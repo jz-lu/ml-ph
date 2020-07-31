@@ -23,6 +23,9 @@ print('END Method 2\n')
 # Instead we can set stdout=subprocess.PIPE and then as input next do stdin = p1.stdout where p1 is name of subprocess object 1.
 # There's a bit more to it to get it to work, see this link https://janakiev.com/blog/python-shell-commands/.
 import subprocess
+
+subprocess.run('')
+
 print('START Method 3: subprocess')
 # subprocess.Popen is a class, so we call its constructor
 # If we want to run a linux/shell command, we need to set "shell=True" in the constructor (defaults to False)

@@ -1,0 +1,6 @@
+general:
+ System = fcc Si 
+ ICHARG=11
+ ENCUT  = 240
+ ISMEAR = -5
+ LORBIT=11

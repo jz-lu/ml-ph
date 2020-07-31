@@ -1,0 +1,83 @@
+ running on   36 total cores
+ distrk:  each k-point on   36 cores,    1 groups
+ distr:  one band on    6 cores,    6 groups
+ using from now: INCAR     
+ vasp.5.4.4.18Apr17-6-g9f103f2a35 (build May 31 2018 21:15:54) complex          
+  
+ POSCAR found type information on POSCAR  C 
+ POSCAR found :  1 types and       2 ions
+ scaLAPACK will be used
+
+ ----------------------------------------------------------------------------- 
+|                                                                             |
+|  ADVICE TO THIS USER RUNNING 'VASP/VAMP'   (HEAR YOUR MASTER'S VOICE ...):  |
+|                                                                             |
+|      You have switched on vdW-DFT.                                          |
+|      This routine was written and supplied by Jiri Klimes.                  |
+|      We recommed that you carefully read and cite the following             |
+|      publication                                                            |
+|      J. Klimes, D.R. Bowler, A. Michelides                                  |
+|        J. Phys.: Cond Matt. 22 022201 (2010)                                |
+|      J. Klimes, D.R. Bowler, A. Michelides                                  |
+|        Phys. Rev. B. 83, 195131 (2011)                                      |
+|      and references therein.                                                |
+|                                                                             |
+ ----------------------------------------------------------------------------- 
+
+ LDA part: xc-table for Pade appr. of Perdew
+ POSCAR, INCAR and KPOINTS ok, starting setup
+ FFT: planning ...
+ WAVECAR not read
+ entering main loop
+       N       E                     dE             d eps       ncg     rms          rms(c)
+Total rVV10 correction in eV:      0.1615702     8.0925840
+DAV:   1     0.404557802039E+02    0.40456E+02   -0.38753E+03  1152   0.690E+02
+DAV:   2    -0.201847690610E+02   -0.60641E+02   -0.50543E+02  1404   0.957E+01
+DAV:   3    -0.231021555821E+02   -0.29174E+01   -0.29173E+01  1788   0.299E+01
+DAV:   4    -0.231163690981E+02   -0.14214E-01   -0.14214E-01  1680   0.218E+00
+DAV:   5    -0.231163826286E+02   -0.13531E-04   -0.13530E-04  1692   0.580E-02    0.602E+00
+Total rVV10 correction in eV:      0.1636637     8.0926091
+DAV:   6    -0.202212876661E+02    0.28951E+01   -0.73454E-01  1752   0.596E+00    0.421E+00
+Total rVV10 correction in eV:      0.1683605     8.0925840
+DAV:   7    -0.199967339559E+02    0.22455E+00   -0.11342E+00  1884   0.604E+00    0.103E+00
+Total rVV10 correction in eV:      0.1691659     8.0925840
+DAV:   8    -0.200000546964E+02   -0.33207E-02   -0.13388E-02  1428   0.110E+00    0.529E-01
+Total rVV10 correction in eV:      0.1708387     8.0925840
+DAV:   9    -0.199989454438E+02    0.11093E-02   -0.10286E-02  1488   0.855E-01    0.123E-01
+Total rVV10 correction in eV:      0.1714726     8.0925840
+DAV:  10    -0.199980767571E+02    0.86869E-03   -0.13708E-03  1464   0.266E-01    0.879E-02
+Total rVV10 correction in eV:      0.1726845     8.0943853
+DAV:  11    -0.199937099553E+02    0.43668E-02   -0.33935E-03  1332   0.306E-01    0.697E-02
+Total rVV10 correction in eV:      0.1727624     8.0974882
+DAV:  12    -0.199941644526E+02   -0.45450E-03   -0.12910E-03  1344   0.230E-01    0.323E-02
+Total rVV10 correction in eV:      0.1726885     8.0964077
+DAV:  13    -0.199958131944E+02   -0.16487E-02   -0.10886E-03  1356   0.200E-01    0.340E-02
+Total rVV10 correction in eV:      0.1727338     8.0964390
+DAV:  14    -0.199956032926E+02    0.20990E-03   -0.44617E-04  1428   0.156E-01    0.190E-02
+Total rVV10 correction in eV:      0.1729197     8.0945623
+DAV:  15    -0.199960638763E+02   -0.46058E-03   -0.26429E-04  1188   0.989E-02    0.496E-02
+Total rVV10 correction in eV:      0.1728196     8.0937777
+DAV:  16    -0.199961937418E+02   -0.12987E-03   -0.39744E-05  1356   0.390E-02    0.836E-03
+Total rVV10 correction in eV:      0.1728983     8.0930182
+DAV:  17    -0.199963908332E+02   -0.19709E-03   -0.25166E-05  1272   0.433E-02    0.434E-03
+Total rVV10 correction in eV:      0.1729347     8.0927259
+DAV:  18    -0.199964699905E+02   -0.79157E-04   -0.30933E-06  1368   0.178E-02    0.202E-03
+Total rVV10 correction in eV:      0.1729575     8.0926082
+DAV:  19    -0.199964884817E+02   -0.18491E-04   -0.34768E-06  1212   0.118E-02    0.246E-04
+Total rVV10 correction in eV:      0.1729611     8.0925940
+DAV:  20    -0.199964907651E+02   -0.22834E-05   -0.40713E-07  1224   0.333E-03    0.123E-04
+Total rVV10 correction in eV:      0.1729627     8.0925850
+DAV:  21    -0.199964923057E+02   -0.15406E-05   -0.99722E-08  1308   0.200E-03    0.308E-05
+Total rVV10 correction in eV:      0.1729625     8.0925845
+DAV:  22    -0.199964923724E+02   -0.66642E-07   -0.43918E-09  1500   0.793E-04    0.145E-05
+Total rVV10 correction in eV:      0.1729625     8.0925841
+DAV:  23    -0.199964924025E+02   -0.30094E-07   -0.42436E-09  1332   0.764E-04    0.255E-06
+Total rVV10 correction in eV:      0.1729625     8.0925841
+DAV:  24    -0.199964924007E+02    0.17567E-08   -0.10788E-09  1440   0.388E-04
+Total rVV10 correction in eV:      0.1729625     8.0925841
+Total rVV10 correction in eV:      0.1729625     8.0925841
+   1 F= -.19996492E+02 E0= -.19996467E+02  d E =-.199965E+02
+ curvature:   0.00 expect dE= 0.000E+00 dE for cont linesearch  0.000E+00
+ trial: gam= 0.00000 g(F)=  0.108E-40 g(S)=  0.000E+00 ort = 0.000E+00 (trialstep = 0.100E+01)
+ search vector abs. value=  0.100E-09
+ reached required accuracy - stopping structural energy minimisation

@@ -1,0 +1,27 @@
+SYSTEM = bilayer_graphene_AA
+ISTART = 0
+ISMEAR = 0
+SIGMA  = 0.01
+ENCUT = 800
+AMIN  = 0.01
+NSW   = 40
+EDIFF = 1E-8
+EDIFFG = -1E-4
+NEDOS = 9001
+
+IBRION = 2
+SYMPREC = 0.0001
+NPAR = 6
+ADDGRID = .TRUE.
+LREAL = .FALSE. 
+LWAVE = .FALSE.
+ALGO = N
+NELMIN = 5
+PREC = Accurate
+
+# vdw
+#METAGGA = SCAN # use rbv10
+#LASPH = T
+#ADDGRID = T
+#LUSE_VDW = T
+#BPARAM = 15.7
