@@ -1,0 +1,36 @@
+# All the constants and hard strings for vasp are here.
+
+### PARAMETERS FOR VASP INPUT FILES ###
+## INCAR
+ISTART = 0 # No WAVECAR input
+ISMEAR = 0 # Gaussian smearing
+SIGMA = 0.01 # Width of smear
+ENCUT = 800 # Plane wave expansion cutoff index
+AMIN = 0.01 # Parameter in initial approximation of dielectric function for screening
+NSW = {'relax': 80, 'no_relax': 0} # Number of ionic relaxation steps
+EDIFF = 1E-8 # Acceptable self-consistent energy difference in electronic relaxation 
+EDIFFG = -1E-8 # Acceptable self-consistent energy difference (or forces if with negative sign as flag) in ionic relaxation
+NEDOS = 6001 # Number of samples for electronic DOS calculation in the fixed energy range
+IBRION = {'relax': 2, 'no_relax': -1} # 2 is a flag for do ionic relaxation, set to -1 when relaxation calculation is complete
+ICHARG = {'relax': 2, 'no_relax_sc': 1, 'no_relax_nsc': 11} # 2 is default initial charge density, 1 is self-consistent CONTCAR import, 11 is non self-consistent (fixed density) CONTCAR
+SYMPREC = 0.0001
+NPAR = 6
+ADDGRID = '.TRUE.'
+LREAL = '.FALSE.'
+LWAVE = '.FALSE.'
+LCHARG = '.FALSE.'
+ALGO = 'N'
+NELMIN = 5
+PREC = 'Accurate'
+# vdW settings
+METAGGA = 'SCAN'
+LASPH = '.TRUE.'
+LUSE_VDW = '.TRUE.'
+BPARAM = 15.7
+
+## POTCAR
+POT_DEFAULT_DIR = '' # Fill this!
+
+## KPOINTS
+RELAXATION_GRID_DENSITY = (21, 21, 1)
+RELAXATION_GRID_SHIFT = (0, 0, 0)
