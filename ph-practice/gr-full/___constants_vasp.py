@@ -54,6 +54,7 @@ LUSE_VDW = '.TRUE.'
 BPARAM = 15.7
 
 ## POTCAR
+POT_PMG_INIT_CMD = 'cat “PMG_VASP_PSP_DIR: /n/kaxiras_lab/atomate_PPs” > ~/.pmgrc.yaml'
 POT_NOPMG_DIR = '/n/kaxiras_lab/vasp.5.4.4/PPs/potpaw_PBE.54/' # This is the method of direct POTCAR without pymatgen!
 
 ## KPOINTS

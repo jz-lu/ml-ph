@@ -2,10 +2,10 @@ from ___constants_misc import *
 from ___constants_names import *
 from ___constants_vasp import *
 from __directory_searchers import find
-from __dirModifications import move, cat
+from __dirModifications import move, cat, checkPath
 import sys
 
-from pymatgen.io.vasp.inputs import Poscar, Incar, Kpoints # No Potcar class, we'll just do it with cat the ol' fashioned way
+from pymatgen.io.vasp.inputs import Poscar, Incar, Kpoints, Potcar
 
 # Get a POSCAR object
 def getPoscarObj(poscarName=POSCAR_UNIT_RELAXATION_NAME, dirName=ROOT):
@@ -87,24 +87,61 @@ def buildRelaxationIncar(dirName=ROOT, vdW=False, writeOut=True):
     
     return incar
 
-# Writes a properly constructed POTCAR (not an object)
+# Writes a properly constructed POTCAR (not an object), use only if pymatgen method below isn't working!
 # Returns 0 on success, 1 on failure
 def buildPotcar_noPMG(dirName=ROOT, potcarDir=POT_NOPMG_DIR, poscarObj=getPoscarObj()):
     atoms = poscarObj.site_symbols
-    numAtoms = len(atoms)
+    # print(atoms)
 
-    if numAtoms == 1:
-        # Just get the one POTCAR
-        potcarExists = find(atoms[0], POT_NOPMG_DIR)
-        if not potcarExists:
-            sys.exit(ERR_NO_POTCAR)
-        movePotcar = move('POTCAR', POT_NOPMG_DIR + atoms[0], ROOT)
-        if movePotcar.stderr !=  '':
-            print('Error in moving POTCARs to {}. Check process by hand.'.format(ROOT))
-            return 1
-    
-    elif numAtoms > 1:
-        # We need to concatenate POTCARs.First we do the first two then the rest.
-        
-        
-    
+    dirName = checkPath(dirName)
+    if potcarDir[-1] != '/':
+        potcarDir += '/'
+
+    fileDirs = []
+    # We build an array to pass into cat().
+    for i in atoms:
+        fileDirs.append(potcarDir + i + '/' + POTCAR_NAME)
+    # print(fileDirs)
+
+    cat(fileDirs, dirName, POTCAR_NAME)
+    print('Successfully built POTCAR.')
+
+    return 0
+
+# Build a POTCAR object using pymatgen, not testable unless on Odyssey
+# TODO: test this on Odyssey.
+def buildPotcar(poscarObj=getPoscarObj(), dirName=ROOT, useGivenPotcar=False): # Just specify useGivenPotcar and dirName (if not ROOT) if POTCAR file given.
+    if useGivenPotcar:
+        try:
+            potcar = Potcar.from_file(checkPath(dirName) + POTCAR_NAME)
+            return potcar
+        except FileNotFoundError as err:
+            print('Error:', err)
+            print('Possible source of error: did you specify you want to use your own POTCAR without actually having one in the directory?')
+            sys.exit()
+        except Exception as err:
+            print('Error:', err)
+            print('Possible source of error: is your POTCAR file actually a valid POTCAR format?')
+            sys.exit()
+
+    else:
+        try:
+            atoms = poscarObj.site_symbols # Get array of atoms for potential, in order as given in POSCAR
+        except Exception as err:
+            print('Error:', err)
+            print('Possible source of error: your POSCAR is likely wrong. You cannot import POTCAR until POSCAR is made properly for the PUC. Check POSCAR input and POTCAR maker function input.')
+            sys.exit()
+        #print(atoms)
+
+        # Get a pymatgen Potcar object
+        try:
+            potcar = Potcar(atoms)
+            print('POTCARs fetched by pymatgen. Writing to file...')
+            potcar.write_file(checkPath(dirName) + POTCAR_NAME)
+            return potcar
+        except ValueError as err:
+            print('Error:', err)
+            print('\nPossible solution: run the following command as a one-time intialization to set up directories, if using Odyssey. \n\n\t{}\n'.format(POT_PMG_INIT_CMD))
+            sys.exit()
+
+print(buildPotcar(useGivenPotcar=True))
