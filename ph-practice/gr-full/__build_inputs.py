@@ -40,12 +40,39 @@ def buildRelaxationKpoints(dirName=ROOT, grid=RELAXATION_GRID_DENSITY, shift=REL
     return kpoints
 
 # Returns pymatgen Incar object
-def buildRelaxationIncar(dirName=ROOT, vdW=True, writeOut=True):
+def buildRelaxationIncar(dirName=ROOT, vdW=False, writeOut=True):
     # First let's build an array of default keys, which is helpful later
     default_keys = list(INCAR_DEFAULT_SETTINGS.keys())
+    default_values = list(INCAR_DEFAULT_SETTINGS.values())
     vdW_keys = list(INCAR_VDW_SETTINGS.keys())
+    vdW_values = list(INCAR_VDW_SETTINGS.values())
 
     incarExists = find(INCAR_RELAXATION_NAME, ROOT) # Look for existing INCAR
     if not incarExists:
         # Create a default
+        print('No INCAR input found. Generating default relaxation settings...')
         incar = Incar.from_string('')
+        for i in range(0, len(default_keys)):
+            incar[default_keys[i]] = default_values[i]
+    else:
+        print('INCAR input found. Using parameters given and adding any other necessary ones...')
+        incar = Incar.from_file(ROOT + INCAR_RELAXATION_NAME)
+        for i in range(0, len(default_keys)):
+            if default_keys[i] not in incar:
+                print('{} not in INCAR'.format(i))
+                incar[default_keys[i]] = default_values[i]
+    
+    if vdW:
+        print('Adding van der Waals interaction parameters to INCAR...')
+        for i in range(0, len(vdW_keys)):
+            incar[vdW_keys[i]] = vdW_values[i]
+    
+    # Get a SYSTEM tag for the name, as a comment
+    incar['SYSTEM'] = getInputName()
+
+    if writeOut:
+        print('Writing INCAR to file...')
+        incar.write_file(ROOT + INCAR_RELAXATION_NAME)
+    
+    return incar
+
