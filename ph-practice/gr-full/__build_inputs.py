@@ -3,35 +3,22 @@ from ___constants_names import *
 from ___constants_vasp import *
 from __directory_searchers import find
 from __dirModifications import move, cat, checkPath
+from __query_inputs import getPoscarObj, getInputName
 import sys
 
 from pymatgen.io.vasp.inputs import Poscar, Incar, Kpoints, Potcar
-
-# Get a POSCAR object
-def getPoscarObj(poscarName=POSCAR_UNIT_RELAXATION_NAME, dirName=ROOT):
-    poscarExists = find(poscarName, dirName)
-    if poscarExists:
-        return Poscar.from_file(dirName + poscarName)
-    else:
-        sys.exit(ERR_NO_POSCAR)
-        return
-
-# Helps us label the input files
-def getInputName(dirName=ROOT, poscarName=POSCAR_UNIT_RELAXATION_NAME):
-    poscar = Poscar.from_file(ROOT + poscarName)
-    sysName = ''
-    for i in poscar.site_symbols:
-        sysName = sysName + i + '-'
-    sysName += str(poscar.natoms[0])
-
-    return sysName
 
 # Returns pymatgen Kpoints object
 def buildRelaxationKpoints(dirName=ROOT, grid=RELAXATION_GRID_DENSITY, shift=RELAXATION_GRID_SHIFT, isRelaxed=False, writeOut=True):
     kpointsExists = find(KPOINTS_MESH_NAME, ROOT) # Look for existing KPOINTS
     if kpointsExists:
-        kpoints = Kpoints.from_file(ROOT + KPOINTS_MESH_NAME)
-        print('KPOINTS file inputted by user. Importing input for computation...')
+        try:
+            kpoints = Kpoints.from_file(checkPath(dirName) + KPOINTS_MESH_NAME)
+            print('KPOINTS file inputted by user. Importing input for computation...')
+        except Exception as err:
+            print('Error:', err)
+            print('Suggestion: your user-inputted KPOINTS file is likely invalid. Check it')
+            sys.exit()
     else:
         if grid == RELAXATION_GRID_DENSITY and shift == RELAXATION_GRID_SHIFT:
             print('No KPOINTS file found. Generating default relaxation mesh...')
@@ -43,7 +30,7 @@ def buildRelaxationKpoints(dirName=ROOT, grid=RELAXATION_GRID_DENSITY, shift=REL
 
     if (not kpointsExists) and writeOut:
         print('Writing new KPOINTS file...')
-        kpoints.write_file(ROOT + KPOINTS_MESH_NAME)
+        kpoints.write_file(dirName + KPOINTS_MESH_NAME)
     
     if not writeOut:
         print('KPOINTS object created without file writing.')
@@ -67,10 +54,15 @@ def buildRelaxationIncar(dirName=ROOT, vdW=False, writeOut=True):
             incar[default_keys[i]] = default_values[i]
     else:
         print('INCAR input found. Using parameters given and adding any other necessary ones...')
-        incar = Incar.from_file(ROOT + INCAR_RELAXATION_NAME)
+        try:
+            incar = Incar.from_file(ROOT + INCAR_RELAXATION_NAME)
+        except Exception as error:
+            print('Error:', error)
+            print('Suggestion: you probably have a file labeled INCAR in the specified directory that is invalid.')
+
         for i in range(0, len(default_keys)):
             if default_keys[i] not in incar:
-                print('{} not in INCAR'.format(i))
+                print('{} not in INCAR. Adding it automatically for relaxation calculations...'.format(default_keys[i]))
                 incar[default_keys[i]] = default_values[i]
     
     if vdW:
@@ -94,8 +86,7 @@ def buildPotcar_noPMG(dirName=ROOT, potcarDir=POT_NOPMG_DIR, poscarObj=getPoscar
     # print(atoms)
 
     dirName = checkPath(dirName)
-    if potcarDir[-1] != '/':
-        potcarDir += '/'
+    potcarDir = checkPath(potcarDir)
 
     fileDirs = []
     # We build an array to pass into cat().
@@ -104,7 +95,7 @@ def buildPotcar_noPMG(dirName=ROOT, potcarDir=POT_NOPMG_DIR, poscarObj=getPoscar
     # print(fileDirs)
 
     cat(fileDirs, dirName, POTCAR_NAME)
-    print('Successfully built POTCAR.')
+    print('Successfully built POTCAR. Stored in {}'.format(dirName))
 
     return 0
 
@@ -143,5 +134,3 @@ def buildPotcar(poscarObj=getPoscarObj(), dirName=ROOT, useGivenPotcar=False): #
             print('Error:', err)
             print('\nPossible solution: run the following command as a one-time intialization to set up directories, if using Odyssey. \n\n\t{}\n'.format(POT_PMG_INIT_CMD))
             sys.exit()
-
-print(buildPotcar(useGivenPotcar=True))
