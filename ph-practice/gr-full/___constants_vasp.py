@@ -1,4 +1,5 @@
 # All the constants and hard strings for vasp are here.
+# NOTE: all directory strings must end in '/'
 
 ### PARAMETERS FOR VASP INPUT FILES ###
 ## INCAR
@@ -53,7 +54,7 @@ LUSE_VDW = '.TRUE.'
 BPARAM = 15.7
 
 ## POTCAR
-POT_DEFAULT_DIR = '' # Fill this!
+POT_NOPMG_DIR = '/n/kaxiras_lab/vasp.5.4.4/PPs/potpaw_PBE.54/' # This is the method of direct POTCAR without pymatgen!
 
 ## KPOINTS
 RELAXATION_GRID_DENSITY = (21, 21, 1)

@@ -1,5 +1,5 @@
 import subprocess
-_unique_str = 'aUniqueStringThatIsVeryUnlikelyToBeReproducedRandomly_q3452435234'
+from ___constants_misc import unique_str
 
 def mkdir(dirName, currPath='.'):
     if currPath[-1] != '/':
@@ -7,8 +7,8 @@ def mkdir(dirName, currPath='.'):
     newDir = subprocess.run(['mkdir', currPath + dirName], capture_output=True, universal_newlines=True)
     return newDir.stderr
 
-def move(dirName, currPath, newPath=_unique_str, newName=''):
-    if newPath == _unique_str:
+def move(dirName, currPath, newPath=unique_str, newName=''):
+    if newPath == unique_str:
         newPath = currPath
 
     if currPath[-1] != '/':
@@ -19,8 +19,8 @@ def move(dirName, currPath, newPath=_unique_str, newName=''):
     movement = subprocess.run(['mv', currPath + dirName, newPath + newName], capture_output=True, universal_newlines=True)
     return movement.stderr
 
-def copy(dirName, currPath, newPath=_unique_str, newName='', isFolder=False):
-    if newPath == _unique_str:
+def copy(dirName, currPath, newPath=unique_str, newName='', isFolder=False):
+    if newPath == unique_str:
         newPath = currPath
 
     if currPath[-1] != '/':
@@ -41,12 +41,14 @@ def rm(dirPath, isFolder=False):
         removal = subprocess.run(['rm', dirPath], capture_output=True, universal_newlines=True)
     return removal.stderr
 
-def cat(name1, name2, outFileName, dir1, dir2=_unique_str, dirOut=_unique_str):
-    if dir1[-1] != '/':
-        dir1 += '/'
-    if dir2 == _unique_str:
-        dir2 = dir1
-    if dirOut=_unique_str:
-        dirOut = dir1
-    newFileObj = subprocess.run(['cat', dir1 + name1, dir2 + name2, '>', dirOut + outFileName], capture_output=True, universal_newlines=True)
+def cat(fileDirs, outFileName, dirOut):
+    if dirOut[-1] != '/':
+        dirOut += '/'
+
+    cmd = ['cat'] + fileDirs + ['>', dirOut + outFileName]
+    print(cmd)
+
+    newFileObj = subprocess.run(cmd, capture_output=True, universal_newlines=True)
     return newFileObj.stderr
+
+cat(['./POSCAR', './KPOINTS'], 'TESTCAT', '.')

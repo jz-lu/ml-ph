@@ -2,8 +2,19 @@ from ___constants_misc import *
 from ___constants_names import *
 from ___constants_vasp import *
 from __directory_searchers import find
+from __dirModifications import move, cat
+import sys
 
 from pymatgen.io.vasp.inputs import Poscar, Incar, Kpoints # No Potcar class, we'll just do it with cat the ol' fashioned way
+
+# Get a POSCAR object
+def getPoscarObj(poscarName=POSCAR_UNIT_RELAXATION_NAME, dirName=ROOT):
+    poscarExists = find(poscarName, dirName)
+    if poscarExists:
+        return Poscar.from_file(dirName + poscarName)
+    else:
+        sys.exit(ERR_NO_POSCAR)
+        return
 
 # Helps us label the input files
 def getInputName(dirName=ROOT, poscarName=POSCAR_UNIT_RELAXATION_NAME):
@@ -76,3 +87,24 @@ def buildRelaxationIncar(dirName=ROOT, vdW=False, writeOut=True):
     
     return incar
 
+# Writes a properly constructed POTCAR (not an object)
+# Returns 0 on success, 1 on failure
+def buildPotcar_noPMG(dirName=ROOT, potcarDir=POT_NOPMG_DIR, poscarObj=getPoscarObj()):
+    atoms = poscarObj.site_symbols
+    numAtoms = len(atoms)
+
+    if numAtoms == 1:
+        # Just get the one POTCAR
+        potcarExists = find(atoms[0], POT_NOPMG_DIR)
+        if not potcarExists:
+            sys.exit(ERR_NO_POTCAR)
+        movePotcar = move('POTCAR', POT_NOPMG_DIR + atoms[0], ROOT)
+        if movePotcar.stderr !=  '':
+            print('Error in moving POTCARs to {}. Check process by hand.'.format(ROOT))
+            return 1
+    
+    elif numAtoms > 1:
+        # We need to concatenate POTCARs.First we do the first two then the rest.
+        
+        
+    
