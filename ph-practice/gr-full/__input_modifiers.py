@@ -6,6 +6,8 @@ from ___constants_vasp import FULL_RELAX_SELECTIVE_DYNAMICS_ARR, LAYER_RELAX_SEL
 from ___constants_names import *
 from pymatgen.core.structure import Structure
 
+import numpy as np
+
 # Functions for editing the input files depending on the calculation we need.
 def modifyIncar(incar, addArr, delArr): # Add any elements and remove any elements respectively.
     # Function takes an incar object from pmg as input and we modify it.
@@ -82,3 +84,45 @@ def randomAtomicPerturbations(distance, minDistance=None, twoDimensionalMat=True
         print('Writing perturbed POSCAR to file...')
         poscarObj.write_file(checkPath(outDir) + outFileName)
 
+# Make additions or deletions from the POSCAR PUC.
+def addAtomToSite(atomName, dir_coords, poscarObj=getPoscarObj(), writeOut=False, outDir=ROOT, outFileName=POSCAR_UNIT_RELAXATION_NAME):
+   try:
+       newPoscarObj = poscarObj.structure.append(atomName, dir_coords, validate_proximity=True)
+   except ValueError as err:
+        print('Error:', err)
+        print('Suggested source of problem: you likely placed an atom that is too close to another one already in the PUC, which violates the obvious physics.')
+        sys.exit()
+   
+   if writeOut:
+       print('Writing updated POSCAR with inserted atom {} to file...'.format(atomName))
+       newPoscarObj.write_file(checkPath(outDir) + outFileName)
+   
+   return newPoscarObj
+
+# NOTE: this function requires the coordinates to be EXACT with the POSCAR i.e. same digit accuracy. e.g. 0.3333 will fail if POSCAR says 0.333333 or 0.33
+def removeAtomFromSite(atomName, dir_coords, poscarObj=getPoscarObj(), writeOut=False, outDir=ROOT, outFileName=POSCAR_UNIT_RELAXATION_NAME):
+    # Technically we could do it directly by index but in that case we may as well just use the direct pmg command
+    # poscarObj.structure.remove_sites(array of indices here (start: 0) in the order of the POSCAR)
+
+    # So instead we will let user input the atom and its position to be removed.
+    index = None
+    try:
+        for i in range(0, getNumAtoms(poscarObj)):
+            if np.array_equal(poscarObj.structure.sites[i].frac_coords, dir_coords): # no issue
+                index = i
+        if index == None:
+            print('Error: the atom %s at (%f, %f, %f) specified for removal does not exist in the Poscar object.'%(atomName, dir_coords[0], dir_coords[1], dir_coords[2]))
+            sys.exit()
+
+        newPoscarObj = poscarObj.structure.remove_sites([index])
+        print('Removed atom %s at coordinates (%f, %f, %f) from Poscar object.'%(atomName, dir_coords[0], dir_coords[1], dir_coords[2]))
+    except Exception as err:
+        print('Error:', err)
+        
+    print(poscarObj.structure.sites)
+
+    if writeOut:
+       print('Writing updated POSCAR with removed atom %s at (%f, %f, %f) to file...'%(atomName, dir_coords[0], dir_coords[1], dir_coords[2]))
+       newPoscarObj.write_file(checkPath(outDir) + outFileName)
+    
+    return newPoscarObj
