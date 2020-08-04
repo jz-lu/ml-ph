@@ -10,8 +10,10 @@ ROOT = '/Users/jonathanlu/Documents/ml-ph/ph-practice/gr-full/' # File path to t
 ## Note!! It is crucial that ROOT end in a forward slash. ##
 DIR_ELEDOS = ROOT + ELEDOS + '/'
 DIR_ELEBAND = ROOT + ELEBAND + '/'
-DIR_PHDOS = ROOT + PHDOS + '/'
-DIR_PHBAND = ROOT + PHBAND + '/'
+PHONOPY_DIR_NAME = 'phonon_calculations'
+DIR_PHONOPY = ROOT + PHONOPY_DIR_NAME + '/'
+DIR_PHDOS = DIR_PHONOPY + PHDOS + '/'
+DIR_PHBAND = DIR_PHONOPY + PHBAND + '/'
 
 # File names
 POSCAR_NAME = 'POSCAR'

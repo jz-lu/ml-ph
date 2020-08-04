@@ -9,6 +9,8 @@ from __dirModifications import move, copy, mkdir, rm # Easy "APIs" to the comman
 from ___constants_names import *
 from ___constants_misc import BAD_INPUT_ERR_MSG, GENERAL_ERR_USAGE_MSG
 
+from __phPreprocess import phPreProcess
+
 # Declare global checker variables
 # hasBeenCalled = { 'getPhDisp': False,  }
 
@@ -27,26 +29,22 @@ def organizePhonopyVaspOuts():
 # We then process the specific needs of the calculation
 
 def processEledos():
-    mkdir(ELEBAND, ROOT)
 
     # For eledos, we need to copy the relaxed files, CONTCAR -> POSCAR,
     # modify INCAR to stop relaxation, use CHGCAR, and keep relaxation, 
-        
+
 
     print(ELEDOS)
 
 def processEleband():
-    mkdir(ELEBAND, ROOT)
 
     print(ELEBAND)
 
 def processPhdos():
-    mkdir(PHDOS, ROOT)
 
     print(PHDOS)
 
 def processPhband():
-    mkdir(PHBAND, ROOT)
 
     # TODO: move the proper input files in here for the processed vasp calculations, then run genDisp()
 
@@ -72,7 +70,7 @@ else:
     incar_nonselfcon = getNonSelfConNoRelIncar(original_incar)
     
     # Besides INCAR no object needs changes between different analysis types
-    relaxed_poscar = Poscar.from_file(ROOT + CONTCAR_NAME)
+    poscar_relaxed = Poscar.from_file(ROOT + CONTCAR_NAME)
     potcar = Potcar.from_file(ROOT + POTCAR_NAME)
     chgcar = Chgcar.from_file(ROOT + CHGCAR_NAME)
     
@@ -82,17 +80,43 @@ else:
     # Momentarily we wrap all these into a neat VaspInput class's object.
 
     # Parse command line and direct necessary function calls
-
     for i in cmdargs:
         if i == ELEDOS:
+            mkdir(i, ROOT) # Create a subfolder for the analysis
+
             # We will need the standard VASP IO Object plus CHGCAR.
-            processEledos()
+            stdVaspObj = VaspInput(incar_selfcon, kpoints_mesh_relaxed, poscar_relaxed, potcar)
+
+            # TODO: delete the next line and put CHGCAR as an object into the vasp obj when you figure out how.
+            copy(CHGCAR_NAME, ROOT, DIR_ELEDOS)
+            stdVaspObj.write_input(DIR_ELEDOS)
+
+            # TODO: change the copy files thing to a more robust VaspInput.from_directory. SAME FOR BAND.
         elif i == ELEBAND:
-            processEleband()
-        elif i == PHDOS:
-            processPhdos()
-        elif i == PHBAND:
-            processPhband()
+            mkdir(i, ROOT) # Create a subfolder for the analysis
+
+            # TODO: same TODO as ELEDOS but for band. CHGCAR into Vasp input object.
+
+            try:
+                # TODO: change the line to autogeneration as well.
+                kpoints_line = Kpoints.from_file(ROOT + KPOINTS_LINE_NAME)
+            except Exception as err:
+                print('Error:', err)
+                sys.exit('Suggested source of error: you asked for a band structure calculation but did not give a (valid) line kpoints file named {}'.format(KPOINTS_LINE_NAME))
+
+            # We will need the standard VASP IO Object plus CHGCAR.
+            stdVaspObj = VaspInput(incar_nonselfcon, kpoints_line, poscar_relaxed, potcar)
+            copy(CHGCAR_NAME, ROOT, DIR_ELEBAND)
+            stdVaspObj.write_input(DIR_ELEDOS)
+        else: # i.e. we have phonon calculations to do
+            # First no matter what we need to preprocess to get FORCE_SETS. 
+            # Only difference between band and DOS is the .conf file we generate.
+            mkdir(PHONOPY_DIR_NAME, ROOT)
+            stdVaspObj = VaspInput(incar_selfcon, kpoints_mesh_relaxed, poscar_relaxed, potcar)
+            # TODO: is this necessary? Should phonopy run with ICHARG = 1 or default?
+            copy(CHGCAR_NAME, ROOT, DIR_PHONOPY)
+
+            # TODO: phPreprocess()
 
             
     

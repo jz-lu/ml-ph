@@ -2,17 +2,19 @@ from __directory_searchers import find # Will let us look for the different POSC
 from __dirModifications import move, copy, rm, mkdir
 
 from ___constants_phonopy import *
+from ___constants_names import *
 
 import subprocess
 import sys
 
-def phPreProcess(supercellDim, Poscar_unitcell_name):
+def phPreProcess(supercellDim=SUPER_DIM, Poscar_unitcell_name=POSCAR_UNIT, phDir=PHONOPY_DIR_NAME):
     print(PHONOPY_DISP_MSG)
+    CMD_GET_DISPLACEMENTS = ['phonopy', '-d', '--dim={}'.format(supercellDim), '-c', PH_ROOT + '/' + POSCAR_UNIT]
     phStarterMsg = subprocess.run(CMD_GET_DISPLACEMENTS, capture_output=True, universal_newlines=True)
     print(phStarterMsg.stdout)
 
     # Check for the number of POSCAR-XYZ's made and organize them accordingly.
-    poscarArray = find('POSCAR-*', ROOT)
+    poscarArray = find('POSCAR-*', phDir)
     numPoscars = len(poscarArray)
     print('{} displacement files found.'.format(len(poscarArray)))
 
