@@ -9,7 +9,7 @@ from __dirModifications import move, copy, mkdir, rm # Easy "APIs" to the comman
 from ___constants_names import *
 from ___constants_misc import BAD_INPUT_ERR_MSG, GENERAL_ERR_USAGE_MSG
 
-from __phPreprocess import phPreProcess
+from __phProcessing import phPreProcess
 
 # Declare global checker variables
 # hasBeenCalled = { 'getPhDisp': False,  }
@@ -115,6 +115,8 @@ else:
             stdVaspObj = VaspInput(incar_selfcon, kpoints_mesh_relaxed, poscar_relaxed, potcar)
             # TODO: is this necessary? Should phonopy run with ICHARG = 1 or default?
             copy(CHGCAR_NAME, ROOT, DIR_PHONOPY)
+            # TODO: if this is necessary, then figure out a way to put it into the vasp object container or pass it into phPreprocess()
+            
 
             # TODO: phPreprocess()
 
