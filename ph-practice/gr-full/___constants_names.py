@@ -11,6 +11,8 @@ ROOT = '/Users/jonathanlu/Documents/ml-ph/ph-practice/gr-full/' # File path to t
 DIR_ELEDOS = ROOT + ELEDOS + '/'
 DIR_ELEBAND = ROOT + ELEBAND + '/'
 PHONOPY_DIR_NAME = 'phonon_calculations'
+PHDISP_STATIC_NAME = 'disp-'
+PHDISP_DIR_NAME = PHDISP_STATIC_NAME + '%s/'
 DIR_PHONOPY = ROOT + PHONOPY_DIR_NAME + '/'
 DIR_PHDOS = DIR_PHONOPY + PHDOS + '/'
 DIR_PHBAND = DIR_PHONOPY + PHBAND + '/'
@@ -29,4 +31,5 @@ POSCAR_UNIT_PHONOPY_NAME = 'POSCAR_unit'
 KPOINTS_MESH_NAME = 'KPOINTS'
 KPOINTS_LINE_NAME = 'LINE_KPOINTS'
 
+VASP_RUN_XML_NAME = 'vasprun.xml'
 

@@ -30,11 +30,12 @@ def phPreProcess(incar, kpoints_mesh, potcar, supercellDim=SUPER_DIM, Poscar_uni
     elif numPoscars > 999: # Obviously this should never happen but I'm all about caution with error handling
         sys.exit(PHONOPY_DISP_ERR_2)
     else:
+        dispNum = 0 # Initialize outside loop block so we can return it
         for i in range(0, numPoscars):
             # Make the subfolders for each displacement and move the right POSCAR-XYZ there.
-            dispNum = (poscarArray[i])[-3:] # Gives the XYZ of POSCAR-XYZ
+            dispNum = (poscarArray[i])[-3:] # Gives the XYZ of POSCAR-XYZ. THIS IS A STRING!
             try:
-                newSubdir = 'disp-%s/'%(dispNum)
+                newSubdir = PHDISP_DIR_NAME%(dispNum)
                 makeNewSubdir = mkdir(newSubdir, DIR_PHONOPY)
                 # NOTE: uncomment the next line and adjust the poscar input of the vasp object below if you want POSCAR-XYZ out of phonopy root dir
                 # moveNewSubdir = move(poscarArray[i], DIR_PHONOPY, DIR_PHONOPY + newSubdir, POSCAR_NAME) # Rename it as well as move so we can just immediately run vasp
@@ -50,5 +51,11 @@ def phPreProcess(incar, kpoints_mesh, potcar, supercellDim=SUPER_DIM, Poscar_uni
                 # print(moveNewSubdir)
                 sys.exit('Error in preprocessing phonopy (generating displacements and moving them to the right places): ' + err)
 
-    return 0
+    return dispNum # Returns last displacement number so we can get force sets.
 
+# Takes as input dispNum, the output of phPreProcess
+def phGenerateForceSets(dispNum, dirName=DIR_PHONOPY):
+    # We run a generator of force sets with phonopy on the shell
+    phForce_output = subprocess.run('phonopy -f %s{001..%s}/%s'%(PHDISP_STATIC_NAME, dispNum, VASP_RUN_XML_NAME), shell=True, capture_output=True, universal_newlines=True)
+    print(phForce_output.stdout)
+    # TODO: If force sets created then proceed, if not exit with error. Use find function to find out.

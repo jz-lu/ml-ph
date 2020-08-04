@@ -7,15 +7,16 @@ incar = Incar.from_file('INCAR')
 poscar = Poscar.from_file('POSCAR')
 potcar = Potcar.from_file('POTCAR')
 kpoints = Kpoints.from_file('KPOINTS')
+
 chgcar.write_file('TEST')
 
-print(chgcar.data)
+print(chgcar.as_dict())
 print(incar)
 
 opDic = {CHGCAR_NAME: chgcar}
 # vaspObj = VaspInput.from_directory(ROOT, opDic)
 vaspObj = VaspInput(incar, kpoints, poscar, potcar, opDic)
-print(vaspObj['CHGCAR'])
+print(vaspObj['CHGCAR'].as_dict())
 
-# vaspObj.write_input('./bobross')
+vaspObj.write_input('./bobross')
 # print(chgcar.as_dict())
