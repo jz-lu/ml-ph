@@ -2,33 +2,37 @@ from pymatgen.io.vasp.inputs import Incar, Kpoints, Poscar
 from __dirModifications import checkPath
 from __query_inputs import *
 
-from ___constants_vasp import FULL_RELAX_SELECTIVE_DYNAMICS_ARR, LAYER_RELAX_SELECTIVE_DYNAMICS_ARR, KPOINTS_MESH_DOS
+from ___constants_vasp import *
 from ___constants_names import *
+from ___constants_misc import ERR_BAD_KPOINTS_MODIFY_INPUT
 from pymatgen.core.structure import Structure
 
 import numpy as np
 
 # Functions for editing the input files depending on the calculation we need.
-def modifyIncar(incar, addArr, delArr): # Add any elements and remove any elements respectively.
+def modifyIncar(incar, addArr=None, delArr=None): # Add any elements and remove any elements respectively.
     # Function takes an incar object from pmg as input and we modify it.
-    # Format of addArr: each element is a tuple (key, value) to add. Format of delArry: each element is just a key to delete.
-    for i in addArr:
-        incar[i[0]] = i[1]
-    for i in delArr:
-        incar.pop(delArr)
+    # Format of addArr: each element is a tuple (key, value) to add. Format of delArr: each element is just a key to delete.
+    if addArr != None:
+        for i in addArr:
+            incar[i[0]] = i[1]
+    
+    if delArr != None:
+        for i in delArr:
+            incar.pop(delArr)
     return incar
 
 # Give the right Kpoints object so that we can write it into the proper subdirectory.
-def modifyKpoints(samplingType, matName, totShift=(0, 0, 0)): # material name
+def modifyKpoints(samplingType, meshDensity=NONRELAXATION_GRID_DENSITY, totShift=NONRELAXATIONI_GRID_SHIFT): # material name
     if samplingType == 'mesh':
-        kpoints_new = Kpoints.gamma_automatic( KPOINTS_MESH_DOS, totShift )
+        kpoints_new = Kpoints.gamma_automatic( meshDensity, totShift )
         kpoints_new.comment = 'Kpoints grid for ' + getInputName()
     elif samplingType == 'line':
         # Generate a line KPOINTS for band calculations. See documentation of the library for details.
         # TODO: for now, we just import a LINE_KPOINTS file since the autogenerator doesn't seem to work.
-        kpoints_new = Kpoints.from_file(ROOT + '/LINE_KPOINTS')
+        kpoints_new = Kpoints.from_file(ROOT + '/' + KPOINTS_LINE_NAME)
     else:
-        sys.exit('Error: to modify KPOINTS file or Kpoints object you must choose samplingType as line or mesh.')
+        sys.exit(ERR_BAD_KPOINTS_MODIFY_INPUT)
     return kpoints_new
 
 # This allows us to change the selective dynamics from relaxing only the interlayer spacing to full relaxation or vice versa.
@@ -126,3 +130,19 @@ def removeAtomFromSite(atomName, dir_coords, poscarObj=getPoscarObj(), writeOut=
        newPoscarObj.write_file(checkPath(outDir) + outFileName)
     
     return newPoscarObj
+
+# The following two functions prepare incar for nonrelaxed calculations, respectively self-consistent and nonself-consistent for dos/ph and band.
+def getSelfConNoRelIncar(incarObj):
+    settings_to_add = [('ICHARG', ICHARG['no_relax_sc']), 
+                       ('NEDOS', NEDOS), 
+                       ('IBRION', IBRION['no_relax']), 
+                       ('NSW', NSW['no_relax'])]
+    incarObj = modifyIncar(incar=incarObj, addArr=settings_to_add)
+    return incarObj
+
+def getNonSelfConNoRelIncar(incarObj):
+    settings_to_add = [('ICHARG', ICHARG['no_relax_nsc']),
+                       ('IBRION', IBRION['no_relax']), 
+                       ('NSW', NSW['no_relax'])] # No NEDOS, thats just for plotting DOS
+    incarObj = modifyIncar(incar=incarObj, addArr=settings_to_add)
+    return incarObj

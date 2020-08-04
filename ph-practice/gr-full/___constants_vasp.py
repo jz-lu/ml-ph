@@ -32,7 +32,7 @@ ISMEAR = 0 # Gaussian smearing
 SIGMA = 0.01 # Width of smear
 ENCUT = 800 # Plane wave expansion cutoff index
 AMIN = 0.01 # Parameter in initial approximation of dielectric function for screening
-NSW = {'relax': 80, 'no_relax': 0} # Number of ionic relaxation steps
+NSW = {'relax': 80, 'no_relax': 0, 'relax_low': 40, 'relax_very_low': 20} # Number of ionic relaxation steps
 EDIFF = 1E-8 # Acceptable self-consistent energy difference in electronic relaxation 
 EDIFFG = -1E-8 # Acceptable self-consistent energy difference (or forces if with negative sign as flag) in ionic relaxation
 NEDOS = 6001 # Number of samples for electronic DOS calculation in the fixed energy range
@@ -60,7 +60,8 @@ POT_NOPMG_DIR = '/n/kaxiras_lab/vasp.5.4.4/PPs/potpaw_PBE.54/' # This is the met
 ## KPOINTS
 RELAXATION_GRID_DENSITY = (21, 21, 1)
 RELAXATION_GRID_SHIFT = (0, 0, 0)
-KPOINTS_MESH_DOS = (21, 21, 1) # Mesh sampling
+NONRELAXATION_GRID_DENSITY = (21, 21, 1) # For precise calculations like DOS
+NONRELAXATIONI_GRID_SHIFT = (0, 0, 0)
 KPOINTS_LINE_INTS = 50 # Number of sampling k-points on each line
 KPOINTS_LINE_HEX_STR = 'k-points along high symmetry lines\n50\nLine_mode\nReciprocal\n0.0 0.0 0.0 ! \Gamma\n0.5 0.5 0.0 ! M\n\n0.5 0.5 0.0 ! M\n0.666667 0.333333 0.0 ! K\n\n0.666667 0.333333 0.0 ! K\n0.0 0.0 0.0 ! \Gamma'
 

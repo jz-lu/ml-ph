@@ -6,3 +6,6 @@ unique_str = 'aUniqueStringThatIsVeryUnlikelyToBeReproducedRandomly_q34523457234
 ERR_BAD_DIR = 'Invalid directories.'
 ERR_NO_POSCAR = 'Error: no input POSCAR found.'
 ERR_NO_POTCAR = 'No potentials found for atom given. Check potential list directory and verify POSCAR is correct.'
+GENERAL_ERR_USAGE_MSG = 'Usage: python3 _postProcess_relaxation.py <arg1> <arg2> .... Specify at least one arg (eledos, eleband, phdos, phband).'
+BAD_INPUT_ERR_MSG = 'Error: invalid command line arguments.'
+ERR_BAD_KPOINTS_MODIFY_INPUT = 'Error: to modify KPOINTS file or Kpoints object you must choose samplingType as line or mesh.'

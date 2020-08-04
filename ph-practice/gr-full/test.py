@@ -1,5 +1,6 @@
-from ___constants_vasp import *
-from pymatgen.io.vasp.inputs import Kpoints
+from ___constants_names import *
+from pymatgen.io.vasp.inputs import VaspInput
+from pymatgen.io.vasp.outputs import Chgcar
 
-kpoints = Kpoints.from_file('../../pmg-practice/gr_BAND/KPOINTS')
-print(kpoints)
+vaspObj = VaspInput.from_directory(ROOT, {CHGCAR_NAME: Chgcar})
+vaspObj.write_input('./bobross')
