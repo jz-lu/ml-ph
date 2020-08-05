@@ -59,3 +59,5 @@ def phGenerateForceSets(dispNum, dirName=DIR_PHONOPY):
     phForce_output = subprocess.run('phonopy -f %s{001..%s}/%s'%(PHDISP_STATIC_NAME, dispNum, VASP_RUN_XML_NAME), shell=True, capture_output=True, universal_newlines=True)
     print(phForce_output.stdout)
     # TODO: If force sets created then proceed, if not exit with error. Use find function to find out.
+
+    

@@ -3,11 +3,13 @@ ELEDOS = 'eledos'
 ELEBAND = 'eleband'
 PHDOS = 'phdos'
 PHBAND = 'phband'
-CMD_LINE_ARG_LIST = [ELEDOS, ELEBAND, PHDOS, PHBAND]
+ENERGIES = 'energies'
+CMD_LINE_ARG_LIST = [ELEDOS, ELEBAND, PHDOS, PHBAND, ENERGIES]
 
 # Directories
+## NOTE: it is crucial that all directories end in a forward slash. ##
 ROOT = '/Users/jonathanlu/Documents/ml-ph/ph-practice/gr-full/' # File path to the scripts
-## Note!! It is crucial that ROOT end in a forward slash. ##
+BATCH_FILE_PATH = '/n/home04/jzlu/codes/ml-ph/STATIC_BAT_DNE'
 DIR_ELEDOS = ROOT + ELEDOS + '/'
 DIR_ELEBAND = ROOT + ELEBAND + '/'
 PHONOPY_DIR_NAME = 'phonon_calculations'
