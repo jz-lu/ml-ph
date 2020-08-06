@@ -65,6 +65,8 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
                 print('An error occurred while processing displacement POSCAR file {}'.format(dirName + poscarArray[i]))
                 sys.exit('Error in preprocessing phonopy (parsing displacement files and running VASP force calculations): ' + err)
 
+        print('Total number of displacement files generated: ' + dispNum)
+        
     return dispNum # Returns last displacement number so we can get force sets.
 
 # Takes as input dispNum, the output of phPreProcess
@@ -93,6 +95,7 @@ def ph_generate_forcesets(dirName, dispNum):
     
     # Move FORCE_SETS to the proper place
     move(PH_FORCE_SETS_NAME, THIS_DIR, dirName)
+    print(PH_FORCE_SETS_NAME + ' successfully moved to ' + dirName + '. Phonopy postprocessing complete.')
 
     return 
     

@@ -7,16 +7,16 @@ from pymatgen.core.structure import Structure
 from __input_modifiers import modifyIncar, newKpoints, getSelfConNoRelIncar, getNonSelfConNoRelIncar # Input modifiers
 from __dirModifications import move, copy, mkdir, rm # Easy modules to the command line pipeline for basic linux commands
 from __directory_searchers import checkPath
-from __ph_processing import ph_preprocess
+from __ph_processing import ph_preprocess, ph_generate_forcesets
 from __run_vasp import run_vasp
 
-from ___constants_vasp import NEDOS
+from ___constants_vasp import NEDOS, ICHARG
 from ___constants_names import *
 from ___constants_misc import BAD_INPUT_ERR_MSG, GENERAL_ERR_USAGE_MSG
 
 
 # Process the command-line arguments
-def postProcess_relaxation(relaxed_vaspObj, calculation_list, dirName): # vasp input object generated at beginning of relaxation
+def postProcess_relaxation(dirName, relaxed_vaspObj, calculation_list, kpoints_line): # vasp input object generated at beginning of relaxation
     dirName = checkPath(dirName)
 
     # Get the relevant objects for the next set of calculations
@@ -32,12 +32,6 @@ def postProcess_relaxation(relaxed_vaspObj, calculation_list, dirName): # vasp i
     # Kpoints needs to be rebuilt since we want denser sampling for DOS calculations
     kpoints_mesh_nonrelax = newKpoints(dirName, 'mesh', poscar_relaxed)
 
-    # Declare necessary directory strings. Note that exceot for the batch file path, all must end in '/' for postprocessing purposes
-    DIR_ELEBAND = dirName + ELEBAND + '/'
-    DIR_PHONOPY = dirName + PHONOPY_DIR_NAME + '/'
-    DIR_PHDOS = DIR_PHONOPY + PHDOS + '/'
-    DIR_PHBAND = DIR_PHONOPY + PHBAND + '/'
-
     # Parse command line and direct necessary function calls
     for i in calculation_list:
         if i == ELEDOS:
@@ -50,37 +44,38 @@ def postProcess_relaxation(relaxed_vaspObj, calculation_list, dirName): # vasp i
             # We will need the standard VASP IO Object plus CHGCAR.
             eledos_vasp_obj = VaspInput(incar_eledos, kpoints_mesh_nonrelax, poscar_relaxed, potcar, {CHGCAR_NAME: chgcar})
 
-            # Now we run vasp
-            run
+            run_vasp(eledos_vasp_obj, DIR_ELEDOS)
 
-            # TODO: change the copy files thing to a more robust VaspInput.from_directory. SAME FOR BAND.
         elif i == ELEBAND:
             mkdir(i, dirName) # Create a subfolder for the analysis
+            DIR_ELEBAND = dirName + ELEBAND + '/'
 
-            # TODO: same TODO as ELEDOS but for band. CHGCAR into Vasp input object.
+            # We use the line kpoints file that we imported in the command line parsing start.py
+            eleband_vasp_obj = VaspInput(incar_nonselfcon, kpoints_line, poscar_relaxed, potcar, {CHGCAR_NAME: chgcar})
 
-            try:
-                # TODO: change the line to autogeneration as well.
-                kpoints_line = Kpoints.from_file(dirName + KPOINTS_LINE_NAME)
-            except Exception as err:
-                print('Error:', err)
-                sys.exit('Suggested source of error: you asked for a band structure calculation but did not give a (valid) line kpoints file named {}'.format(KPOINTS_LINE_NAME))
-
-            # We will need the standard VASP IO Object plus CHGCAR.
-            stdVaspObj = VaspInput(incar_nonselfcon, kpoints_line, poscar_relaxed, potcar)
-            copy(CHGCAR_NAME, dirName, DIR_ELEBAND)
-            stdVaspObj.write_input(DIR_ELEDOS)
-        else: # i.e. we have phonon calculations to do
+            run_vasp(eleband_vasp_obj, DIR_ELEBAND)
+        else: 
+            # i.e. we have phonon calculations to do
             # First no matter what we need to preprocess to get FORCE_SETS. 
             # Only difference between band and DOS is the .conf file we generate.
             mkdir(PHONOPY_DIR_NAME, dirName)
-            stdVaspObj = VaspInput(incar_selfcon, kpoints_mesh_relaxed, poscar_relaxed, potcar)
-            # TODO: is this necessary? Should phonopy run with ICHARG = 1 or default?
-            copy(CHGCAR_NAME, dirName, DIR_PHONOPY)
-            # TODO: if this is necessary, then figure out a way to put it into the vasp object container or pass it into phPreprocess()
+            DIR_PHONOPY = dirName + PHONOPY_DIR_NAME + '/'
+
+            # Due to the displacement invalidating charge densities, it is important that we use default charge densities to start
+            # i.e. ICHARG = default = 2
+            incar_selfcon_initChg = modifyIncar(incar_selfcon, addArr=[('ICHARG', ICHARG['default'])])
+
+            # Note that in this object the poscar could be any valid poscar; we'll replace it in preprocessing by displacement poscar
+            ph_preprocess_vasp_obj = VaspInput(incar_selfcon_initChg, kpoints_mesh_nonrelax, poscar_relaxed, potcar)
+        
+            # Run preprocessing
+            lastDispNum = ph_preprocess(DIR_PHONOPY, ph_preprocess_vasp_obj) # returns a string with largest XYZ in POSCAR-XYZ for use in force sets generator
             
+            # Generate force sets file
+            ph_generate_forcesets(DIR_PHONOPY, lastDispNum)
 
-            # TODO: phPreprocess()
-
+            # TODO: conduct analysis on separate subpipes
+            DIR_PHDOS = DIR_PHONOPY + PHDOS + '/'
+            DIR_PHBAND = DIR_PHONOPY + PHBAND + '/'
             
     
