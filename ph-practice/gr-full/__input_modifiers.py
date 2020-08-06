@@ -1,12 +1,13 @@
 from pymatgen.io.vasp.inputs import Incar, Kpoints, Poscar
 from __dirModifications import checkPath
-from __query_inputs import *
+from __query_inputs import getInputName, getNumAtoms
 
 from ___constants_vasp import *
 from ___constants_names import *
 from ___constants_misc import ERR_BAD_KPOINTS_MODIFY_INPUT
 from pymatgen.core.structure import Structure
 
+import sys
 import numpy as np
 
 # Functions for editing the input files depending on the calculation we need.
@@ -23,20 +24,20 @@ def modifyIncar(incar, addArr=None, delArr=None): # Add any elements and remove 
     return incar
 
 # Give the right Kpoints object so that we can write it into the proper subdirectory.
-def modifyKpoints(samplingType, meshDensity=NONRELAXATION_GRID_DENSITY, totShift=NONRELAXATIONI_GRID_SHIFT): # material name
+def modifyKpoints(dirName, samplingType, poscarObj, meshDensity=NONRELAXATION_GRID_DENSITY, totShift=NONRELAXATIONI_GRID_SHIFT): # material name
     if samplingType == 'mesh':
         kpoints_new = Kpoints.gamma_automatic( meshDensity, totShift )
-        kpoints_new.comment = 'Kpoints grid for ' + getInputName()
+        kpoints_new.comment = 'Kpoints grid for ' + getInputName(poscarObj)
     elif samplingType == 'line':
         # Generate a line KPOINTS for band calculations. See documentation of the library for details.
         # TODO: for now, we just import a LINE_KPOINTS file since the autogenerator doesn't seem to work.
-        kpoints_new = Kpoints.from_file(ROOT + '/' + KPOINTS_LINE_NAME)
+        kpoints_new = Kpoints.from_file(dirName + '/' + KPOINTS_LINE_NAME)
     else:
         sys.exit(ERR_BAD_KPOINTS_MODIFY_INPUT)
     return kpoints_new
 
 # This allows us to change the selective dynamics from relaxing only the interlayer spacing to full relaxation or vice versa.
-def modifySelectiveDynamics(poscarObj=getPoscarObj(), relax_z_only=False, writeOut=False, outDir=ROOT, outFileName=POSCAR_UNIT_RELAXATION_NAME): # change writeOut and outDir when modifying in subfolders
+def modifySelectiveDynamics(poscarObj, outDir, outFileName=POSCAR_UNIT_RELAXATION_NAME, relax_z_only=False, writeOut=False): # change writeOut and outDir when modifying in subfolders
     natoms = getNumAtoms(poscarObj)
     sdMatrix = [] # Nx3 array of booleans for selective dynamic flags
 
@@ -63,7 +64,7 @@ def modifySelectiveDynamics(poscarObj=getPoscarObj(), relax_z_only=False, writeO
 
 # Perform a random lattice perturbation. If two dimensional, then we will need to do more work.
 # TODO: check this function and how to modify it properly.
-def randomAtomicPerturbations(distance, minDistance=None, twoDimensionalMat=True, poscarObj=getPoscarObj(), writeOut=False, outDir=ROOT, outFileName=POSCAR_UNIT_RELAXATION_NAME):
+def randomAtomicPerturbations(distance, poscarObj, outDir, minDistance=None, twoDimensionalMat=True, writeOut=False, outFileName=POSCAR_UNIT_RELAXATION_NAME):
     # Random perturbation on sites in PUC. Choose a distance, and if fixed distance of perturbation do nothing else
     # If variable perturbation distance, set minDistance to something smaller than distance and we uniformly choose minDistance <= d <= distance
     
@@ -89,7 +90,7 @@ def randomAtomicPerturbations(distance, minDistance=None, twoDimensionalMat=True
         poscarObj.write_file(checkPath(outDir) + outFileName)
 
 # Make additions or deletions from the POSCAR PUC.
-def addAtomToSite(atomName, dir_coords, poscarObj=getPoscarObj(), writeOut=False, outDir=ROOT, outFileName=POSCAR_UNIT_RELAXATION_NAME):
+def addAtomToSite(atomName, dir_coords, poscarObj, outDir, writeOut=False, outFileName=POSCAR_UNIT_RELAXATION_NAME):
    try:
        newPoscarObj = poscarObj.structure.append(atomName, dir_coords, validate_proximity=True)
    except ValueError as err:
@@ -104,7 +105,7 @@ def addAtomToSite(atomName, dir_coords, poscarObj=getPoscarObj(), writeOut=False
    return newPoscarObj
 
 # NOTE: this function requires the coordinates to be EXACT with the POSCAR i.e. same digit accuracy. e.g. 0.3333 will fail if POSCAR says 0.333333 or 0.33
-def removeAtomFromSite(atomName, dir_coords, poscarObj=getPoscarObj(), writeOut=False, outDir=ROOT, outFileName=POSCAR_UNIT_RELAXATION_NAME):
+def removeAtomFromSite(atomName, dir_coords, poscarObj, outDir, writeOut=False, outFileName=POSCAR_UNIT_RELAXATION_NAME):
     # Technically we could do it directly by index but in that case we may as well just use the direct pmg command
     # poscarObj.structure.remove_sites(array of indices here (start: 0) in the order of the POSCAR)
 

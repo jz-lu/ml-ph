@@ -1,15 +1,9 @@
 import subprocess
 import sys
 from ___constants_misc import *
-from ___constants_names import ROOT
+from __directory_searchers import checkPath
 
-# Check if a path ends in a '/' for proper use
-def checkPath(dirName):
-    if dirName[-1] != '/':
-        dirName += '/'
-    return dirName
-
-def mkdir(dirName, currPath=ROOT):
+def mkdir(dirName, currPath):
     if currPath[-1] != '/':
         currPath += '/'
     newDir = subprocess.run(['mkdir', currPath + dirName], capture_output=True, universal_newlines=True)

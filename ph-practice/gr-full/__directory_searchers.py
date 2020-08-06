@@ -7,3 +7,9 @@ def find(pattern, path):
             if fnmatch.fnmatch(name, pattern):
                 result.append(name)
     return result
+
+# Check if a path ends in a '/' for proper use
+def checkPath(dirName):
+    if dirName[-1] != '/':
+        dirName += '/'
+    return dirName

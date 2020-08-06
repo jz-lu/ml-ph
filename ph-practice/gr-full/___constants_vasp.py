@@ -1,6 +1,9 @@
 # All the constants and hard strings for vasp are here.
 # NOTE: all directory strings must end in '/'
 
+# Error checker for vasp.out
+VASP_OUTFILE_LEN_THRESHOLD = 1000
+
 ### PARAMETERS FOR VASP INPUT FILES ###
 ## INCAR
 INCAR_DEFAULT_SETTINGS = {'ISTART': 0, 
