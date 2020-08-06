@@ -1,7 +1,7 @@
 from ___constants_misc import *
 from ___constants_names import *
 from ___constants_vasp import *
-from __directory_searchers import find, checkPath
+from __directory_searchers import checkPath
 from __dirModifications import move, cat
 from __query_inputs import getInputName
 import sys, os

@@ -7,7 +7,9 @@ def mkdir(dirName, currPath):
     if currPath[-1] != '/':
         currPath += '/'
     newDir = subprocess.run(['mkdir', currPath + dirName], capture_output=True, universal_newlines=True)
-    return newDir.stderr
+    if newDir.stderr != '':
+        sys.exit('Could not make new directory %s at %s. Error: %s.'%(dirName, currPath, newDir.stderr))
+    return
 
 def move(dirName, currPath, newPath=unique_str, newName=''):
     currPath = checkPath(currPath)
@@ -16,7 +18,9 @@ def move(dirName, currPath, newPath=unique_str, newName=''):
     newPath = checkPath(newPath)
 
     movement = subprocess.run(['mv', currPath + dirName, newPath + newName], capture_output=True, universal_newlines=True)
-    return movement.stderr
+    if movement.stderr != '':
+        sys.exit('Could not move %s to %s. Error: %s.'%(currPath + dirName, newPath + newName, movement.stderr))
+    return
 
 def copy(dirName, currPath, newPath=unique_str, newName='', isFolder=False):
     currPath = checkPath(currPath)
@@ -28,14 +32,18 @@ def copy(dirName, currPath, newPath=unique_str, newName='', isFolder=False):
         newCopy = subprocess.run(['cp', '-r', currPath + dirName, newPath + newName], capture_output=True, universal_newlines=True)
     else:
         newCopy = subprocess.run(['cp', currPath + dirName, newPath + newName], capture_output=True, universal_newlines=True)
-    return newCopy.stderr
+    if newCopy.stderr != '':
+        sys.exit('Could not copy %s to %s. Error: %s.'%(currPath + dirName, newPath + newName, newCopy.stderr))
+    return
 
 def rm(dirPath, isFolder=False):
     if isFolder:
         removal = subprocess.run(['rm', '-r', dirPath], capture_output=True, universal_newlines=True)
     else:
         removal = subprocess.run(['rm', dirPath], capture_output=True, universal_newlines=True)
-    return removal.stderr
+    if removal.stderr != '':
+        sys.exit('Could not remove %s. Error: %s.'%(dirPath, removal.stderr))
+    return
 
 def cat(fileDirs, dirOut, outFileName):
     # Takes as input an array of files (with directory paths) to concatenate, and an out directrory and new file name

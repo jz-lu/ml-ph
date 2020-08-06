@@ -1,3 +1,6 @@
+# Name of directory where this program is stored
+# NOTE: this should not change! A command line argument specifies where the root directory of the calculation is, so we never need to move this
+THIS_DIR = '/Users/jonathanlu/Documents/ml-ph/ph-practice/gr-full'
 
 # Command line arguments in relaxation postprocessing
 ELEDOS = 'eledos'
@@ -8,9 +11,11 @@ ENERGIES = 'energies'
 CMD_LINE_ARG_LIST = [ELEDOS, ELEBAND, PHDOS, PHBAND, ENERGIES]
 
 # Directory names
+START_BATCH_NAME = 'EXECUTABLE_BAT_DNE'
 BATCH_FILE_PATH = '/n/home04/jzlu/codes/ml-ph/STATIC_BAT_DNE'
 PHONOPY_DIR_NAME = 'phonon_calculations'
 PHDISP_STATIC_NAME = 'disp-'
+PHDISP_DIR_NAME = PHDISP_STATIC_NAME + '%s/'
 
 # File names
 POSCAR_NAME = 'POSCAR'
@@ -32,4 +37,6 @@ VASP_RUN_RELAX_OUT_NAME = 'vasp_relaxation.out'
 VASP_RUN_RELAX_ERR_NAME = 'vasp_relaxation.err'
 
 TOT_ENERGIES_NAME = 'total_energies.txt'
+
+PH_FORCE_SETS_NAME = 'FORCE_SETS'
 

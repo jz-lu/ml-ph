@@ -1,5 +1,5 @@
 from pymatgen.io.vasp.inputs import Incar, Kpoints, Poscar
-from __dirModifications import checkPath
+from __directory_searchers import checkPath
 from __query_inputs import getInputName, getNumAtoms
 
 from ___constants_vasp import *
@@ -24,7 +24,7 @@ def modifyIncar(incar, addArr=None, delArr=None): # Add any elements and remove 
     return incar
 
 # Give the right Kpoints object so that we can write it into the proper subdirectory.
-def modifyKpoints(dirName, samplingType, poscarObj, meshDensity=NONRELAXATION_GRID_DENSITY, totShift=NONRELAXATIONI_GRID_SHIFT): # material name
+def newKpoints(dirName, samplingType, poscarObj, meshDensity=NONRELAXATION_GRID_DENSITY, totShift=NONRELAXATIONI_GRID_SHIFT): # material name
     if samplingType == 'mesh':
         kpoints_new = Kpoints.gamma_automatic( meshDensity, totShift )
         kpoints_new.comment = 'Kpoints grid for ' + getInputName(poscarObj)
@@ -135,7 +135,6 @@ def removeAtomFromSite(atomName, dir_coords, poscarObj, outDir, writeOut=False, 
 # The following two functions prepare incar for nonrelaxed calculations, respectively self-consistent and nonself-consistent for dos/ph and band.
 def getSelfConNoRelIncar(incarObj):
     settings_to_add = [('ICHARG', ICHARG['no_relax_sc']), 
-                       ('NEDOS', NEDOS), 
                        ('IBRION', IBRION['no_relax']), 
                        ('NSW', NSW['no_relax'])]
     incarObj = modifyIncar(incarObj, settings_to_add)

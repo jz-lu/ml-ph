@@ -8,7 +8,7 @@ from ___constants_vasp import VASP_OUTFILE_LEN_THRESHOLD
 
 from __directory_searchers import checkPath
 from __build_inputs import buildInitialInputs
-from __run_relaxation import run_relaxation
+from __run_vasp import run_vasp
 from __get_energy_analysis import get_energy_analysis
 
 # Run only this file by hand. This is the only file that will hold "constants" outside of constants files, due to user inputting directory of input files.
@@ -84,10 +84,8 @@ init_vasp_obj = buildInitialInputs(ROOT, do_vdW, poscar, potcarExists)
 
 # Call the relaxation
 print('Running VASP relaxation calculations...')
-relaxation_outpath = run_relaxation(init_vasp_obj, ROOT)
+run_vasp(init_vasp_obj, ROOT)
 print('VASP relaxation calculations complete.')
-if os.stat(relaxation_outpath).st_size < VASP_OUTFILE_LEN_THRESHOLD:
-    sys.exit('It is very likely that something went wrong in the VASP relaxation calculation as the .out file is unreasonably short. If that is not the case, then modify the source code threshold constant.')
 
 # Begin post-processing the relaxation calculations, handled by the postprocessing module
 # Step 1: do the total energy
