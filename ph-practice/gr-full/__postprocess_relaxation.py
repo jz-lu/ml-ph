@@ -1,4 +1,4 @@
-import sys
+import sys, os
 import subprocess
 from pymatgen.io.vasp.inputs import Incar, Kpoints, Poscar, Potcar, VaspInput
 from pymatgen.io.vasp.outputs import Chgcar
@@ -9,6 +9,9 @@ from __dirModifications import move, copy, mkdir, rm # Easy modules to the comma
 from __directory_searchers import checkPath
 from __ph_processing import ph_preprocess, ph_generate_forcesets
 from __run_vasp import run_vasp
+
+from __get_eledos_analysis import get_eledos_analysis
+from __get_eleband_analysis import get_eleband_analysis
 
 from ___constants_vasp import NEDOS, ICHARG
 from ___constants_names import *
@@ -32,11 +35,17 @@ def postProcess_relaxation(dirName, relaxed_vaspObj, calculation_list, kpoints_l
     # Kpoints needs to be rebuilt since we want denser sampling for DOS calculations
     kpoints_mesh_nonrelax = newKpoints(dirName, 'mesh', poscar_relaxed)
 
+    # Objects useful for plotting data
+    eledos_obj = None
+    eleband_obj = None
+
     # Parse command line and direct necessary function calls
     for i in calculation_list:
         if i == ELEDOS:
             mkdir(i, dirName) # Create a subfolder for the analysis
-            DIR_ELEDOS = dirName + ELEDOS + '/'
+            DIR_ELEDOS = checkPath(dirName + ELEDOS)
+            mkdir(OUTPUT_DIR_NAME, DIR_ELEDOS) # subsubfolder for result storage
+            DIR_ELEDOS_RESULTS = checkPath(DIR_ELEDOS + OUTPUT_DIR_NAME)
 
             # In addition to self-consistent calculation, we need to also add on the NEDOS parameter to sample the space for eledos
             incar_eledos = modifyIncar(incar_selfcon, addArr=[('NEDOS', NEDOS)])
@@ -44,16 +53,29 @@ def postProcess_relaxation(dirName, relaxed_vaspObj, calculation_list, kpoints_l
             # We will need the standard VASP IO Object plus CHGCAR.
             eledos_vasp_obj = VaspInput(incar_eledos, kpoints_mesh_nonrelax, poscar_relaxed, potcar, {CHGCAR_NAME: chgcar})
 
+            # Run vasp nonrelaxation, self-consistent
             run_vasp(eledos_vasp_obj, DIR_ELEDOS)
+
+            # Get the analysis plots and data
+            eledos_obj = get_eledos_analysis(DIR_ELEDOS, DIR_ELEDOS_RESULTS, poscar_relaxed, extract_raw_data=True, extract_plot=True)
+            if os.path.isfile(DIR_ELEDOS + DOSCAR_NAME):
+                move(DOSCAR_NAME, DIR_ELEDOS, DIR_ELEDOS_RESULTS)
 
         elif i == ELEBAND:
             mkdir(i, dirName) # Create a subfolder for the analysis
-            DIR_ELEBAND = dirName + ELEBAND + '/'
+            DIR_ELEBAND = checkPath(dirName + ELEBAND)
+            mkdir(OUTPUT_DIR_NAME, DIR_ELEBAND) # subsubfolder for result storage
+            DIR_ELEBAND_RESULTS = checkPath(DIR_ELEBAND + OUTPUT_DIR_NAME)
 
             # We use the line kpoints file that we imported in the command line parsing start.py
             eleband_vasp_obj = VaspInput(incar_nonselfcon, kpoints_line, poscar_relaxed, potcar, {CHGCAR_NAME: chgcar})
 
+            # Run vasp
             run_vasp(eleband_vasp_obj, DIR_ELEBAND)
+
+            # Get the analysis plots and data
+            eleband_obj = get_eleband_analysis(DIR_ELEBAND, DIR_ELEBAND_RESULTS, poscar_relaxed, extract_raw_data=True, extract_plot=True)
+
         else: 
             # i.e. we have phonon calculations to do
             # First no matter what we need to preprocess to get FORCE_SETS. 

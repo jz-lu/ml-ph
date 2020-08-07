@@ -22,3 +22,12 @@ def getInputName(poscarObj):
     sysName = sysName[:-2] # trim off that last ', '
 
     return sysName
+
+# Same thing but no spaces
+def getInputFormula(poscarObj):
+    sysName = ''
+    # Labels it by atoms and number of each,  e.g. C-1, Si-2
+    for i in range(0, len(poscarObj.site_symbols)):
+        sysName = sysName + poscarObj.site_symbols[i] + str(poscarObj.natoms[i])
+
+    return sysName
