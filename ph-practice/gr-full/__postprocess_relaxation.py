@@ -1,5 +1,6 @@
 import sys, os
 import subprocess
+import matplotlib.pyplot as plt
 from pymatgen.io.vasp.inputs import Incar, Kpoints, Poscar, Potcar, VaspInput
 from pymatgen.io.vasp.outputs import Chgcar
 from pymatgen.core.structure import Structure
@@ -12,6 +13,7 @@ from __run_vasp import run_vasp
 
 from __get_eledos_analysis import get_eledos_analysis
 from __get_eleband_analysis import get_eleband_analysis
+from __get_elecombined_analysis import get_elecombined_analysis
 
 from ___constants_vasp import NEDOS, ICHARG
 from ___constants_names import *
@@ -38,6 +40,7 @@ def postProcess_relaxation(dirName, relaxed_vaspObj, calculation_list, kpoints_l
     # Objects useful for plotting data
     eledos_obj = None
     eleband_obj = None
+    combinedPlot = None
 
     # Parse command line and direct necessary function calls
     for i in calculation_list:
@@ -100,4 +103,9 @@ def postProcess_relaxation(dirName, relaxed_vaspObj, calculation_list, kpoints_l
             DIR_PHDOS = DIR_PHONOPY + PHDOS + '/'
             DIR_PHBAND = DIR_PHONOPY + PHBAND + '/'
             
+    # Parse the full plot if there is one
+    if (eleband_obj != None) and (eledos_obj != None):
+        mkdir(COMBINED_ELE_OUTPUTS_NAME, dirName)
+        combined_plot = get_elecombined_analysis(dirName + COMBINED_ELE_OUTPUTS_NAME, eledos_obj, eleband_obj)
+
     

@@ -38,6 +38,7 @@ DOSCAR_NAME = 'DOSCAR'
 OUTCAR_NAME = 'OUTCAR'
 
 OUTPUT_DIR_NAME = 'outputs'
+COMBINED_ELE_OUTPUTS_NAME = 'additional_outputs'
 
 TOT_ENERGIES_NAME = 'total_energies.txt'
 
