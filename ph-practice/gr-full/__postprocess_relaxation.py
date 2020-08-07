@@ -8,7 +8,7 @@ from pymatgen.core.structure import Structure
 from __input_modifiers import modifyIncar, newKpoints, getSelfConNoRelIncar, getNonSelfConNoRelIncar # Input modifiers
 from __dirModifications import move, copy, mkdir, rm # Easy modules to the command line pipeline for basic linux commands
 from __directory_searchers import checkPath
-from __ph_processing import ph_preprocess, ph_generate_forcesets
+from __ph_processing import ph_prepare_for_analysis
 from __run_vasp import run_vasp
 
 from __get_eledos_analysis import get_eledos_analysis
@@ -21,14 +21,14 @@ from ___constants_misc import BAD_INPUT_ERR_MSG, GENERAL_ERR_USAGE_MSG
 
 
 # Process the command-line arguments
-def postProcess_relaxation(dirName, relaxed_vaspObj, calculation_list, kpoints_line): # vasp input object generated at beginning of relaxation
+def postProcess_relaxation(dirName, unrelaxed_vaspObj, calculation_list, kpoints_line): # vasp input object generated at beginning of relaxation
     dirName = checkPath(dirName)
 
     # Get the relevant objects for the next set of calculations
     chgcar = Chgcar.from_file(dirName + CHGCAR_NAME) # Need to retrieve the last charge density to get good calculations
     poscar_relaxed = Poscar.from_file(dirName + CONTCAR_NAME) # Get the relaxed positions from CONTCAR
-    relaxation_incar = relaxed_vaspObj['INCAR'] # For the inspective code reviewer: these are pymatgen's hard strings so no need to collect them
-    potcar = relaxed_vaspObj['POTCAR']
+    relaxation_incar = unrelaxed_vaspObj['INCAR'] # For the inspective code reviewer: these are pymatgen's hard strings so no need to collect them
+    potcar = unrelaxed_vaspObj['POTCAR']
     
     # Incar changes for various calculations
     incar_selfcon = getSelfConNoRelIncar(relaxation_incar)
@@ -41,6 +41,10 @@ def postProcess_relaxation(dirName, relaxed_vaspObj, calculation_list, kpoints_l
     eledos_obj = None
     eleband_obj = None
     combinedPlot = None
+    
+    # Since all processing for phonopy is done at once, we should flag so that if we want phband and phdos we don't preprocess twice
+    ph_has_preprocessed = False
+    DIR_PHONOPY = None # This will be set during first processing
 
     # Parse command line and direct necessary function calls
     for i in calculation_list:
@@ -80,28 +84,21 @@ def postProcess_relaxation(dirName, relaxed_vaspObj, calculation_list, kpoints_l
             eleband_obj = get_eleband_analysis(DIR_ELEBAND, DIR_ELEBAND_RESULTS, poscar_relaxed, extract_raw_data=True, extract_plot=True)
 
         else: 
-            # i.e. we have phonon calculations to do
+            # Only case left is that we have phonon calculations to do
             # First no matter what we need to preprocess to get FORCE_SETS. 
-            # Only difference between band and DOS is the .conf file we generate.
-            mkdir(PHONOPY_DIR_NAME, dirName)
-            DIR_PHONOPY = dirName + PHONOPY_DIR_NAME + '/'
+            if not ph_has_preprocessed:
+                # Returns the directory name that all phonopy calculations are stored in.
+                DIR_PHONOPY = ph_prepare_for_analysis(dirName, incar_selfcon, kpoints_mesh_nonrelax, poscar_relaxed, potcar)
+                DIR_PHONOPY = checkPath(DIR_PHONOPY)
+                ph_has_preprocessed = True
 
-            # Due to the displacement invalidating charge densities, it is important that we use default charge densities to start
-            # i.e. ICHARG = default = 2
-            incar_selfcon_initChg = modifyIncar(incar_selfcon, addArr=[('ICHARG', ICHARG['default'])])
-
-            # Note that in this object the poscar could be any valid poscar; we'll replace it in preprocessing by displacement poscar
-            ph_preprocess_vasp_obj = VaspInput(incar_selfcon_initChg, kpoints_mesh_nonrelax, poscar_relaxed, potcar)
-        
-            # Run preprocessing
-            lastDispNum = ph_preprocess(DIR_PHONOPY, ph_preprocess_vasp_obj) # returns a string with largest XYZ in POSCAR-XYZ for use in force sets generator
+            # Split into two analyses depending on whether band or dos
+            if i == PHDOS:
+                DIR_PHDOS = checkPath(DIR_PHONOPY + PHDOS)
             
-            # Generate force sets file
-            ph_generate_forcesets(DIR_PHONOPY, lastDispNum)
+            elif i == PHBAND:
+                DIR_PHBAND = checkPath(DIR_PHONOPY + PHBAND)
 
-            # TODO: conduct analysis on separate subpipes
-            DIR_PHDOS = DIR_PHONOPY + PHDOS + '/'
-            DIR_PHBAND = DIR_PHONOPY + PHBAND + '/'
             
     # Parse the full plot if there is one
     if (eleband_obj != None) and (eledos_obj != None):

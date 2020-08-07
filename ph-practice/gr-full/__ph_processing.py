@@ -2,10 +2,12 @@ from __directory_searchers import find # Will let us look for the different POSC
 from __dirModifications import move, copy, rm, mkdir
 from __directory_searchers import checkPath, findFilesInDir, filesInDir
 from __run_vasp import run_vasp
+from __input_modifiers import modifyIncar
 
 from ___constants_phonopy import *
 from ___constants_names import *
 from ___constants_misc import ERR_PH_FORCE_SETS, ERR_PH_FORCE_SETS_NOT_FOUND
+from ___constants_vasp import *
 
 import subprocess
 import sys, os
@@ -66,7 +68,7 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
                 sys.exit('Error in preprocessing phonopy (parsing displacement files and running VASP force calculations): ' + err)
 
         print('Total number of displacement files generated: ' + dispNum)
-        
+
     return dispNum # Returns last displacement number so we can get force sets.
 
 # Takes as input dispNum, the output of phPreProcess
@@ -99,6 +101,25 @@ def ph_generate_forcesets(dirName, dispNum):
 
     return 
     
+# Get a neat function that uses the above functions to handle all processing
+def ph_prepare_for_analysis(rootDirName, incar_selfcon, kpoints_mesh_nonrelax, poscar_relaxed, potcar):
+    rootDirName = checkPath(rootDirName)
+    mkdir(PHONOPY_DIR_NAME, rootDirName)
+    DIR_PHONOPY = checkPath(rootDirName + PHONOPY_DIR_NAME)
 
+    # Due to the displacement invalidating charge densities, it is important that we use default charge densities to start
+    # i.e. ICHARG = default = 2
+    incar_selfcon_initChg = modifyIncar(incar_selfcon, addArr=[('ICHARG', ICHARG['default'])])
+
+    # Note that in this object the poscar could be any valid poscar; we'll replace it in preprocessing by displacement poscar
+    ph_preprocess_vasp_obj = VaspInput(incar_selfcon_initChg, kpoints_mesh_nonrelax, poscar_relaxed, potcar)
+
+    # Run preprocessing
+    lastDispNum = ph_preprocess(DIR_PHONOPY, ph_preprocess_vasp_obj) # returns a string with largest XYZ in POSCAR-XYZ for use in force sets generator
+    
+    # Generate force sets file
+    ph_generate_forcesets(DIR_PHONOPY, lastDispNum)
+
+    return DIR_PHONOPY
 
     

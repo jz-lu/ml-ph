@@ -10,6 +10,7 @@ from __directory_searchers import checkPath
 from __build_inputs import buildInitialInputs
 from __run_vasp import run_vasp
 from __get_energy_analysis import get_energy_analysis
+from __postprocess_relaxation import postProcess_relaxation
 
 # Run only this file by hand. This is the only file that will hold "constants" outside of constants files, due to user inputting directory of input files.
 # The purpose of this script is to parse the command line and pass it inot main to being the calculation pipeline.
@@ -74,7 +75,7 @@ if ELEBAND in calculation_list:
         kpoints_line = Kpoints.from_file(ROOT + KPOINTS_LINE_NAME)
     except Exception as err:
         sys.exit('Error in importing line KPOINTS file for requested electronic band structure calculations:', err)
-# If we need the band calculations then 
+# If we need the band calculations then get the line kpoints first (i.e. check to make sure it's valid, then might as well get it now)
 
 # Is there a POTCAR given already? or should we generate a new one? Let's find out here.
 potcarExists = os.path.isfile(ROOT + POTCAR_NAME)
@@ -96,3 +97,4 @@ if len(calculation_list) == 0:
     sys.exit('Successfully completed total energy calculation, which was the only specified calculation.')
 
 # Step 2, for ele/ph calculations, we transfer to postprocessing module
+postProcess_relaxation(ROOT, init_vasp_obj, calculation_list, kpoints_line)

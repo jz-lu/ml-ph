@@ -1,1 +1,4 @@
-print('Henlo World! -doggo')
+if True:
+    doggo = 'hi'
+
+print(doggo)
