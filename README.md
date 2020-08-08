@@ -6,7 +6,7 @@ You can run it directly or use a batch file to submit a job if you wish. The com
 ```
 python3 start.py <I/O DIRECTORY> <vdW (T/F)> <GAMMA or MP> <calculation 1> ... <calculation n>
 ```
-where _<I/O DIRECTORY>_ is the directory of the POSCAR and where the calculation will be run, _<vdW (T/F)>_ is a True/False on whether to use van der Waals interactions in the calculations or not, _<GAMMA or MP>_ specifies the type of sampling on the Brillouin zone (for gamma-centered enter GAMMA or for Monkhorst-Pack enter MP), and the _<calculation i>_ specifies the types of calculations for electronic and phononic bands and DOS (inputs eledos, eleband, phdos, phband).
+where _I/O DIRECTORY_ is the directory of the POSCAR and where the calculation will be run, _vdW (T/F)_ is a True/False on whether to use van der Waals interactions in the calculations or not, *GAMMA or MP* specifies the type of sampling on the Brillouin zone (for gamma-centered enter GAMMA or for Monkhorst-Pack enter MP), and the _calculation i_ specifies the types of calculations for electronic and phononic bands and DOS (inputs eledos, eleband, phdos, phband).
 
 
 ## Notes
