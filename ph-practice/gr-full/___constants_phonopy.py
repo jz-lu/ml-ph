@@ -2,6 +2,7 @@
 
 # Preprocessing
 POSCAR_UNIT_NAME = 'POSCAR_unit' # Unit cell POSCAR name
+PHONOPY_NUM_LINE_INTS = 50 # Number of samples along each line in kpoints path
 SUPER_DIM = '3 3 1' # Supercell size, fixed for now
 PHONOPY_DISP_MSG = 'Phonopy activated. Getting displacements...'
 PHONOPY_ORG_MSG = 'Organizing displacement files into respective subdirectories...'

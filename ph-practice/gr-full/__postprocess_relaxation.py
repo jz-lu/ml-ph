@@ -8,8 +8,9 @@ from pymatgen.core.structure import Structure
 from __input_modifiers import modifyIncar, newKpoints, getSelfConNoRelIncar, getNonSelfConNoRelIncar # Input modifiers
 from __dirModifications import move, copy, mkdir, rm # Easy modules to the command line pipeline for basic linux commands
 from __directory_searchers import checkPath
-from __ph_processing import ph_prepare_for_analysis
 from __run_vasp import run_vasp
+from __ph_processing import ph_prepare_for_analysis
+from __get_phdos_analysis import ph_get_dos
 
 from __get_eledos_analysis import get_eledos_analysis
 from __get_eleband_analysis import get_eleband_analysis
@@ -94,9 +95,14 @@ def postProcess_relaxation(dirName, unrelaxed_vaspObj, calculation_list, kpoints
 
             # Split into two analyses depending on whether band or dos
             if i == PHDOS:
+                mkdir(PHDOS, DIR_PHONOPY)
                 DIR_PHDOS = checkPath(DIR_PHONOPY + PHDOS)
+
+                # Call the DOS analysis with the relevant parameters
+                ph_get_dos(kpoints_mesh_nonrelax, poscar_relaxed, DIR_PHDOS, DIR_PHONOPY) #TODO TEST THIS
             
             elif i == PHBAND:
+                mkdir(PHBAND, DIR_PHONOPY)
                 DIR_PHBAND = checkPath(DIR_PHONOPY + PHBAND)
 
             

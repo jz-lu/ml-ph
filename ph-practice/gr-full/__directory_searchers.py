@@ -24,6 +24,7 @@ def filesInDir(dirName):
 
 # Find all files in a directory. Specify type as 'start', 'end', or 'exact' to get search that starts with, ends with, or is exactly, fileName.
 def findFilesInDir(dirName, fileName, searchType):
+
     dirName = checkPath(dirName)
     
     if searchType == 'exact':

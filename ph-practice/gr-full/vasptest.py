@@ -1,4 +1,4 @@
-if True:
-    doggo = 'hi'
+from pymatgen.io.vasp.inputs import Kpoints
 
-print(doggo)
+k =  Kpoints.from_file('./KPOINTS')
+print(k.kpts[0])

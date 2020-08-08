@@ -12,7 +12,9 @@ CMD_LINE_ARG_LIST = [ELEDOS, ELEBAND, PHDOS, PHBAND, ENERGIES]
 
 # Directory names
 START_BATCH_NAME = 'EXECUTABLE_BAT_DNE'
-BATCH_FILE_PATH = '/n/home04/jzlu/codes/ml-ph/STATIC_BAT_DNE'
+START_BATCH_PATH = '/n/home04/jzlu/codes/ml-ph/static_batch_file/' + START_BATCH_NAME
+BATCH_FILE_NAME = 'STATIC_BAT_DNE'
+BATCH_FILE_PATH = '/n/home04/jzlu/codes/ml-ph/HTP/' + BATCH_FILE_NAME
 PHONOPY_DIR_NAME = 'phonon_calculations'
 PHDISP_STATIC_NAME = 'disp-'
 PHDISP_DIR_NAME = PHDISP_STATIC_NAME + '%s/'
@@ -43,6 +45,10 @@ COMBINED_ELE_OUTPUTS_NAME = 'additional_outputs'
 TOT_ENERGIES_NAME = 'total_energies.txt'
 
 PH_FORCE_SETS_NAME = 'FORCE_SETS'
+PH_BASIC_INFO_FILENAME = 'phonopy_basic_structure_input.txt'
+PH_MESH_CONF_NAME = 'mesh.conf'
+PH_BAND_CONF_NAME = 'band.conf'
+PH_BAND_RAW_DATA_NAME = 'ph_dos_raw'
 
 # Output names
 ELEDOS_RAW_DATA_NAME = 'total_ele_dos_pmg'

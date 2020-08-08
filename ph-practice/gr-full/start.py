@@ -70,11 +70,11 @@ except Exception as err:
 # The only thing we need to check besides poscar validity (code will handle other input files if none are given
 # is the existence of a line kpoints file if we want an electronic band structure calculation
 kpoints_line = None
-if ELEBAND in calculation_list:
+if (ELEBAND in calculation_list) or (PHBAND in calculation_list):
     try:
         kpoints_line = Kpoints.from_file(ROOT + KPOINTS_LINE_NAME)
     except Exception as err:
-        sys.exit('Error in importing line KPOINTS file for requested electronic band structure calculations:', err)
+        sys.exit('Error in importing line KPOINTS file for requested electronic and/or phononic band structure calculations:', err)
 # If we need the band calculations then get the line kpoints first (i.e. check to make sure it's valid, then might as well get it now)
 
 # Is there a POTCAR given already? or should we generate a new one? Let's find out here.
