@@ -103,7 +103,7 @@ if (ELEBAND in calculation_list) or (PHBAND in calculation_list):
 potcarExists = os.path.isfile(ROOT + POTCAR_NAME)
 
 # Build the necessary input files, returns vasp object
-init_vasp_obj = buildInitialInputs(ROOT, do_vdW, poscar, kpoints_is_gamma_centered,potcarExists)
+init_vasp_obj = buildInitialInputs(ROOT, do_vdW, poscar, kpoints_is_gamma_centered, potcarExists)
 
 # We want to run the relaxation on a separate subfolder, so everything is organized
 mkdir(RELAXATION_DIR_NAME, ROOT)

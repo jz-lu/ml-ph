@@ -136,7 +136,7 @@ def buildPotcar(dirName, poscarObj, useGivenPotcar=False, writeOut=True): # Just
         try:
             potcar = Potcar(atoms)
             if writeOut:
-                print('POTCARs fetched by pymatgen. Writing to file...')
+                print('POTCARs fetched by pymatgen. Writing to file path %s'%(checkPath(dirName) + POTCAR_NAME))
                 potcar.write_file(checkPath(dirName) + POTCAR_NAME)
             else:
                 print('POTCARs fetched by pymatgen. Returned without writing to file.')
@@ -150,6 +150,6 @@ def buildPotcar(dirName, poscarObj, useGivenPotcar=False, writeOut=True): # Just
 def buildInitialInputs(dirName, do_vdW, poscarObj, kpoints_is_gamma, potcarGiven):
     incar = buildRelaxationIncar(dirName, poscarObj, vdW=do_vdW, writeOut=True)
     kpoints = buildKpoints(dirName, poscarObj, is_gamma=kpoints_is_gamma, grid=RELAXATION_GRID_DENSITY, shift=RELAXATION_GRID_SHIFT, writeOut=True)
-    potcar = buildPotcar(dirName, poscarObj, useGivenPotcar=potcarGiven, writeOut=True)
+    potcar = buildPotcar(dirName, poscarObj, useGivenPotcar=potcarGiven, writeOut=False)
     poscarObj.write_file(dirName + POSCAR_NAME)
     return VaspInput(incar, kpoints, poscarObj, potcar)
