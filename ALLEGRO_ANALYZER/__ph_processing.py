@@ -36,7 +36,7 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
         numPoscars = len(poscarArray)
         print('Result: {} displacement files found.'.format(len(poscarArray)))
     except Exception as err:
-        exit_with_error('Phonopy preprocessing error: ' + err)
+        exit_with_error('Phonopy preprocessing error: ' + str(err))
 
     if numPoscars == 0:
         exit_with_error(PHONOPY_DISP_ERR_1)
@@ -61,7 +61,7 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
                 
             except Exception as err:
                 print('An error occurred while processing displacement POSCAR file {}'.format(dirName + poscarArray[i]))
-                exit_with_error('Error in preprocessing phonopy (parsing displacement files and running VASP force calculations): ' + err)
+                exit_with_error('Error in preprocessing phonopy (parsing displacement files and running VASP force calculations): ' + str(err))
 
         print('Total number of displacement files generated: ' + dispNum)
 
@@ -85,7 +85,7 @@ def ph_generate_forcesets(dirName, dispNum):
     except Exception as err:
         print(ERR_PH_FORCE_SETS)
         print('Command log: {}'.format(phForce_output.stderr))
-        exit_with_error('Error: ' + err)
+        exit_with_error('Error: ' + str(err))
 
     # If force sets created then proceed, if not exit with error. Use find function to find out.
     if not os.path.isfile(THIS_DIR + PH_FORCE_SETS_NAME):

@@ -19,5 +19,5 @@ def moveRelevantFiles(dirName):
                     move(i, THIS_DIR, dirName)
             print('Move complete.')
         except Exception as err:
-            exit_with_error('Error in moving: ' + err)
+            exit_with_error('Error in moving: ' + str(err))
         

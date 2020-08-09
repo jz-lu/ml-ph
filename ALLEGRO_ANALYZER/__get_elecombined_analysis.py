@@ -13,4 +13,4 @@ def get_elecombined_analysis(dirName, dosObj, bandObj):
         plot.savefig(dirName)
         return plot
     except Exception as err:
-        exit_with_error('Error in producing combined ELEDOS/ELEBAND plot: ' + err)
+        exit_with_error('Error in producing combined ELEDOS/ELEBAND plot: ' + str(err))

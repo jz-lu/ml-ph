@@ -133,7 +133,7 @@ def ph_get_dos(kpoints_mesh_obj, poscar_unitcell_obj, outDir, poscar_unit_path):
         print(output_of_ph_dos_call.stdout)
     except Exception as err:
         print(output_of_ph_dos_call.stderr)
-        exit_with_error('Error in DOS analysis and output: ' + err)
+        exit_with_error('Error in DOS analysis and output: ' + str(err))
     
     # As with before, all files generated need to be moved to this directory, by default they are in the script directory THIS_DIR
     moveRelevantFiles(outDir)
@@ -157,7 +157,7 @@ def ph_get_band(kpoints_line_obj, poscar_unitcell_obj, outDir, poscar_unit_path)
         print(output_of_ph_band_call.stdout)
     except Exception as err:
         print(output_of_ph_band_call.stderr)
-        exit_with_error('Error in phonon band analysis and output: ' + err)
+        exit_with_error('Error in phonon band analysis and output: ' + str(err))
     
     # As with before, all files generated need to be moved to this directory, by default they are in the script directory THIS_DIR
     moveRelevantFiles(outDir)

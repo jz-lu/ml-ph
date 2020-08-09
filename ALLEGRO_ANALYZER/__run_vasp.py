@@ -24,7 +24,7 @@ def run_vasp(vaspObj, dirName):
         
         return
     except Exception as err:
-        exit_with_error(ERR_VASP_RUN_RELAX + ' ' + err)
+        exit_with_error(ERR_VASP_RUN_RELAX + ' ' + str(err))
 
 
 
