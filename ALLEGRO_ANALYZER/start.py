@@ -116,9 +116,8 @@ DIR_ANALYSIS = checkPath(ROOT + ANALYSIS_DIR_NAME)
 print('Created new folder %s to store relaxation calculations.'%(DIR_ANALYSIS))
 
 # Call the relaxation
-print('Running VASP relaxation calculations...')
-print(init_vasp_obj)
-print(DIR_RELAXATION)
+print('Running VASP relaxation calculations...results to be sent to %s'%(DIR_RELAXATION))
+# print(init_vasp_obj)
 run_vasp(init_vasp_obj, DIR_RELAXATION)
 print('VASP relaxation calculations complete.')
 
