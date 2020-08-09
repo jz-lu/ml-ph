@@ -1,6 +1,8 @@
 import subprocess
-import sys
+from ____exit_with_error import exit_with_error
+
 from ___constants_misc import *
+
 from __directory_searchers import checkPath
 
 def mkdir(dirName, currPath):
@@ -8,7 +10,7 @@ def mkdir(dirName, currPath):
         currPath += '/'
     newDir = subprocess.run(['mkdir', currPath + dirName], capture_output=True, universal_newlines=True)
     if newDir.stderr != '':
-        sys.exit('Could not make new directory %s at %s. Error: %s.'%(dirName, currPath, newDir.stderr))
+        exit_with_error('Could not make new directory %s at %s. Error: %s.'%(dirName, currPath, newDir.stderr))
     return
 
 def move(dirName, currPath, newPath=unique_str, newName=''):
@@ -19,7 +21,7 @@ def move(dirName, currPath, newPath=unique_str, newName=''):
 
     movement = subprocess.run(['mv', currPath + dirName, newPath + newName], capture_output=True, universal_newlines=True)
     if movement.stderr != '':
-        sys.exit('Could not move %s to %s. Error: %s.'%(currPath + dirName, newPath + newName, movement.stderr))
+        exit_with_error('Could not move %s to %s. Error: %s.'%(currPath + dirName, newPath + newName, movement.stderr))
     return
 
 def copy(dirName, currPath, newPath=unique_str, newName='', isFolder=False):
@@ -33,7 +35,7 @@ def copy(dirName, currPath, newPath=unique_str, newName='', isFolder=False):
     else:
         newCopy = subprocess.run(['cp', currPath + dirName, newPath + newName], capture_output=True, universal_newlines=True)
     if newCopy.stderr != '':
-        sys.exit('Could not copy %s to %s. Error: %s.'%(currPath + dirName, newPath + newName, newCopy.stderr))
+        exit_with_error('Could not copy %s to %s. Error: %s.'%(currPath + dirName, newPath + newName, newCopy.stderr))
     return
 
 def rm(dirPath, isFolder=False):
@@ -42,7 +44,7 @@ def rm(dirPath, isFolder=False):
     else:
         removal = subprocess.run(['rm', dirPath], capture_output=True, universal_newlines=True)
     if removal.stderr != '':
-        sys.exit('Could not remove %s. Error: %s.'%(dirPath, removal.stderr))
+        exit_with_error('Could not remove %s. Error: %s.'%(dirPath, removal.stderr))
     return
 
 def cat(fileDirs, dirOut, outFileName):
@@ -57,6 +59,6 @@ def cat(fileDirs, dirOut, outFileName):
 
     newFileObj = subprocess.run(cmd, shell=True, capture_output=True, universal_newlines=True)
     if newFileObj.stderr != '':
-        sys.exit(ERR_BAD_DIR)
+        exit_with_error(ERR_BAD_DIR)
 
     return newFileObj.stdout

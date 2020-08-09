@@ -1,5 +1,6 @@
+from ____exit_with_error import exit_with_error
+
 from ___constants_names import THIS_DIR, START_BATCH_NAME, BATCH_FILE_NAME
-import sys
 
 from __directory_searchers import filesInDir
 from __dirModifications import move
@@ -18,5 +19,5 @@ def moveRelevantFiles(dirName):
                     move(i, THIS_DIR, dirName)
             print('Move complete.')
         except Exception as err:
-            sys.exit('Error in moving: ' + err)
+            exit_with_error('Error in moving: ' + err)
         

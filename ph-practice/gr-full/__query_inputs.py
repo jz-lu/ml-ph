@@ -2,7 +2,6 @@ from ___constants_misc import ERR_NO_POSCAR
 
 from __directory_searchers import find, checkPath
 from pymatgen.io.vasp.inputs import Poscar, Kpoints
-import sys
     
 # Get the total number of atoms in PUC
 def getNumAtoms(poscarObj):

@@ -1,4 +1,7 @@
-import os, fnmatch, sys
+import os, fnmatch
+
+from ____exit_with_error import exit_with_error
+
 from ___constants_misc import ERR_INVALID_FINDDIR_PARAM
 
 # Not currently used for anything.
@@ -47,4 +50,4 @@ def findFilesInDir(dirName, fileName, searchType):
         return arr
     
     else:
-        sys.exit(ERR_INVALID_FINDDIR_PARAM)
+        exit_with_error(ERR_INVALID_FINDDIR_PARAM)

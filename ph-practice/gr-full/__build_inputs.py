@@ -1,15 +1,18 @@
+from ____exit_with_error import exit_with_error
+
 from ___constants_misc import *
 from ___constants_names import *
 from ___constants_vasp import *
+
 from __directory_searchers import checkPath
 from __dirModifications import move, cat
 from __query_inputs import getInputName
-import sys, os
 
+import os
 from pymatgen.io.vasp.inputs import Poscar, Incar, Kpoints, Potcar, VaspInput
 
-# Returns pymatgen Kpoints object
-def buildKpoints(dirName, poscarObj, grid=RELAXATION_GRID_DENSITY, shift=RELAXATION_GRID_SHIFT, writeOut=True):
+# Returns pymatgen Kpoints object, by default we use Monkhorst-Pack
+def buildKpoints(dirName, poscarObj, is_gamma=False, grid=RELAXATION_GRID_DENSITY, shift=RELAXATION_GRID_SHIFT, writeOut=True):
     dirName = checkPath(dirName)
     kpointsExists = os.path.isfile(dirName + KPOINTS_MESH_NAME) # Look for existing KPOINTS
     if kpointsExists:
@@ -18,14 +21,20 @@ def buildKpoints(dirName, poscarObj, grid=RELAXATION_GRID_DENSITY, shift=RELAXAT
             print('KPOINTS file inputted by user. Importing input for computation...')
         except Exception as err:
             print('Error:', err)
-            print('Suggestion: your user-inputted KPOINTS file is likely invalid. Check it.')
-            sys.exit()
+            exit_with_error('Suggestion: your user-inputted KPOINTS file is likely invalid. Check it.')
+
     else:
         if grid == RELAXATION_GRID_DENSITY and shift == RELAXATION_GRID_SHIFT:
             print('No KPOINTS file found. Generating default relaxation mesh...')
         else:
             print('No KPOINTS file found. Generating mesh according to user inputted grid...')
-        kpoints = Kpoints.gamma_automatic(grid, shift) # Only supports Gamma centered Monkhorst Pack for now
+
+        if is_gamma:
+            print('Using Gamma-centered scheme...')
+            kpoints = Kpoints.gamma_automatic(grid, shift)
+        else:
+            print('Using Monkhorst-Pack scheme...')
+            kpoints = Kpoints.monkhorst_automatic(grid, shift)
     
     kpoints.comment = getInputName(poscarObj) # Standardize labeling style
 
@@ -60,7 +69,7 @@ def buildRelaxationIncar(dirName, poscarObj, vdW=False, writeOut=True):
             incar = Incar.from_file(dirName + INCAR_RELAXATION_NAME)
         except Exception as error:
             print('Error:', error)
-            sys.exit('Suggestion: you probably have a file labeled INCAR in the specified directory that is invalid.')
+            exit_with_error('Suggestion: you probably have a file labeled INCAR in the specified directory that is invalid.')
 
         for i in range(0, len(default_keys)):
             if default_keys[i] not in incar:
@@ -110,20 +119,17 @@ def buildPotcar(dirName, poscarObj, useGivenPotcar=False, writeOut=True): # Just
             return potcar
         except FileNotFoundError as err:
             print('Error:', err)
-            print('Possible source of error: did you specify you want to use your own POTCAR without actually having one in the directory?')
-            sys.exit()
+            exit_with_error('Possible source of error: did you specify you want to use your own POTCAR without actually having one in the directory?')
         except Exception as err:
             print('Error:', err)
-            print('Possible source of error: is your POTCAR file actually a valid POTCAR format?')
-            sys.exit()
+            exit_with_error('Possible source of error: is your POTCAR file actually a valid POTCAR format?')
 
     else:
         try:
             atoms = poscarObj.site_symbols # Get array of atoms for potential, in order as given in POSCAR
         except Exception as err:
             print('Error:', err)
-            print('Possible source of error: your POSCAR is likely wrong. You cannot import POTCAR until POSCAR is made properly for the PUC. Check POSCAR input and POTCAR maker function input.')
-            sys.exit()
+            exit_with_error('Possible source of error: your POSCAR is likely wrong. You cannot import POTCAR until POSCAR is made properly for the PUC. Check POSCAR input and POTCAR maker function input.')
         #print(atoms)
 
         # Get a pymatgen Potcar object
@@ -137,13 +143,13 @@ def buildPotcar(dirName, poscarObj, useGivenPotcar=False, writeOut=True): # Just
                 return potcar
         except ValueError as err:
             print('Error:', err)
-            print('\nPossible solution: run the following command as a one-time intialization to set up directories, if using Odyssey. \n\n\t{}\n'.format(POT_PMG_INIT_CMD))
-            sys.exit()
+            exit_with_error('\nPossible solution: run the following command as a one-time intialization to set up directories, if using Odyssey. \n\n\t{}\n'.format(POT_PMG_INIT_CMD))
 
 # Build the inputs using the above functions. Specify whether to do van der Waals.
 # Return vasp object. 
-def buildInitialInputs(dirName, do_vdW, poscarObj, potcarGiven):
+def buildInitialInputs(dirName, do_vdW, poscarObj, kpoints_is_gamma, potcarGiven):
     incar = buildRelaxationIncar(dirName, poscarObj, vdW=do_vdW, writeOut=True)
-    kpoints = buildKpoints(dirName, poscarObj, grid=RELAXATION_GRID_DENSITY, shift=RELAXATION_GRID_SHIFT, writeOut=True)
+    kpoints = buildKpoints(dirName, poscarObj, is_gamma=kpoints_is_gamma, grid=RELAXATION_GRID_DENSITY, shift=RELAXATION_GRID_SHIFT, writeOut=True)
     potcar = buildPotcar(dirName, poscarObj, useGivenPotcar=potcarGiven, writeOut=True)
+    poscarObj.write_file(dirName + POSCAR_NAME)
     return VaspInput(incar, kpoints, poscarObj, potcar)

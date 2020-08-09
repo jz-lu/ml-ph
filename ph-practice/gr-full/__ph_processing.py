@@ -1,3 +1,5 @@
+from ____exit_with_error import exit_with_error
+
 from __directory_searchers import find # Will let us look for the different POSCAR-XYZ displacement files
 from __dirModifications import move, copy, rm, mkdir
 from __directory_searchers import checkPath, findFilesInDir, filesInDir
@@ -11,7 +13,7 @@ from ___constants_misc import ERR_PH_FORCE_SETS, ERR_PH_FORCE_SETS_NOT_FOUND
 from ___constants_vasp import *
 
 import subprocess
-import sys, os
+import os
 from pymatgen.io.vasp.inputs import Poscar, VaspInput
 
 # Function to handle all preprocessing of phonopy before the force calulation.
@@ -34,12 +36,12 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
         numPoscars = len(poscarArray)
         print('Result: {} displacement files found.'.format(len(poscarArray)))
     except Exception as err:
-        sys.exit('Phonopy preprocessing error: ' + err)
+        exit_with_error('Phonopy preprocessing error: ' + err)
 
     if numPoscars == 0:
-        sys.exit(PHONOPY_DISP_ERR_1)
+        exit_with_error(PHONOPY_DISP_ERR_1)
     elif numPoscars > 999: # Obviously this should never happen but I'm all about caution with error handling
-        sys.exit(PHONOPY_DISP_ERR_2)
+        exit_with_error(PHONOPY_DISP_ERR_2)
     else:
         dispNum = '' # Initialize outside loop block so we can return it
         for i in range(0, numPoscars):
@@ -59,7 +61,7 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
                 
             except Exception as err:
                 print('An error occurred while processing displacement POSCAR file {}'.format(dirName + poscarArray[i]))
-                sys.exit('Error in preprocessing phonopy (parsing displacement files and running VASP force calculations): ' + err)
+                exit_with_error('Error in preprocessing phonopy (parsing displacement files and running VASP force calculations): ' + err)
 
         print('Total number of displacement files generated: ' + dispNum)
 
@@ -83,11 +85,11 @@ def ph_generate_forcesets(dirName, dispNum):
     except Exception as err:
         print(ERR_PH_FORCE_SETS)
         print('Command log: {}'.format(phForce_output.stderr))
-        sys.exit('Error:', err)
+        exit_with_error('Error: ' + err)
 
     # If force sets created then proceed, if not exit with error. Use find function to find out.
     if not os.path.isfile(THIS_DIR + PH_FORCE_SETS_NAME):
-        sys.exit(ERR_PH_FORCE_SETS_NOT_FOUND)
+        exit_with_error(ERR_PH_FORCE_SETS_NOT_FOUND)
     
     # Move FORCE_SETS to the proper place
     move(PH_FORCE_SETS_NAME, THIS_DIR, dirName)
@@ -106,7 +108,7 @@ def ph_prepare_for_analysis(rootDirName, incar_selfcon, kpoints_mesh_nonrelax, p
         poscar_relaxed.write_file(DIR_PHONOPY + POSCAR_UNIT_NAME)
     except Exception as err:
         print('Error in writing the %s file to %s.'%(POSCAR_UNIT_NAME, DIR_PHONOPY))
-        sys.exit(err)
+        exit_with_error(err)
 
     # Due to the displacement invalidating charge densities, it is important that we use default charge densities to start
     # i.e. ICHARG = default = 2

@@ -11,7 +11,8 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "env": {"PYTHONPATH": "${/Users/jonathanlu/Documents/ml-ph}"}
+            "env": {"PYTHONPATH": "${/Users/jonathanlu/Documents/ml-ph}"},
+            "args": [".", "F", "Gam", "eledos"]
         }
     ]
 }

@@ -1,3 +1,9 @@
+# Program details
+
+PRGM_COOL_NAME = '  __   __    __    ____  ___  ____   __         \n / _\\ (  )  (  )  (  __)/ __)(  _ \\ /  \\        \n/    \\/ (_/\\/ (_/\\ ) _)( (_ \\ )   /(  O )       \n\\_/\\_/\\____/\\____/(____)\\___/(__\\_) \\__/        \n  __   __ _   __   __    _  _  ____  ____  ____ \n / _\\ (  ( \\ / _\\ (  )  ( \\/ )(__  )(  __)(  _ \\\n/    \\/    //    \\/ (_/\\ )  /  / _/  ) _)  )   /\n\\_/\\_/\\_)__)\\_/\\_/\\____/(__/  (____)(____)(__\\_)'
+PRGM_VERSION = 1.0
+PRGM_END_CARD = ' ____  __ _  ____ \n(  __)(  ( \\(    \\\n ) _) /    / ) D (\n(____)\\_)__)(____/'
+
 # Name of directory where this program is stored
 # NOTE: this should not change! A command line argument specifies where the root directory of the calculation is, so we never need to move this
 THIS_DIR = '/Users/jonathanlu/Documents/ml-ph/ph-practice/gr-full'
@@ -15,6 +21,9 @@ START_BATCH_NAME = 'EXECUTABLE_BAT_DNE'
 START_BATCH_PATH = '/n/home04/jzlu/codes/ml-ph/static_batch_file/' + START_BATCH_NAME
 BATCH_FILE_NAME = 'STATIC_BAT_DNE'
 BATCH_FILE_PATH = '/n/home04/jzlu/codes/ml-ph/HTP/' + BATCH_FILE_NAME
+RELAXATION_DIR_NAME = 'relaxation_calculations'
+ANALYSIS_DIR_NAME = 'analyses'
+TOTAL_ENER_DIR_NAME = 'energy_data'
 PHONOPY_DIR_NAME = 'phonon_calculations'
 PHDISP_STATIC_NAME = 'disp-'
 PHDISP_DIR_NAME = PHDISP_STATIC_NAME + '%s/'
@@ -28,7 +37,6 @@ CONTCAR_NAME = 'CONTCAR'
 CHGCAR_NAME = 'CHGCAR'
 
 POSCAR_UNIT_RELAXATION_NAME = 'POSCAR'
-POSCAR_UNIT_PHONOPY_NAME = 'POSCAR_unit'
 
 KPOINTS_MESH_NAME = 'KPOINTS'
 KPOINTS_LINE_NAME = 'LINE_KPOINTS'

@@ -4,5 +4,7 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"python.pythonPath": "/Users/jonathanlu/miniconda3/envs/phonopy/bin/python"
+	}
 }

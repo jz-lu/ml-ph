@@ -1,4 +1,8 @@
 from pymatgen.io.vasp.inputs import Incar, Kpoints, Poscar
+import numpy as np
+
+from ____exit_with_error import exit_with_error
+
 from __directory_searchers import checkPath
 from __query_inputs import getInputName, getNumAtoms
 
@@ -6,9 +10,6 @@ from ___constants_vasp import *
 from ___constants_names import *
 from ___constants_misc import ERR_BAD_KPOINTS_MODIFY_INPUT
 from pymatgen.core.structure import Structure
-
-import sys
-import numpy as np
 
 # Functions for editing the input files depending on the calculation we need.
 def modifyIncar(incar, addArr=None, delArr=None): # Add any elements and remove any elements respectively.
@@ -23,18 +24,11 @@ def modifyIncar(incar, addArr=None, delArr=None): # Add any elements and remove 
             incar.pop(delArr)
     return incar
 
-# Give the right Kpoints object so that we can write it into the proper subdirectory.
-def newKpoints(dirName, samplingType, poscarObj, meshDensity=NONRELAXATION_GRID_DENSITY, totShift=NONRELAXATIONI_GRID_SHIFT): # material name
-    if samplingType == 'mesh':
-        kpoints_new = Kpoints.gamma_automatic( meshDensity, totShift )
-        kpoints_new.comment = 'Kpoints grid for ' + getInputName(poscarObj)
-    elif samplingType == 'line':
-        # Generate a line KPOINTS for band calculations. See documentation of the library for details.
-        # TODO: for now, we just import a LINE_KPOINTS file since the autogenerator doesn't seem to work.
-        kpoints_new = Kpoints.from_file(dirName + '/' + KPOINTS_LINE_NAME)
-    else:
-        sys.exit(ERR_BAD_KPOINTS_MODIFY_INPUT)
-    return kpoints_new
+# Give the right Kpoints object for a different type of calculation, usually a denser sampling for DOS.
+def modifyKpointsMesh(kpts_obj, meshDensity=NONRELAXATION_GRID_DENSITY, totShift=NONRELAXATION_GRID_SHIFT): # material name
+    kpts_obj.kpts[0] = meshDensity
+    kpts_obj.kpts_shift = totShift
+    return kpts_obj
 
 # This allows us to change the selective dynamics from relaxing only the interlayer spacing to full relaxation or vice versa.
 def modifySelectiveDynamics(poscarObj, outDir, outFileName=POSCAR_UNIT_RELAXATION_NAME, relax_z_only=False, writeOut=False): # change writeOut and outDir when modifying in subfolders
@@ -95,8 +89,7 @@ def addAtomToSite(atomName, dir_coords, poscarObj, outDir, writeOut=False, outFi
        newPoscarObj = poscarObj.structure.append(atomName, dir_coords, validate_proximity=True)
    except ValueError as err:
         print('Error:', err)
-        print('Suggested source of problem: you likely placed an atom that is too close to another one already in the PUC, which violates the obvious physics.')
-        sys.exit()
+        exit_with_error('Suggested source of problem: you likely placed an atom that is too close to another one already in the PUC, which violates the obvious physics.')
    
    if writeOut:
        print('Writing updated POSCAR with inserted atom {} to file...'.format(atomName))
@@ -116,8 +109,7 @@ def removeAtomFromSite(atomName, dir_coords, poscarObj, outDir, writeOut=False, 
             if np.array_equal(poscarObj.structure.sites[i].frac_coords, dir_coords): # no issue
                 index = i
         if index == None:
-            print('Error: the atom %s at (%f, %f, %f) specified for removal does not exist in the Poscar object.'%(atomName, dir_coords[0], dir_coords[1], dir_coords[2]))
-            sys.exit()
+            exit_with_error('Error: the atom %s at (%f, %f, %f) specified for removal does not exist in the Poscar object.'%(atomName, dir_coords[0], dir_coords[1], dir_coords[2]))
 
         newPoscarObj = poscarObj.structure.remove_sites([index])
         print('Removed atom %s at coordinates (%f, %f, %f) from Poscar object.'%(atomName, dir_coords[0], dir_coords[1], dir_coords[2]))

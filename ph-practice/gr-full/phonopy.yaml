@@ -5,8 +5,9 @@ phonopy:
   configuration:
     atom_name: "C"
     dim: "3 3 1"
-    mesh: "21 21 1"
-    cell_filename: "/Users/jonathanlu/Documents/ml-ph/ph-practice/gr_test/unitcell_pos/POSCAR_unit"
+    band: "0.0 0.0 0.0  0.5 0.5 0.0  0.666667 0.333333 0.0  0.0 0.0 0.0"
+    band_points: "101"
+    cell_filename: "./POSCAR_unit"
 
 physical_unit:
   atomic_mass: "AMU"
