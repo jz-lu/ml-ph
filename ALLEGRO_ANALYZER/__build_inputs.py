@@ -147,9 +147,11 @@ def buildPotcar(dirName, poscarObj, useGivenPotcar=False, writeOut=True): # Just
 
 # Build the inputs using the above functions. Specify whether to do van der Waals.
 # Return vasp object. 
+# IMPORTANT NOTE: pymatgen is strange. For some reason if we write the POTCAR in the root directory, it won't write it to subfolders 
+# when doing calculations, and then the calculations obviously fail without the POTCAR...so we're just going to not write it out here.
 def buildInitialInputs(dirName, do_vdW, poscarObj, kpoints_is_gamma, potcarGiven):
-    incar = buildRelaxationIncar(dirName, poscarObj, vdW=do_vdW, writeOut=True)
-    kpoints = buildKpoints(dirName, poscarObj, is_gamma=kpoints_is_gamma, grid=RELAXATION_GRID_DENSITY, shift=RELAXATION_GRID_SHIFT, writeOut=True)
-    potcar = buildPotcar(dirName, poscarObj, useGivenPotcar=potcarGiven, writeOut=True)
+    incar = buildRelaxationIncar(dirName, poscarObj, vdW=do_vdW, writeOut=False)
+    kpoints = buildKpoints(dirName, poscarObj, is_gamma=kpoints_is_gamma, grid=RELAXATION_GRID_DENSITY, shift=RELAXATION_GRID_SHIFT, writeOut=False)
+    potcar = buildPotcar(dirName, poscarObj, useGivenPotcar=potcarGiven, writeOut=False)
     poscarObj.write_file(dirName + POSCAR_NAME)
     return VaspInput(incar, kpoints, poscarObj, potcar)
