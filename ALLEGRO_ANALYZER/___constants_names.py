@@ -18,7 +18,7 @@ CMD_LINE_ARG_LIST = [ELEDOS, ELEBAND, PHDOS, PHBAND, ENERGIES]
 
 # Directory names
 START_BATCH_NAME = 'EXECUTABLE_BAT_DNE'
-START_BATCH_PATH = '/n/home04/jzlu/codes/ml-ph/start_job_batch_file/' + START_BATCH_NAME
+START_BATCH_PATH = '/n/home04/jzlu/codes/ml-ph/start_job_batch/' + START_BATCH_NAME
 BATCH_FILE_NAME = 'STATIC_BAT_DNE'
 BATCH_FILE_PATH = '/n/home04/jzlu/codes/ml-ph/ALLEGRO_ANALYZER/' + BATCH_FILE_NAME
 RELAXATION_DIR_NAME = 'relaxation_calculations'
