@@ -117,6 +117,8 @@ print('Created new folder %s to store relaxation calculations.'%(DIR_ANALYSIS))
 
 # Call the relaxation
 print('Running VASP relaxation calculations...')
+print(init_vasp_obj)
+print(DIR_RELAXATION)
 run_vasp(init_vasp_obj, DIR_RELAXATION)
 print('VASP relaxation calculations complete.')
 
