@@ -51,8 +51,8 @@ def buildKpoints(dirName, poscarObj, is_gamma=False, grid=RELAXATION_GRID_DENSIT
 def buildRelaxationIncar(dirName, poscarObj, vdW=False, writeOut=True):
     dirName = checkPath(dirName)
     # First let's build an array of default keys, which is helpful later
-    default_keys = list(INCAR_DEFAULT_SETTINGS.keys())
-    default_values = list(INCAR_DEFAULT_SETTINGS.values())
+    default_keys = list(INCAR_RELAX_SETTINGS.keys())
+    default_values = list(INCAR_RELAX_SETTINGS.values())
     vdW_keys = list(INCAR_VDW_SETTINGS.keys())
     vdW_values = list(INCAR_VDW_SETTINGS.values())
 

@@ -6,28 +6,6 @@ VASP_OUTFILE_LEN_THRESHOLD = 1000
 
 ### PARAMETERS FOR VASP INPUT FILES ###
 ## INCAR
-INCAR_DEFAULT_SETTINGS = {'ISTART': 0, 
-                          'ISMEAR': 0, 
-                          'SIGMA': 0.01, 
-                          'ENCUT': 800, 
-                          'AMIN': 0.01, 
-                          'NSW': 60, 
-                          'EDIFF': 1e-08, 
-                          'EDIFFG': -1e-08, 
-                          'IBRION': 2, 
-                          'SYMPREC': 0.0001, 
-                          'NPAR': 6, 
-                          'ADDGRID': True, 
-                          'LREAL': False, 
-                          'LWAVE': False, 
-                          'LCHARG': False, 
-                          'ALGO': 'N', 
-                          'NELMIN': 5, 
-                          'PREC': 'Accurate'} # We'll add in SYSTEM manually, EDIFFG can be larger if not phonon calc.
-INCAR_VDW_SETTINGS = {'METAGGA': 'SCAN',
-                      'LASPH': '.TRUE.',
-                      'LUSE_VDW': '.TRUE.',
-                      'BPARAM': 15.7}
 #INCAR_DEFAULT_KEYS = ['SYSTEM', 'ISTART', 'ISMEAR', 'SIGMA', 'ENCUT', 'AMIN', 'NSW', 'EDIFF', 'EDIFFG', 'IBRION', 'SYMPREC', 'NPAR', 'ADDGRID', 'LREAL', 'LWAVE', 'LCHARG', 'ALGO', 'NELMIN', 'PREC']
 #INCAR_VDW_KEYS = ['METAGGA', 'LASPH', 'LUSE_VDW', 'BPARAM']
 ISTART = 0 # No WAVECAR input
@@ -55,6 +33,30 @@ METAGGA = 'SCAN'
 LASPH = '.TRUE.'
 LUSE_VDW = '.TRUE.'
 BPARAM = 15.7
+
+INCAR_RELAX_SETTINGS = {'ISTART': ISTART, 
+                          'ISMEAR': ISMEAR, 
+                          'SIGMA': SIGMA, 
+                          'ENCUT': ENCUT, 
+                          'AMIN': AMIN, 
+                          'NSW': NSW['relax'], 
+                          'EDIFF': EDIFF, 
+                          'EDIFFG': EDIFFG, 
+                          'IBRION': IBRION['relax'], 
+                          'SYMPREC': SYMPREC, 
+                          'NPAR':NPAR, 
+                          'ADDGRID': ADDGRID, 
+                          'LREAL': LREAL, 
+                          'LWAVE': LWAVE, 
+                          'LCHARG': LCHARG, 
+                          'ALGO': ALGO, 
+                          'NELMIN': NELMIN, 
+                          'PREC': PREC} # We'll add in SYSTEM manually, EDIFFG can be larger if not phonon calc.
+INCAR_VDW_SETTINGS = {'METAGGA': 'SCAN',
+                      'LASPH': '.TRUE.',
+                      'LUSE_VDW': '.TRUE.',
+                      'BPARAM': 15.7}
+
 
 ## POTCAR
 POT_PMG_INIT_CMD = 'cat “PMG_VASP_PSP_DIR: /n/kaxiras_lab/atomate_PPs” > ~/.pmgrc.yaml'
