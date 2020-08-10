@@ -39,7 +39,7 @@ def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax'):
     vaspObj.run_vasp(run_dir=dirName, vasp_cmd=[BATCH_FILE_PATH], output_file=outfile_name, err_file=errfile_name)
     
     # Check the most obvious error in the run automatically
-    if os.stat(dirName + VASP_RUN_OUT_NAME).st_size < VASP_OUTFILE_LEN_THRESHOLD:
+    if os.stat(dirName + outfile_name).st_size < VASP_OUTFILE_LEN_THRESHOLD:
         exit_with_error('It is very likely that something went wrong in the VASP relaxation calculation as the .out file is unreasonably short. If that is not the case, then modify the source code threshold constant.')
     
     return
