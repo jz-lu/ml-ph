@@ -56,7 +56,7 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
                 displaced_poscar = Poscar.from_file(dirName + poscarArray[i])
                 ph_vasp_obj = VaspInput(vaspObj['INCAR'], vaspObj['KPOINTS'], displaced_poscar, vaspObj['POTCAR'])
                 print('Starting VASP nonrelaxation forces calculation for displacement {}...'.format(dispNum))
-                run_vasp(ph_vasp_obj, dirName + newSubdirName)
+                run_vasp(ph_vasp_obj, dirName + newSubdirName, run_type='phonon_preprocess')
                 print('VASP calculation complete.')
                 
             except Exception as err:

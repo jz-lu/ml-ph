@@ -63,7 +63,7 @@ else:
     print('Adoping Monkhorst-Pack scheme of sampling the Brillouin zone.')
 
 # At this point the arguments not popped are all calculation flags so we store it as calculation_list
-calculation_list = cmdargs = list(dict.fromkeys(cmdargs)) # converts to dict, which removes duplicates, and back to list 
+calculation_list = list(dict.fromkeys(cmdargs)) # converts to dict, which removes duplicates, and back to list 
 print('Arguments parsed. List of calculations to perform:', calculation_list)
 
 enerIndex = None

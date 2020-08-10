@@ -49,7 +49,16 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
     
     # Since all processing for phonopy is done at once, we should flag so that if we want phband and phdos we don't preprocess twice
     ph_has_preprocessed = False
+    
     DIR_PHONOPY = None # This will be set during first processing
+
+    # We want eleband to follow eledos if both are calculated since we can get a better CHGCAR for band from DOS
+    # So we put it in the front of the array
+    eledos_has_run = False
+    if ELEDOS in calculation_list:
+        calculation_list.insert(0, ELEDOS)
+        calculation_list = list(dict.fromkeys(calculation_list)) # remove the duplicate, the first will be the one
+
 
     # Parse command line and direct necessary function calls
     for i in calculation_list:
@@ -64,11 +73,12 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
             incar_eledos = modifyIncar(incar_selfcon, addArr=[('NEDOS', NEDOS)])
 
             # We will need the standard VASP IO Object plus CHGCAR.
-            eledos_vasp_obj = VaspInput(incar_eledos, kpoints_mesh_nonrelax, poscar_relaxed, potcar, {CHGCAR_NAME: chgcar})
+            eledos_vasp_obj = VaspInput(incar_eledos, kpoints_mesh_nonrelax, poscar_relaxed, potcar)
 
             print('Running VASP to get data for electronic DOS...')
             # Run vasp nonrelaxation, self-consistent
-            run_vasp(eledos_vasp_obj, DIR_ELEDOS)
+            run_vasp(eledos_vasp_obj, DIR_ELEDOS, predefined_chgcar=chgcar, run_type=ELEDOS)
+            eledos_has_run = True
 
             # Get the analysis plots and data
             print('Parsing VASP run and retrieving DOS data...')
@@ -83,13 +93,17 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
             mkdir(OUTPUT_DIR_NAME, DIR_ELEBAND) # subsubfolder for result storage
             DIR_ELEBAND_RESULTS = checkPath(DIR_ELEBAND + OUTPUT_DIR_NAME)
 
+            # Update to best possible CHGCAR
+            if eledos_has_run:
+                chgcar = Chgcar.from_file(outDirName + ELEDOS)
+
             # We use the line kpoints file that we imported in the command line parsing start.py
-            eleband_vasp_obj = VaspInput(incar_nonselfcon, kpoints_line, poscar_relaxed, potcar, {CHGCAR_NAME: chgcar})
+            eleband_vasp_obj = VaspInput(incar_nonselfcon, kpoints_line, poscar_relaxed, potcar)
             
             print('Running VASP for electronic band calculations...')
             
             # Run vasp
-            run_vasp(eleband_vasp_obj, DIR_ELEBAND)
+            run_vasp(eleband_vasp_obj, DIR_ELEBAND, predefined_chgcar=chgcar, run_type=ELEBAND)
 
             # Get the analysis plots and data
             print('Parsing VASP run and retrieving band structure data...')

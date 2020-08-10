@@ -42,8 +42,8 @@ KPOINTS_MESH_NAME = 'KPOINTS'
 KPOINTS_LINE_NAME = 'LINE_KPOINTS'
 
 VASP_RUN_XML_NAME = 'vasprun.xml'
-VASP_RUN_RELAX_OUT_NAME = 'vasp_relaxation.out'
-VASP_RUN_RELAX_ERR_NAME = 'vasp_relaxation.err'
+VASP_RUN_OUT_NAME = 'vasp_%s.out'
+VASP_RUN_ERR_NAME = 'vasp_%s.err'
 DOSCAR_NAME = 'DOSCAR'
 OUTCAR_NAME = 'OUTCAR'
 
