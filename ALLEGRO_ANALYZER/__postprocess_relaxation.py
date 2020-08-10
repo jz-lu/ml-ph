@@ -5,6 +5,7 @@ from pymatgen.io.vasp.inputs import Incar, Kpoints, Poscar, Potcar, VaspInput
 from pymatgen.io.vasp.outputs import Chgcar
 from pymatgen.core.structure import Structure
 
+from __build_inputs import buildPotcar
 from __input_modifiers import modifyIncar, modifyKpointsMesh, getSelfConNoRelIncar, getNonSelfConNoRelIncar # Input modifiers
 from __dirModifications import move, copy, mkdir, rm # Easy modules to the command line pipeline for basic linux commands
 from __directory_searchers import checkPath
@@ -32,7 +33,7 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
     chgcar = Chgcar.from_file(relaxation_dirName + CHGCAR_NAME) # Need to retrieve the last charge density to get good calculations
     poscar_relaxed = Poscar.from_file(relaxation_dirName + CONTCAR_NAME) # Get the relaxed positions from CONTCAR
     relaxation_incar = unrelaxed_vaspObj['INCAR'] # For the inspective code reviewer: these are pymatgen's hard strings so no need to collect them
-    potcar = unrelaxed_vaspObj['POTCAR']
+    potcar = buildPotcar(outDirName, poscar_relaxed) # outdirname is irrelevant here
     
     # Incar changes for various calculations
     incar_selfcon = getSelfConNoRelIncar(relaxation_incar)
@@ -59,6 +60,7 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
         calculation_list.insert(0, ELEDOS)
         calculation_list = list(dict.fromkeys(calculation_list)) # remove the duplicate, the first will be the one
 
+    print('Ordered list of calculations:', calculation_list)
 
     # Parse command line and direct necessary function calls
     for i in calculation_list:

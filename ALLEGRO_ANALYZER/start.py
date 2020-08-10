@@ -124,9 +124,11 @@ print('VASP relaxation calculations complete.')
 # Begin post-processing the relaxation calculations, handled by the postprocessing module
 # Step 1: do the total energy
 if needEnergies:
+    print('Fetching total energy calculations from calculations...')
     outcar = Outcar(DIR_RELAXATION + OUTCAR_NAME)
     mkdir(TOTAL_ENER_DIR_NAME, DIR_ANALYSIS)
     energyPair = get_energy_analysis(checkPath(DIR_ANALYSIS + TOTAL_ENER_DIR_NAME), outcar) # energyPair = (total energy, fermi energy) tuple pair
+    print('Total energies parsed and written to file.')
 if len(calculation_list) == 0:
     exit_with_error('Successfully completed total energy calculation, which was the only specified calculation.')
 
