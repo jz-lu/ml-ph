@@ -85,8 +85,8 @@ def ph_generate_forcesets(dirName, dispNum):
         else:
             # We run a generator of force sets with phonopy on the shell
             print('Generating force sets now...')
-            print('Running command to shell: phonopy -f %s{001..%s}/%s'%(PHDISP_STATIC_NAME, dispNum, VASP_RUN_XML_NAME))
-            phForce_output = subprocess.run('phonopy -f %s{001..%s}/%s'%(PHDISP_STATIC_NAME, dispNum, VASP_RUN_XML_NAME), shell=True, capture_output=True, universal_newlines=True)
+            print('Running command to shell: phonopy -f %s{001..%s}/%s'%(dirName + PHDISP_STATIC_NAME, dispNum, VASP_RUN_XML_NAME))
+            phForce_output = subprocess.run('phonopy -f %s{001..%s}/%s'%(dirName + PHDISP_STATIC_NAME, dispNum, VASP_RUN_XML_NAME), shell=True, capture_output=True, universal_newlines=True)
             print(phForce_output.stdout)
     except Exception as err:
         print(ERR_PH_FORCE_SETS)
