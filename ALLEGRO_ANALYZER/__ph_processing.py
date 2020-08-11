@@ -14,7 +14,7 @@ from ___constants_vasp import *
 
 import subprocess
 import os
-from pymatgen.io.vasp.inputs import Poscar, VaspInput
+from pymatgen.io.vasp.inputs import Poscar, VaspInput, Potcar
 
 # Function to handle all preprocessing of phonopy before the force calulation.
 def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name=POSCAR_UNIT_NAME):
@@ -23,6 +23,7 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
 
     try:
         CMD_GET_DISPLACEMENTS = ['phonopy', '-d', '--dim={}'.format(supercellDim), '-c', dirName + Poscar_unitcell_name] # -c flag to indicate to phonopy where unit cell POSCAR is
+        print('Running "%s" to shell...'%(' '.join(CMD_GET_DISPLACEMENTS)))
         phStarterMsg = subprocess.run(CMD_GET_DISPLACEMENTS, capture_output=True, universal_newlines=True)
         print(phStarterMsg.stdout)
 
@@ -34,7 +35,7 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
         poscarArray = findFilesInDir(dirName, 'POSCAR-', 'start') # Again, phonopy hard string 'POSCAR-XYZ', no need to collect
         poscarArray.sort() # Make sure displacements in order
         numPoscars = len(poscarArray)
-        print('Result: {} displacement files found.'.format(len(poscarArray)))
+        print('Result: {} displacement files found.'.format(numPoscars))
     except Exception as err:
         exit_with_error('Phonopy preprocessing error: ' + str(err))
 
@@ -50,13 +51,18 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
             try:
                 newSubdirName = PHDISP_DIR_NAME%(dispNum)
                 mkdir(newSubdirName, dirName)
+                print('New subdirectory %s created.'%(checkPath(dirName + newSubdirName)))
+
+                # TODO: change back if it works to see if this was the problem
+                potcar = Potcar((vaspObj['POSCAR']).site_symbols)
 
                 # Perform the VASP calculation on this 
                 # NOTE: no chgcar, the charge densities would be inaccurate now that we have displacements
                 displaced_poscar = Poscar.from_file(dirName + poscarArray[i])
-                ph_vasp_obj = VaspInput(vaspObj['INCAR'], vaspObj['KPOINTS'], displaced_poscar, vaspObj['POTCAR'])
+                ph_vasp_obj = VaspInput(vaspObj['INCAR'], vaspObj['KPOINTS'], displaced_poscar, potcar)
                 print('Starting VASP nonrelaxation forces calculation for displacement {}...'.format(dispNum))
-                run_vasp(ph_vasp_obj, dirName + newSubdirName, run_type='phonon_preprocess')
+                print('Calculations to be stored in %s'%(dirName + newSubdirName))
+                run_vasp(ph_vasp_obj, dirName + newSubdirName, run_type='phonon')
                 print('VASP calculation complete.')
                 
             except Exception as err:
@@ -99,9 +105,11 @@ def ph_generate_forcesets(dirName, dispNum):
     
 # Get a neat function that uses the above functions to handle all processing
 def ph_prepare_for_analysis(rootDirName, incar_selfcon, kpoints_mesh_nonrelax, poscar_relaxed, potcar):
+    print('Phonopy analysis starting...')
     rootDirName = checkPath(rootDirName)
     mkdir(PHONOPY_DIR_NAME, rootDirName)
     DIR_PHONOPY = checkPath(rootDirName + PHONOPY_DIR_NAME)
+    print('New subdirectory created to store phonopy calculations: %s'%(DIR_PHONOPY))
 
     # Write out the poscar into the phonopy directory we made, so we can use it for calling phonopy
     try:
@@ -118,6 +126,8 @@ def ph_prepare_for_analysis(rootDirName, incar_selfcon, kpoints_mesh_nonrelax, p
     ph_preprocess_vasp_obj = VaspInput(incar_selfcon_initChg, kpoints_mesh_nonrelax, poscar_relaxed, potcar)
 
     # Run preprocessing
+    print('Sending vasp object for phonopy-specific force calculations to phonopy preprocessing module...')
+    print('[DEBUGMSG] Phonopy vasp object:', ph_preprocess_vasp_obj)
     lastDispNum = ph_preprocess(DIR_PHONOPY, ph_preprocess_vasp_obj) # returns a string with largest XYZ in POSCAR-XYZ for use in force sets generator
     
     # Generate force sets file

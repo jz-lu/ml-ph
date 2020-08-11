@@ -119,6 +119,7 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
                 print('Preprocessing phonon analyses with phonopy displacements and VASP calculations...')
                 DIR_PHONOPY = ph_prepare_for_analysis(outDirName, incar_selfcon, kpoints_mesh_nonrelax, poscar_relaxed, potcar)
                 DIR_PHONOPY = checkPath(DIR_PHONOPY)
+                print('Phonopy calculations subdirectory sent to postprocessor: %s'%(DIR_PHONOPY))
                 ph_has_preprocessed = True
 
             # Split into two analyses depending on whether band or dos
