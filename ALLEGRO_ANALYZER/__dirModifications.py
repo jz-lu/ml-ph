@@ -31,7 +31,6 @@ def copy(dirName, currPath, newPath=unique_str, newName='', isFolder=False):
         newPath = currPath
 
     cmdarr = []
-
     
     if isFolder:
         cmdarr = ['cp', '-r', currPath + dirName, newPath + newName]
@@ -40,6 +39,7 @@ def copy(dirName, currPath, newPath=unique_str, newName='', isFolder=False):
 
     newCopy = subprocess.run(cmdarr, capture_output=True, universal_newlines=True)
     print('Ran "%s"'%(' '.join(cmdarr)))
+    print(newCopy.stdout)
     if newCopy.stderr != '':
         exit_with_error('Could not copy %s to %s. Error: %s.'%(currPath + dirName, newPath + newName, newCopy.stderr))
     return

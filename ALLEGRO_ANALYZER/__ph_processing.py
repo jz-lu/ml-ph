@@ -32,8 +32,9 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
         moveRelevantFiles(dirName)
 
         # ...Except you need phonopy_disp.yaml in the current directory for FORCE_SETS. We'll clean it after it's generated.
-        copy('phonopy_disp.yaml', dirName, THIS_DIR)
-        print('From ph_processing module: Copy of phonopy_disp.yaml complete.')
+        copy(PH_DISP_YAML_NAME, dirName, THIS_DIR)
+        print('From ph_processing module: Copy of %s complete.'%(PH_DISP_YAML_NAME))
+        print('Verification of existence in %s :'%(THIS_DIR), findFilesInDir(THIS_DIR, PH_DISP_YAML_NAME))
 
         # Check for the number of POSCAR-XYZ's made and organize them accordingly.
         poscarArray = findFilesInDir(dirName, 'POSCAR-', 'start') # Again, phonopy hard string 'POSCAR-XYZ', no need to collect
@@ -81,14 +82,13 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
 def ph_generate_forcesets(dirName, dispNum):
     dirName = checkPath(dirName)
     try:
-        if dispNum ==  '001':
-            print('Generating force sets now...')
+        print('Generating force sets now...')
+        if dispNum == '001':
             print('Running command to shell: phonopy -f %s001/%s'%(dirName + PHDISP_STATIC_NAME, VASP_RUN_XML_NAME))
             phForce_output = subprocess.run('phonopy -f %s001/%s'%(dirName + PHDISP_STATIC_NAME, VASP_RUN_XML_NAME), shell=True, capture_output=True, universal_newlines=True)
             print(phForce_output.stdout)
         else:
             # We run a generator of force sets with phonopy on the shell
-            print('Generating force sets now...')
             print('Running command to shell: phonopy -f %s{001..%s}/%s'%(dirName + PHDISP_STATIC_NAME, dispNum, VASP_RUN_XML_NAME))
             phForce_output = subprocess.run('phonopy -f %s{001..%s}/%s'%(dirName + PHDISP_STATIC_NAME, dispNum, VASP_RUN_XML_NAME), shell=True, capture_output=True, universal_newlines=True)
             print(phForce_output.stdout)
