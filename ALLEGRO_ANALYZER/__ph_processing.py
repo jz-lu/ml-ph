@@ -79,8 +79,8 @@ def ph_generate_forcesets(dirName, dispNum):
     try:
         if dispNum ==  '001':
             print('Generating force sets now...')
-            print('Running command to shell: phonopy -f %s001/%s'%(PHDISP_STATIC_NAME, VASP_RUN_XML_NAME))
-            phForce_output = subprocess.run('phonopy -f %s001/%s'%(PHDISP_STATIC_NAME, VASP_RUN_XML_NAME), shell=True, capture_output=True, universal_newlines=True)
+            print('Running command to shell: phonopy -f %s001/%s'%(dirName + PHDISP_STATIC_NAME, VASP_RUN_XML_NAME))
+            phForce_output = subprocess.run('phonopy -f %s001/%s'%(dirName + PHDISP_STATIC_NAME, VASP_RUN_XML_NAME), shell=True, capture_output=True, universal_newlines=True)
             print(phForce_output.stdout)
         else:
             # We run a generator of force sets with phonopy on the shell
@@ -127,7 +127,7 @@ def ph_prepare_for_analysis(rootDirName, incar_selfcon, kpoints_mesh_nonrelax, p
 
     # Run preprocessing
     print('Sending vasp object for phonopy-specific force calculations to phonopy preprocessing module...')
-    print('[DEBUGMSG] Phonopy vasp object:', ph_preprocess_vasp_obj)
+    #print('[DEBUGMSG] Phonopy vasp object:', ph_preprocess_vasp_obj)
     lastDispNum = ph_preprocess(DIR_PHONOPY, ph_preprocess_vasp_obj) # returns a string with largest XYZ in POSCAR-XYZ for use in force sets generator
     
     # Generate force sets file
