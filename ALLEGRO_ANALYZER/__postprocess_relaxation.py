@@ -39,7 +39,10 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
     
     # Incar changes for various calculations
     incar_selfcon = getSelfConNoRelIncar(relaxation_incar)
+    print('[DEBUGMSG] Incar selfcon:', incar_selfcon)
     incar_nonselfcon = getNonSelfConNoRelIncar(relaxation_incar)
+    print('[DEBUGMSG] Incar non selfcon:', incar_nonselfcon)
+    print('[DEBUGMSG] Incar selfcon (again):', incar_selfcon)
     
     # Kpoints needs to be modified to have a denser sampling for nonrelaxation calculations -> more precision
     kpoints_mesh_nonrelax = unrelaxed_vaspObj['KPOINTS']
@@ -100,6 +103,7 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
 
             # Update to best possible CHGCAR
             if eledos_has_run:
+                print('Electronic DOS has already run. Fetching updated charge densities from dos run...')
                 chgcar = Chgcar.from_file(outDirName + ELEDOS)
 
             # We use the line kpoints file that we imported in the command line parsing start.py
