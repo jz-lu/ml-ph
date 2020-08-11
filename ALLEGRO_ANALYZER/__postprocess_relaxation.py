@@ -124,6 +124,8 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
                 DIR_PHONOPY = checkPath(DIR_PHONOPY)
                 print('Phonopy calculations subdirectory sent to postprocessor: %s'%(DIR_PHONOPY))
                 ph_has_preprocessed = True
+            else:
+                print('Phonopy preprocessing already done. Proceeding directly to calculations...')
 
             # Split into two analyses depending on whether band or dos
             if i == PHDOS:

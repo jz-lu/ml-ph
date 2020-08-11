@@ -1,6 +1,6 @@
 from ____exit_with_error import exit_with_error
 
-from ___constants_names import THIS_DIR, START_BATCH_NAME, START_BATCH_PATH, BATCH_FILE_NAME, START_BATCH_OUTFILE_START
+from ___constants_names import THIS_DIR, START_BATCH_NAME, START_BATCH_PATH, BATCH_FILE_NAME, START_BATCH_OUTFILE_START, PH_DISP_YAML_NAME, PH_FORCE_SETS_NAME
 
 from __directory_searchers import filesInDir, checkPath
 from __dirModifications import move, rm
@@ -15,7 +15,13 @@ def moveRelevantFiles(dirName):
             for i in allFiles:
                 # The directory storing this has nothing except readme, batch file, and scripts, so all other files are phonopy
                 # Move all phonopy files to the right directory
-                if not (i == 'README.md' or i[-3:] == '.py' or i == START_BATCH_NAME or i == BATCH_FILE_NAME or i[:4] == START_BATCH_OUTFILE_START):
+                if not (i == 'README.md' 
+                        or i[-3:] == '.py' 
+                        or i == START_BATCH_NAME 
+                        or i == BATCH_FILE_NAME 
+                        or i[:4] == START_BATCH_OUTFILE_START 
+                        or i == PH_FORCE_SETS_NAME 
+                        or i == PH_DISP_YAML_NAME):
                     move(i, THIS_DIR, dirName)
                     print('Moved %s from %s to %s.'%(i, checkPath(THIS_DIR), dirName))
             print('Move complete.')

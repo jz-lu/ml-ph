@@ -4,7 +4,7 @@ import numpy as np
 
 from ____exit_with_error import exit_with_error
 
-from ___constants_names import PH_MESH_CONF_NAME, PH_BAND_CONF_NAME
+from ___constants_names import PH_MESH_CONF_NAME, PH_BAND_CONF_NAME, KPOINTS_LINE_NAME
 from ___constants_phonopy import SUPER_DIM, POSCAR_UNIT_NAME
 from ___constants_misc import ERR_PH_CANNOT_GEN_MESHCONF
 from ___constants_phonopy import PHONOPY_NUM_LINE_INTS
@@ -17,6 +17,7 @@ def ph_create_mesh_conf(kpoints_mesh_obj, poscar_obj, outDir):
     outDir = checkPath(outDir)
 
     # Process the site symbols string from poscar
+    print('Building mesh.conf file...')
     site_symbols_str = ' '.join(poscar_obj.site_symbols)
 
     # Process the kpoints sampling
@@ -48,11 +49,14 @@ def ph_create_mesh_conf(kpoints_mesh_obj, poscar_obj, outDir):
 
     f.close()
 
+    print('mesh.conf built. Written to %s'%(outDir + PH_MESH_CONF_NAME))
+
     return
 
 # The next two functions are necessary to create band.conf
 # Get the path string for phonopy from LINE_KPOINTS
 def ph_get_band_path(kpoints_line_obj):
+    print('Getting phononpy band path from Kpoints line object for band.conf...')
     # Fancy way of removing duplicate rows, which VASP needs but phonopy does not want
     # NOTE: this function doesn't work well for complicated paths, but 2D materials are probably fine. See github's homepage README for more info.
     new_array = kpoints_line_obj.kpts
@@ -72,11 +76,13 @@ def ph_get_band_path(kpoints_line_obj):
         path[i] = ' '.join(path[i])
     
     path = '  '.join(path)
+    print('Path made: ' + path)
 
     return path
 
 # Get the labels for the path
 def ph_get_band_path_labels(kpoints_line_obj):
+    print('Getting phonopy band path labels for band.conf...')
     # We really just need to get rid of any labels that don't 
     # NOTE: this function doesn't work well for complicated paths, but 2D materials are probably fine. See github's homepage README for more info.
     labelArr = list(dict.fromkeys(kpoints_line_obj.labels))
@@ -91,6 +97,8 @@ def ph_get_band_path_labels(kpoints_line_obj):
     # like with get_band_path, we append to the end the first label to close the path
     labelArr.append(labelArr[0])
 
+    print('Path labels created: ' + ' '.join(labelArr))
+
     # Mash it together into a string
     return ' '.join(labelArr)
 
@@ -102,6 +110,7 @@ def ph_create_band_conf(kpoints_line_obj, poscar_obj, outDir):
     site_symbols_str = ' '.join(poscar_obj.site_symbols)
 
     # Write it out
+    print('Building band.conf file...')
     f = open(outDir + PH_BAND_CONF_NAME, 'w')
     f.write('ATOM_NAME = ' + site_symbols_str + '\n')
     f.write('DIM = ' + SUPER_DIM + '\n')
@@ -111,6 +120,8 @@ def ph_create_band_conf(kpoints_line_obj, poscar_obj, outDir):
     if PHONOPY_NUM_LINE_INTS > 51:
         f.write('BAND_POINTS = ' + str(PHONOPY_NUM_LINE_INTS) + '\n')
     f.close()
+
+    print('band.conf built. Written to %s'%(outDir + PH_BAND_CONF_NAME))
 
     return
 
@@ -129,6 +140,7 @@ def ph_get_dos(kpoints_mesh_obj, poscar_unitcell_obj, outDir, poscar_unit_path):
 
     try:
         CMD_GET_DOS = ['phonopy', '-p', outDir + PH_MESH_CONF_NAME, '-c', poscar_unit_path, '-s']
+        print('Running command to shell:', ' '.join(CMD_GET_DOS))
         output_of_ph_dos_call = subprocess.run(CMD_GET_DOS, capture_output=True, universal_newlines=True)
         print(output_of_ph_dos_call.stdout)
     except Exception as err:
@@ -152,8 +164,9 @@ def ph_get_band(kpoints_line_obj, poscar_unitcell_obj, outDir, poscar_unit_path)
     # We need POSCAR_unit from that directory, imported from poscar_unit_path
 
     try:
-        CMD_GET_DOS = ['phonopy', '-p', outDir + PH_BAND_CONF_NAME, '-c', poscar_unit_path, '-s']
-        output_of_ph_band_call = subprocess.run(CMD_GET_DOS, capture_output=True, universal_newlines=True)
+        CMD_GET_BAND = ['phonopy', '-p', outDir + PH_BAND_CONF_NAME, '-c', poscar_unit_path, '-s']
+        print('Running command to shell:', ' '.join(CMD_GET_BAND))
+        output_of_ph_band_call = subprocess.run(CMD_GET_BAND, capture_output=True, universal_newlines=True)
         print(output_of_ph_band_call.stdout)
     except Exception as err:
         print(output_of_ph_band_call.stderr)
