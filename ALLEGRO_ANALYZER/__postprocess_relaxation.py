@@ -36,16 +36,16 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
     # Get the relevant objects for the next set of calculations
     chgcar = Chgcar.from_file(relaxation_dirName + CHGCAR_NAME) # Need to retrieve the last charge density to get good calculations
     poscar_relaxed = Poscar.from_file(relaxation_dirName + CONTCAR_NAME) # Get the relaxed positions from CONTCAR
-    relaxation_incar_1 = unrelaxed_vaspObj['INCAR'] # For the inspective code reviewer: these are pymatgen's hard strings so no need to collect them
-    
+    # Make deep copies here since we'll need the original
+    relaxation_incar_1 = copy.deepcopy(unrelaxed_vaspObj['INCAR']) # For the inspective code reviewer: these are pymatgen's hard strings so no need to collect them
     relaxation_incar_2 = copy.deepcopy(relaxation_incar_1)
     potcar = buildPotcar(outDirName, poscar_relaxed) # outdirname is irrelevant here
     
     # Incar changes for various calculations
     incar_selfcon = getSelfConNoRelIncar(relaxation_incar_1)
     incar_nonselfcon = getNonSelfConNoRelIncar(relaxation_incar_2)
-    print('[DEBUGMSG] incar selfcon:', incar_selfcon)
-    print('[DEBUGMSG] incar non selfcon:', incar_nonselfcon)
+    #print('[DEBUGMSG] incar selfcon:', incar_selfcon)
+    #print('[DEBUGMSG] incar non selfcon:', incar_nonselfcon)
     
     # Kpoints needs to be modified to have a denser sampling for nonrelaxation calculations -> more precision
     kpoints_mesh_nonrelax = unrelaxed_vaspObj['KPOINTS']
@@ -80,7 +80,7 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
             DIR_ELEDOS_RESULTS = checkPath(DIR_ELEDOS + OUTPUT_DIR_NAME)
 
             # In addition to self-consistent calculation, we need to also add on the NEDOS parameter to sample the space for eledos
-            incar_eledos = incar_selfcon
+            incar_eledos = copy.deepcopy(incar_selfcon)
             incar_eledos = modifyIncar(incar_eledos, addArr=[('NEDOS', NEDOS)])
 
             # We will need the standard VASP IO Object plus CHGCAR.
@@ -108,7 +108,7 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
             # Update to best possible CHGCAR
             if eledos_has_run:
                 print('Electronic DOS has already run. Fetching updated charge densities from dos run...')
-                chgcar = Chgcar.from_file(outDirName + ELEDOS)
+                chgcar = Chgcar.from_file(checkPath(outDirName + ELEDOS) + CHGCAR_NAME)
 
             # We use the line kpoints file that we imported in the command line parsing start.py
             eleband_vasp_obj = VaspInput(incar_nonselfcon, kpoints_line, poscar_relaxed, potcar)
@@ -128,7 +128,8 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
             if not ph_has_preprocessed:
                 # Returns the directory name that all phonopy calculations are stored in.
                 print('Preprocessing phonon analyses with phonopy displacements and VASP calculations...')
-                DIR_PHONOPY = ph_prepare_for_analysis(outDirName, incar_selfcon, kpoints_mesh_nonrelax, poscar_relaxed, potcar)
+                incar_ph = copy.deepcopy(incar_selfcon)
+                DIR_PHONOPY = ph_prepare_for_analysis(outDirName, incar_ph, kpoints_mesh_nonrelax, poscar_relaxed, potcar)
                 DIR_PHONOPY = checkPath(DIR_PHONOPY)
                 print('Phonopy calculations subdirectory sent to postprocessor: %s'%(DIR_PHONOPY))
                 ph_has_preprocessed = True
