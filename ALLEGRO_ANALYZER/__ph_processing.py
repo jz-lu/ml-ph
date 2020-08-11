@@ -33,6 +33,7 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
 
         # ...Except you need phonopy_disp.yaml in the current directory for FORCE_SETS. We'll clean it after it's generated.
         copy('phonopy_disp.yaml', dirName, THIS_DIR)
+        print('From ph_processing module: Copy of phonopy_disp.yaml complete.')
 
         # Check for the number of POSCAR-XYZ's made and organize them accordingly.
         poscarArray = findFilesInDir(dirName, 'POSCAR-', 'start') # Again, phonopy hard string 'POSCAR-XYZ', no need to collect

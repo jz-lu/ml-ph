@@ -17,6 +17,7 @@ def moveRelevantFiles(dirName):
                 # Move all phonopy files to the right directory
                 if not (i == 'README.md' or i[-3:] == '.py' or i == START_BATCH_NAME or i == BATCH_FILE_NAME or i[:4] == START_BATCH_OUTFILE_START):
                     move(i, THIS_DIR, dirName)
+                    print('Moved %s from %s to %s.'%(i, checkPath(THIS_DIR), dirName))
             print('Move complete.')
         except Exception as err:
             exit_with_error('Error in moving: ' + str(err))
@@ -32,6 +33,7 @@ def cleanRelevantFiles():
                 # Move all phonopy files to the right directory
                 if not (i == 'README.md' or i[-3:] == '.py' or i == START_BATCH_NAME or i == BATCH_FILE_NAME or i[:4] == START_BATCH_OUTFILE_START):
                     rm(checkPath(THIS_DIR) + i)
+                    print('Removed %s from %s for cleanup.'%(i, checkPath(THIS_DIR)))
             print('Move complete.')
         except Exception as err:
             exit_with_error('Error in removing files in%s: '%(THIS_DIR) + str(err))

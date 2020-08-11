@@ -29,11 +29,17 @@ def copy(dirName, currPath, newPath=unique_str, newName='', isFolder=False):
     newPath = checkPath(newPath)
     if newPath == unique_str:
         newPath = currPath
+
+    cmdarr = []
+
     
     if isFolder:
-        newCopy = subprocess.run(['cp', '-r', currPath + dirName, newPath + newName], capture_output=True, universal_newlines=True)
+        cmdarr = ['cp', '-r', currPath + dirName, newPath + newName]
     else:
-        newCopy = subprocess.run(['cp', currPath + dirName, newPath + newName], capture_output=True, universal_newlines=True)
+        cmdarr = ['cp', currPath + dirName, newPath + newName]
+
+    newCopy = subprocess.run(cmdarr, capture_output=True, universal_newlines=True)
+    print('Ran "%s"'%(' '.join(cmdarr)))
     if newCopy.stderr != '':
         exit_with_error('Could not copy %s to %s. Error: %s.'%(currPath + dirName, newPath + newName, newCopy.stderr))
     return
