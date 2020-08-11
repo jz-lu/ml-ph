@@ -124,10 +124,10 @@ def ph_prepare_for_analysis(rootDirName, incar_selfcon, kpoints_mesh_nonrelax, p
 
     # Due to the displacement invalidating charge densities, it is important that we use default charge densities to start
     # i.e. ICHARG = default = 2
-    incar_selfcon_initChg = modifyIncar(incar_selfcon, addArr=[('ICHARG', ICHARG['default'])])
+    incar_selfcon_initChg_noWriteChg = modifyIncar(incar_selfcon, addArr=[('ICHARG', ICHARG['default']), ('LCHARG', LCHARG['no_write_charge'])])
 
     # Note that in this object the poscar could be any valid poscar; we'll replace it in preprocessing by displacement poscar
-    ph_preprocess_vasp_obj = VaspInput(incar_selfcon_initChg, kpoints_mesh_nonrelax, poscar_relaxed, potcar)
+    ph_preprocess_vasp_obj = VaspInput(incar_selfcon_initChg_noWriteChg, kpoints_mesh_nonrelax, poscar_relaxed, potcar)
 
     # Run preprocessing
     print('Sending vasp object for phonopy-specific force calculations to phonopy preprocessing module...')

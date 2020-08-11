@@ -24,7 +24,7 @@ NPAR = 6
 ADDGRID = '.TRUE.'
 LREAL = '.FALSE.'
 LWAVE = '.FALSE.'
-LCHARG = '.TRUE.'
+LCHARG = {'write_charge': '.TRUE.', "no_write_charge": '.FALSE.'}
 ALGO = 'N'
 NELMIN = 5
 PREC = 'Accurate'
@@ -48,7 +48,7 @@ INCAR_RELAX_SETTINGS = {'ISTART': ISTART,
                           'ADDGRID': ADDGRID, 
                           'LREAL': LREAL, 
                           'LWAVE': LWAVE, 
-                          'LCHARG': LCHARG, 
+                          'LCHARG': LCHARG['write_charge'], 
                           'ALGO': ALGO, 
                           'NELMIN': NELMIN, 
                           'PREC': PREC} # We'll add in SYSTEM manually, EDIFFG can be larger if not phonon calc.

@@ -78,7 +78,7 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
 
             # We will need the standard VASP IO Object plus CHGCAR.
             eledos_vasp_obj = VaspInput(incar_eledos, kpoints_mesh_nonrelax, poscar_relaxed, potcar)
-            print('[DEBUGMSG] eledos vasp input: ', eledos_vasp_obj)
+            print('[DEBUGMSG] eledos vasp incar: ', eledos_vasp_obj['INCAR'])
 
             print('Running VASP to get data for electronic DOS...')
             # Run vasp nonrelaxation, self-consistent

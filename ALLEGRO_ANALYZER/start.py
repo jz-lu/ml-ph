@@ -73,10 +73,11 @@ for i in range(0, len(calculation_list)):
             exit_with_error(BAD_INPUT_ERR_MSG)
         # Makes sure that we do not have invalid command line arguments before we begin postprocessig
         if calculation_list[i] == ENERGIES:
+            print('Calculation to include total energy. Flagging total energy extraction process...')
             enerIndex = i
             needEnergies = True
 if enerIndex != None:
-    del calculation_list[i] # We will parse the total energy separately and before everything else since we can stop there if nothing else is needed.
+    del calculation_list[enerIndex] # We will parse the total energy separately and before everything else since we can stop there if nothing else is needed.
 # calculation_list is now fully parsed and ready to send to postprocessing
 
 # Try to get the poscar, if fail then exit

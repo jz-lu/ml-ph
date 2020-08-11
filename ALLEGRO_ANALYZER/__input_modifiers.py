@@ -135,6 +135,7 @@ def getSelfConNoRelIncar(incarObj):
 def getNonSelfConNoRelIncar(incarObj):
     settings_to_add = [('ICHARG', ICHARG['no_relax_nsc']),
                        ('IBRION', IBRION['no_relax']), 
-                       ('NSW', NSW['no_relax'])] # No NEDOS, thats just for plotting DOS
+                       ('NSW', NSW['no_relax']),
+                       ('LCHARG', LCHARG['no_write_charge'])] # No NEDOS, thats just for plotting DOS
     incarObj = modifyIncar(incarObj, settings_to_add)
     return incarObj
