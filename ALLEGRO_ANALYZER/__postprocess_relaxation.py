@@ -63,6 +63,7 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
 
     # We want eleband to follow eledos if both are calculated since we can get a better CHGCAR for band from DOS
     # So we put it in the front of the array
+    calculation_list.sort()
     eledos_has_run = False
     if ELEDOS in calculation_list:
         calculation_list.insert(0, ELEDOS)
