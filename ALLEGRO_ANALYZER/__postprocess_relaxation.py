@@ -8,6 +8,7 @@ from pymatgen.core.structure import Structure
 from __build_inputs import buildPotcar
 from __input_modifiers import modifyIncar, modifyKpointsMesh, getSelfConNoRelIncar, getNonSelfConNoRelIncar # Input modifiers
 from __dirModifications import move, copy, mkdir, rm # Easy modules to the command line pipeline for basic linux commands
+import copy
 from __directory_searchers import checkPath
 from __run_vasp import run_vasp
 from __ph_processing import ph_prepare_for_analysis
@@ -26,6 +27,7 @@ from ___constants_phonopy import POSCAR_UNIT_NAME
 
 
 # Process the command-line arguments
+
 def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, calculation_list, kpoints_line): # vasp input object generated at beginning of relaxation
     print('Postprocessing VASP relaxation beginning...')
     outDirName = checkPath(outDirName)
@@ -34,18 +36,16 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
     # Get the relevant objects for the next set of calculations
     chgcar = Chgcar.from_file(relaxation_dirName + CHGCAR_NAME) # Need to retrieve the last charge density to get good calculations
     poscar_relaxed = Poscar.from_file(relaxation_dirName + CONTCAR_NAME) # Get the relaxed positions from CONTCAR
-    relaxation_incar_cp1 = unrelaxed_vaspObj['INCAR'] # For the inspective code reviewer: these are pymatgen's hard strings so no need to collect them
-    relaxation_incar_cp2 = unrelaxed_vaspObj['INCAR'] # copy for pass-by-reference of scf and nonscf modifications below
+    relaxation_incar_1 = unrelaxed_vaspObj['INCAR'] # For the inspective code reviewer: these are pymatgen's hard strings so no need to collect them
+    
+    relaxation_incar_2 = copy.deepcopy(relaxation_incar_1)
     potcar = buildPotcar(outDirName, poscar_relaxed) # outdirname is irrelevant here
     
     # Incar changes for various calculations
-    incar_selfcon = getSelfConNoRelIncar(relaxation_incar_cp1)
-    print('[DEBUGMSG] after1 relaxation_incar:', relaxation_incar)
-    print('[DEBUGMSG] Incar selfcon:', incar_selfcon)
-    incar_nonselfcon = getNonSelfConNoRelIncar(relaxation_incar_cp2)
-    print('[DEBUGMSG] after relaxation_incar cp2:', relaxation_incar_cp2)
-    print('[DEBUGMSG] Incar non selfcon:', incar_nonselfcon)
-    print('[DEBUGMSG] Incar selfcon (again):', incar_selfcon)
+    incar_selfcon = getSelfConNoRelIncar(relaxation_incar_1)
+    incar_nonselfcon = getNonSelfConNoRelIncar(relaxation_incar_2)
+    print('[DEBUGMSG] incar selfcon:', incar_selfcon)
+    print('[DEBUGMSG] incar non selfcon:', incar_nonselfcon)
     
     # Kpoints needs to be modified to have a denser sampling for nonrelaxation calculations -> more precision
     kpoints_mesh_nonrelax = unrelaxed_vaspObj['KPOINTS']

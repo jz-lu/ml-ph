@@ -21,7 +21,10 @@ def modifyIncar(incar, addArr=None, delArr=None): # Add any elements and remove 
     
     if delArr != None:
         for i in delArr:
-            incar.pop(delArr)
+            if i in list(incar.keys()):
+                incar.pop(delArr)
+            else:
+                print('Attempted deletion of %s failed as incar did not have that entry to begin with.'%(i))
     return incar
 
 # Give the right Kpoints object for a different type of calculation, usually a denser sampling for DOS.
