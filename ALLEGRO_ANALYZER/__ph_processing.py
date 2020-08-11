@@ -5,7 +5,7 @@ from __dirModifications import move, copy, rm, mkdir
 from __directory_searchers import checkPath, findFilesInDir, filesInDir
 from __run_vasp import run_vasp
 from __input_modifiers import modifyIncar
-from __ph_movers import moveRelevantFiles
+from __ph_movers import moveRelevantFiles, cleanRelevantFiles
 
 from ___constants_phonopy import *
 from ___constants_names import *
@@ -30,6 +30,9 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
         # Phonopy places all their files in the directory of this script. 
         # We want it in phDir, so we scane for all files that are not .py scripts or related and move them over.
         moveRelevantFiles(dirName)
+
+        # ...Except you need phonopy_disp.yaml in the current directory for FORCE_SETS. We'll clean it after it's generated.
+        copy('phonopy_disp.yaml', dirName, THIS_DIR)
 
         # Check for the number of POSCAR-XYZ's made and organize them accordingly.
         poscarArray = findFilesInDir(dirName, 'POSCAR-', 'start') # Again, phonopy hard string 'POSCAR-XYZ', no need to collect
@@ -132,6 +135,9 @@ def ph_prepare_for_analysis(rootDirName, incar_selfcon, kpoints_mesh_nonrelax, p
     
     # Generate force sets file
     ph_generate_forcesets(DIR_PHONOPY, lastDispNum)
+
+    # Cleanup files from batch directory
+    cleanRelevantFiles()
 
     return DIR_PHONOPY
 
