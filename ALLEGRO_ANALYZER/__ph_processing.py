@@ -84,13 +84,13 @@ def ph_generate_forcesets(dirName, dispNum):
     try:
         print('Generating force sets now...')
         if dispNum == '001':
-            print('Running command to shell: phonopy -f %s001/%s'%(dirName + PHDISP_STATIC_NAME, VASP_RUN_XML_NAME))
-            phForce_output = subprocess.run('phonopy -f %s001/%s'%(dirName + PHDISP_STATIC_NAME, VASP_RUN_XML_NAME), shell=True, capture_output=True, universal_newlines=True)
+            print('Running command to shell: phonopy -f %s001/%s -c %s'%(dirName + PHDISP_STATIC_NAME, VASP_RUN_XML_NAME, POSCAR_UNIT_NAME))
+            phForce_output = subprocess.run('phonopy -f %s001/%s -c %s'%(dirName + PHDISP_STATIC_NAME, VASP_RUN_XML_NAME, POSCAR_UNIT_NAME), shell=True, capture_output=True, universal_newlines=True)
             print(phForce_output.stdout)
         else:
             # We run a generator of force sets with phonopy on the shell
-            print('Running command to shell: phonopy -f %s{001..%s}/%s'%(dirName + PHDISP_STATIC_NAME, dispNum, VASP_RUN_XML_NAME))
-            phForce_output = subprocess.run('phonopy -f %s{001..%s}/%s'%(dirName + PHDISP_STATIC_NAME, dispNum, VASP_RUN_XML_NAME), shell=True, capture_output=True, universal_newlines=True)
+            print('Running command to shell: phonopy -f %s{001..%s}/%s -c %s'%(dirName + PHDISP_STATIC_NAME, dispNum, VASP_RUN_XML_NAME, POSCAR_UNIT_NAME))
+            phForce_output = subprocess.run('phonopy -f %s{001..%s}/%s -c %s'%(dirName + PHDISP_STATIC_NAME, dispNum, VASP_RUN_XML_NAME, POSCAR_UNIT_NAME), shell=True, capture_output=True, universal_newlines=True)
             print(phForce_output.stdout)
     except Exception as err:
         print(ERR_PH_FORCE_SETS)

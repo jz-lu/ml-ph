@@ -8,7 +8,7 @@ def cleanRelevantFiles():
     # Phonopy places all their files in the directory of this script. 
         # We want it in phDir, so we scane for all files that are not .py scripts or related and move them over.
         allFiles = filesInDir(THIS_DIR)
-        print('Calculations for phonopy complete. Cleaning batch directory %s ...'%(START_BATCH_PATH))
+        print('Calculations complete. Cleaning batch directory %s ...'%(START_BATCH_PATH))
         try:
             for i in allFiles:
                 # The directory storing this has nothing except readme, batch file, and scripts, so all other files are phonopy
