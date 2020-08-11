@@ -34,13 +34,16 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
     # Get the relevant objects for the next set of calculations
     chgcar = Chgcar.from_file(relaxation_dirName + CHGCAR_NAME) # Need to retrieve the last charge density to get good calculations
     poscar_relaxed = Poscar.from_file(relaxation_dirName + CONTCAR_NAME) # Get the relaxed positions from CONTCAR
-    relaxation_incar = unrelaxed_vaspObj['INCAR'] # For the inspective code reviewer: these are pymatgen's hard strings so no need to collect them
+    relaxation_incar_cp1 = unrelaxed_vaspObj['INCAR'] # For the inspective code reviewer: these are pymatgen's hard strings so no need to collect them
+    relaxation_incar_cp2 = unrelaxed_vaspObj['INCAR'] # copy for pass-by-reference of scf and nonscf modifications below
     potcar = buildPotcar(outDirName, poscar_relaxed) # outdirname is irrelevant here
     
     # Incar changes for various calculations
-    incar_selfcon = getSelfConNoRelIncar(relaxation_incar)
+    incar_selfcon = getSelfConNoRelIncar(relaxation_incar_cp1)
+    print('[DEBUGMSG] after1 relaxation_incar:', relaxation_incar)
     print('[DEBUGMSG] Incar selfcon:', incar_selfcon)
-    incar_nonselfcon = getNonSelfConNoRelIncar(relaxation_incar)
+    incar_nonselfcon = getNonSelfConNoRelIncar(relaxation_incar_cp2)
+    print('[DEBUGMSG] after relaxation_incar cp2:', relaxation_incar_cp2)
     print('[DEBUGMSG] Incar non selfcon:', incar_nonselfcon)
     print('[DEBUGMSG] Incar selfcon (again):', incar_selfcon)
     
@@ -77,7 +80,8 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
             DIR_ELEDOS_RESULTS = checkPath(DIR_ELEDOS + OUTPUT_DIR_NAME)
 
             # In addition to self-consistent calculation, we need to also add on the NEDOS parameter to sample the space for eledos
-            incar_eledos = modifyIncar(incar_selfcon, addArr=[('NEDOS', NEDOS)])
+            incar_eledos = incar_selfcon
+            incar_eledos = modifyIncar(incar_eledos, addArr=[('NEDOS', NEDOS)])
 
             # We will need the standard VASP IO Object plus CHGCAR.
             eledos_vasp_obj = VaspInput(incar_eledos, kpoints_mesh_nonrelax, poscar_relaxed, potcar)
