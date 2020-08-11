@@ -17,6 +17,8 @@ from __get_eledos_analysis import get_eledos_analysis
 from __get_eleband_analysis import get_eleband_analysis
 from __get_elecombined_analysis import get_elecombined_analysis
 
+from __cleanup import cleanRelevantFiles
+
 from ___constants_vasp import NEDOS, ICHARG
 from ___constants_names import *
 from ___constants_misc import BAD_INPUT_ERR_MSG, GENERAL_ERR_USAGE_MSG
@@ -148,6 +150,9 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
         print('Preparing a combined electron DOS and band structure plot...')
         mkdir(COMBINED_ELE_OUTPUTS_NAME, outDirName)
         combined_plot = get_elecombined_analysis(outDirName + COMBINED_ELE_OUTPUTS_NAME, eledos_obj, eleband_obj)
+    
+    # When it's all said and done, clean all the files written to the starter batch file directory
+    cleanRelevantFiles()
     
     print(PRGM_END_CARD)
 

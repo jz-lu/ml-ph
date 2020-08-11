@@ -5,7 +5,7 @@ from __dirModifications import move, copy, rm, mkdir
 from __directory_searchers import checkPath, findFilesInDir, filesInDir
 from __run_vasp import run_vasp
 from __input_modifiers import modifyIncar
-from __ph_movers import moveRelevantFiles, cleanRelevantFiles
+from __ph_movers import moveRelevantFiles
 
 from ___constants_phonopy import *
 from ___constants_names import *
@@ -136,9 +136,6 @@ def ph_prepare_for_analysis(rootDirName, incar_selfcon, kpoints_mesh_nonrelax, p
     
     # Generate force sets file
     ph_generate_forcesets(DIR_PHONOPY, lastDispNum)
-
-    # Cleanup files from batch directory
-    cleanRelevantFiles()
 
     return DIR_PHONOPY
 
