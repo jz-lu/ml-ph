@@ -156,11 +156,12 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
 
             
     # Parse the full plot if there is one
-    if (eleband_obj != None) and (eledos_obj != None):
-        print('Both electronic DOS and band structure calculated, combined plot available.')
-        print('Preparing a combined electron DOS and band structure plot...')
-        mkdir(COMBINED_ELE_OUTPUTS_NAME, outDirName)
-        combined_plot = get_elecombined_analysis(outDirName + COMBINED_ELE_OUTPUTS_NAME, eledos_obj, eleband_obj)
+    # NOTE: this doesn't really work as it turns out unless we project along the high symmetry lines of DOS which is probably unnecessary for now...
+    # if (eleband_obj != None) and (eledos_obj != None):
+    #     print('Both electronic DOS and band structure calculated, combined plot available.')
+    #     print('Preparing a combined electron DOS and band structure plot...')
+    #     mkdir(COMBINED_ELE_OUTPUTS_NAME, outDirName)
+    #     combined_plot = get_elecombined_analysis(outDirName + COMBINED_ELE_OUTPUTS_NAME, eledos_obj, eleband_obj)
     
     # When it's all said and done, clean all the files written to the starter batch file directory
     cleanRelevantFiles()
