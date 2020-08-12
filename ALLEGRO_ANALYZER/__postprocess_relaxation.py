@@ -20,7 +20,7 @@ from __get_elecombined_analysis import get_elecombined_analysis
 
 from __cleanup import cleanRelevantFiles
 
-from ___constants_vasp import NEDOS, ICHARG
+from ___constants_vasp import NEDOS, ICHARG, SIGMA, PHONOPY_GRID_DENSITY, PHONOPY_GRID_SHIFT
 from ___constants_names import *
 from ___constants_misc import BAD_INPUT_ERR_MSG, GENERAL_ERR_USAGE_MSG
 from ___constants_phonopy import POSCAR_UNIT_NAME
@@ -48,8 +48,11 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
     #print('[DEBUGMSG] incar non selfcon:', incar_nonselfcon)
     
     # Kpoints needs to be modified to have a denser sampling for nonrelaxation calculations -> more precision
-    kpoints_mesh_nonrelax = unrelaxed_vaspObj['KPOINTS']
+    kpoints_mesh_nonrelax = copy.deepcopy(unrelaxed_vaspObj['KPOINTS'])
     kpoints_mesh_nonrelax = modifyKpointsMesh(kpoints_mesh_nonrelax)
+    # For phonopy it might need to be a little denser but not necessarily as dense as dos
+    kpoints_mesh_ph = copy.deepcopy(unrelaxed_vaspObj['KPOINTS'])
+    kpoints_mesh_ph = modifyKpointsMesh(kpoints_mesh_ph, meshDensity=PHONOPY_GRID_DENSITY, totShift=PHONOPY_GRID_SHIFT)
 
     # Objects useful for plotting data
     eledos_obj = None
@@ -130,7 +133,8 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
                 # Returns the directory name that all phonopy calculations are stored in.
                 print('Preprocessing phonon analyses with phonopy displacements and VASP calculations...')
                 incar_ph = copy.deepcopy(incar_selfcon)
-                DIR_PHONOPY = ph_prepare_for_analysis(outDirName, incar_ph, kpoints_mesh_nonrelax, poscar_relaxed, potcar)
+                incar_ph = modifyIncar(incar_ph, addArr=[('SIGMA', SIGMA['narrow'])])
+                DIR_PHONOPY = ph_prepare_for_analysis(outDirName, incar_ph, kpoints_mesh_ph, poscar_relaxed, potcar)
                 DIR_PHONOPY = checkPath(DIR_PHONOPY)
                 print('Phonopy calculations subdirectory sent to postprocessor: %s'%(DIR_PHONOPY))
                 ph_has_preprocessed = True

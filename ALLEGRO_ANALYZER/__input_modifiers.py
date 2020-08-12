@@ -131,7 +131,8 @@ def removeAtomFromSite(atomName, dir_coords, poscarObj, outDir, writeOut=False, 
 def getSelfConNoRelIncar(incarObj):
     settings_to_add = [('ICHARG', ICHARG['no_relax_sc']), 
                        ('IBRION', IBRION['no_relax']), 
-                       ('NSW', NSW['no_relax'])]
+                       ('NSW', NSW['no_relax']),
+                       ('SIGMA', SIGMA['wide'])]
     incarObj = modifyIncar(incarObj, settings_to_add)
     return incarObj
 
