@@ -16,6 +16,7 @@ def last_N_lines(fname, N):
 
 # Uses last_N_lines to check convergence of file
 def check_if_not_converged(dirName, fileName):
+    print('Now checking for convergence...')
     dirName = checkPath(dirName)
     filePath = dirName + fileName
 

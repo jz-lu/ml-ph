@@ -48,8 +48,12 @@ def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax'):
         # Run vasp and check convergence
         vaspObj.run_vasp(run_dir=dirName, vasp_cmd=[BATCH_FILE_PATH], output_file=outfile_name, err_file=errfile_name)
         not_converged = check_if_not_converged(dirName, outfile_name)
+        if not not_converged:
+            print('Relaxation has converged.')
 
         while not_converged:
+            print('Relaxation has not converged. Proceeding to rerun relaxation with updated ionic positions...')
+            print('Loop counter: ' + str(loopCounter))
             loopCounter += 1
             # Loop counter and exit function
             if loopCounter > VASP_MAX_CONVERGENCE_ATTEMPTS:
@@ -57,9 +61,13 @@ def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax'):
             
             new_poscar = Poscar.from_file(dirName + CONTCAR_NAME)
             vaspObj['POSCAR'] = new_poscar # Update POSCAR to be the new CONTCAR
+            print('CONTCAR copied to POSCAR. Rerunning relaxation...')
             # No need to delete anything, the files will be overwritten. Just start the calculation.
             vaspObj.run_vasp(run_dir=dirName, vasp_cmd=[BATCH_FILE_PATH], output_file=outfile_name, err_file=errfile_name)
+            print('Run complete.')
             not_converged = check_if_not_converged(dirName, outfile_name)
+            if not not_converged:
+                print('Relaxation has converged.')
     
     # Check the most obvious error in the run automatically
     if os.stat(dirName + outfile_name).st_size < VASP_OUTFILE_LEN_THRESHOLD:
