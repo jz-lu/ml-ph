@@ -12,6 +12,7 @@ ERR_NO_POTCAR = 'No potentials found for atom given. Check potential list direct
 ERR_INVALID_FINDDIR_PARAM = 'Error: invalid specification for type of search (searchType) in calling filesInDir.'
 
 ERR_VASP_RUN_RELAX = 'Error running Vasp in relaxation:'
+ERR_VASP_NOT_CONVERGED = 'Error in running Vasp relaxation. Too many attempts made to converge relaxation, all failed. Check results of calculation for details.'
 BAD_INPUT_ERR_MSG = 'Error: invalid command line arguments.'
 ERR_BAD_KPOINTS_MODIFY_INPUT = 'Error: to modify KPOINTS file or Kpoints object you must choose samplingType as line or mesh.'
 ERR_ENER_WRITE_FAIL = 'Failed to write out the energies to the specified root directory.'
