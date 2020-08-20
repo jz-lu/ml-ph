@@ -10,7 +10,7 @@
 module list
 
 source activate $HOME/anaconda_env
-STR="codes/ml-ph/testfiles/AAGr1/"
+STR="codes/ml-ph/testfiles/AAGr2/"
 ALLEGRO_DIR="/n/home04/jzlu/codes/ml-ph/ALLEGRO_ANALYZER"
 echo "...It's alive!! Batch file starting."
 python3 $ALLEGRO_DIR/start.py ~/$STR F Gamma eleband eledos energies phband phdos
