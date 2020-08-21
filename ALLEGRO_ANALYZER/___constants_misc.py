@@ -3,10 +3,12 @@
 unique_str = 'aUniqueStringThatIsVeryUnlikelyToBeReproducedRandomly_q345234572345'
 
 # Error Messages
-GENERAL_ERR_USAGE_MSG = 'Usage: python3 main.py <I/O DIRECTORY> <vdW T/F> <GAMMA or MP> <arg1> <arg2> .... Specify at least one arg (eledos, eleband, phdos, phband, energies).'
+GENERAL_ERR_USAGE_MSG = 'Usage: python3 main.py <typeFlag: 0 for single, 1 for config> <I/O DIRECTORY> <vdW T/F> <GAMMA or MP> <arg1> <arg2> .... Specify at least one arg (eledos, eleband, phdos, phband, energies).'
+ERR_BAD_TYPE_FLAG = 'Type flag not correctly specified. Select 0 for normal calculation and 1 for configuration space sampling.'
 ERR_BAD_INPUT_DIR = 'Root I/O directory invalid. Check first command-line argument.'
 ERR_BAD_DIR = 'Invalid directories.'
 ERR_INVALID_VDW_FLAG = 'Invalid specification for van der Waals forces. Specify T or F in command line args.'
+ERR_NO_INPUT = 'Input not imported properly to handler class. No initialization done in instance of InputData class. Check code workflow.'
 ERR_NO_POSCAR = 'Error: POSCAR required for input either invalid or not found.'
 ERR_NO_POTCAR = 'No potentials found for atom given. Check potential list directory and verify POSCAR is correct.'
 ERR_INVALID_FINDDIR_PARAM = 'Error: invalid specification for type of search (searchType) in calling filesInDir.'

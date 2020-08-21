@@ -149,7 +149,7 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
                 print('Conducting phonon total DOS analyses...')
                 # Call the DOS analysis with the relevant parameters
                 # NOTE: the poscar here is just for the atom names in the PUC so we don't need to do anything.
-                ph_get_dos(kpoints_mesh_nonrelax, poscar_relaxed, DIR_PHDOS, DIR_PHONOPY + POSCAR_UNIT_NAME)
+                ph_get_dos(kpoints_mesh_ph, poscar_relaxed, DIR_PHDOS, DIR_PHONOPY + POSCAR_UNIT_NAME)
             
             elif i == PHBAND:
                 print('Now running phononic band structure calculations.')

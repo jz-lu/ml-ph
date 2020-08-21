@@ -5,6 +5,7 @@ from ___constants_misc import *
 
 from __directory_searchers import checkPath
 
+
 def mkdir(dirName, currPath):
     if currPath[-1] != '/':
         currPath += '/'
