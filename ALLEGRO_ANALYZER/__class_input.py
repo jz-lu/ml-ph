@@ -13,7 +13,7 @@ class InputData:
 
     def __init__(self, cmdline_arg_tuple): # cmdline_arg_tuple being an immutable tuple of sys.argv
         cmdline_arg_tuple = tuple(cmdline_arg_tuple)
-        if (len(cmdline_arg_tuple) < 5) or (len(cmdline_arg_tuple) > 9):
+        if (len(cmdline_arg_tuple) < 6) or (len(cmdline_arg_tuple) > 10):
             exit_with_error(GENERAL_ERR_USAGE_MSG) # Need at least one calculation in addition to settings
         self.cmdargs = cmdline_arg_tuple
         print('Command line arguments initiated in InputData class constructor. Arguments: ', self.cmdargs)
@@ -22,10 +22,14 @@ class InputData:
         except ValueError as err:
             print('Error:', err)
             exit_with_error(ERR_BAD_TYPE_FLAG)
-        self.ROOT = cmdline_arg_tuple[1]
-        self.do_vdW = cmdline_arg_tuple[2]
-        self.kpoints_is_gamma_centered = cmdline_arg_tuple[3]
-        self.calculation_list = tuple(dict.fromkeys(cmdline_arg_tuple[4:])) # Filter duplicates in calculation flag list
+        self.__interlayer_distance = cmdline_arg_tuple[1]
+        if self.__interlayer_distance <= 0:
+            exit_with_error('Interlayer distance invalid.')
+
+        self.ROOT = cmdline_arg_tuple[2]
+        self.do_vdW = cmdline_arg_tuple[3]
+        self.kpoints_is_gamma_centered = cmdline_arg_tuple[4]
+        self.calculation_list = tuple(dict.fromkeys(cmdline_arg_tuple[5:])) # Filter duplicates in calculation flag list
         self.input_imported = True
         self.__check_input_style()
         self.__parse_calculation_input()
@@ -119,6 +123,8 @@ class InputData:
     def get_calculation_list(self):
         return self.calculation_list
 
+    def get_interlayer_distance(self):
+        return self.__interlayer_distance
 
 
 

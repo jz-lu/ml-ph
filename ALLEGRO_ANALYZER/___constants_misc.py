@@ -2,6 +2,13 @@
 
 unique_str = 'aUniqueStringThatIsVeryUnlikelyToBeReproducedRandomly_q345234572345'
 
+# Any configuration space errors
+ERR_INCONSISTENT_NORMS = 'Inconsistent norms of in-plane lattice vectors for one of the input POSCARS'
+ERR_INCONSISTENT_LATTICES = 'Error: set of lattice vectors are not identical to the first lattice vector, up to lattice constant.'
+ERR_ATOMS_OUT_OF_PLANE = 'Error: all input POSCARs must have atoms zeroed wrt the out-of-plane (3rd basis) vector. \n\n\tFound problem (first occurrence) in POSCAR file %d on atom %d.\n\n'
+ERR_WRONG_ZVEC = 'Error: at least one lattice z-vector (i.e. 3rd basis vector) is inconsistent with constant fixed length %f.'
+ERR_INVALID_GRID = 'Error: invalid grid. Usage: (a, b, 1). Note 1 since only 2D materials are supported.'
+
 # Error Messages
 GENERAL_ERR_USAGE_MSG = 'Usage: python3 main.py <typeFlag: 0 for single, 1 for config> <I/O DIRECTORY> <vdW T/F> <GAMMA or MP> <arg1> <arg2> .... Specify at least one arg (eledos, eleband, phdos, phband, energies).'
 ERR_BAD_TYPE_FLAG = 'Type flag not correctly specified. Select 0 for normal calculation and 1 for configuration space sampling.'

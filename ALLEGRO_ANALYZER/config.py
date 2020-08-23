@@ -14,7 +14,7 @@ import multiprocessing as mp
 print_start_msg()
 
 # Import and check the command line arguments. 
-# First flag indicates the type of operation we are doing
+# First flag indicates the type of operation we are doing (0 for standard, int > 0 for configuration)
 # Second flag is just the directory where the input files are stored, we will make it the root of our calculations
 # Third flag is whether to do van der Waals forces (T/F) bool
 # The remaining flags need to say which calculations to do.

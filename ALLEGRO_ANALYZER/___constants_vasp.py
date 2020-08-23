@@ -1,6 +1,12 @@
 # All the constants and hard strings for vasp are here.
 # NOTE: all directory strings must end in '/'
 
+# POSCAR z-separation, increase if we add a lot more (>3) layers
+Z_LATTICE_SIZE = 25.0
+# Precision of POSCAR lattice and atoms, in number of decimal places
+POSCAR_PRECISION = 6
+POSCAR_PREC_COMP_THRESHOLD = 0.0001
+
 # Error checker for vasp.out
 VASP_OUTFILE_LEN_THRESHOLD = 1000
 VASP_MAX_CONVERGENCE_ATTEMPTS = 3 # Number of times we rerun the relaxation before we quit and say we failed to relax.
@@ -76,4 +82,5 @@ KPOINTS_LINE_HEX_STR = 'k-points along high symmetry lines\n50\nLine_mode\nRecip
 
 ## POSCAR
 FULL_RELAX_SELECTIVE_DYNAMICS_ARR = [True, True, True] # This is per-atom so you append this for every atom.
+NO_RELAX_SELECTIVE_DYNAMICS_ARR = [False, False, False] # Completely fix an atom
 LAYER_RELAX_SELECTIVE_DYNAMICS_ARR = [False, False, True] # Same deal as above, only fixes interlayer spacing.
