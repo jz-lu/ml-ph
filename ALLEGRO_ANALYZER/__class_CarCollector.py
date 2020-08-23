@@ -1,5 +1,5 @@
 from ____exit_with_error import exit_with_error
-from ___constants_names import POSCAR_UNIT_RELAXATION_NAME, POTCAR_NAME, KPOINTS_LINE_NAME, KPOINTS_MESH_NAME, INCAR_RELAXATION_NAME
+from ___constants_names import POSCAR_UNIT_RELAXATION_NAME, POTCAR_NAME, KPOINTS_LINE_NAME, KPOINTS_MESH_NAME, INCAR_RELAXATION_NAME, POSCAR_NAME, CONTCAR_NAME
 from ___constants_vasp import RELAXATION_GRID_DENSITY, RELAXATION_GRID_SHIFT, INCAR_RELAX_SETTINGS, INCAR_VDW_SETTINGS, POT_PMG_INIT_CMD
 from ___constants_misc import ERR_NO_POSCAR
 from __directory_searchers import checkPath
@@ -168,3 +168,23 @@ class CarCollector:
             return kpoints_line
         else:
             return None
+
+    # Get a poscar object from file
+    @staticmethod
+    def poscar_from_file(dirName):
+        return Poscar.from_file(checkPath(dirName) + POSCAR_NAME)
+
+    # Get the layer distance
+    @staticmethod
+    def get_interlayer_spacing(DIR_RELAXATION):
+        p = Poscar.from_file(checkPath(DIR_RELAXATION) + CONTCAR_NAME)
+        atoms_z_pos = []
+        atoms = p.structure.frac_coords
+
+        for i in atoms:
+            if i[2] > 0:
+                atoms_z_pos.append(round(i[2], 6))
+        atoms_z_pos = list(dict.fromkeys(atoms_z_pos))
+
+        interlayer_spacing = min(atoms_z_pos)
+        return interlayer_spacing

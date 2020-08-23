@@ -33,6 +33,8 @@ class InputData:
         self.input_imported = True
         self.__check_input_style()
         self.__parse_calculation_input()
+        if self.type_flag != 0:
+            self.calculation_list == [ENERGIES] # In config space all we want are the energies, for now. TODO add dynamical matrix stuff?
         print('Final calculation list:', self.calculation_list)
 
     def __check_import_status(self):
@@ -40,7 +42,7 @@ class InputData:
             exit_with_error(ERR_NO_INPUT)
 
     def __check_type_flag(self):
-        if self.type_flag != 0 and self.type_flag != 1:
+        if self.type_flag < 0:
             exit_with_error(ERR_BAD_TYPE_FLAG)
         print('Calculation type flag validated.')
 
@@ -118,6 +120,9 @@ class InputData:
             return True
         else:
             return False
+
+    def get_base_root_dir(self):
+        return self.ROOT
 
     # Get calculation list
     def get_calculation_list(self):

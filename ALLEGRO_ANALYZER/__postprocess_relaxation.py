@@ -24,6 +24,7 @@ from ___constants_vasp import NEDOS, ICHARG, SIGMA, PHONOPY_GRID_DENSITY, PHONOP
 from ___constants_names import *
 from ___constants_misc import BAD_INPUT_ERR_MSG, GENERAL_ERR_USAGE_MSG
 from ___constants_phonopy import POSCAR_UNIT_NAME
+import os
 
 
 # Process the command-line arguments
@@ -80,6 +81,9 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
             print('Now running electronic DOS calculations.')
             mkdir(i, outDirName) # Create a subfolder for the analysis
             DIR_ELEDOS = checkPath(outDirName + ELEDOS)
+
+            # os.chdir(DIR_ELEDOS) # Go to that working directory
+
             mkdir(OUTPUT_DIR_NAME, DIR_ELEDOS) # subsubfolder for result storage
             DIR_ELEDOS_RESULTS = checkPath(DIR_ELEDOS + OUTPUT_DIR_NAME)
 
@@ -106,6 +110,9 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
             print('Now running electronic band structure calculations.')
             mkdir(i, outDirName) # Create a subfolder for the analysis
             DIR_ELEBAND = checkPath(outDirName + ELEBAND)
+
+            # os.chdir(DIR_ELEBAND) # Go to that working directory
+
             mkdir(OUTPUT_DIR_NAME, DIR_ELEBAND) # subsubfolder for result storage
             DIR_ELEBAND_RESULTS = checkPath(DIR_ELEBAND + OUTPUT_DIR_NAME)
 
@@ -136,10 +143,12 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
                 incar_ph = modifyIncar(incar_ph, addArr=[('SIGMA', SIGMA['narrow'])])
                 DIR_PHONOPY = ph_prepare_for_analysis(outDirName, incar_ph, kpoints_mesh_ph, poscar_relaxed, potcar)
                 DIR_PHONOPY = checkPath(DIR_PHONOPY)
+                # os.chdir(DIR_PHONOPY) # Go to that working directory
                 print('Phonopy calculations subdirectory sent to postprocessor: %s'%(DIR_PHONOPY))
                 ph_has_preprocessed = True
             else:
                 print('Phonopy preprocessing already done. Proceeding directly to calculations...')
+                # os.chdir(DIR_PHONOPY) # Go to that working directory
 
             # Split into two analyses depending on whether band or dos
             if i == PHDOS:
@@ -169,8 +178,6 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
     #     combined_plot = get_elecombined_analysis(outDirName + COMBINED_ELE_OUTPUTS_NAME, eledos_obj, eleband_obj)
     
     # When it's all said and done, clean all the files written to the starter batch file directory
-    cleanRelevantFiles()
-    
-    print(PRGM_END_CARD)
+    cleanRelevantFiles(THIS_DIR)
 
     
