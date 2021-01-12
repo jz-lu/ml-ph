@@ -1,6 +1,7 @@
 from ____exit_with_error import exit_with_error
 from __class_input import InputData
 from __printers import print_start_msg, print_end_msg
+from ___constants_misc import GENERAL_ERR_USAGE_MSG
 from __begin_computation import begin_computation
 import copy, sys, os
 
@@ -18,13 +19,20 @@ start_time = print_start_msg()
 # Third flag is whether to do van der Waals forces (T/F) bool
 # The remaining flags need to say which calculations to do.
 cmdargs = tuple(copy.deepcopy(sys.argv))
+if '-f' in cmdargs:
+    ind = cmdargs.index('-f')
+    try:
+        with open(cmdargs[ind]) as f:
+            cmdargs = tuple(f.read().splitlines())
+    except:
+        exit_with_error()
 user_input_settings = InputData(cmdargs)
 os.chdir(user_input_settings.get_base_root_dir())
 
 bze_points = begin_computation(user_input_settings)
 if bze_points == None:
     print_end_msg(start_time)
-    sys.exit()
+    sys.exit(GENERAL_ERR_USAGE_MSG)
 
 # Analyze results of the bze calculations
 print_end_msg(start_time)

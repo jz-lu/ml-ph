@@ -34,7 +34,7 @@ class InputData:
         self.__check_input_style()
         self.__parse_calculation_input()
         if self.type_flag != 0:
-            self.calculation_list == [ENERGIES] # In config space all we want are the energies, for now. TODO add dynamical matrix stuff?
+            self.calculation_list = [ENERGIES] # In config space all we want are the energies, for now. TODO add dynamical matrix stuff?
         print('Final calculation list:', self.calculation_list)
 
     def __check_import_status(self):

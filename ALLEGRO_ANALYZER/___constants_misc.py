@@ -10,7 +10,7 @@ ERR_WRONG_ZVEC = 'Error: at least one lattice z-vector (i.e. 3rd basis vector) i
 ERR_INVALID_GRID = 'Error: invalid grid. Usage: (a, b, 1). Note 1 since only 2D materials are supported.'
 
 # Error Messages
-GENERAL_ERR_USAGE_MSG = 'Usage: python3 main.py <typeFlag: 0 for single, 1 for config> <I/O DIRECTORY> <vdW T/F> <GAMMA or MP> <arg1> <arg2> .... Specify at least one arg (eledos, eleband, phdos, phband, energies).'
+GENERAL_ERR_USAGE_MSG = 'Usage: python3 start.py <typeFlag: 0 for single, 1 for config> <I/O DIRECTORY> <vdW T/F> <GAMMA or MP> <arg1> <arg2> .... Specify at least one arg (eledos, eleband, phdos, phband, energies).\n\n\t If using input file...\t Usage: "python3 start.py -f <filename>" where parameters are in the input file separated by a newline\n\n'
 ERR_BAD_TYPE_FLAG = 'Type flag not correctly specified. Select 0 for normal calculation and 1 for configuration space sampling.'
 ERR_BAD_INPUT_DIR = 'Root I/O directory invalid. Check first command-line argument.'
 ERR_BAD_DIR = 'Invalid directories.'

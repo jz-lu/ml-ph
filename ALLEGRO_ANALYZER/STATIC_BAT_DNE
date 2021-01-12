@@ -11,4 +11,4 @@ module list
 
 echo "...it's alive! Batch file starting..."
 mpirun -np $SLURM_NTASKS /n/kaxiras_lab/vasp/vasp.std
-echo "Bstch file complete."
+echo "Batch file complete."

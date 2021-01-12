@@ -8,6 +8,9 @@ PRGM_END_CARD = ' ____  __ _  ____ \n(  __)(  ( \\(    \\\n ) _) /    / ) D (\n(
 # NOTE: this should not change! A command line argument specifies where the root directory of the calculation is, so we never need to move this
 THIS_DIR = '/n/home04/jzlu/codes/ml-ph/start_job_batch/'
 
+# Default input specifications filename
+DEFAULT_INPUT_FILENAME = '/n/home04/jzlu/codes/ml-ph/inputfiles/input.txt'
+
 # Command line arguments in relaxation postprocessing
 ELEDOS = 'eledos'
 ELEBAND = 'eleband'

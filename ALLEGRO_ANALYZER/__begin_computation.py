@@ -10,7 +10,7 @@ import multiprocessing as mp
 def branch_and_compute(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
     BASE_ROOT = checkPath(BASE_ROOT)
     base_root_subpaths = []
-    print('Creating subdirectoriies to store VASP calculations for each configuration...')
+    print('Creating subdirectories to store VASP calculations for each configuration...')
     for i in range(len(configposcar_shift_tuple)):
         new_subdir_name = 'shift_%d'%(i+1)
         mkdir(new_subdir_name, BASE_ROOT)
