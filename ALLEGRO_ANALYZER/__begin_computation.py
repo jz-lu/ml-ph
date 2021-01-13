@@ -1,12 +1,14 @@
 from ___constants_config import GRID_SAMPLE_LOW, GRID_SAMPLE_HIGH
+from ___constants_misc import NUM_AVAILABLE_CORES
 from ___constants_vasp import Z_LATTICE_SIZE
 from __compute_properties import relax_solid
 from __class_input import InputData
 from __class_Configuration import Configuration
 from __directory_searchers import checkPath
 from __dirModifications import mkdir
-import multiprocessing as mp
+from multiprocessing import Pool
 
+# Multiprocess for each displacement, since they are completely independent.
 def branch_and_compute(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
     BASE_ROOT = checkPath(BASE_ROOT)
     base_root_subpaths = []
@@ -16,28 +18,29 @@ def branch_and_compute(BASE_ROOT, user_input_settings, configposcar_shift_tuple)
         mkdir(new_subdir_name, BASE_ROOT)
         base_root_subpaths.append(BASE_ROOT + new_subdir_name)
 
-    pool = mp.Pool(processes=len(configposcar_shift_tuple))
+    # Create a persistent pool of processors computing the core.
+    pool = Pool(NUM_AVAILABLE_CORES)
 
-    # NOTE: change to sync in testing if needed
+    # Run asynchronous isolated calculations for each displacement over the pool.
     print('Starting parallel computation of configurations.')
     bze_points = [pool.apply_async(relax_solid, args=(user_input_settings, 
                                                       configposcar_shift_tuple[i][1], 
                                                       configposcar_shift_tuple[i][0], 
-                                                      base_root_subpaths[i])) for i in range(len(configposcar_shift_tuple))]
+                                                      base_root_subpaths[i])).get() for i in range(len(configposcar_shift_tuple))]
 
     return bze_points
 
-# Build configuration sampling from user input
+# Build configuration sampling from user input.
 def begin_computation(user_input_settings):
     if user_input_settings.get_type_flag() == 0:
-        print('Set to run standard single computation. Results to be stored to base root directory')
+        print('Set to run standard single computation. Results to be stored to base root directory.')
         relax_solid(user_input_settings)
         return None
     else:
         print('Set to run parallel computations over grid sample in configuration space, defaulted to layer 1 (z = 0). Starting...')
         # Sample the grid here! Then pool them over to relax and run an iterator to get energy pairs for graphing
         # Num processes (in pool arg below) = number of grid points, i.e. (a, b, c) |-> a * b * c
-        grid_size = GRID_SAMPLE_LOW
+        grid_size = GRID_SAMPLE_LOW # NOTE: change to ..._HIGH for super-accurate calculations
         BASE_ROOT = user_input_settings.get_base_root_dir()
         init_interlayer_spacing = Z_LATTICE_SIZE
 

@@ -15,7 +15,6 @@ class Configuration:
 
         if poscars == None:
             poscars = self.import_init_poscars()
-        
         self.__poscars = tuple(poscars)
         print('POSCARs imported successfully. Parsing lattice information...')
 
@@ -120,7 +119,7 @@ class Configuration:
             num_nonfixed_atoms += p.structure.num_sites
             for _ in range(0, p.structure.num_sites):
                 at = p.structure.pop(0)
-                # We need to scale it, then shift it
+                # Scale it, then shift it
                 at.frac_coords = (at.frac_coords * lattice_scalers[i]) + shift # The z shift is wrong but we adjust it on the next line
                 
                 # Modulate everything by the torus, which is just 1 in every coordinate in the lattice basis
@@ -151,7 +150,7 @@ class Configuration:
         print('All shift poscar objects built.')
         return configposcar_shift_tuple
 
-    # Return a list of selective dynamics bool arrays for intrlayer relaxation
+    # Return a list of selective dynamics bool arrays for interlayer relaxation
     def __get_sd_matrix(self, num_fixed, num_nonfixed):
         sd_mat = []
         for _ in range(num_fixed):
@@ -176,12 +175,13 @@ class Configuration:
         return self.__poscars
         
     @staticmethod
-    def sample_grid(grid=GRID_SAMPLE_HIGH):
-        # Returns a list of numpy row-vectors, each of which is a shift
+    def sample_grid(grid=GRID_SAMPLE_LOW):
+        # Returns a list of numpy row-vectors, each of which is a shift (expressed in lattice basis).
 
         sample_coord_sets = [] # All the sampling coordinates that we will zip together
         sample_points = [] # All possible combinations of the points in sample_coord_sets, with size grid[0]*grid[1]*grid[2]
 
+        # Grid format validation.
         if len(grid) != 3 or grid[2] != 1:
             exit_with_error(ERR_INVALID_GRID)
 

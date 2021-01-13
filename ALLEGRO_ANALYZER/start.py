@@ -25,8 +25,11 @@ if '-f' in cmdargs:
         with open(cmdargs[ind]) as f:
             cmdargs = tuple(f.read().splitlines())
     except:
-        exit_with_error()
+        exit_with_error(GENERAL_ERR_USAGE_MSG)
+
 user_input_settings = InputData(cmdargs)
+
+# Move home directory to the selected one.
 os.chdir(user_input_settings.get_base_root_dir())
 
 bze_points = begin_computation(user_input_settings)

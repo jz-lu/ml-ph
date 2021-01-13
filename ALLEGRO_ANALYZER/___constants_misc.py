@@ -1,5 +1,8 @@
 # Any miscellaneous constants and hard strings go here
 
+# Number of available cores for muiltiprocessing
+NUM_AVAILABLE_CORES = 12
+
 unique_str = 'aUniqueStringThatIsVeryUnlikelyToBeReproducedRandomly_q345234572345'
 
 # Any configuration space errors
@@ -12,7 +15,8 @@ ERR_INVALID_GRID = 'Error: invalid grid. Usage: (a, b, 1). Note 1 since only 2D 
 # Error Messages
 GENERAL_ERR_USAGE_MSG = 'Usage: python3 start.py <typeFlag: 0 for single, 1 for config> <I/O DIRECTORY> <vdW T/F> <GAMMA or MP> <arg1> <arg2> .... Specify at least one arg (eledos, eleband, phdos, phband, energies).\n\n\t If using input file...\t Usage: "python3 start.py -f <filename>" where parameters are in the input file separated by a newline\n\n'
 ERR_BAD_TYPE_FLAG = 'Type flag not correctly specified. Select 0 for normal calculation and 1 for configuration space sampling.'
-ERR_BAD_INPUT_DIR = 'Root I/O directory invalid. Check first command-line argument.'
+ERR_BAD_INTERLAYER_DISTANCE = 'Interlayer distance invalid.'
+ERR_BAD_INPUT_DIR = 'Unable to find given root I/O directory: directory must exist and have input CAR files.'
 ERR_BAD_DIR = 'Invalid directories.'
 ERR_INVALID_VDW_FLAG = 'Invalid specification for van der Waals forces. Specify T or F in command line args.'
 ERR_NO_INPUT = 'Input not imported properly to handler class. No initialization done in instance of InputData class. Check code workflow.'

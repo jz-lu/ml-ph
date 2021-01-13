@@ -11,7 +11,7 @@ import os
 class InputData:
     input_imported = False
 
-    def __init__(self, cmdline_arg_tuple): # cmdline_arg_tuple being an immutable tuple of sys.argv
+    def __init__(self, cmdline_arg_tuple):
         cmdline_arg_tuple = tuple(cmdline_arg_tuple)
         if (len(cmdline_arg_tuple) < 6) or (len(cmdline_arg_tuple) > 10):
             exit_with_error(GENERAL_ERR_USAGE_MSG) # Need at least one calculation in addition to settings
@@ -24,7 +24,7 @@ class InputData:
             exit_with_error(ERR_BAD_TYPE_FLAG)
         self.__interlayer_distance = cmdline_arg_tuple[1]
         if self.__interlayer_distance <= 0:
-            exit_with_error('Interlayer distance invalid.')
+            exit_with_error(ERR_BAD_INTERLAYER_DISTANCE)
 
         self.ROOT = cmdline_arg_tuple[2]
         self.do_vdW = cmdline_arg_tuple[3]
@@ -37,10 +37,12 @@ class InputData:
             self.calculation_list = [ENERGIES] # In config space all we want are the energies, for now. TODO add dynamical matrix stuff?
         print('Final calculation list:', self.calculation_list)
 
+    # Confirm that the import is successful, exit otherwise
     def __check_import_status(self):
         if not self.input_imported:
             exit_with_error(ERR_NO_INPUT)
 
+    # <Validators>
     def __check_type_flag(self):
         if self.type_flag < 0:
             exit_with_error(ERR_BAD_TYPE_FLAG)
@@ -80,6 +82,7 @@ class InputData:
         self.__check_vdW_settings()
         self.__check_kpoints_style()
     
+    # <Validators/>
     # Parse the input calculations and extract the energy calculation if there is one
     def __parse_calculation_input(self):
         print('Parsing list of calculations to perform...')

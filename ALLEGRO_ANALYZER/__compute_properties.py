@@ -1,11 +1,5 @@
-import sys, os, copy
-from pymatgen.io.vasp.inputs import Kpoints, Poscar, VaspInput
-from pymatgen.io.vasp.outputs import Outcar
-
 from ____exit_with_error import exit_with_error
-
 from ___constants_names import RELAXATION_DIR_NAME, ANALYSIS_DIR_NAME, CONTCAR_NAME
-
 from __directory_searchers import checkPath
 from __dirModifications import mkdir
 from __build_inputs import buildInitialInputs
@@ -13,8 +7,12 @@ from __run_vasp import run_vasp
 from __get_energy_analysis import get_energies
 from __postprocess_relaxation import postProcess_relaxation
 from __class_CarCollector import CarCollector
+import sys, os, copy
+from pymatgen.io.vasp.inputs import Kpoints, Poscar, VaspInput
+from pymatgen.io.vasp.outputs import Outcar
 
 def relax_solid(user_input_settings, poscar=None, shift=None, user_inputted_root=None):
+    # Get the right directory to import the relevant files.
     ROOT = user_input_settings.get_base_root_dir()
     if user_inputted_root != None:
         ROOT = user_inputted_root
@@ -28,6 +26,8 @@ def relax_solid(user_input_settings, poscar=None, shift=None, user_inputted_root
     # The only thing we need to check besides poscar validity (code will handle other input files if none are given
     # is the existence of a line kpoints file if we want an electronic band structure calculation
     kpoints_line = CarCollector.get_line_kpoints(ROOT, user_input_settings.need_line_kpoints())
+
+    output_ROOT = 
 
     # We want to run the relaxation on a separate subfolder, so everything is organized
     mkdir(RELAXATION_DIR_NAME, ROOT)
