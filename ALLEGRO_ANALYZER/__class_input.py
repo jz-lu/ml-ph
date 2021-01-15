@@ -1,10 +1,7 @@
 from ____exit_with_error import exit_with_error
-
 from ___constants_misc import *
 from ___constants_names import CMD_LINE_ARG_LIST, ENERGIES, ELEBAND, PHBAND
-
 from __directory_searchers import checkPath
-
 import os
 
 # Since this is a simple parsing class, we'll dispense with the usually reasonable move of mangling member variables to simulate privacy.
@@ -34,7 +31,8 @@ class InputData:
         self.__check_input_style()
         self.__parse_calculation_input()
         if self.type_flag != 0:
-            self.calculation_list = [ENERGIES] # In config space all we want are the energies, for now. TODO add dynamical matrix stuff?
+            self.calculation_list = [ENERGIES] # In config space all we want are the energies, for now
+            # TODO add dynamical matrix stuff?
         print('Final calculation list:', self.calculation_list)
 
     # Confirm that the import is successful, exit otherwise

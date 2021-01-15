@@ -1,34 +1,60 @@
 from ____exit_with_error import exit_with_error
 from ___constants_config import *
 from ___constants_names import POSCAR_NAME, POSCAR_CONFIG_NAMEPRE
-from ___constants_misc import ERR_INCONSISTENT_NORMS, ERR_INCONSISTENT_LATTICES, ERR_WRONG_ZVEC, ERR_ATOMS_OUT_OF_PLANE, ERR_INVALID_GRID
+from ___constants_misc import *
 from ___constants_vasp import Z_LATTICE_SIZE, POSCAR_PRECISION, POSCAR_PREC_COMP_THRESHOLD, NO_RELAX_SELECTIVE_DYNAMICS_ARR, LAYER_RELAX_SELECTIVE_DYNAMICS_ARR
 from __directory_searchers import findFilesInDir, checkPath
-from pymatgen.io.vasp.inputs import Poscar
-import numpy as np
+from pymatgen.io.vasp.inputs import Poscar # pylint: disable=import-error
+import numpy as np # pylint: disable=import-error 
 import copy
 
+# Class Configuration
+#    Stores the POSCAR and shift information for each displacement sampling.
+#    Executes the strain-shift algorithm to prepare the composite layered material for relaxation.
+
 class Configuration:
-    def __init__(self, BASE_ROOT, poscars=None): # poscars is a list of poscar objects imported with pmg
+    # Import the POSCARs and check validity 
+    def __init__(self, BASE_ROOT, poscars=None): # poscars: list of poscar objects imported with pmg
         print('Configuration class instantiated. Initiating input files...')
         self.BASE_ROOT = checkPath(BASE_ROOT)
 
+        # Import the given poscars if none are specified.
         if poscars == None:
             poscars = self.import_init_poscars()
         self.__poscars = tuple(poscars)
         print('POSCARs imported successfully. Parsing lattice information...')
 
-        # Get all the lattice information stored in self instance, and check validity of input
+        # Get all the lattice information stored in self instance, and check validity of input.
+        # self.__lattices: list of matrices of lattice basis vectors, each matrix for a POSCAR.
         self.__get_lattices()
-        self.__check_lattice_consistency
-        self.__get_lattice_constants()
         self.__get_normed_fixed_lattice()
+        self.__get_lattice_constants()
+        self.__check_lattice_consistency()
         self.__check_poscar_atoms()
         print('All basic consistency checks and verifications complete. Configuration object constructed.')
 
+    # Import all the initial POSCARs and return them in a list of pmg poscar objects.
+    def import_init_poscars(self):
+        poscar_names = findFilesInDir(self.BASE_ROOT, POSCAR_CONFIG_NAMEPRE, searchType='start')
+
+        # The input format for POSCARs in config sampling is 1 POSCAR per layer, minimum 2 layers.
+        if len(poscar_names) <= 1:
+            exit_with_error(ERR_BAD_CONFIG_POSCAR)
+        
+        poscars = []
+        for i in poscar_names:
+            poscars.append(Poscar.from_file(self.BASE_ROOT + i))
+        return poscars
+
+    # Method to get the poscars safely.
+    def get_init_poscars(self):
+        return self.__poscars
+
+    # For each imported POSCAR (corr. to each layer of the solid), get the lattice matrix, 
+    # i.e. the 3 possibly un-normalized basis vectors concatenated into a column matrix.
     def __get_lattices(self):
         print('Extracting set of lattices from POSCARs...')
-        # Get lattice matrices in an array
+        # Get lattice matrices in an array.
         self.__lattices = []
         for i in self.__poscars:
             p_dict = i.as_dict()
@@ -37,7 +63,8 @@ class Configuration:
         np.set_printoptions(precision=POSCAR_PRECISION)
         print('Lattices extracted. Ordered list:\n', self.__lattices)
         return self.__lattices
-    
+
+    # Extract the lattice constant of the POSCARs for straining.
     def __get_lattice_constants(self):
         print('Extracting set of lattice constants from lattices...')
         self.__lattice_constants = []
@@ -50,41 +77,35 @@ class Configuration:
         print('Lattice constants extracted. Ordered list:\n', self.__lattice_constants)
         return self.__lattice_constants
 
+    # Get the normalized lattice matrix for the fixed (i.e. first) layer.
     def __get_normed_fixed_lattice(self):
         print('Retrieving normalized lattice basis of the fixed layer...')
         lattice = copy.deepcopy(self.__lattices[0])
-        diff = np.lingalg.norm(lattice[0]) - np.lingalg.norm(lattice[1])
+        # Check that the in-plane lattice vectors have the same norm, otherwise everything is scaled wrong.
+        diff = np.linalg.norm(lattice[0]) - np.linalg.norm(lattice[1]) 
         if diff != 0:
-            print('Warning: precision of lattices in the fixed layer may not be sufficiently good for phonon calculations. Ensure all lattices and sublattices are of the same significant figures.')
+            print(WARN_LOW_INPLANE_PREC%(diff))
         if diff > POSCAR_PREC_COMP_THRESHOLD:
             print('Error in finding the normed fixed lattice matrix. In-plane lattice vectors have inconsistent norms.')
             exit_with_error(ERR_INCONSISTENT_NORMS)
-        if lattice[2][2] != Z_LATTICE_SIZE:
-            exit_with_error(ERR_WRONG_ZVEC%(Z_LATTICE_SIZE))
-        norm = np.lingalg.norm(lattice[0])
+        if lattice[2][2] != Z_LATTICE_SIZE: # Ensure that Z-plane lattice size is consistent with code's
+            lattice[2][2] = Z_LATTICE_SIZE
+            # exit_with_error(ERR_WRONG_ZVEC%(Z_LATTICE_SIZE))
+        norm = np.linalg.norm(lattice[0])
         lattice[0] = lattice[0] / norm
         lattice[1] = lattice[1] / norm
         self.__normed_fixed_lattice = lattice
         print('Retrieval complete.')
         return lattice
 
-    def __check_poscar_atoms(self):
-        print('Checking validity of atomic sublattice sites in POSCARs...')
-        for i in range(0, self.__poscars):
-            mat = self.__poscars[i].structure.frac_coords
-            for j in range(len(mat)):
-                if mat[j][2] != mat[0][2]:
-                    exit_with_error(ERR_ATOMS_OUT_OF_PLANE%(i+1, j+1))
-        print('Atoms validated.')
-
+    # Check if all the lattices are the same when they are normalized. If they are not, then
+    # return error as strain-shift only works for layers of the same normalized lattice vectors.
     def __check_lattice_consistency(self):
-        # Check if all the lattices are the same when they are normalized.
-        # If they are not then our strain-shift map into b-space fails and we return error.
-        # NOTE: depends on __get_normed_fixed_lattice()
-        print('Verifying consistency of lattices (i.e. lattices identical up to constant multiples)...')
-        for i in range(len(self.__lattices)):
-            for j in range(0, 2):
-                normed_vec = (self.__lattices[i][j] / np.linalg.norm(i[j]))
+        print('Verifying consistency of lattices (lattices must be identical up to constant multiples)...')
+        # Loop over each lattice vector and check that they are the same as the fixed lattice vectors.
+        for i in self.__lattices:
+            for j in range(2):
+                normed_vec = (i[j] / np.linalg.norm(i[j])) # Normalize
                 abs_diff = np.linalg.norm(normed_vec - self.__normed_fixed_lattice[j])
                 if abs_diff != 0:
                     print('Norm difference between fixed lattice and lattice vector %d of layer %d: %f'%(j+1, i+1, abs_diff))
@@ -96,6 +117,17 @@ class Configuration:
         print('Lattice consistency verified.')
         return True
 
+    # Check that the atoms in the same layer are coplanar.
+    def __check_poscar_atoms(self):
+        print('Checking coplanarity of atomic sublattice sites in POSCARs...')
+        for i in range(self.__poscars):
+            mat = self.__poscars[i].structure.frac_coords
+            for j in range(len(mat)):
+                if mat[j][2] != mat[0][2]:
+                    exit_with_error(ERR_ATOMS_OUT_OF_PLANE%(i+1, j+1))
+        print('Atomic coplanarity validated.')
+
+    # For each shift, construct a single POSCAR input file containing all the validated layers. 
     def build_config_poscar(self, shift, init_interlayer_spacing):
         print('Building configuration POSCAR for sampling shift {}'.format(str(shift)))
         # Apply strain using the constant scalers array
@@ -158,26 +190,10 @@ class Configuration:
         for _ in range(num_nonfixed):
             sd_mat.append(LAYER_RELAX_SELECTIVE_DYNAMICS_ARR)
         return sd_mat
-
-    # Import all the initial POSCARs and return them in a list of pmg poscar objects
-    def import_init_poscars(self):
-        poscar_names = findFilesInDir(self.BASE_ROOT, POSCAR_CONFIG_NAMEPRE, searchType='start')
-        if len(poscar_names) <= 1:
-            exit_with_error('Error: at least 2 POSCAR files (layers) must be given for configuation space sampling.')
-        
-        poscars = []
-        for i in poscar_names:
-            poscars.append(Poscar.from_file(self.BASE_ROOT + i))
-
-        return poscars
-
-    def get_init_poscars(self):
-        return self.__poscars
         
     @staticmethod
+    # Returns a list of numpy row-vectors, each of which is a shift (expressed in arbitrary lattice basis).
     def sample_grid(grid=GRID_SAMPLE_LOW):
-        # Returns a list of numpy row-vectors, each of which is a shift (expressed in lattice basis).
-
         sample_coord_sets = [] # All the sampling coordinates that we will zip together
         sample_points = [] # All possible combinations of the points in sample_coord_sets, with size grid[0]*grid[1]*grid[2]
 

@@ -13,19 +13,19 @@ import copy, sys, os
 
 start_time = print_start_msg()
 
-# Import and check the command line arguments. 
+# Import and check the command line arguments.
 # First flag indicates the type of operation we are doing (0 for standard, int > 0 for configuration)
 # Second flag is just the directory where the input files are stored, we will make it the root of our calculations
 # Third flag is whether to do van der Waals forces (T/F) bool
 # The remaining flags need to say which calculations to do.
 cmdargs = tuple(copy.deepcopy(sys.argv))
 if '-f' in cmdargs:
-    ind = cmdargs.index('-f')
+    filename = cmdargs[cmdargs.index('-f') + 1]
     try:
-        with open(cmdargs[ind]) as f:
+        with open(filename) as f:
             cmdargs = tuple(f.read().splitlines())
     except:
-        exit_with_error(GENERAL_ERR_USAGE_MSG)
+        exit_with_error(GENERAL_ERR_USAGE_MSG + "\n\n\t" + filename + "is not a valid file.\n\n")
 
 user_input_settings = InputData(cmdargs)
 
@@ -37,10 +37,10 @@ if bze_points == None:
     print_end_msg(start_time)
     sys.exit(GENERAL_ERR_USAGE_MSG)
 
-# Analyze results of the bze calculations
-print_end_msg(start_time)
-
+# Analyze results of the bze calculations.
 # TODO: result functions to plot e vs z, e vs b, z vs b. 
 # Recall bze_points is a list of tuples (b, z, e) which is easy to unzip and plot using Zoe's plotting method.
+
+print_end_msg(start_time)
 
 

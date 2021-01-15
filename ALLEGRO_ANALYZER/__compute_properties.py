@@ -27,8 +27,6 @@ def relax_solid(user_input_settings, poscar=None, shift=None, user_inputted_root
     # is the existence of a line kpoints file if we want an electronic band structure calculation
     kpoints_line = CarCollector.get_line_kpoints(ROOT, user_input_settings.need_line_kpoints())
 
-    output_ROOT = 
-
     # We want to run the relaxation on a separate subfolder, so everything is organized
     mkdir(RELAXATION_DIR_NAME, ROOT)
     DIR_RELAXATION = checkPath(ROOT + RELAXATION_DIR_NAME)

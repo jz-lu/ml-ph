@@ -1,12 +1,12 @@
 from ___constants_config import GRID_SAMPLE_LOW, GRID_SAMPLE_HIGH
 from ___constants_misc import NUM_AVAILABLE_CORES
 from ___constants_vasp import Z_LATTICE_SIZE
-from __compute_properties import relax_solid
 from __class_input import InputData
 from __class_Configuration import Configuration
 from __directory_searchers import checkPath
 from __dirModifications import mkdir
 from multiprocessing import Pool
+from __compute_properties import relax_solid
 
 # Multiprocess for each displacement, since they are completely independent.
 def branch_and_compute(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
@@ -18,8 +18,8 @@ def branch_and_compute(BASE_ROOT, user_input_settings, configposcar_shift_tuple)
         mkdir(new_subdir_name, BASE_ROOT)
         base_root_subpaths.append(BASE_ROOT + new_subdir_name)
 
-    # Create a persistent pool of processors computing the core.
-    pool = Pool(NUM_AVAILABLE_CORES)
+    # Create a persistent pool of processors computing the configuration forces.
+    pool = Pool(NUM_AVAILABLE_CORES) # Parallelize as much as possible.
 
     # Run asynchronous isolated calculations for each displacement over the pool.
     print('Starting parallel computation of configurations.')
@@ -49,6 +49,7 @@ def begin_computation(user_input_settings):
 
         configposcar_shift_tuple = config.build_config_poscar_set(sampling_set, init_interlayer_spacing)
 
+        # Multiprocess over the configurations
         bze_points = branch_and_compute(BASE_ROOT, user_input_settings, configposcar_shift_tuple)
         return bze_points
     
