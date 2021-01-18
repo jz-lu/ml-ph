@@ -14,7 +14,7 @@ from ___constants_vasp import *
 
 import subprocess
 import os
-from pymatgen.io.vasp.inputs import Poscar, VaspInput, Potcar 
+from pymatgen.io.vasp.inputs import Poscar, VaspInput, Potcar # pylint: disable=import-error
 
 # Function to handle all preprocessing of phonopy before the force calulation.
 def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name=POSCAR_UNIT_NAME):
@@ -22,6 +22,7 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
     dirName = checkPath(dirName)
 
     try:
+        os.chdir(dirName)
         CMD_GET_DISPLACEMENTS = ['phonopy', '-d', '--dim={}'.format(supercellDim), '-c', dirName + Poscar_unitcell_name] # -c flag to indicate to phonopy where unit cell POSCAR is
         print('Running "%s" to shell...'%(' '.join(CMD_GET_DISPLACEMENTS)))
         phStarterMsg = subprocess.run(CMD_GET_DISPLACEMENTS, capture_output=True, universal_newlines=True)
@@ -29,7 +30,7 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
 
         # Phonopy places all their files in the directory of this script. 
         # We want it in phDir, so we scane for all files that are not .py scripts or related and move them over.
-        moveRelevantFiles(dirName)
+        # moveRelevantFiles(dirName)
 
         # ...Except you need phonopy_disp.yaml in the current directory for FORCE_SETS. We'll clean it after it's generated.
         # copy(PH_DISP_YAML_NAME, dirName, THIS_DIR)
@@ -46,7 +47,7 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
 
     if numPoscars == 0:
         exit_with_error(PHONOPY_DISP_ERR_1)
-    elif numPoscars > 999: # Obviously this should never happen but I'm all about caution with error handling
+    elif numPoscars > 999:
         exit_with_error(PHONOPY_DISP_ERR_2)
     else:
         dispNum = '' # Initialize outside loop block so we can return it
@@ -98,7 +99,7 @@ def ph_generate_forcesets(dirName, dispNum):
         exit_with_error('Error: ' + str(err))
 
     # If force sets created then proceed, if not exit with error. Use find function to find out.
-    if not os.path.isfile(THIS_DIR + PH_FORCE_SETS_NAME):
+    if not os.path.isfile(dirName + PH_FORCE_SETS_NAME):
         exit_with_error(ERR_PH_FORCE_SETS_NOT_FOUND)
     
     # Move FORCE_SETS to the proper place

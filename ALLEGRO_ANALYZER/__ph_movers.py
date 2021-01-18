@@ -1,7 +1,5 @@
 from ____exit_with_error import exit_with_error
-
 from ___constants_names import THIS_DIR, START_BATCH_NAME, START_BATCH_PATH, BATCH_FILE_NAME, START_BATCH_OUTFILE_START, PH_DISP_YAML_NAME, PH_FORCE_SETS_NAME
-
 from __directory_searchers import filesInDir, checkPath
 from __dirModifications import move, rm
 

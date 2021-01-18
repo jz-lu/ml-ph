@@ -1,6 +1,7 @@
-from pymatgen.io.vasp.inputs import Kpoints, Poscar
+from pymatgen.io.vasp.inputs import Kpoints, Poscar # pylint: disable=import-error
 import subprocess
-import numpy as np
+import numpy as np # pylint: disable=import-error
+import os
 
 from ____exit_with_error import exit_with_error
 
@@ -148,7 +149,7 @@ def ph_get_dos(kpoints_mesh_obj, poscar_unitcell_obj, outDir, poscar_unit_path):
         exit_with_error('Error in DOS analysis and output: ' + str(err))
     
     # As with before, all files generated need to be moved to this directory, by default they are in the script directory THIS_DIR
-    moveRelevantFiles(outDir)
+    # moveRelevantFiles(outDir)
 
     return
 
