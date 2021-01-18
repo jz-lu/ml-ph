@@ -1,8 +1,9 @@
 # All the constants and hard strings for vasp are here.
 # NOTE: all directory strings must end in '/'
 
-# POSCAR z-separation, increase if we add a lot more (>3) layers
+# POSCAR z-basis vector magnitude, increase if we add a lot more (>3) layers
 Z_LATTICE_SIZE = 25.0
+Z_LAYER_SEP = 0.25 # Layer separation in terms of the z-basis vector
 # Precision of POSCAR lattice and atoms, in number of decimal places
 POSCAR_PRECISION = 6
 POSCAR_PREC_COMP_THRESHOLD = 0.0001

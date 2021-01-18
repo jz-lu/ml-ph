@@ -4,7 +4,7 @@ from ___constants_vasp import RELAXATION_GRID_DENSITY, RELAXATION_GRID_SHIFT, IN
 from ___constants_misc import ERR_NO_POSCAR
 from __directory_searchers import checkPath
 from __query_inputs import getInputName
-from pymatgen.io.vasp.inputs import Poscar, Kpoints, Potcar, Incar, VaspInput
+from pymatgen.io.vasp.inputs import Poscar, Kpoints, Potcar, Incar, VaspInput # pylint: disable=import-error
 import os
 
 # Not a typo, just a naming convention for "*CAR" of VASP I/O files.

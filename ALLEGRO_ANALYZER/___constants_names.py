@@ -1,8 +1,9 @@
 # Program details
 
-PRGM_COOL_NAME = '  __   __    __    ____  ___  ____   __         \n / _\\ (  )  (  )  (  __)/ __)(  _ \\ /  \\        \n/    \\/ (_/\\/ (_/\\ ) _)( (_ \\ )   /(  O )       \n\\_/\\_/\\____/\\____/(____)\\___/(__\\_) \\__/        \n  __   __ _   __   __    _  _  ____  ____  ____ \n / _\\ (  ( \\ / _\\ (  )  ( \\/ )(__  )(  __)(  _ \\\n/    \\/    //    \\/ (_/\\ )  /  / _/  ) _)  )   /\n\\_/\\_/\\_)__)\\_/\\_/\\____/(__/  (____)(____)(__\\_)'
+PRGM_COOL_NAME = '\n\n█▀▄▀█ █░░ ▄▄ █▀█ █░█ ▀   █▀ ▀█▀ ▄▀█ █▀█ ▀█▀ █ █▄░█ █▀▀\n█░▀░█ █▄▄ ░░ █▀▀ █▀█ ▄   ▄█ ░█░ █▀█ █▀▄ ░█░ █ █░▀█ █▄█\n\n'
 PRGM_VERSION = 1.0
-PRGM_END_CARD = ' ____  __ _  ____ \n(  __)(  ( \\(    \\\n ) _) /    / ) D (\n(____)\\_)__)(____/'
+PRGM_END_CARD = '\n\n█▀▄▀█ █░░ ▄▄ █▀█ █░█   █▀▀ ▀▄▀ █ ▀█▀ █ █▄░█ █▀▀\n█░▀░█ █▄▄ ░░ █▀▀ █▀█   ██▄ █░█ █ ░█░ █ █░▀█ █▄█\n\n'
+BACKUP_END_CARD = ' ____  __ _  ____ \n(  __)(  ( \\(    \\\n ) _) /    / ) D (\n(____)\\_)__)(____/'
 
 # Name of directory where this program is stored
 # NOTE: this should not change! A command line argument specifies where the root directory of the calculation is, so we never need to move this

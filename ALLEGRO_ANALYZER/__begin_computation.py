@@ -1,6 +1,6 @@
 from ___constants_config import GRID_SAMPLE_LOW, GRID_SAMPLE_HIGH
 from ___constants_misc import NUM_AVAILABLE_CORES
-from ___constants_vasp import Z_LATTICE_SIZE
+from ___constants_vasp import Z_LAYER_SEP
 from __class_input import InputData
 from __class_Configuration import Configuration
 from __directory_searchers import checkPath
@@ -42,7 +42,7 @@ def begin_computation(user_input_settings):
         # Num processes (in pool arg below) = number of grid points, i.e. (a, b, c) |-> a * b * c
         grid_size = GRID_SAMPLE_LOW # NOTE: change to ..._HIGH for super-accurate calculations
         BASE_ROOT = user_input_settings.get_base_root_dir()
-        init_interlayer_spacing = Z_LATTICE_SIZE
+        init_interlayer_spacing = Z_LAYER_SEP
 
         sampling_set = Configuration.sample_grid(grid=grid_size)
         config = Configuration(BASE_ROOT)

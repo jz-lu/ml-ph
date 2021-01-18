@@ -31,8 +31,8 @@ user_input_settings = InputData(cmdargs)
 
 # Move home directory to the selected one.
 os.chdir(user_input_settings.get_base_root_dir())
-
 bze_points = begin_computation(user_input_settings)
+
 if bze_points == None:
     print_end_msg(start_time)
     sys.exit(GENERAL_ERR_USAGE_MSG)

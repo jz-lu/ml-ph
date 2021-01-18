@@ -1,7 +1,5 @@
 import os, fnmatch
-
 from ____exit_with_error import exit_with_error
-
 from ___constants_misc import ERR_INVALID_FINDDIR_PARAM
 
 # Not currently used for anything.
@@ -27,27 +25,27 @@ def filesInDir(dirName):
 
 # Find all files in a directory. Specify type as 'start', 'end', or 'exact' to get search that starts with, ends with, or is exactly, fileName.
 def findFilesInDir(dirName, fileName, searchType='exact'):
-
     dirName = checkPath(dirName)
+    arr = []
     
     if searchType == 'exact':
         for f in os.listdir(dirName):
             if f == fileName:
-                return [f]
+                arr.append(f)
 
     elif searchType == 'start':
         arr = []
         for f in os.listdir(dirName):
             if f.startswith(fileName):
                 arr.append(f)
-        return arr
     
     elif searchType == 'end':
         arr = []
         for f in os.listdir(dirName):
             if f.endswith(fileName):
                 arr.append(f)
-        return arr
     
     else:
         exit_with_error(ERR_INVALID_FINDDIR_PARAM)
+
+    return arr.sort()

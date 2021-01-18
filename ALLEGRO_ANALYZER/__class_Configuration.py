@@ -22,10 +22,12 @@ class Configuration:
         if poscars == None:
             poscars = self.import_init_poscars()
         self.__poscars = tuple(poscars)
-        print('POSCARs imported successfully. Parsing lattice information...')
+        print('POSCARs imported successfully.')
+
 
         # Get all the lattice information stored in self instance, and check validity of input.
         # self.__lattices: list of matrices of lattice basis vectors, each matrix for a POSCAR.
+        print('Parsing lattice information...')
         self.__get_lattices()
         self.__get_normed_fixed_lattice()
         self.__get_lattice_constants()
@@ -34,11 +36,14 @@ class Configuration:
         print('All basic consistency checks and verifications complete. Configuration object constructed.')
 
     # Import all the initial POSCARs and return them in a list of pmg poscar objects.
+    # The input format for POSCARs in config sampling is 1 POSCAR per layer, minimum 2 layers.
     def import_init_poscars(self):
+        # Every POSCAR in the root directory is imported.
+        # NOTE: the fixed layer is the first one in alphabetic order
         poscar_names = findFilesInDir(self.BASE_ROOT, POSCAR_CONFIG_NAMEPRE, searchType='start')
+        print('Fixed layer set to POSCAR named ' + poscar_names[0])
 
-        # The input format for POSCARs in config sampling is 1 POSCAR per layer, minimum 2 layers.
-        if len(poscar_names) <= 1:
+        if len(poscar_names) < 2:
             exit_with_error(ERR_BAD_CONFIG_POSCAR)
         
         poscars = []
@@ -127,35 +132,48 @@ class Configuration:
                     exit_with_error(ERR_ATOMS_OUT_OF_PLANE%(i+1, j+1))
         print('Atomic coplanarity validated.')
 
-    # For each shift, construct a single POSCAR input file containing all the validated layers. 
+        # Return a list of selective dynamics bool arrays for interlayer relaxation
+    
+    # Return a SD indicator matrix constraining directions of relaxation.
+    def __get_sd_matrix(self, num_fixed, num_nonfixed):
+        # Interlayer relaxation allowed for all layers except the fixed layer.
+        sd_mat = []
+        for _ in range(num_fixed):
+            sd_mat.append(NO_RELAX_SELECTIVE_DYNAMICS_ARR)
+        for _ in range(num_nonfixed):
+            sd_mat.append(LAYER_RELAX_SELECTIVE_DYNAMICS_ARR)
+        return sd_mat
+
+    # For each shift, construct a single POSCAR input file containing all the validated layers,
+    # i.e. apply the strain-shift algorithm.
     def build_config_poscar(self, shift, init_interlayer_spacing):
         print('Building configuration POSCAR for sampling shift {}'.format(str(shift)))
         # Apply strain using the constant scalers array
         # Basically this is just scaling all the atoms in the other layers
         poscars = copy.deepcopy(self.__poscars) # So we don't delete everything in the class space
-        lattice_constants = tuple(self.__lattice_constants)
 
-        # We need to scale everything first (strain)
-        lattice_scalers = []
-        for i in range(0, len(lattice_constants)):
-            lattice_scalers.append(lattice_constants[0] / lattice_constants[i])
-        lattice_scalers = tuple(lattice_scalers) # no more modifying by accident
+        # We need to strain (scale) everything 
+        # so that it has the same lattice constant as the fixed layer.
+        # lattice_constants = tuple(self.__lattice_constants)
+        # lattice_scalers = []
+        # for i in range(0, len(lattice_constants)):
+        #     lattice_scalers.append(lattice_constants[0] / lattice_constants[i])
+        # lattice_scalers = tuple(lattice_scalers) # no more modifying by accident
 
-        num_nonfixed_atoms = 0 # Number of atoms we need to add to the first layer config space
         bspace_structure = copy.deepcopy(poscars[0].structure)
         num_fixed_atoms = bspace_structure.num_sites # Number of atoms in fixed layer, needed for SD below
+        num_nonfixed_atoms = 0 # Number of atoms we need to add to the first layer config space
 
         # Get a full structure object, except for SD, with strain-shift.
-        for i in range(1, len(poscars)):
+        for i in range(1, len(poscars)): # Don't modify the first (fixed) layer
             p = poscars[i]
             num_nonfixed_atoms += p.structure.num_sites
-            for _ in range(0, p.structure.num_sites):
+            n_at = p.structure.num_sites
+            for _ in range(n_at): # Loop through each atom per layer sublattice
                 at = p.structure.pop(0)
-                # Scale it, then shift it
-                at.frac_coords = (at.frac_coords * lattice_scalers[i]) + shift # The z shift is wrong but we adjust it on the next line
-                
-                # Modulate everything by the torus, which is just 1 in every coordinate in the lattice basis
-                at.frac_coords = at.frac_coords % 1 
+                # Shift it (no scaling is necessary since the lattice constant is already there!), 
+                # modulo the unit cell torus which is just 1 in every coordinate in the lattice basis
+                at.frac_coords = (at.frac_coords + shift) % 1
                 
                 # Since it is on a different layer we need to separate the layers in the z-coordinate
                 at.frac_coords[2] = i * init_interlayer_spacing
@@ -163,6 +181,7 @@ class Configuration:
                 # Push it into the fxed lattice poscar object, which will be the b-space poscar
                 bspace_structure.append(at.species, at.frac_coords)
             
+        # SD: interlayer relaxation allowed for every 
         sd_mat = self.__get_sd_matrix(num_fixed_atoms, num_nonfixed_atoms)
         
         # Created a new fixed poscar with selective dynamics adjusted
@@ -180,16 +199,7 @@ class Configuration:
 
         self.config_space_poscar_set = configposcar_shift_tuple
         print('All shift poscar objects built.')
-        return configposcar_shift_tuple
-
-    # Return a list of selective dynamics bool arrays for interlayer relaxation
-    def __get_sd_matrix(self, num_fixed, num_nonfixed):
-        sd_mat = []
-        for _ in range(num_fixed):
-            sd_mat.append(NO_RELAX_SELECTIVE_DYNAMICS_ARR)
-        for _ in range(num_nonfixed):
-            sd_mat.append(LAYER_RELAX_SELECTIVE_DYNAMICS_ARR)
-        return sd_mat
+        return tuple(configposcar_shift_tuple)
         
     @staticmethod
     # Returns a list of numpy row-vectors, each of which is a shift (expressed in arbitrary lattice basis).
@@ -198,15 +208,17 @@ class Configuration:
         sample_points = [] # All possible combinations of the points in sample_coord_sets, with size grid[0]*grid[1]*grid[2]
 
         # Grid format validation.
-        if len(grid) != 3 or grid[2] != 1:
+        if len(grid) != 3 or grid[2] != 1: # Only shift in dimensions 1 annd 2 out of 3
             exit_with_error(ERR_INVALID_GRID)
 
-        for i in range(0, len(grid)):
+        # Generate a set of shifts in each coordinate.
+        for i in range(len(grid)):
             temp = []
-            for sample_coord in range(0, grid[i]):
+            for sample_coord in range(grid[i]):
                 temp.append(round((sample_coord / float(grid[i])) + 0.00000001, 6))
             sample_coord_sets.append(temp)
         
+        # Construct a shift vector for every combination of the coordinate shifts.
         for i in sample_coord_sets[0]:
             for j in sample_coord_sets[1]:
                 for k in sample_coord_sets[2]:

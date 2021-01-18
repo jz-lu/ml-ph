@@ -8,8 +8,8 @@ from __get_energy_analysis import get_energies
 from __postprocess_relaxation import postProcess_relaxation
 from __class_CarCollector import CarCollector
 import sys, os, copy
-from pymatgen.io.vasp.inputs import Kpoints, Poscar, VaspInput
-from pymatgen.io.vasp.outputs import Outcar
+from pymatgen.io.vasp.inputs import Kpoints, Poscar, VaspInput # pylint: disable=import-error
+from pymatgen.io.vasp.outputs import Outcar # pylint: disable=import-error
 
 def relax_solid(user_input_settings, poscar=None, shift=None, user_inputted_root=None):
     # Get the right directory to import the relevant files.
