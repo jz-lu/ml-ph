@@ -1,4 +1,4 @@
-from pymatgen.io.vasp.outputs import Outcar
+from pymatgen.io.vasp.outputs import Outcar # pylint: disable=import-error
 from ____exit_with_error import exit_with_error
 from ___constants_names import TOT_ENERGIES_NAME, OUTCAR_NAME, TOTAL_ENER_DIR_NAME
 from __directory_searchers import checkPath

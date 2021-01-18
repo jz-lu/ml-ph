@@ -173,7 +173,8 @@ def ph_get_band(kpoints_line_obj, poscar_unitcell_obj, outDir, poscar_unit_path)
         exit_with_error('Error in phonon band analysis and output: ' + str(err))
     
     # As with before, all files generated need to be moved to this directory, by default they are in the script directory THIS_DIR
-    moveRelevantFiles(outDir)
+    if os.getcwd() != outDir:
+        moveRelevantFiles(outDir)
 
     return
 
@@ -181,5 +182,5 @@ def ph_get_band(kpoints_line_obj, poscar_unitcell_obj, outDir, poscar_unit_path)
 # k = Kpoints.from_file('LINE_KPOINTS')
 # kmesh = Kpoints.from_file('KPOINTS')
 # p = Poscar.from_file('POSCAR_unit')
-# # ph_get_dos(kmesh, p, '.', './POSCAR_unit')
+# ph_get_dos(kmesh, p, '.', './POSCAR_unit')
 # ph_get_band(k, p, '.', './POSCAR_unit')

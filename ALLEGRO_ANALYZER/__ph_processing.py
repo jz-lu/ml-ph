@@ -14,7 +14,7 @@ from ___constants_vasp import *
 
 import subprocess
 import os
-from pymatgen.io.vasp.inputs import Poscar, VaspInput, Potcar
+from pymatgen.io.vasp.inputs import Poscar, VaspInput, Potcar 
 
 # Function to handle all preprocessing of phonopy before the force calulation.
 def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name=POSCAR_UNIT_NAME):
@@ -102,8 +102,8 @@ def ph_generate_forcesets(dirName, dispNum):
         exit_with_error(ERR_PH_FORCE_SETS_NOT_FOUND)
     
     # Move FORCE_SETS to the proper place
-    copy(PH_FORCE_SETS_NAME, THIS_DIR, dirName)
-    print(PH_FORCE_SETS_NAME + ' successfully copied to ' + dirName + '. Phonopy postprocessing complete.')
+    # copy(PH_FORCE_SETS_NAME, THIS_DIR, dirName)
+    # print(PH_FORCE_SETS_NAME + ' successfully copied to ' + dirName + '. Phonopy postprocessing complete.')
 
     return 
     
@@ -113,7 +113,8 @@ def ph_prepare_for_analysis(rootDirName, incar_selfcon, kpoints_mesh_nonrelax, p
     rootDirName = checkPath(rootDirName)
     mkdir(PHONOPY_DIR_NAME, rootDirName)
     DIR_PHONOPY = checkPath(rootDirName + PHONOPY_DIR_NAME)
-    print('New subdirectory created to store phonopy calculations: %s'%(DIR_PHONOPY))
+    os.chdir(DIR_PHONOPY) # Move to the new directory
+    print('os.chdir() CALLED to cd to %s for storing phonopy calculations: %s'%(DIR_PHONOPY))
 
     # Write out the poscar into the phonopy directory we made, so we can use it for calling phonopy
     try:

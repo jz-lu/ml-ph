@@ -1,10 +1,9 @@
 import os
 import subprocess
-import matplotlib.pyplot as plt
-from pymatgen.io.vasp.inputs import Incar, Kpoints, Poscar, Potcar, VaspInput
-from pymatgen.io.vasp.outputs import Chgcar
-from pymatgen.core.structure import Structure
-
+import matplotlib.pyplot as plt # pylint: disable=import-error
+from pymatgen.io.vasp.inputs import Incar, Kpoints, Poscar, Potcar, VaspInput # pylint: disable=import-error 
+from pymatgen.io.vasp.outputs import Chgcar # pylint: disable=import-error
+from pymatgen.core.structure import Structure # pylint: disable=import-error
 from __build_inputs import buildPotcar
 from __input_modifiers import modifyIncar, modifyKpointsMesh, getSelfConNoRelIncar, getNonSelfConNoRelIncar # Input modifiers
 from __dirModifications import move, copy, mkdir, rm # Easy modules to the command line pipeline for basic linux commands
@@ -13,13 +12,10 @@ from __directory_searchers import checkPath
 from __run_vasp import run_vasp
 from __ph_processing import ph_prepare_for_analysis
 from __get_ph_analysis import ph_get_dos, ph_get_band
-
 from __get_eledos_analysis import get_eledos_analysis
 from __get_eleband_analysis import get_eleband_analysis
 from __get_elecombined_analysis import get_elecombined_analysis
-
 from __cleanup import cleanRelevantFiles
-
 from ___constants_vasp import NEDOS, ICHARG, SIGMA, PHONOPY_GRID_DENSITY, PHONOPY_GRID_SHIFT
 from ___constants_names import *
 from ___constants_misc import BAD_INPUT_ERR_MSG, GENERAL_ERR_USAGE_MSG
@@ -28,7 +24,6 @@ import os
 
 
 # Process the command-line arguments
-
 def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, calculation_list, kpoints_line): # vasp input object generated at beginning of relaxation
     print('Postprocessing VASP relaxation beginning...')
     outDirName = checkPath(outDirName)
@@ -134,7 +129,7 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
             eleband_obj = get_eleband_analysis(DIR_ELEBAND, DIR_ELEBAND_RESULTS, poscar_relaxed, extract_raw_data=True, extract_plot=True)
 
         else: 
-            # Only case left is that we have phonon calculations to do
+            # Only case left is that we have phonon calculations to do.
             # First no matter what we need to preprocess to get FORCE_SETS. 
             if not ph_has_preprocessed:
                 # Returns the directory name that all phonopy calculations are stored in.
@@ -143,18 +138,19 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
                 incar_ph = modifyIncar(incar_ph, addArr=[('SIGMA', SIGMA['narrow'])])
                 DIR_PHONOPY = ph_prepare_for_analysis(outDirName, incar_ph, kpoints_mesh_ph, poscar_relaxed, potcar)
                 DIR_PHONOPY = checkPath(DIR_PHONOPY)
-                # os.chdir(DIR_PHONOPY) # Go to that working directory
+                os.chdir(DIR_PHONOPY) # Go to that working directory
                 print('Phonopy calculations subdirectory sent to postprocessor: %s'%(DIR_PHONOPY))
                 ph_has_preprocessed = True
             else:
                 print('Phonopy preprocessing already done. Proceeding directly to calculations...')
-                # os.chdir(DIR_PHONOPY) # Go to that working directory
+                os.chdir(DIR_PHONOPY) # Go to that working directory
 
             # Split into two analyses depending on whether band or dos
             if i == PHDOS:
                 print('Now running phononic DOS calculations.')
                 mkdir(PHDOS, DIR_PHONOPY)
                 DIR_PHDOS = checkPath(DIR_PHONOPY + PHDOS)
+                os.chdir(DIR_PHONOPY) # Go to that working directory
                 print('Conducting phonon total DOS analyses...')
                 # Call the DOS analysis with the relevant parameters
                 # NOTE: the poscar here is just for the atom names in the PUC so we don't need to do anything.
@@ -168,14 +164,6 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
                 # NOTE: the poscar here is just for the atom names in the PUC so we don't need to do anything.
                 ph_get_band(kpoints_line, poscar_relaxed, DIR_PHBAND, DIR_PHONOPY + POSCAR_UNIT_NAME)
 
-            
-    # Parse the full plot if there is one
-    # NOTE: this doesn't really work as it turns out unless we project along the high symmetry lines of DOS which is probably unnecessary for now...
-    # if (eleband_obj != None) and (eledos_obj != None):
-    #     print('Both electronic DOS and band structure calculated, combined plot available.')
-    #     print('Preparing a combined electron DOS and band structure plot...')
-    #     mkdir(COMBINED_ELE_OUTPUTS_NAME, outDirName)
-    #     combined_plot = get_elecombined_analysis(outDirName + COMBINED_ELE_OUTPUTS_NAME, eledos_obj, eleband_obj)
     
     # When it's all said and done, clean all the files written to the starter batch file directory
     cleanRelevantFiles(THIS_DIR)
