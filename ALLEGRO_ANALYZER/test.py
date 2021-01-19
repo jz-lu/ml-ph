@@ -1,13 +1,15 @@
-from pymatgen.io.vasp.inputs import Poscar
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+from math import log
 
-p = Poscar.from_file('POSCAR')
-atoms_z_pos = []
-atoms = p.structure.frac_coords
+a = [i for i in range(100)]
+b = [i**2 for i in range(100)]
+c = [log(i+1, 2) for i in range(100)]
 
-for i in atoms:
-    if i[2] > 0:
-        atoms_z_pos.append(round(i[2], 6))
-atoms_z_pos = list(dict.fromkeys(atoms_z_pos))
+arr = np.array([a, b, c])
+arr = np.transpose(arr)
 
-interlayer_spacing = min(atoms_z_pos)
-return interlayer_spacing
+with open("foo.csv", 'wb') as f:
+    f.write(b"a, b, c\n")
+    np.savetxt("foo.csv", arr, delimiter=",")
