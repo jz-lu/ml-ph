@@ -22,11 +22,11 @@ class DataOutput:
     
     # Smoothly interpolate toal energy at various shifts.
     def plot_e_vs_b(self):
-        # TODO
+        pass # TODO
     
     # Smoothly interpolate interlayer spacing at various shifts.
     def plot_z_vs_b(self):
-        # TODO
+        pass # TODO
     
     # Evaluate energy vs. interlayer spacing over all of the shifts.
     def plot_e_vs_z(self):

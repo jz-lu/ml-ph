@@ -3,6 +3,7 @@ from __class_input import InputData
 from __printers import print_start_msg, print_end_msg
 from ___constants_misc import GENERAL_ERR_USAGE_MSG
 from __begin_computation import begin_computation
+from __class_DataOutput import DataOutput
 import copy, sys, os
 
 # TODO items:
@@ -36,6 +37,11 @@ bze_points = begin_computation(user_input_settings)
 if bze_points == None:
     print_end_msg(start_time)
     sys.exit(GENERAL_ERR_USAGE_MSG)
+
+data_dir = user_input_settings.get_base_root_dir() + "raw_data/"
+if not os.path.isdir(data_dir):
+    os.mkdir(data_dir)
+out = DataOutput()
 
 # Analyze results of the bze calculations.
 # TODO: result functions to plot e vs z, e vs b, z vs b. 
