@@ -5,6 +5,9 @@ _Documentation Notes_:
 1. This documentation regularly switches between the terminology of the "fixed" layer and the "first" layer (i.e. bottom layer). They both refer to the layer serving as the reference point for the configuration; this layer sets the standard of the lattice constant that all other layers will be strained to in the strain-shift algorithm. Since the choice of the fixed layer is arbitrary, we will always take it to be the first or bottommost layer.
 2. "Selective dynamics", which refers to a constraint on which directions (in terms of the lattice basis vector set) the VASP DFT calculator's relaxation protocol is allowed to relax the solid on, is shortened to "SD".
 
+## Overview
+The purpose, (blackbox style) functions, and sample calculations are found in the _docs_ folder.
+
 
 ## Instructions on calling the automated script
 You can run it directly or use a batch file to submit a job if you wish. The command-line calling, either way, should be of the form
