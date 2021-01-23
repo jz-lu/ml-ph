@@ -31,22 +31,21 @@ if '-f' in cmdargs:
 user_input_settings = InputData(cmdargs)
 
 # Move home directory to the selected one.
-os.chdir(user_input_settings.get_base_root_dir())
+data_dir = user_input_settings.get_base_root_dir() + "raw_data/"
+os.chdir(data_dir)
+print("Moved CWD to " + data_dir)
+sys.exit()
 bze_points = begin_computation(user_input_settings)
 
-if bze_points == None:
+if bze_points == None: # (b, z, e)
     print_end_msg(start_time)
     sys.exit(GENERAL_ERR_USAGE_MSG)
 
-data_dir = user_input_settings.get_base_root_dir() + "raw_data/"
 if not os.path.isdir(data_dir):
     os.mkdir(data_dir)
-out = DataOutput()
+out = DataOutput(data_dir, bze_points)
+out.output_all_analysis()
 
-# Analyze results of the bze calculations.
-# TODO: result functions to plot e vs z, e vs b, z vs b. 
-# Recall bze_points is a list of tuples (b, z, e) which is easy to unzip and plot using Zoe's plotting method.
-
+# Exit success
 print_end_msg(start_time)
-
 

@@ -2,30 +2,46 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from math import log
+import math
 from pymatgen.io.vasp.inputs import Poscar # pylint: disable=import-error
+import sys
+from random import uniform as unif
 
-a = [i for i in range(100)]
-b = [i**2 for i in range(100)]
-c = [log(i+1, 2) for i in range(100)]
+p = Poscar.from_file("POS_TEST")
+basis = p.as_dict()['structure']['lattice']['matrix'][:-1]
+cob = np.transpose([i[:-1] for i in basis])
+print("COB:", cob)
 
-p = Poscar.from_file("POSCAR")
-lattices = p.as_dict()['structure']['lattice']['matrix'][:-1]
-print(lattices)
+bset = np.arange(0, 3, 1)
+pts = []
 
-x = [0, lattices[0][0], lattices[0][0] + lattices[1][0], lattices[1][0]]
-y = [0, lattices[0][1], lattices[0][1] + lattices[1][1], lattices[1][1]]
-z = np.array([i*i+j*j for j in y for i in x])
-print(x)
-print(y)
-print(z)
+for i in bset:
+    for j in bset:
+        b = np.array([i, j])
+        print("DIRECT:", b)
+        c = list(np.dot(cob, b))
+        c.append(i+j)
+        print("CARTESIAN:", c)
+        pts.append(c)
 
-X, Y = np.meshgrid(x, y)
-Z = z.reshape(4, 4)
+X = np.array([i[0] for i in pts])
+Y = np.array([i[1] for i in pts])
+z = np.array([i[2] for i in pts])
+Z = z.reshape(int(math.sqrt(len(pts))), int(math.sqrt(len(pts))))
+z2 = np.array([unif(0, 1) for i in pts])
 
-plt.pcolor(X, Y, Z, shading='auto')
-# plt.fill(x, y, c="C0")
-plt.savefig("test.png")
+print(pts)
+print("X:", X)
+print("Y:", Y)
+print("z:", z)
+print("z2:", z2)
 
-arr = np.array([a, b, c])
-arr = np.transpose(arr)
+fig, ax = plt.subplots()
+cf = ax.tricontourf(X, Y, z2, levels=51, cmap="RdGy_r")
+fig.colorbar(cf, ax=ax)
+ax.set_xlabel(r"$b_x$")
+ax.set_ylabel(r"$b_y$")
+ax.set_title(r"$E_{tot}(b)$")
+fig.savefig("test.png")
+
 

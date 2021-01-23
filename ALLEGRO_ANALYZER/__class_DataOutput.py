@@ -22,7 +22,13 @@ class DataOutput:
     
     # Smoothly interpolate toal energy at various shifts.
     def plot_e_vs_b(self):
-        pass # TODO
+        fig, ax = plt.subplots()
+        cf = ax.tricontourf(X, Y, z2, levels=51, cmap="RdGy_r")
+        fig.colorbar(cf, ax=ax)
+        ax.set_xlabel(r"$b_x$")
+        ax.set_ylabel(r"$b_y$")
+        ax.set_title(r"$E_{tot}(b)$")
+        fig.savefig("test.png")
     
     # Smoothly interpolate interlayer spacing at various shifts.
     def plot_z_vs_b(self):
@@ -39,4 +45,9 @@ class DataOutput:
         scat, ax2 = plt.subplots()
         ax2.scatter(self.__zspacings, self.__energies)
         scat.savefig(self.__out_dir + "energy_vs_interlayer_spacing_scatter.png")
-        
+    
+    # Do all available functions
+    def output_all_analysis(self):
+        self.save_raw_data()
+        self.plot_e_vs_z()
+        self.plot_e_vs_b()

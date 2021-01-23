@@ -3,7 +3,6 @@ import datetime
 
 def print_start_msg():
     print(PRGM_COOL_NAME)
-    print('\n')
     print('Version:', PRGM_VERSION)
     start_time = datetime.datetime.now()
     print('Time program started:', start_time, '\n')

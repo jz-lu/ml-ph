@@ -1,9 +1,7 @@
 from pymatgen.io.vasp.outputs import Vasprun
 from pymatgen import Spin
 from pymatgen.electronic_structure.plotter import BSPlotter, BSDOSPlotter, DosPlotter
-
 from ___constants_names import VASP_RUN_XML_NAME, PLOT_FILE_FORMAT, ELEBAND_RAW_DATA_NAME
-
 from __dirModifications import checkPath
 from __query_inputs import getInputFormula
 
