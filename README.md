@@ -58,6 +58,7 @@ Calculations for phonons are in part done by `phonopy`, program with a python AP
 
 In the Fourier space transform (**NOTE: not yet implemented**)
 TODO
+
 <img src="http://www.sciweavers.org/tex2img.php?eq=%5Cmathbf%7Bk%7D%20%3D%20A_%7B%5Cdelta%202%7D%20%5Cmathbf%7BG%7D%2C%5C%3B%20A_%7B%5Cdelta%202%7D%5ET%20%3D%20A_%7B%5Cdelta%202%7D%20%20%5CRightarrow%20e%5E%7Bi%5Cmathbf%7Bk%7D%5Ccdot%5Cmathbf%7Br%7D%7D%20%3D%20e%5E%7Bi%5Cmathbf%7BG%7D%5Ccdot%5Cmathbf%7Bb%7D%7D&bc=White&fc=Black&im=jpg&fs=12&ff=arev&edit=0" align="center" border="0" alt="\mathbf{k} = A_{\delta 2} \mathbf{G},\; A_{\delta 2}^T = A_{\delta 2}  \Rightarrow e^{i\mathbf{k}\cdot\mathbf{r}} = e^{i\mathbf{G}\cdot\mathbf{b}}" width="285" height="28" />
 
 
