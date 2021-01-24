@@ -6,11 +6,11 @@ _Documentation Notes_:
 2. "Selective dynamics", which refers to a constraint on which directions (in terms of the lattice basis vector set) the VASP DFT calculator's relaxation protocol is allowed to relax the solid on, is shortened to "SD".
 
 ## Overview
-The purpose, (blackbox style) functions, and sample calculations are found in the _docs_ folder.
+The purpose, (blackbox style) functions, and sample calculations are found in the _docs_ folder. The below details how to run the script, and then discusses a high-level idea of how it works. **A flow chart detailing the algorithm is found in the _docs_ folder as well**.
 
 
 ## Instructions on calling the automated script
-You can run it directly or use a batch file to submit a job if you wish. The command-line calling, either way, should be of the form
+If any of this section if unclear, read the documentation first, in particular the **Input** section. You can run it directly or use a batch file to submit a job if you wish. The command-line calling, either way, should be of the form
 ```
 python3 start.py <typeFlag: 0 for real space, 1 for config sampling> <I/O DIRECTORY> <vdW T/F> <GAMMA or MP> <arg1> <arg2> .... Specify at least one arg (eledos, eleband, phdos, phband, energies).\n\n\t If using input file...\t Usage: "python3 start.py -f <filename>" where parameters are in the input file separated by a newline
 ```
@@ -22,7 +22,7 @@ The general flow chart is given as a PDF in the docfiles folder, for configurati
 ### Input
 For any calculation, the four inputs are the INCAR (VASP settings), POTCAR (pseudopotential), KPOINTS (reciprocal space sampling line/grid), and POSCAR (solid spcification). If running a real-space calculations, the input is a single POSCAR; for configuration space, the input is one POSCAR per layer (see **Notes** on input format) and the fixed layer is the file that comes *first in alphanumeric order*. INCAR, KPOINTS (grid for DOS), and POTCAR are optional—`Allegro Analyzer` will generate them with default options if they are not found. For band structure, a line KPOINTS file named `LINE_KPOINTS` should be inputted. All inputs should go into the I/O directory specified on the command line.
 
-### Configuration Sampling Algorithm
+### Configuration Sampling
 
 #### Input validation
 Configurations are built as follows. Along with the standard INCAR, POTCAR, KPOINTS inputs (none of which are required—`Allegro Analyzer` automates the default construction of them all), one POSCAR must be given for each layer, for a minimum of two layers. These POSCARs are imported into _pymatgen_ objects in `Configuration::import_init_poscars()` in `__class_Configuration.py`, from individual files that must be located at the specified `ROOT` I/O directory from the command line. The lattice basis vectors, concatenated into a matrix, are extracted from the _pymatgen_ POSCAR object in `Configuration::get_lattices()`. The fixed layer (which is the first layer under our model) in-plane lattice vectors (the 2 basis vectors in the plane of the 2D solid) are checked to have the same norm (they should be scaled identically), and then normalized in `Configuration::__get_normed_fixed_lattice()`. A multilayered solid under the configuration sampling paradigm can differ _at most_ by a small constant scaling in the lattice; the lattice vectors themselves _must be identical_ up to normalization. Thus `Configuration::check_lattice_consistency()` subsequently examines the lattices over each layer and ensures that they are the same when normalized. Finally,  If any of the above checks fail, `Allegro Analyzer` terminates. 
@@ -37,7 +37,7 @@ for i in nonfixed_layers:
 No explicit straining is necessary since the fixed layer serves as the base POSCAR, and each atom from the other layers are subsequently added to the base POSCAR after the shift, so by virtue of sharing the same lattice basis as the fixed, the strain has already been made.
 
 ### DFT Relaxation and Energy Computation
-TODO
+The program assumes that the individual layers are either already relaxed, or are strained anyway so it isn't actually supposed to be relaxed (e.g. mismatched lattices in multilayers, twists, etc.). Thus only the interlayer spacing is relaxed. The relaxation process is computed with DFT handled by the program VASP (Vienna Ab Initio Simulation Package). The inputs required on VASP are the [https://www.vasp.at/wiki/index.php/INCAR](INCAR) (VASP settings), [https://www.vasp.at/wiki/wiki/index.php/POSCAR](POSCAR) (gives all specs of the unit cell of the solid), [https://www.vasp.at/wiki/wiki/index.php/POTCAR](POTCAR) (which is always handled entirely by the program and does not require user knowledge--it is just a file giving the pseudopotential that VASP is to use in simluating the given material), and [https://www.vasp.at/wiki/wiki/index.php/KPOINTS](KPOINTS) (specifies the sampling of the BZ, a mesh/grid for DOS and a line around the IBZ for band structure). To relax the solid, VASP starts by assuming a trial wavefunction using Linear Combination of Orbitals (LCAO), then iteratively solves the corresponding Schrodinger equation until a self-consistent wavefunction is found (the calculation is said to *converge* when this occurs). For phonon calculations, the convergence threshold should be extremely small for accurate calculations, and in the default INCAR it is set to `10^-8` energy units. In each round, the energy computed, along with use of the Hellmann-Feynman theorem (get the forces from the Hamiltonian matrix elements), give the direction and magnitude by which VASP nnudges the atoms, thus "relaxing them" to an equilibrium point. Overall, the process is 2-layered: there are many rounds of relaxation where the atoms are moved based on the computed forces until an equilibrium threshold, set in INCAR, has been reached (or failure to relax is outputted), and in each relaxation round the wavefunctions are solved iteratively until self-consistent and the forces computed. The total and Fermi energy are then outputted by the program.
 
 ### Electronic Calculations
 TODO
