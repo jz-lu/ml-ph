@@ -27,24 +27,18 @@ if '-f' in cmdargs:
             cmdargs = tuple(f.read().splitlines())
     except:
         exit_with_error(GENERAL_ERR_USAGE_MSG + "\n\n\t" + filename + "is not a valid file.\n\n")
-
 user_input_settings = InputData(cmdargs)
 
-# Move home directory to the selected one.
-data_dir = user_input_settings.get_base_root_dir() + "raw_data/"
-os.chdir(data_dir)
-print("Moved CWD to " + data_dir)
-sys.exit()
 bze_points = begin_computation(user_input_settings)
-
+print("All computations complete! Returning any debug messages and exiting.")
 if bze_points == None: # (b, z, e)
     print_end_msg(start_time)
     sys.exit(GENERAL_ERR_USAGE_MSG)
-
-if not os.path.isdir(data_dir):
-    os.mkdir(data_dir)
-out = DataOutput(data_dir, bze_points)
-out.output_all_analysis()
+else:
+    print("\n\n[Debug] BZE POINTS:")
+    for i in bze_points:
+        print(i)
+    print("\n")
 
 # Exit success
 print_end_msg(start_time)

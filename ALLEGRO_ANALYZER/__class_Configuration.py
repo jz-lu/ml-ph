@@ -201,6 +201,10 @@ class Configuration:
         print('All shift poscar objects built.')
         return tuple(configposcar_shift_tuple)
         
+    # Get the poscar of the fixed layer.
+    def get_fixed_layer_poscar(self):
+        return self.__poscars[0]
+    
     @staticmethod
     # Returns a list of numpy row-vectors, each of which is a shift (expressed in arbitrary lattice basis).
     def sample_grid(grid=GRID_SAMPLE_LOW):

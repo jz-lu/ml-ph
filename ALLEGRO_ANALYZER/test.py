@@ -37,11 +37,10 @@ print("z:", z)
 print("z2:", z2)
 
 fig, ax = plt.subplots()
-cf = ax.tricontourf(X, Y, z2, levels=51, cmap="RdGy_r")
+cf = ax.tricontourf(X, Y, z2, levels=21, cmap="twilight_shifted")
 fig.colorbar(cf, ax=ax)
 ax.set_xlabel(r"$b_x$")
 ax.set_ylabel(r"$b_y$")
 ax.set_title(r"$E_{tot}(b)$")
 fig.savefig("test.png")
-
 
