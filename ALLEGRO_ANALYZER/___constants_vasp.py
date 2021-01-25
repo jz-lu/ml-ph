@@ -2,7 +2,7 @@
 # NOTE: all directory strings must end in '/'
 
 # POSCAR z-basis vector magnitude, increase if we add a lot more (>3) layers
-Z_LATTICE_SIZE = 25.0
+Z_LATTICE_SIZE = 20.0
 Z_LAYER_SEP = 0.25 # Layer separation in terms of the z-basis vector
 # Precision of POSCAR lattice and atoms, in number of decimal places
 POSCAR_PRECISION = 6
