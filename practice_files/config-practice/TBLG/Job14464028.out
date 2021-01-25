@@ -1,0 +1,44 @@
+[==ROOT BATCH FILE==] ...It's alive!! Root batch file starting.
+
+█▀▄▀█ █░░ ▄▄ █▀█ █░█ ▀   █▀ ▀█▀ ▄▀█ █▀█ ▀█▀ █ █▄░█ █▀▀
+█░▀░█ █▄▄ ░░ █▀▀ █▀█ ▄   ▄█ ░█░ █▀█ █▀▄ ░█░ █ █░▀█ █▄█
+
+Version: 1.0
+Time program started: 2021-01-25 16:23:18.381179 
+
+Reading program inputs settings from command line.
+
+Command line arguments initiated in InputData class constructor. Arguments:  ('1', '/n/home04/jzlu/codes/ml-ph/practice_files/config-practice/TBLG', 'F', 'Gamma', 'energies')
+Validating command line inputs...
+Calculation type flag validated.
+Root directory input validated.
+van der Waals flag validated.
+Adopting Gamma-centered sampling of the Brillouin zone.
+Kpoints flag validated.
+Parsing list of calculations to perform...
+Recieved request to calculate total energies. Branching energy computation to different calculation pipeline...
+Removed energy computation from main pipeline. Other calculations: (None)
+Final calculation list: ['energies']
+Set to run parallel computations over grid sample in configuration space, defaulted to layer 1 (z = 0). Starting...
+Configuration class instantiated. Initiating input files from /n/home04/jzlu/codes/ml-ph/practice_files/config-practice/TBLG/
+Searching for matches 'start' of file 'POSCAR_' in path /n/home04/jzlu/codes/ml-ph/practice_files/config-practice/TBLG/ with files: ['.Job14464028.out.swp', 'POSCAR_LAYER1', 'POSCAR_LAYER2', '.nfs00000001b4fc88dc000001e9', 'cmds.txt', 'EXECUTABLE_BAT_DNE', 'Job14464028.out', 'Err14464028.err']
+Search done, returning list: ['POSCAR_LAYER1', 'POSCAR_LAYER2']
+POSCAR files found: ['POSCAR_LAYER1', 'POSCAR_LAYER2']
+Fixed layer set to POSCAR named POSCAR_LAYER1
+POSCARs imported successfully.
+Parsing lattice information...
+Extracting set of lattices from POSCARs...
+Lattices extracted. Ordered list:
+ [array([[ 2.13    , -1.229756,  0.      ],
+       [ 2.13    ,  1.229756,  0.      ],
+       [ 0.      ,  0.      , 20.      ]]), array([[ 2.13    , -1.229756,  0.      ],
+       [ 2.13    ,  1.229756,  0.      ],
+       [ 0.      ,  0.      , 20.      ]])]
+Retrieving normalized lattice basis of the fixed layer...
+Retrieval complete.
+Extracting set of lattice constants from lattices...
+Lattice constants extracted. Ordered list:
+ [2.4595121100608552, 2.4595121100608552]
+Verifying consistency of lattices (lattices must be identical up to constant multiples)...
+Error: at least one lattice z-vector (i.e. 3rd basis vector) is inconsistent with constant fixed length. Shoule be: 25.000000. Actual: 20.000000
+[==ROOT BATCH FILE==] Root batch file completed execution.
