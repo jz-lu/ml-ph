@@ -10,22 +10,28 @@ from __compute_properties import relax_solid
 from __class_DataOutput import DataOutput
 import os
 import numpy as np
+from sys import exit
 
 # Multiprocess for each displacement, since they are completely independent.
 def branch_and_compute(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
     BASE_ROOT = checkPath(BASE_ROOT)
     base_root_subpaths = []
     print('Creating subdirectories to store VASP calculations for each configuration...')
-    for i in range(len(configposcar_shift_tuple)):
-        new_subdir_name = 'shift_%d'%(i+1)
+    for i in configposcar_shift_tuple:
+        new_subdir_name = 'shift_' + str(tuple(i[0]))
         mkdir(new_subdir_name, BASE_ROOT)
         base_root_subpaths.append(BASE_ROOT + new_subdir_name)
 
+    print("[DEBUG] Exiting at breakpoint...")
+    exit()
+
     # Create a persistent pool of processors computing the configuration forces.
+    print('Constructing multiprocessing worker pool...')
     pool = Pool(NUM_AVAILABLE_CORES) # Parallelize as much as possible.
+    print('Pool loaded.')
 
     # Run asynchronous isolated calculations for each displacement over the pool.
-    print('Starting parallel computation of configurations.')
+    print('Starting parallel computation of configurations...')
     bze_points = [pool.apply_async(relax_solid, args=(user_input_settings, 
                                                       configposcar_shift_tuple[i][1], 
                                                       configposcar_shift_tuple[i][0], 
@@ -43,12 +49,14 @@ def begin_computation(user_input_settings):
         print('Set to run parallel computations over grid sample in configuration space, defaulted to layer 1 (z = 0). Starting...')
         # Sample the grid here! Then pool them over to relax and run an iterator to get energy pairs for graphing
         # Num processes (in pool arg below) = number of grid points, i.e. (a, b, c) |-> a * b * c
-        grid_size = GRID_SAMPLE_LOW # NOTE: change to ..._HIGH for super-accurate calculations
+        grid_size = GRID_SAMPLE_LOW # NOTE: change LOW to HIGH oin var name for super-accurate calculations
         BASE_ROOT = user_input_settings.get_base_root_dir()
         init_interlayer_spacing = Z_LAYER_SEP
 
         sampling_set = Configuration.sample_grid(grid=grid_size)
         config = Configuration(BASE_ROOT)
+
+        # Get a set of tuples (shift vector, poscar object) for each shift vector.
         configposcar_shift_tuple = config.build_config_poscar_set(sampling_set, init_interlayer_spacing)
 
         # Multiprocess over the configurations

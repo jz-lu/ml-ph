@@ -55,7 +55,7 @@ def relax_solid(user_input_settings, poscar=None, shift=None, user_inputted_root
         print('Successfully completed total energy calculation, which was the only specified calculation. Exiting relaxation...')
 
     if shift == None:
-        sys.exit() # Exit status 0 (success)
+        return None
     else:
         bze_point = (shift, CarCollector.get_interlayer_spacing(DIR_RELAXATION), energy_pair[0])
         return bze_point

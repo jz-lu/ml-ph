@@ -15,8 +15,8 @@ import copy
 class Configuration:
     # Import the POSCARs and check validity 
     def __init__(self, BASE_ROOT, poscars=None): # poscars: list of poscar objects imported with pmg
-        print('Configuration class instantiated. Initiating input files...')
         self.BASE_ROOT = checkPath(BASE_ROOT)
+        print('Configuration class instantiated. Initiating input files from %s'%(self.BASE_ROOT))
 
         # Import the given poscars if none are specified.
         if poscars == None:
@@ -41,6 +41,7 @@ class Configuration:
         # Every POSCAR in the root directory is imported.
         # NOTE: the fixed layer is the first one in alphabetic order
         poscar_names = findFilesInDir(self.BASE_ROOT, POSCAR_CONFIG_NAMEPRE, searchType='start')
+        print("POSCAR files found:", poscar_names)
         print('Fixed layer set to POSCAR named ' + poscar_names[0])
 
         if len(poscar_names) < 2:
@@ -117,15 +118,15 @@ class Configuration:
                     print('Warning: precision of lattices in the nonfixed layers (wrt difference with fixed layer vectors) may not be sufficiently good for phonon calculations. Ensure all lattices and sublattices are of the same significant figures.')
                 if abs_diff > POSCAR_PREC_COMP_THRESHOLD:
                     exit_with_error(ERR_INCONSISTENT_LATTICES)
-            if self.__lattices[i][2] != Z_LATTICE_SIZE:
-                exit_with_error(ERR_WRONG_ZVEC%(Z_LATTICE_SIZE))
+            if i[2][2] != Z_LATTICE_SIZE: # Check that the Z-lattice initial spacing correct
+                exit_with_error(ERR_WRONG_ZVEC%(Z_LATTICE_SIZE, i[2][2]))
         print('Lattice consistency verified.')
         return True
 
     # Check that the atoms in the same layer are coplanar.
     def __check_poscar_atoms(self):
         print('Checking coplanarity of atomic sublattice sites in POSCARs...')
-        for i in range(self.__poscars):
+        for i in range(len(self.__poscars)):
             mat = self.__poscars[i].structure.frac_coords
             for j in range(len(mat)):
                 if mat[j][2] != mat[0][2]:
@@ -190,6 +191,7 @@ class Configuration:
         return bspace_poscar
         
     # Return set of poscar objects that each describe a particular shift in b-space
+    # Return value: set of tuples (shift vector, poscar object)
     def build_config_poscar_set(self, shift_set, init_interlayer_spacing):
         print('Constructing the set of POSCARs now with shifts. Starting POSCAR builds...')
         configposcar_shift_tuple = []

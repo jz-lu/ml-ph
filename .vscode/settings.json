@@ -4,5 +4,7 @@
       "/home/jonathanlu/Documents/ml-ph/ALLEGRO_ANALYZER"
     ],
     "python.linting.pylintEnabled": true,
-    "python.linting.enabled": true
+    "python.linting.enabled": true,
+    "python.jediEnabled": true,
+    "python.languageServer": "Jedi"
 }

@@ -11,12 +11,9 @@ def get_energy_analysis(dirName, outcar, writeOut=False):
     energyPair = (outcar.final_energy, outcar.efermi)
     try: 
         energyFile = open(dirName + TOT_ENERGIES_NAME, 'w')
-
         str1 = 'Total energy (eV): ' + str(outcar.final_energy)
         str2 = 'Fermi energy (eV): ' + str(outcar.efermi)
-
         strings = [str1, '\n', str2]
-
         energyFile.writelines(strings)
         energyFile.close()
 

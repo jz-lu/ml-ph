@@ -24,8 +24,11 @@ def filesInDir(dirName):
     return files
 
 # Find all files in a directory. Specify type as 'start', 'end', or 'exact' to get search that starts with, ends with, or is exactly, fileName.
+#   Return files in alphanumerically ordered list.
 def findFilesInDir(dirName, fileName, searchType='exact'):
     dirName = checkPath(dirName)
+    print("Searching for matches '%s' of file '%s' in path %s with files:"%(searchType, fileName, dirName), 
+        os.listdir(dirName))
     arr = []
     
     if searchType == 'exact':
@@ -34,13 +37,11 @@ def findFilesInDir(dirName, fileName, searchType='exact'):
                 arr.append(f)
 
     elif searchType == 'start':
-        arr = []
         for f in os.listdir(dirName):
             if f.startswith(fileName):
                 arr.append(f)
     
     elif searchType == 'end':
-        arr = []
         for f in os.listdir(dirName):
             if f.endswith(fileName):
                 arr.append(f)
@@ -48,4 +49,6 @@ def findFilesInDir(dirName, fileName, searchType='exact'):
     else:
         exit_with_error(ERR_INVALID_FINDDIR_PARAM)
 
-    return arr.sort()
+    arr.sort()
+    print("Search done, returning list:", arr)
+    return arr
