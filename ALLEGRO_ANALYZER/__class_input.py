@@ -26,12 +26,12 @@ class InputData:
         self.calculation_list = tuple(dict.fromkeys(cmdline_arg_tuple[4:])) # Filter duplicates in calculation flag list
         self.input_imported = True
         self.__check_input_style()
-        self.__parse_calculation_input()
         if self.type_flag != 0 or len(self.calculation_list) == 0:
             self.calculation_list = [ENERGIES] # In config space all we want are the energies, for now
             # TODO add dynamical matrix stuff?
+        self.__parse_calculation_input()
 
-        print('Final calculation list:', self.calculation_list)
+        print('Final calculation list (except energies if specified):', self.calculation_list)
 
     # Confirm that the import is successful, exit otherwise
     def __check_import_status(self):
