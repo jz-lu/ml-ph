@@ -10,7 +10,6 @@ from __compute_properties import relax_solid
 from __class_DataOutput import DataOutput
 import os
 import numpy as np
-from sys import exit
 
 # Multiprocess for each displacement, since they are completely independent.
 def branch_and_compute(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
