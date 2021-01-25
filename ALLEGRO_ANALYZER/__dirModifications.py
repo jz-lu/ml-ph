@@ -11,7 +11,7 @@ def mkdir(dirName, currPath):
         currPath += '/'
     newDir = subprocess.run(['mkdir', currPath + dirName], capture_output=True, universal_newlines=True)
     if newDir.stderr != '':
-        exit_with_error('Could not make new directory %s at %s. Error: %s.'%(dirName, currPath, newDir.stderr))
+        exit_with_error('Could not make new directory %s at %s. \n\n\tError: %s.\n\n'%(dirName, currPath, newDir.stderr))
     return
 
 def move(dirName, currPath, newPath=unique_str, newName=''):

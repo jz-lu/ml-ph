@@ -22,9 +22,6 @@ def branch_and_compute(BASE_ROOT, user_input_settings, configposcar_shift_tuple)
         mkdir(new_subdir_name, BASE_ROOT)
         base_root_subpaths.append(BASE_ROOT + new_subdir_name)
 
-    print("[DEBUG] Exiting at breakpoint...")
-    exit()
-
     # Create a persistent pool of processors computing the configuration forces.
     print('Constructing multiprocessing worker pool...')
     pool = Pool(NUM_AVAILABLE_CORES) # Parallelize as much as possible.

@@ -1,0 +1,19 @@
+#!/bin/bash
+#SBATCH --job-name=WSe2
+#SBATCH -n 18
+#SBATCH -t 16:00:00
+#SBATCH -p shared
+#SBATCH --mem-per-cpu=5000
+#SBATCH -o job_%j.out
+#SBATCH -e job_%j.err
+
+module list
+
+source activate $HOME/anaconda_env
+THIS_DIR="codes/ml-ph/practice_files/config-practice/TBLG"
+ALLEGRO_DIR="/n/home04/jzlu/codes/ml-ph/ALLEGRO_ANALYZER"
+echo "[==ROOT BATCH FILE==] ...It's alive!! Root batch file starting."
+python3 $ALLEGRO_DIR/start.py ~/$THIS_DIR F Gamma energies
+
+echo "[==ROOT BATCH FILE==] Root batch file completed execution."
+mv ./job_* ~/$STR

@@ -9,6 +9,6 @@
 
 module list
 
-echo ".VASP batch file starting..."
+echo "[**VASP BATCH FILE**] VASP batch file starting..."
 mpirun -np $SLURM_NTASKS /n/kaxiras_lab/vasp/vasp.std
-echo "VASP batch file complete."
+echo "[**VASP BATCH FILE**] VASP batch file complete."
