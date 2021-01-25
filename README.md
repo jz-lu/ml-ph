@@ -66,7 +66,7 @@ TODO
 Note that this code, at least the automated phonopy analysis part, likely does not work for 3-d materials or ones with  complicated band paths. For bulk materials the code can be modified easily on the phonopy analysis to use a package like seeKpath to automatically generate the high symmetry lines.
 
 Any "special" notes:
-* Input POSCARs should never begin with 'POSCAR-'. i.e. 'POSCAR_(stuff)' is fine and 'POSCAR' is good but not 'POSCAR-stuff'. The automated analysis relies on this keyword to analyze phonon structures properly.
+* Input POSCARs should never begin with 'POSCAR-'. Specifically, 'POSCAR_(stuff)' is to be used for configuration work, where the layers will be orderd alphanumerically after the underscore, and 'POSCAR' should be used for real space work. The automated analysis relies on this keyword to analyze phonon structures properly.
 * The KPOINTS file for line sampling along the IBZ boundary must be named `LINE_KPOINTS` and must be specified if any band calculations (electronic or phononic) are requested. A normal mesh grid must be named `KPOINTS`, but need not be specified as the program will generate a default one if none are fed in.
 
 ## Informal Changelog (major only)
