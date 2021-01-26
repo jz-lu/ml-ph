@@ -31,9 +31,8 @@ class DataOutput:
     def save_raw_data(self):
         table = np.transpose(np.array([self.xshifts, self.yshifts, self.__zspacings, self.__energies]))
         out_file = self.__out_dir + "raw_data.csv"
-        with open(out_file) as f:
-            f.write(b"2D Shift vector (lattice basis), Relaxed interlayer spacing, Energy\n")
-            np.savetxt(out_file, table, delimiter=",")
+        np.savetxt(out_file, table, delimiter=",", 
+            header="bx, by, relaxed z-spacing, energy\n")
    
     # Smoothly interpolate toal energy at various shifts.
     def plot_e_vs_b(self):
@@ -71,7 +70,7 @@ class DataOutput:
     
     # Do all available functions.
     def output_all_analysis(self):
-        self.save_raw_data()
         self.plot_e_vs_z()
         self.plot_e_vs_b()
         self.plot_z_vs_b()
+        self.save_raw_data()
