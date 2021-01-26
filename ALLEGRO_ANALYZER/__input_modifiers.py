@@ -132,7 +132,9 @@ def getSelfConNoRelIncar(incarObj):
     settings_to_add = [('ICHARG', ICHARG['no_relax_sc']), 
                        ('IBRION', IBRION['no_relax']), 
                        ('NSW', NSW['no_relax']),
-                       ('SIGMA', SIGMA['wide'])]
+                       ('SIGMA', SIGMA['wide']),
+                       ('EDIFF', EDIFF['no_relax']),
+                       ('EDIFFG', EDIFFG['no_relax'])]
     incarObj = modifyIncar(incarObj, settings_to_add)
     return incarObj
 
@@ -140,6 +142,8 @@ def getNonSelfConNoRelIncar(incarObj):
     settings_to_add = [('ICHARG', ICHARG['no_relax_nsc']),
                        ('IBRION', IBRION['no_relax']), 
                        ('NSW', NSW['no_relax']),
+                       ('EDIFF', EDIFF['no_relax']),
+                       ('EDIFFG', EDIFFG['no_relax']),
                        ('LCHARG', LCHARG['no_write_charge'])] # No NEDOS, thats just for plotting DOS
     incarObj = modifyIncar(incarObj, settings_to_add)
     return incarObj

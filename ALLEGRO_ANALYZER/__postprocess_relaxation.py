@@ -40,8 +40,8 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
     # Incar changes for various calculations
     incar_selfcon = getSelfConNoRelIncar(relaxation_incar_1)
     incar_nonselfcon = getNonSelfConNoRelIncar(relaxation_incar_2)
-    #print('[DEBUGMSG] incar selfcon:', incar_selfcon)
-    #print('[DEBUGMSG] incar non selfcon:', incar_nonselfcon)
+    print('[DEBUGMSG] incar selfcon:', incar_selfcon)
+    print('[DEBUGMSG] incar non selfcon:', incar_nonselfcon)
     
     # Kpoints needs to be modified to have a denser sampling for nonrelaxation calculations -> more precision
     kpoints_mesh_nonrelax = copy.deepcopy(unrelaxed_vaspObj['KPOINTS'])
