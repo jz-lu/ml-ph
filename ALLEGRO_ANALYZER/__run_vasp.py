@@ -44,7 +44,9 @@ def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax'):
             loopCounter += 1
             # Loop counter and exit function
             if loopCounter > VASP_MAX_CONVERGENCE_ATTEMPTS:
-                exit_with_error(ERR_VASP_NOT_CONVERGED)
+                # exit_with_error(ERR_VASP_NOT_CONVERGED)
+                print(ERR_VASP_NOT_CONVERGED)
+                break
             
             new_poscar = Poscar.from_file(dirName + CONTCAR_NAME)
             vaspObj['POSCAR'] = new_poscar # Update POSCAR to be the new CONTCAR
