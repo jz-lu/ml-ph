@@ -12,16 +12,17 @@ class DataOutput:
     def __init__(self, out_dir, plot_list, cob_matrix):
         print("Initalizing DataOutput object.")
         self.__plot_list = plot_list
-        self.__zspacings = np.array([plot_list[1] for i in plot_list])
-        self.__energies = np.array([plot_list[2] for i in plot_list])
+        self.__zspacings = np.array([i[1] for i in plot_list])
+        self.__energies = np.array([i[2] for i in plot_list])
         self.__out_dir = checkPath(out_dir)
         print("Output to be stored in %s"%(out_dir))
 
         # Get the shifts in Cartesian coordinates via COB
-        self.__shifts = [np.dot(cob_matrix, np.array(plot_list[0][:-1])) for i in plot_list] # Exclude z-coordinate since plot is 2D
+        self.__shifts = [np.dot(cob_matrix, np.array(i[0][:-1])) for i in plot_list] # Exclude z-coordinate since plot is 2D
         self.xshifts = np.array([i[0] for i in self.__shifts])
         self.yshifts = np.array([i[1] for i in self.__shifts])
-        print("SHIFTS:", self.__shifts)
+        print("DIRECT SHIFTS:", [np.array(i[0][:-1]) for i in plot_list])
+        print("CARTESIAN SHIFTS:", self.__shifts)
         print("xshifts:", self.xshifts)
         print("yshifts:", self.yshifts)
         print("Energies:", self.__energies)
