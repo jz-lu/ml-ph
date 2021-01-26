@@ -131,7 +131,7 @@ def ph_prepare_for_analysis(rootDirName, incar_selfcon, kpoints_mesh_nonrelax, p
     mkdir(PHONOPY_DIR_NAME, rootDirName)
     DIR_PHONOPY = checkPath(rootDirName + PHONOPY_DIR_NAME)
     os.chdir(DIR_PHONOPY) # Move to the new directory
-    print('os.chdir() CALLED to cd to %s for storing phonopy calculations: %s'%(DIR_PHONOPY))
+    print('os.chdir() CALLED to cd to %s for storing phonopy calculations.'%(DIR_PHONOPY))
 
     # Write out the poscar into the phonopy directory we made, so we can use it for calling phonopy
     try:
