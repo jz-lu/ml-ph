@@ -28,15 +28,15 @@ class DataOutput:
         print("Interlayer spacings:", self.__zspacings)
 
         print('[DEBUG] RAW DATA OUTPUTTING!')
-        with open("shifts.txt", 'w+') as f1:
+        with open(self.__out_dir + "shifts.txt", 'w+') as f1:
             f1.write(str(self.__plot_list))
-        with open("xshifts.txt", 'w+') as f1:
+        with open(self.__out_dir + "xshifts.txt", 'w+') as f1:
             f1.write(str(self.xshifts))
-        with open("yshifts.txt", 'w+') as f1:
+        with open(self.__out_dir + "yshifts.txt", 'w+') as f1:
             f1.write(str(self.yshifts))
-        with open("zspacings.txt", 'w+') as f1:
+        with open(self.__out_dir + "zspacings.txt", 'w+') as f1:
             f1.write(str(self.__zspacings))
-        with open("e.txt", 'w+') as f1:
+        with open(self.__out_dir + "e.txt", 'w+') as f1:
             f1.write(str(self.__energies))
     
     # Output raw data as a csv file.
