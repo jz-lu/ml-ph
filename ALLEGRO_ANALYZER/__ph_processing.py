@@ -98,6 +98,9 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
 # Takes as input dispNum, the output of phPreProcess
 def ph_generate_forcesets(dirName, dispNum):
     dirName = checkPath(dirName)
+    os.chdir(dirName) # Move to the new directory
+    print('CHANGED WD to %s for storing phonopy calculations.'%(dirName))
+    print('Files/directories in CWD:', os.listdir())
     try:
         print('Generating force sets now...')
         if dispNum == '001':
