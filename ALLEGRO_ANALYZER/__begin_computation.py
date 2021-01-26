@@ -16,8 +16,8 @@ def branch_and_compute(BASE_ROOT, user_input_settings, configposcar_shift_tuple)
     BASE_ROOT = checkPath(BASE_ROOT)
     base_root_subpaths = []
     print('Creating subdirectories to store VASP calculations for each configuration...')
-    for i in configposcar_shift_tuple:
-        new_subdir_name = 'shift_' + str(tuple(i[0]))
+    for i in range(len(configposcar_shift_tuple)):
+        new_subdir_name = 'shift_%d'%(i)
         mkdir(new_subdir_name, BASE_ROOT)
         base_root_subpaths.append(BASE_ROOT + new_subdir_name)
 
