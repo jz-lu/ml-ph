@@ -10,7 +10,7 @@ POSCAR_PREC_COMP_THRESHOLD = 0.0001
 
 # Error checker for vasp.out
 VASP_OUTFILE_LEN_THRESHOLD = 1000
-VASP_MAX_CONVERGENCE_ATTEMPTS = 3 # Number of times we rerun the relaxation before we quit and say we failed to relax.
+VASP_MAX_CONVERGENCE_ATTEMPTS = 5 # Number of times we rerun the relaxation before we quit and say we failed to relax.
 VASP_OUTFILE_CONVERGENCE_LINE_CUT = 6 # Number of lines from the bottom we scan looking for an error message
 
 ### PARAMETERS FOR VASP INPUT FILES ###
@@ -23,8 +23,8 @@ SIGMA = {'wide': 0.1, 'narrow': 0.01} # Width of smear
 ENCUT = 800 # Plane wave expansion cutoff index
 AMIN = 0.01 # Parameter in initial approximation of dielectric function for screening
 NSW = {'relax': 80, 'no_relax': 0, 'relax_low': 40, 'relax_very_low': 20} # Number of ionic relaxation steps
-EDIFF = 1E-8 # Acceptable self-consistent energy difference in electronic relaxation 
-EDIFFG = -1E-8 # Acceptable self-consistent energy difference (or forces if with negative sign as flag) in ionic relaxation
+EDIFF = 1E-6 # Acceptable self-consistent energy difference in electronic relaxation 
+EDIFFG = 1E-7 # Acceptable self-consistent RELAXATION energy difference (or forces if with negative sign as flag) in ionic relaxation
 NEDOS = 6001 # Number of samples for electronic DOS calculation in the fixed energy range
 IBRION = {'relax': 2, 'no_relax': -1} # 2 is a flag for do ionic relaxation, set to -1 when relaxation calculation is complete
 ICHARG = {'default': 2, 'no_relax_sc': 1, 'no_relax_nsc': 11} # 2 is default initial charge density, 1 is self-consistent CONTCAR import, 11 is non self-consistent (fixed density) CONTCAR
