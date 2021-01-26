@@ -26,6 +26,18 @@ class DataOutput:
         print("yshifts:", self.yshifts)
         print("Energies:", self.__energies)
         print("Interlayer spacings:", self.__zspacings)
+
+        print('[DEBUG] RAW DATA OUTPUTTING!')
+        with open("shifts.txt", 'w+') as f1:
+            f1.write(str(self.__plot_list))
+        with open("xshifts.txt", 'w+') as f1:
+            f1.write(str(self.xshifts))
+        with open("yshifts.txt", 'w+') as f1:
+            f1.write(str(self.yshifts))
+        with open("zspacings.txt", 'w+') as f1:
+            f1.write(str(self.__zspacings))
+        with open("e.txt", 'w+') as f1:
+            f1.write(str(self.__energies))
     
     # Output raw data as a csv file.
     def save_raw_data(self):
@@ -70,7 +82,7 @@ class DataOutput:
     
     # Do all available functions.
     def output_all_analysis(self):
-        self.plot_e_vs_z()
+        self.save_raw_data()
         self.plot_e_vs_b()
         self.plot_z_vs_b()
-        self.save_raw_data()
+        self.plot_e_vs_z()

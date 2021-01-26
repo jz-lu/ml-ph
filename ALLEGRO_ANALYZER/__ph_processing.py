@@ -77,6 +77,8 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
             subdirNames.append(PHDISP_DIR_NAME%(dispNums[i]))
             mkdir(subdirNames[i], dirName)
             print('New subdirectory %s created.'%(checkPath(dirName + subdirNames[i])))
+
+        print("Submitting the following INCAR to VASP for phonon calculation:\n", vaspObj['INCAR'])
                 
         # Multithread the VASP phonon supercell calculations.
         threads = list()
