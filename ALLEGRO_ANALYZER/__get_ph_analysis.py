@@ -131,6 +131,7 @@ def ph_create_band_conf(kpoints_line_obj, poscar_obj, outDir):
 # NOTE: the unit poscar object is to get the name for the .conf file and the path is to run the subprocess in the actual generation
 def ph_get_dos(kpoints_mesh_obj, poscar_unitcell_obj, outDir, poscar_unit_path):
     outDir = checkPath(outDir)
+    print("Getting phdos to be placed in " + outDir + ", currently sitting in", os.getcwd())
     try:
         ph_create_mesh_conf(kpoints_mesh_obj, poscar_unitcell_obj, outDir)
     except Exception as err:
@@ -149,13 +150,16 @@ def ph_get_dos(kpoints_mesh_obj, poscar_unitcell_obj, outDir, poscar_unit_path):
         exit_with_error('Error in DOS analysis and output: ' + str(err))
     
     # As with before, all files generated need to be moved to this directory, by default they are in the script directory THIS_DIR
-    # moveRelevantFiles(outDir)
+    if os.getcwd() != outDir:
+        print("Moving generated phdos files from", os.getcwd(), "to", outDir)
+        moveRelevantFiles(outDir)
 
     return
 
 # Get band structure raw data and plot, as with DOS it's a nonnegotiable package deal
 def ph_get_band(kpoints_line_obj, poscar_unitcell_obj, outDir, poscar_unit_path):
     outDir = checkPath(outDir)
+    print("Getting phband to be placed in " + outDir + ", currently sitting in", os.getcwd())
     try:
         ph_create_band_conf(kpoints_line_obj, poscar_unitcell_obj, outDir)
     except Exception as err:
@@ -175,6 +179,7 @@ def ph_get_band(kpoints_line_obj, poscar_unitcell_obj, outDir, poscar_unit_path)
     
     # As with before, all files generated need to be moved to this directory, by default they are in the script directory THIS_DIR
     if os.getcwd() != outDir:
+        print("Moving phband generated files from", os.getcwd(), "to", outDir)
         moveRelevantFiles(outDir)
 
     return
