@@ -12,7 +12,10 @@ The purpose, (blackbox style) functions, and sample calculations are found in th
 ## Instructions on calling the automated script
 If any of this section if unclear, read the documentation first, in particular the **Input** section. You can run it directly or use a batch file to submit a job if you wish. The command-line calling, either way, should be of the form
 ```
-python3 start.py <typeFlag: 0 for real space, 1 for config sampling> <I/O DIRECTORY> <vdW T/F> <GAMMA or MP> <arg1> <arg2> .... Specify at least one arg (eledos, eleband, phdos, phband, energies).\n\n\t If using input file...\t Usage: "python3 start.py -f <filename>" where parameters are in the input file separated by a newline
+python3 start.py <typeFlag: 0 for real space, 1 for config sampling> <I/O DIRECTORY> <vdW T/F> <GAMMA or MP> <arg1> <arg2> .... Specify at least one arg (eledos, eleband, phdos, phband, energies).
+
+    If using input file to specify parameters...
+        Usage: "python3 start.py -f <filename>" where parameters are in the input file separated by a newline
 ```
 where _I/O DIRECTORY_ is the directory of the POSCAR and where the calculation will be run, _vdW (T/F)_ is a True/False on whether to use van der Waals interactions in the calculations or not, *GAMMA or MP* specifies the type of sampling on the Brillouin zone (for gamma-centered enter GAMMA or for Monkhorst-Pack enter MP), and the _calculation i_ specifies the types of calculations for electronic and phononic bands and DOS (inputs eledos, eleband, phdos, phband). Note that for _GAMMA or MP_, if you already have a valid KPOINTS file in your I/O directory, it does not matter which you put in; the file's sampling type will be read and used.
 
