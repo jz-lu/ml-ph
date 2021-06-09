@@ -101,7 +101,6 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
             eledos_obj = get_eledos_analysis(DIR_ELEDOS, DIR_ELEDOS_RESULTS, poscar_relaxed, extract_raw_data=True, extract_plot=True)
             if os.path.isfile(DIR_ELEDOS + DOSCAR_NAME):
                 move(DOSCAR_NAME, DIR_ELEDOS, DIR_ELEDOS_RESULTS)
-
         elif i == ELEBAND:
             print('Now running electronic band structure calculations.')
             mkdir(i, outDirName) # Create a subfolder for the analysis
@@ -128,7 +127,6 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
             # Get the analysis plots and data
             print('Parsing VASP run and retrieving band structure data...')
             eleband_obj = get_eleband_analysis(DIR_ELEBAND, DIR_ELEBAND_RESULTS, poscar_relaxed, extract_raw_data=True, extract_plot=True)
-
         else: 
             # Only case left is that we have phonon calculations to do.
             # First no matter what we need to preprocess to get FORCE_SETS. 
@@ -151,7 +149,6 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
                 print('Now running phononic DOS calculations.')
                 mkdir(PHDOS, DIR_PHONOPY)
                 DIR_PHDOS = checkPath(DIR_PHONOPY + PHDOS)
-                os.chdir(DIR_PHDOS) # Go to that working directory
                 print('Conducting phonon total DOS analyses...')
                 # Call the DOS analysis with the relevant parameters
                 # NOTE: the poscar here is just for the atom names in the PUC so we don't need to do anything.
@@ -161,7 +158,6 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
                 print('Now running phononic band structure calculations.')
                 mkdir(PHBAND, DIR_PHONOPY)
                 DIR_PHBAND = checkPath(DIR_PHONOPY + PHBAND)
-                os.chdir(DIR_PHBAND)
                 print('Conducting phonon band structure analyses...')
                 # NOTE: the poscar here is just for the atom names in the PUC so we don't need to do anything.
                 ph_get_band(kpoints_line, poscar_relaxed, DIR_PHBAND, DIR_PHONOPY + POSCAR_UNIT_NAME)

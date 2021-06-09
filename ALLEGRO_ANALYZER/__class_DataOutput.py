@@ -12,28 +12,40 @@ class DataOutput:
     def __init__(self, out_dir, plot_list, cob_matrix):
         print("Initalizing DataOutput object.")
         self.__plot_list = plot_list
-        self.__zspacings = np.array([plot_list[1] for i in plot_list])
-        self.__energies = np.array([plot_list[2] for i in plot_list])
+        self.__zspacings = np.array([i[1] for i in plot_list])
+        self.__energies = np.array([i[2] for i in plot_list])
         self.__out_dir = checkPath(out_dir)
         print("Output to be stored in %s"%(out_dir))
 
         # Get the shifts in Cartesian coordinates via COB
-        self.__shifts = [np.dot(cob_matrix, np.array(plot_list[0][:-1])) for i in plot_list] # Exclude z-coordinate since plot is 2D
+        self.__shifts = [np.dot(cob_matrix, np.array(i[0][:-1])) for i in plot_list] # Exclude z-coordinate since plot is 2D
         self.xshifts = np.array([i[0] for i in self.__shifts])
         self.yshifts = np.array([i[1] for i in self.__shifts])
-        print("SHIFTS:", self.__shifts)
+        print("DIRECT SHIFTS:", [np.array(i[0][:-1]) for i in plot_list])
+        print("CARTESIAN SHIFTS:", self.__shifts)
         print("xshifts:", self.xshifts)
         print("yshifts:", self.yshifts)
         print("Energies:", self.__energies)
         print("Interlayer spacings:", self.__zspacings)
+
+        print('[DEBUG] RAW DATA OUTPUTTING!')
+        with open(self.__out_dir + "shifts.txt", 'w+') as f1:
+            f1.write(str(self.__plot_list))
+        with open(self.__out_dir + "xshifts.txt", 'w+') as f1:
+            f1.write(str(self.xshifts))
+        with open(self.__out_dir + "yshifts.txt", 'w+') as f1:
+            f1.write(str(self.yshifts))
+        with open(self.__out_dir + "zspacings.txt", 'w+') as f1:
+            f1.write(str(self.__zspacings))
+        with open(self.__out_dir + "e.txt", 'w+') as f1:
+            f1.write(str(self.__energies))
     
     # Output raw data as a csv file.
     def save_raw_data(self):
         table = np.transpose(np.array([self.xshifts, self.yshifts, self.__zspacings, self.__energies]))
         out_file = self.__out_dir + "raw_data.csv"
-        with open(out_file) as f:
-            f.write(b"2D Shift vector (lattice basis), Relaxed interlayer spacing, Energy\n")
-            np.savetxt(out_file, table, delimiter=",")
+        np.savetxt(out_file, table, delimiter=",", 
+            header="bx, by, relaxed z-spacing, energy\n")
    
     # Smoothly interpolate toal energy at various shifts.
     def plot_e_vs_b(self):
@@ -72,6 +84,6 @@ class DataOutput:
     # Do all available functions.
     def output_all_analysis(self):
         self.save_raw_data()
-        self.plot_e_vs_z()
         self.plot_e_vs_b()
         self.plot_z_vs_b()
+        self.plot_e_vs_z()

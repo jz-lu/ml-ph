@@ -77,21 +77,24 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
             subdirNames.append(PHDISP_DIR_NAME%(dispNums[i]))
             mkdir(subdirNames[i], dirName)
             print('New subdirectory %s created.'%(checkPath(dirName + subdirNames[i])))
+
+        print("Submitting the following INCAR to VASP for phonon calculation:\n", vaspObj['INCAR'])
                 
         # Multithread the VASP phonon supercell calculations.
-        threads = list()
+        # threads = list()
         for i in range(numPoscars):
-            print("[MAIN TH] Starting phonon VASP calculation thread %d..."%(i))
-            th = threading.Thread(target=compute_vasp_ph_forces, 
-                    args=(i, dispNums[i], dirName, subdirNames[i], poscarArray[i], vaspObj))
-            threads.append(th)
-            th.start() # Detach the thread
+            # print("[MAIN TH] Starting phonon VASP calculation thread %d..."%(i))
+            # th = threading.Thread(target=compute_vasp_ph_forces, 
+            #         args=(i, dispNums[i], dirName, subdirNames[i], poscarArray[i], vaspObj))
+            # threads.append(th)
+            # th.start() # Detach the thread
+            compute_vasp_ph_forces(i, dispNums[i], dirName, subdirNames[i], poscarArray[i], vaspObj)
         print('Total number of displacement files generated: ' + dispNums[-1])
 
         # Hold main until the last thread dies.
-        for i, th in enumerate(threads):
-            print("[MAIN TH] Joining thread %d..."%(i))
-            th.join()
+        # for i, th in enumerate(threads):
+        #     print("[MAIN TH] Joining thread %d..."%(i))
+        #     th.join()
 
     return dispNums[-1] # Returns last displacement number so we can get force sets.
 
@@ -120,6 +123,9 @@ def ph_generate_forcesets(dirName, dispNum):
     # If force sets created then proceed, if not exit with error. Use find function to find out.
     if not os.path.isfile(dirName + PH_FORCE_SETS_NAME):
         exit_with_error(ERR_PH_FORCE_SETS_NOT_FOUND)
+    
+    print("[DEBUG] FORCE_SETS put in directory " + dirName)
+    print("[DEBUG] Files in alleged FORCE_SETS directory:", os.listdir())
     
     # Move FORCE_SETS to the proper place
     # copy(PH_FORCE_SETS_NAME, THIS_DIR, dirName)
