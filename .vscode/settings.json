@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "/home/jonathanlu/anaconda_env/bin/python",
+    "python.pythonPath": "/Users/jonathanlu/miniconda3/envs/phonopy/bin/python",
     "python.autoComplete.extraPaths": [
       "/home/jonathanlu/Documents/ml-ph/ALLEGRO_ANALYZER"
     ],
