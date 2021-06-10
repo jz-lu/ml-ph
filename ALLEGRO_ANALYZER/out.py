@@ -1,6 +1,7 @@
 import numpy as np
 from pymatgen.io.vasp.inputs import Poscar
 from __class_DataOutput import DataOutput
+ABS_MIN_ENERGY = -40.02975439 # energy of minimum configuration to shift everything against.
 
 a = []
 a.append((np.asarray([0., 0., 0.]), 0.226122, -36.9177224))
@@ -18,5 +19,5 @@ lat = p.as_dict()['structure']['lattice']['matrix'][:-1]
 cob = np.transpose([i[:-1] for i in lat])
 print("\n\nCOB:", cob, "\n\n")
 
-d = DataOutput('./out', a, cob)
+d = DataOutput('./out', a, cob, ABS_MIN_ENERGY)
 d.output_all_analysis()

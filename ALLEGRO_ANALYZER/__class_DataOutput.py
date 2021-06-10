@@ -9,11 +9,11 @@ class DataOutput:
     # plot list is a list of tuples (b, z, e) = (shift, z-spacing, energy).
     # cob is the change-of-basis matrix to get fom lattice basis (which b is in) to Cartesian to plot.
     #   Note cob_matrix must be a numpy matrix.
-    def __init__(self, out_dir, plot_list, cob_matrix):
+    def __init__(self, out_dir, plot_list, cob_matrix, abs_min_energy):
         print("Initalizing DataOutput object.")
         self.__plot_list = plot_list
         self.__zspacings = np.array([i[1] for i in plot_list])
-        self.__energies = np.array([i[2] for i in plot_list])
+        self.__energies = np.array([(i[2]-abs_min_energy)*1000 for i in plot_list])
         self.__out_dir = checkPath(out_dir)
         print("Output to be stored in %s"%(out_dir))
 
@@ -25,7 +25,7 @@ class DataOutput:
         print("CARTESIAN SHIFTS:", self.__shifts)
         print("xshifts:", self.xshifts)
         print("yshifts:", self.yshifts)
-        print("Energies:", self.__energies)
+        print("Energies (meV):", self.__energies)
         print("Interlayer spacings:", self.__zspacings)
 
         print('[DEBUG] RAW DATA OUTPUTTING!')
