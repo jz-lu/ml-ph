@@ -3,8 +3,10 @@ from __class_input import InputData
 from __printers import print_start_msg, print_end_msg
 from ___constants_misc import GENERAL_ERR_USAGE_MSG
 from __begin_computation import begin_computation
-from __class_DataOutput import DataOutput
+from ___constants_config import BZE_OUT_FILENAME
+from pymatgen.io.vasp.inputs import Poscar
 import copy, sys, os
+import numpy as np
 
 # TODO items:
 # Get the put directories of phonopy right with os.chdir() and adjust the movers in phonopy and the cleanup functions accordingly.

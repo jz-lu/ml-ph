@@ -1,7 +1,9 @@
 import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
+from ___constants_config import DEFAULT_ABS_MIN_ENERGY
 from __directory_searchers import checkPath
+
 
 NUM_LEVELS = 21 # Controls contour plot smooothness, ensure it is odd for the middle to be captured.
 
@@ -9,7 +11,7 @@ class DataOutput:
     # plot list is a list of tuples (b, z, e) = (shift, z-spacing, energy).
     # cob is the change-of-basis matrix to get fom lattice basis (which b is in) to Cartesian to plot.
     #   Note cob_matrix must be a numpy matrix.
-    def __init__(self, out_dir, plot_list, cob_matrix, abs_min_energy):
+    def __init__(self, out_dir, plot_list, cob_matrix, abs_min_energy=DEFAULT_ABS_MIN_ENERGY):
         print("Initalizing DataOutput object.")
         self.__plot_list = plot_list
         self.__zspacings = np.array([i[1] for i in plot_list])
@@ -27,6 +29,7 @@ class DataOutput:
         print("yshifts:", self.yshifts)
         print("Energies (meV):", self.__energies)
         print("Interlayer spacings:", self.__zspacings)
+        np.save(self.__out_dir + 'bze', self.__plot_list)
 
         print('[DEBUG] RAW DATA OUTPUTTING!')
         with open(self.__out_dir + "shifts.txt", 'w+') as f1:
@@ -39,7 +42,7 @@ class DataOutput:
             f1.write(str(self.__zspacings))
         with open(self.__out_dir + "e.txt", 'w+') as f1:
             f1.write(str(self.__energies))
-    
+
     # Output raw data as a csv file.
     def save_raw_data(self):
         table = np.transpose(np.array([self.xshifts, self.yshifts, self.__zspacings, self.__energies]))
@@ -54,7 +57,7 @@ class DataOutput:
         fig.colorbar(cf, ax=ax)
         ax.set_xlabel(r"$b_x$")
         ax.set_ylabel(r"$b_y$")
-        ax.set_title(r"$E_{tot}(b)$")
+        ax.set_title(r"$E_{tot}(b) (meV)$")
         out_file = self.__out_dir + "energy_config_plot.png"
         fig.savefig(out_file)
     

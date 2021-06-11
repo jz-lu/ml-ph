@@ -71,9 +71,10 @@ def begin_computation(user_input_settings):
         lattice_basis = config.get_fixed_layer_poscar().as_dict()['structure']['lattice']['matrix'][:-1]
         cob_matrix = np.transpose([i[:-1] for i in lattice_basis])
 
+        # TODO make abs_min_energy inputtable on cmdline instead of making value as constant in code
         out = DataOutput(data_dir, bze_points, cob_matrix)
         out.output_all_analysis()
-        print("Configuration analysis (raw table export, plotting) complete. Returning data to start.py...")
+        print("Configuration analysis (raw table export, plotting) complete. Returning data to `start.py`...")
 
         return bze_points
     
