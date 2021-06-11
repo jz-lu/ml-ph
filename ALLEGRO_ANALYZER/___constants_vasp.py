@@ -3,7 +3,7 @@
 
 # POSCAR z-basis vector magnitude, increase if we add a lot more (>3) layers
 Z_LATTICE_SIZE = 20.0
-Z_LAYER_SEP = 0.25 # Layer separation in terms of the z-basis vector
+Z_LAYER_SEP = 0.17 # Layer separation in terms of the z-basis vector
 # Precision of POSCAR lattice and atoms, in number of decimal places
 POSCAR_PRECISION = 6
 POSCAR_PREC_COMP_THRESHOLD = 0.0001
