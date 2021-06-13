@@ -20,7 +20,7 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
     base_root_subpaths = []
     print('Creating subdirectories to store VASP calculations for each configuration...')
     for i in range(len(configposcar_shift_tuple)):
-        new_subdir_name = '%s%d'%(SUBDIRNAMES, i)
+        new_subdir_name = '%s%d/'%(SUBDIRNAMES, i)
         mkdir(new_subdir_name, BASE_ROOT)
         base_root_subpaths.append(BASE_ROOT + new_subdir_name)
     
@@ -45,7 +45,7 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
         vdw = 'T' if user_input_settings.do_vdW else 'F'
         kpts = 'GAMMA' if user_input_settings.kpoints_is_gamma_centered else 'MP'
         for i, shpath in enumerate(base_root_subpaths):
-            with open(BASE_ROOT + shpath + CONFIG_BATCH_NAME + str(i), 'w') as bshscr:
+            with open(shpath + CONFIG_BATCH_NAME + str(i), 'w') as bshscr:
                 bshscr.write('#!/bin/bash\n')
                 bshscr.write('source activate $HOME/anaconda_env\n')
                 bshscr.write('STR="%s"\n'%BASE_ROOT)
@@ -57,7 +57,7 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
                 for val in configposcar_shift_tuple[i][0]:
                     f.write(str(val))
         print('All configurations executables built.')
-        print('Running exectuables...')
+        print('Running executables...')
         stream = os.popen('sbatch ' + rtfile)
         print(stream.read())
         return None
