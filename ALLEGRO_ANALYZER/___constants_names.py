@@ -22,16 +22,20 @@ CMD_LINE_ARG_LIST = [ELEDOS, ELEBAND, PHDOS, PHBAND, ENERGIES]
 
 # Directory and batch names
 START_BATCH_NAME = 'EXECUTABLE_BAT_DNE'
+CONFIG_BATCH_NAME = 'SHIFT_BAT_DNE_'
 START_BATCH_PATH = '/n/home04/jzlu/codes/ml-ph/start_job_batch/' + START_BATCH_NAME
 START_BATCH_OUTFILE_START = 'job_'
 BATCH_FILE_NAME = 'STATIC_BAT_DNE'
-BATCH_FILE_PATH = '/n/home04/jzlu/codes/ml-ph/ALLEGRO_ANALYZER/' + BATCH_FILE_NAME
+CODE_DIR = '/n/home04/jzlu/codes/ml-ph/ALLEGRO_ANALYZER/'
+BATCH_FILE_PATH = CODE_DIR + BATCH_FILE_NAME
 RELAXATION_DIR_NAME = 'relaxation_calculations'
 ANALYSIS_DIR_NAME = 'analyses'
 TOTAL_ENER_DIR_NAME = 'energy_data'
+SHIFT_NAME = 'shiftcoord.txt'
 PHONOPY_DIR_NAME = 'phonon_calculations'
 PHDISP_STATIC_NAME = 'disp-'
 PHDISP_DIR_NAME = PHDISP_STATIC_NAME + '%s/'
+MY_EMAIL = 'jlu@college.harvard.edu'
 
 # File names
 POSCAR_NAME = 'POSCAR'
