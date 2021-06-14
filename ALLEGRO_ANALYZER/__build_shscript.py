@@ -19,8 +19,9 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
     BASE_ROOT = checkPath(BASE_ROOT)
     SUBDIRNAMES = 'shift_'
     base_root_subpaths = []
+    nshifts = len(configposcar_shift_tuple)
     print('Creating subdirectories to store VASP calculations for each configuration...')
-    for i in range(len(configposcar_shift_tuple)):
+    for i in range(nshifts):
         new_subdir_name = '%s%d/'%(SUBDIRNAMES, i)
         mkdir(new_subdir_name, BASE_ROOT)
         base_root_subpaths.append(BASE_ROOT + new_subdir_name)
@@ -31,35 +32,40 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
         rtfile = BASE_ROOT + START_BATCH_NAME
         print('Building configuration space job array executables...')
         with open(rtfile, 'w') as f:
+            vdw = 'T' if user_input_settings.do_vdW else 'F'
+            kpts = 'GAMMA' if user_input_settings.kpoints_is_gamma_centered else 'MP'
+            randidx = randint(1,10000)
             f.write('#!/bin/bash\n')
             f.write('#SBATCH -J shifts\n')
             f.write('#SBATCH -n 1\n#SBATCH -t 8:00:00\n#SBATCH -p kaxiras,shared\n#SBATCH --mem-per-cpu=5000\n')
             f.write('#SBATCH -o shift_%A_%a.out\n#SBATCH -e shift_%A_%a.err\n')
             f.write('#SBATCH --mail-type=END,FAIL\n#SBATCH --mail-user=%s\n'%MY_EMAIL)
+            f.write('source activate $HOME/anaconda_env\n')
+            f.write('WDIR="%s${SLURM_ARRAY_TASK_ID}"\n'%(BASE_ROOT + SUBDIRNAMES))
+            f.write('echo "WD: ${WDIR}"\n')
+            f.write('ALLEGRO_DIR="%s"\n'%CODE_DIR)
             f.write('module list\nsource activate $HOME/anaconda_env\n')
-            randidx = randint(1,10000)
             f.write('echo "RUNNING new array ridx = %d"\n'%randidx)
-            f.write(START_BATCH_NAME + ' ' + BASE_ROOT + SUBDIRNAMES + '"${SLURM_ARRAY_TASK_ID}"' + CONFIG_BATCH_NAME + '"${SLURM_ARRAY_TASK_ID}"')
+            f.write('python3 $ALLEGRO_DIR/start.py 0 $WDIR %s %s energies\n'%(vdw, kpts))
             f.write('echo "FINISHED array ridx = %d"\n'%randidx)
         print('Main executable built.')
 
-        vdw = 'T' if user_input_settings.do_vdW else 'F'
-        kpts = 'GAMMA' if user_input_settings.kpoints_is_gamma_centered else 'MP'
         for i, shpath in enumerate(base_root_subpaths):
-            with open(shpath + CONFIG_BATCH_NAME + str(i), 'w') as bshscr:
-                bshscr.write('#!/bin/bash\n')
-                bshscr.write('source activate $HOME/anaconda_env\n')
-                bshscr.write('STR="%s"\n'%BASE_ROOT)
-                bshscr.write('echo "WD: ${STR}"\n')
-                bshscr.write('ALLEGRO_DIR="%s"\n'%CODE_DIR)
-                bshscr.write('python3 $ALLEGRO_DIR/start.py 0 $STR %s %s energies\n'%(vdw, kpts))
+            # with open(shpath + CONFIG_BATCH_NAME + str(i), 'w') as bshscr:
+            #     bshscr.write('#!/bin/bash\n')
+            #     bshscr.write('source activate $HOME/anaconda_env\n')
+            #     bshscr.write('STR="%s"\n'%shpath)
+            #     bshscr.write('echo "WD: ${STR}"\n')
+            #     bshscr.write('ALLEGRO_DIR="%s"\n'%CODE_DIR)
+            #     bshscr.write('python3 $ALLEGRO_DIR/start.py 0 $STR %s %s energies\n'%(vdw, kpts))
             bfile = shpath + SHIFT_NAME
             with open(bfile, 'w') as f:
                 for val in configposcar_shift_tuple[i][0]:
                     f.write(str(val))
         print('All configurations executables built.')
-        print('Running executables...')
-        stream = os.popen('sbatch ' + rtfile)
+        runcmd = 'sbatch --array-0-%d'%(nshifts-1) + rtfile
+        print('Running %s...'%runcmd)
+        stream = os.popen(runcmd)
         print(stream.read())
         return None
 

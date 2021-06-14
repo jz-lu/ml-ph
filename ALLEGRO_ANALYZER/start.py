@@ -38,10 +38,7 @@ user_input_settings = InputData(cmdargs)
 
 bze_points = begin_computation(user_input_settings)
 print("All computations complete! Returning any debug messages and exiting.")
-if bze_points == None: # (b, z, e)
-    print_end_msg(start_time)
-    sys.exit(GENERAL_ERR_USAGE_MSG)
-else:
+if bze_points: # (b, z, e)
     print("\n\n[Debug] BZE POINTS:")
     for i in bze_points:
         print(i)
