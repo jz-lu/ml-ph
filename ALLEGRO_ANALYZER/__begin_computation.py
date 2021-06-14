@@ -33,24 +33,24 @@ def begin_computation(user_input_settings):
         # Multiprocess over the configurations
         bze_points = compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple)
 
-        # Parse the output of the configuration analysis.
-        # Move home directory to the selected one.
-        data_dir = user_input_settings.get_base_root_dir() + "raw_data/"
-        if not os.path.isdir(data_dir):
-            os.mkdir(data_dir)
-        os.chdir(data_dir)
-        print("Moved CWD to " + data_dir)
+        # # Parse the output of the configuration analysis.
+        # # Move home directory to the selected one.
+        # data_dir = user_input_settings.get_base_root_dir() + "raw_data/"
+        # if not os.path.isdir(data_dir):
+        #     os.mkdir(data_dir)
+        # os.chdir(data_dir)
+        # print("Moved CWD to " + data_dir)
 
-        # Get the 2D (without z vector) lattice basis from the POSCAR of the fixed layer,
-        # then convert it into a change-of-basis matrix.
-        lattice_basis = config.get_fixed_layer_poscar().as_dict()['structure']['lattice']['matrix'][:-1]
-        cob_matrix = np.transpose([i[:-1] for i in lattice_basis])
+        # # Get the 2D (without z vector) lattice basis from the POSCAR of the fixed layer,
+        # # then convert it into a change-of-basis matrix.
+        # lattice_basis = config.get_fixed_layer_poscar().as_dict()['structure']['lattice']['matrix'][:-1]
+        # cob_matrix = np.transpose([i[:-1] for i in lattice_basis])
 
-        # TODO make abs_min_energy inputtable on cmdline instead of making value as constant in code
-        np.save(data_dir + 'bze', np.array(bze_points))
-        out = DataOutput(data_dir, bze_points, cob_matrix)
-        out.output_all_analysis()
-        print("Configuration analysis (raw table export, plotting) complete. Returning data to `start.py`...")
+        # # TODO make abs_min_energy inputtable on cmdline instead of making value as constant in code
+        # np.save(data_dir + 'bze', np.array(bze_points))
+        # out = DataOutput(data_dir, bze_points, cob_matrix)
+        # out.output_all_analysis()
+        print("Configuration analysis (raw data file dump) complete. Returning data to `start.py`...")
 
         return bze_points
     
