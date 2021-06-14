@@ -1,6 +1,7 @@
 from ___constants_config import GRID_SAMPLE_LOW, GRID_SAMPLE_HIGH
 from ___constants_misc import NUM_AVAILABLE_CORES
 from ___constants_vasp import Z_LAYER_SEP
+from ___constants_names import CONFIG_DATA_DIR, COB_NPY_NAME
 from __class_input import InputData
 from __class_Configuration import Configuration
 from __directory_searchers import checkPath
@@ -33,24 +34,26 @@ def begin_computation(user_input_settings):
         # Multiprocess over the configurations
         bze_points = compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple)
 
-        # # Parse the output of the configuration analysis.
-        # # Move home directory to the selected one.
-        # data_dir = user_input_settings.get_base_root_dir() + "raw_data/"
-        # if not os.path.isdir(data_dir):
-        #     os.mkdir(data_dir)
-        # os.chdir(data_dir)
-        # print("Moved CWD to " + data_dir)
+        # Parse the output of the configuration analysis.
+        # Move home directory to the selected one.
+        data_dir = user_input_settings.get_base_root_dir() + checkPath(CONFIG_DATA_DIR)
+        if not os.path.isdir(data_dir):
+            os.mkdir(data_dir)
+        os.chdir(data_dir)
+        print("Moved CWD to " + data_dir)
 
-        # # Get the 2D (without z vector) lattice basis from the POSCAR of the fixed layer,
-        # # then convert it into a change-of-basis matrix.
-        # lattice_basis = config.get_fixed_layer_poscar().as_dict()['structure']['lattice']['matrix'][:-1]
-        # cob_matrix = np.transpose([i[:-1] for i in lattice_basis])
+        # Get the 2D (without z vector) lattice basis from the POSCAR of the fixed layer,
+        # then convert it into a change-of-basis matrix.
+        lattice_basis = config.get_fixed_layer_poscar().as_dict()['structure']['lattice']['matrix'][:-1]
+        cob_matrix = np.transpose([i[:-1] for i in lattice_basis])
+        np.save(data_dir + COB_NPY_NAME, cob_matrix)
+        print("Saved COB matrix for analysis at " + data_dir)
 
-        # # TODO make abs_min_energy inputtable on cmdline instead of making value as constant in code
         # np.save(data_dir + 'bze', np.array(bze_points))
         # out = DataOutput(data_dir, bze_points, cob_matrix)
         # out.output_all_analysis()
         print("Configuration analysis (raw data file dump) complete. Returning data to `start.py`...")
+        print("**IMPORTANT**: when computation on all shifts complete, run `config_analyze.py` to get data analysis")
 
         return bze_points
     

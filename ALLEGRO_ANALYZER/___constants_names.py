@@ -31,11 +31,14 @@ BATCH_FILE_PATH = CODE_DIR + BATCH_FILE_NAME
 RELAXATION_DIR_NAME = 'relaxation_calculations'
 ANALYSIS_DIR_NAME = 'analyses'
 TOTAL_ENER_DIR_NAME = 'energy_data'
-SHIFT_NAME = 'shiftcoord.txt'
 PHONOPY_DIR_NAME = 'phonon_calculations'
 PHDISP_STATIC_NAME = 'disp-'
 PHDISP_DIR_NAME = PHDISP_STATIC_NAME + '%s/'
 MY_EMAIL = 'jlu@college.harvard.edu'
+CONFIG_DATA_DIR = 'config_data/'
+CONFIG_SUBDIR_NAME = 'shift_'
+SHIFT_NAME = 'shiftcoord.txt'
+COB_NPY_NAME = 'cob.npy' # must end in .npy
 
 # File names
 POSCAR_NAME = 'POSCAR'

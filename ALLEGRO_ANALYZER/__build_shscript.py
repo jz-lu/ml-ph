@@ -1,5 +1,13 @@
 from ___constants_config import GRID_SAMPLE_LOW, GRID_SAMPLE_HIGH
-from ___constants_names import CONFIG_BATCH_NAME, START_BATCH_NAME, CODE_DIR, MY_EMAIL, SHIFT_NAME, TOTAL_ENER_DIR_NAME, POSCAR_NAME
+from ___constants_names import (
+    CONFIG_BATCH_NAME, 
+    START_BATCH_NAME, 
+    CODE_DIR, MY_EMAIL, 
+    SHIFT_NAME, 
+    TOTAL_ENER_DIR_NAME, 
+    POSCAR_NAME, 
+    CONFIG_SUBDIR_NAME
+    )
 from ___constants_misc import NUM_AVAILABLE_CORES
 from ___constants_vasp import Z_LAYER_SEP
 from __class_input import InputData
@@ -17,12 +25,11 @@ SINGLE_POOL = False
 # Multiprocess for each displacement, since they are completely independent.
 def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
     BASE_ROOT = checkPath(BASE_ROOT)
-    SUBDIRNAMES = 'shift_'
     base_root_subpaths = []
     nshifts = len(configposcar_shift_tuple)
     print('Creating subdirectories to store VASP calculations for each configuration...')
     for i in range(nshifts):
-        new_subdir_name = '%s%d/'%(SUBDIRNAMES, i)
+        new_subdir_name = '%s%d/'%(CONFIG_SUBDIR_NAME, i)
         mkdir(new_subdir_name, BASE_ROOT)
         base_root_subpaths.append(BASE_ROOT + new_subdir_name)
     
@@ -41,7 +48,7 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
             f.write('#SBATCH -o shift_%A_%a.out\n#SBATCH -e shift_%A_%a.err\n')
             f.write('#SBATCH --mail-type=END,FAIL\n#SBATCH --mail-user=%s\n'%MY_EMAIL)
             f.write('source activate $HOME/anaconda_env\n')
-            f.write('WDIR="%s${SLURM_ARRAY_TASK_ID}"\n'%(BASE_ROOT + SUBDIRNAMES))
+            f.write('WDIR="%s${SLURM_ARRAY_TASK_ID}"\n'%(BASE_ROOT + CONFIG_SUBDIR_NAME))
             f.write('echo "WD: ${WDIR}"\n')
             f.write('ALLEGRO_DIR="%s"\n'%CODE_DIR)
             f.write('module list\nsource activate $HOME/anaconda_env\n')
