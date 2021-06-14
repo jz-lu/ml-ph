@@ -63,7 +63,7 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
                 for val in configposcar_shift_tuple[i][0]:
                     f.write(str(val))
         print('All configurations executables built.')
-        runcmd = 'sbatch --array-0-%d'%(nshifts-1) + ' ' + rtfile
+        runcmd = 'sbatch --array=0-%d'%(nshifts-1) + ' ' + rtfile
         print('Running %s...'%runcmd)
         stream = os.popen(runcmd)
         print(stream.read())
