@@ -34,7 +34,7 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
             f.write('#SBATCH -J shifts\n')
             f.write('#SBATCH -n 1\n#SBATCH -t 8:00:00\n#SBATCH -p kaxiras,shared\n#SBATCH --mem-per-cpu=5000\n')
             f.write('#SBATCH -o shift_%A_%a.out\n#SBATCH -e shift_%A_%a.err\n')
-            f.write('#SBATCH --mail-type=END,FAIL\n#SBATCH --mail-user=%s'%MY_EMAIL)
+            f.write('#SBATCH --mail-type=END,FAIL\n#SBATCH --mail-user=%s\n'%MY_EMAIL)
             f.write('module list\nsource activate $HOME/anaconda_env\n')
             
             f.write('echo "RUNNING array idx %A_%a"\n')
@@ -52,7 +52,7 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
                 bshscr.write('echo "WD: ${STR}"\n')
                 bshscr.write('ALLEGRO_DIR="%s"\n'%CODE_DIR)
                 bshscr.write('python3 $ALLEGRO_DIR/start.py 0 $STR %s %s energies\n'%(vdw, kpts))
-            bfile = BASE_ROOT + checkPath(TOTAL_ENER_DIR_NAME) + SHIFT_NAME
+            bfile = shpath + SHIFT_NAME
             with open(bfile, 'w') as f:
                 for val in configposcar_shift_tuple[i][0]:
                     f.write(str(val))
