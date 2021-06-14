@@ -9,6 +9,7 @@ from __dirModifications import mkdir
 from __compute_properties import relax_solid
 from __class_DataOutput import DataOutput
 from multiprocessing import Pool
+from random import randint
 import os
 import numpy as np
 SINGLE_POOL = False
@@ -36,10 +37,10 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
             f.write('#SBATCH -o shift_%A_%a.out\n#SBATCH -e shift_%A_%a.err\n')
             f.write('#SBATCH --mail-type=END,FAIL\n#SBATCH --mail-user=%s\n'%MY_EMAIL)
             f.write('module list\nsource activate $HOME/anaconda_env\n')
-            
-            f.write('echo "RUNNING array idx %A_%a"\n')
+            randidx = randint(1,10000)
+            f.write('echo "RUNNING new array ridx = %d"\n'%randidx)
             f.write(START_BATCH_NAME + ' ' + BASE_ROOT + SUBDIRNAMES + '"${SLURM_ARRAY_TASK_ID}"' + CONFIG_BATCH_NAME + '"${SLURM_ARRAY_TASK_ID}"')
-            f.write('echo "FINISHED array idx %A_%a"\n')
+            f.write('echo "FINISHED array ridx = %d"\n'%randidx)
         print('Main executable built.')
 
         vdw = 'T' if user_input_settings.do_vdW else 'F'
