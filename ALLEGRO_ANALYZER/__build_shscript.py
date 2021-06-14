@@ -1,5 +1,5 @@
 from ___constants_config import GRID_SAMPLE_LOW, GRID_SAMPLE_HIGH
-from ___constants_names import CONFIG_BATCH_NAME, START_BATCH_NAME, CODE_DIR, MY_EMAIL, SHIFT_NAME, TOTAL_ENER_DIR_NAME
+from ___constants_names import CONFIG_BATCH_NAME, START_BATCH_NAME, CODE_DIR, MY_EMAIL, SHIFT_NAME, TOTAL_ENER_DIR_NAME, POSCAR_NAME
 from ___constants_misc import NUM_AVAILABLE_CORES
 from ___constants_vasp import Z_LAYER_SEP
 from __class_input import InputData
@@ -62,6 +62,7 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
             with open(bfile, 'w') as f:
                 for val in configposcar_shift_tuple[i][0]:
                     f.write(str(val))
+            configposcar_shift_tuple[i][1].write_file(shpath + POSCAR_NAME) # write POSCAR to file
         print('All configurations executables built.')
         runcmd = 'sbatch --array=0-%d'%(nshifts-1) + ' ' + rtfile
         print('Running %s...'%runcmd)
