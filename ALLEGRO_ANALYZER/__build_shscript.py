@@ -61,7 +61,7 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
             bfile = shpath + SHIFT_NAME
             with open(bfile, 'w') as f:
                 for val in configposcar_shift_tuple[i][0]:
-                    f.write(str(val))
+                    f.write(str(val) + '\n')
             configposcar_shift_tuple[i][1].write_file(shpath + POSCAR_NAME) # write POSCAR to file
         print('All configurations executables built.')
         runcmd = 'sbatch --array=0-%d'%(nshifts-1) + ' ' + rtfile
