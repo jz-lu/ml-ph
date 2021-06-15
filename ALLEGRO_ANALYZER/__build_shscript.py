@@ -6,7 +6,8 @@ from ___constants_names import (
     SHIFT_NAME, 
     TOTAL_ENER_DIR_NAME, 
     POSCAR_NAME, 
-    CONFIG_SUBDIR_NAME
+    CONFIG_SUBDIR_NAME,
+    ENERGIES
     )
 from ___constants_compute import *
 from ___constants_misc import NUM_AVAILABLE_CORES
@@ -44,17 +45,19 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
             kpts = 'GAMMA' if user_input_settings.kpoints_is_gamma_centered else 'MP'
             randidx = randint(1,10000)
             f.write('#!/bin/bash\n')
-            f.write('#SBATCH -J shifts\n')
-            f.write('#SBATCH -n 1\n#SBATCH -t %s\n#SBATCH -p %s\n#SBATCH --mem-per-cpu=%s\n'%(COMPUTE_TIME, COMPUTE_PARTITIONS, COMPUTE_MEM_PER_CPU))
+            f.write('#SBATCH -J %s\n'%(COMPUTE_JOBNAME))
+            if USE_NODE_INDICATOR:
+                f.write('#SBATCH -N %s\n'%(COMPUTE_NNODE))
+            f.write('#SBATCH -n %s\n#SBATCH -t %s\n#SBATCH -p %s\n#SBATCH --mem-per-cpu=%s\n'%(COMPUTE_NCPU, COMPUTE_TIME, COMPUTE_PARTITIONS, COMPUTE_MEM_PER_CPU))
             f.write('#SBATCH -o shift_%A_%a.out\n#SBATCH -e shift_%A_%a.err\n')
             f.write('#SBATCH --mail-type=%s\n#SBATCH --mail-user=%s\n'%(COMPUTE_EMAIL_TYPE, COMPUTE_EMAIL_TO))
-            f.write('source activate $HOME/anaconda_env\n')
+            f.write('source activate $HOME/%s\n'%(COMPUTE_ANACONDA_ENV))
             f.write('WDIR="%s${SLURM_ARRAY_TASK_ID}"\n'%(BASE_ROOT + CONFIG_SUBDIR_NAME))
             f.write('echo "WD: ${WDIR}"\n')
             f.write('ALLEGRO_DIR="%s"\n'%CODE_DIR)
-            f.write('module list\nsource activate $HOME/anaconda_env\n')
+            f.write('module list\nsource activate $HOME/%s\n'%(COMPUTE_ANACONDA_ENV))
             f.write('echo "RUNNING new array ridx = %d"\n'%randidx)
-            f.write('python3 $ALLEGRO_DIR/start.py 0 $WDIR %s %s energies\n'%(vdw, kpts))
+            f.write('python3 $ALLEGRO_DIR/start.py 0 $WDIR %s %s %s\n'%(vdw, kpts, ENERGIES))
             f.write('echo "FINISHED array ridx = %d"\n'%randidx)
         print('Main executable built.')
 
