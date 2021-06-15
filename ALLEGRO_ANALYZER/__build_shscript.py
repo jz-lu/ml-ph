@@ -8,6 +8,7 @@ from ___constants_names import (
     POSCAR_NAME, 
     CONFIG_SUBDIR_NAME
     )
+from ___constants_compute import *
 from ___constants_misc import NUM_AVAILABLE_CORES
 from ___constants_vasp import Z_LAYER_SEP
 from __class_input import InputData
@@ -44,9 +45,9 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
             randidx = randint(1,10000)
             f.write('#!/bin/bash\n')
             f.write('#SBATCH -J shifts\n')
-            f.write('#SBATCH -n 1\n#SBATCH -t 8:00:00\n#SBATCH -p kaxiras,shared\n#SBATCH --mem-per-cpu=5000\n')
+            f.write('#SBATCH -n 1\n#SBATCH -t %s\n#SBATCH -p %s\n#SBATCH --mem-per-cpu=%s\n'%(COMPUTE_TIME, COMPUTE_PARTITIONS, COMPUTE_MEM_PER_CPU))
             f.write('#SBATCH -o shift_%A_%a.out\n#SBATCH -e shift_%A_%a.err\n')
-            f.write('#SBATCH --mail-type=END,FAIL\n#SBATCH --mail-user=%s\n'%MY_EMAIL)
+            f.write('#SBATCH --mail-type=%s\n#SBATCH --mail-user=%s\n'%(COMPUTE_EMAIL_TYPE, COMPUTE_EMAIL_TO))
             f.write('source activate $HOME/anaconda_env\n')
             f.write('WDIR="%s${SLURM_ARRAY_TASK_ID}"\n'%(BASE_ROOT + CONFIG_SUBDIR_NAME))
             f.write('echo "WD: ${WDIR}"\n')
