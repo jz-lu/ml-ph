@@ -92,9 +92,8 @@ while i < n:
         c = []
         while i < n and args[i] in CMD_LINE_ARG_LIST:
             c.append(args[i]); i += 1
-        if not c or (i+1 < n and not is_flag(args[i+1])):
+        if not c or (i+1 < n and not is_flag(args[i])):
             err(f'Error: specified computations under flag "-c" invalid')
-        i += 1
     else:
         warn(f'Warning: unknown flag "{args[i]} ignored')
         i += 1
