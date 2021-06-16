@@ -102,6 +102,7 @@ outdir = checkPath(outdir)
 c = ' '.join(c)
 with open(outdir + fname, 'w') as f:
     f.write('#!/bin/bash\n')
+    f.write('#SBATCH --job-name=' + compute_jobname + '\n')
     if USE_NODE_INDICATOR:
         f.write('#SBATCH -N %s\n'%(compute_nnode))
     f.write('#SBATCH -n %s\n#SBATCH -t %s\n#SBATCH -p %s\n#SBATCH --mem-per-cpu=%s\n'%(compute_ncpu, compute_time, compute_partitions, compute_mem_per_cpu))
