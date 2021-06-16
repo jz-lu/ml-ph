@@ -23,7 +23,7 @@ def relax_solid(user_input_settings, poscar=None, shift=None, user_inputted_root
     init_vasp_obj = vasp_input_initializers.build_relaxation_input(print_all_info=True)
 
     # Before we build the relaxation calculation inputs below, we need a sanity check as to whether the calculations can be done
-    # The only thing we need to check besides poscar validity (code will handle other input files if none are given
+    # The only thing we need to check besides poscar validity (code will handle other input files if none are given)
     # is the existence of a line kpoints file if we want an electronic band structure calculation
     kpoints_line = CarCollector.get_line_kpoints(ROOT, user_input_settings.need_line_kpoints())
 
@@ -60,3 +60,29 @@ def relax_solid(user_input_settings, poscar=None, shift=None, user_inputted_root
     else:
         return None
 
+def solve_electronic(user_input_settings, poscar=None, user_inputted_root=None):
+    # Get the right directory to import the relevant files.
+    ROOT = user_input_settings.get_base_root_dir()
+    if user_inputted_root:
+        ROOT = user_inputted_root
+    ROOT = checkPath(ROOT)
+
+    # Collect input files
+    vasp_input_initializers = CarCollector(ROOT, user_input_settings.do_vdW, user_input_settings.kpoints_is_gamma_centered, user_input_settings.need_line_kpoints(), poscar=poscar)
+    init_vasp_obj = vasp_input_initializers.build_norelax_input(print_all_info=True)
+
+    # Similarly we want to run the analyses post-relaxation in a separate subfolder
+    mkdir(ANALYSIS_DIR_NAME, ROOT)
+    DIR_ANALYSIS = checkPath(ROOT + ANALYSIS_DIR_NAME)
+    print('Created new folder %s to store self-consistent electronic step results.'%(DIR_ANALYSIS))
+
+    print('Running VASP electronic step calculations...results to be sent to %s'%(DIR_ANALYSIS))
+    # print(init_vasp_obj)
+    run_vasp(init_vasp_obj, DIR_ANALYSIS, run_type='no_relax')
+    print('VASP electronic step calculations complete.')
+    if user_input_settings.do_energy_calculation():
+        get_energies(DIR_ANALYSIS, DIR_ANALYSIS, writeOut=True)    
+    print('Successfully completed total energy calculation, which was the only specified calculation. Exiting relaxation...')
+    return None
+
+    

@@ -1,6 +1,11 @@
 from ____exit_with_error import exit_with_error
 from ___constants_misc import *
-from ___constants_names import CMD_LINE_ARG_LIST, ENERGIES, ELEBAND, PHBAND
+from ___constants_names import (
+    CMD_LINE_ARG_LIST, 
+    ENERGIES, ELEBAND, PHBAND, PHDOS, PH, 
+    TYPE_FLAGS, 
+    TYPE_RELAX_BASIC, TYPE_RELAX_CONFIG, TYPE_NORELAX_BASIC
+)
 from __directory_searchers import checkPath
 import os
 
@@ -26,8 +31,8 @@ class InputData:
         self.calculation_list = tuple(dict.fromkeys(cmdline_arg_tuple[4:])) # Filter duplicates in calculation flag list
         self.input_imported = True
         self.__check_input_style()
-        if self.type_flag != 0 or len(self.calculation_list) == 0:
-            self.calculation_list = [ENERGIES] # In config space all we want are the energies, for now
+        if len(self.calculation_list) == 0:
+            self.calculation_list = [ENERGIES]
             # TODO add dynamical matrix stuff?
         self.__parse_calculation_input()
 
@@ -40,8 +45,9 @@ class InputData:
 
     # <Validators>
     def __check_type_flag(self):
-        if self.type_flag < 0:
+        if self.type_flag not in TYPE_FLAGS:
             exit_with_error(ERR_BAD_TYPE_FLAG)
+        # * 0: relax basic, 1: relax config, 2: no-relax basic (for phonon calculations)
         print('Calculation type flag validated.')
 
     def __check_root_dir(self):
@@ -91,6 +97,10 @@ class InputData:
             if i == ENERGIES:
                 self.need_energies = True
                 enerIndex = self.calculation_list.index(ENERGIES)
+        if PH in self.calculation_list and (PHDOS in self.calculation_list or PHBAND in self.calculation_list):
+            exit_with_error(ERR_INCOMP_CALC1)
+        if self.type_flag == TYPE_NORELAX_BASIC and (len(self.calculation_list) > 1 or ENERGIES not in self.calculation_list):
+            exit_with_error(ERR_INCOMP_CALC2)
         if enerIndex >= 0:
             print('Recieved request to calculate total energies. Branching energy computation to different calculation pipeline...')
             self.calculation_list = list(self.calculation_list)

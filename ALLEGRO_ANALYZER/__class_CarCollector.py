@@ -1,6 +1,15 @@
 from ____exit_with_error import exit_with_error
 from ___constants_names import POSCAR_UNIT_RELAXATION_NAME, POTCAR_NAME, KPOINTS_LINE_NAME, KPOINTS_MESH_NAME, INCAR_RELAXATION_NAME, POSCAR_NAME, CONTCAR_NAME
-from ___constants_vasp import RELAXATION_GRID_DENSITY, RELAXATION_GRID_SHIFT, INCAR_RELAX_SETTINGS, INCAR_VDW_SETTINGS, POT_PMG_INIT_CMD
+from ___constants_vasp import (
+    RELAXATION_GRID_DENSITY, 
+    RELAXATION_GRID_SHIFT, 
+    NONRELAXATION_GRID_DENSITY, 
+    NONRELAXATION_GRID_SHIFT, 
+    INCAR_RELAX_SETTINGS, 
+    INCAR_NORELAX_SCON_SETTINGS, 
+    INCAR_VDW_SETTINGS, 
+    POT_PMG_INIT_CMD
+)
 from ___constants_misc import ERR_NO_POSCAR
 from __directory_searchers import checkPath
 from __query_inputs import getInputName
@@ -33,6 +42,47 @@ class CarCollector:
         # First let's build an array of default keys, which is helpful later
         default_keys = list(INCAR_RELAX_SETTINGS.keys())
         default_values = list(INCAR_RELAX_SETTINGS.values())
+        vdW_keys = list(INCAR_VDW_SETTINGS.keys())
+        vdW_values = list(INCAR_VDW_SETTINGS.values())
+
+        incarExists = os.path.isfile(self.ROOT + INCAR_RELAXATION_NAME) # Look for existing INCAR
+        if not incarExists:
+            # Create a default
+            print('No INCAR input found. Generating default relaxation settings...')
+            incar = Incar.from_string('')
+            for i in range(0, len(default_keys)):
+                incar[default_keys[i]] = default_values[i]
+        else:
+            print('INCAR input found. Using parameters given and adding any other necessary ones...')
+            try:
+                incar = Incar.from_file(self.ROOT + INCAR_RELAXATION_NAME)
+            except Exception as error:
+                print('Error:', error)
+                exit_with_error('Suggestion: you probably have a file labeled INCAR in the specified directory that is invalid.')
+
+            for i in range(0, len(default_keys)):
+                if default_keys[i] not in incar:
+                    print('{} not in INCAR. Adding it automatically for relaxation calculations...'.format(default_keys[i]))
+                    incar[default_keys[i]] = default_values[i]
+        
+        if self.do_vdW:
+            print('Adding van der Waals interaction parameters to INCAR...')
+            for i in range(0, len(vdW_keys)):
+                incar[vdW_keys[i]] = vdW_values[i]
+        
+        # Get a SYSTEM tag for the name, as a comment
+        incar['SYSTEM'] = self.mat_name
+
+        if writeOut:
+            print('Writing INCAR to file...')
+            incar.write_file(self.ROOT + INCAR_RELAXATION_NAME)
+
+        self.relaxation_incar = incar        
+        return incar
+
+    def get_norelax_scon_incar(self, writeOut=False):
+        default_keys = list(INCAR_NORELAX_SCON_SETTINGS.keys())
+        default_values = list(INCAR_NORELAX_SCON_SETTINGS.values())
         vdW_keys = list(INCAR_VDW_SETTINGS.keys())
         vdW_values = list(INCAR_VDW_SETTINGS.values())
 
@@ -150,6 +200,18 @@ class CarCollector:
 
         return v
 
+    def build_norelax_input(self, print_key_info=False, print_all_info=False):
+        incar = self.get_norelax_scon_incar()
+        kpoints = self.get_mesh_kpoints(grid=NONRELAXATION_GRID_DENSITY, shift=NONRELAXATION_GRID_SHIFT)
+        potcar = self.get_potcar()
+        v = VaspInput(incar, kpoints, self.poscar, potcar)
+        if print_all_info:
+            print('Relaxation Incar:', incar)
+            print('Relaxation Kpoints mesh:', kpoints)
+            print('Relaxation POSCAR, initial:', self.poscar)
+        elif print_key_info:
+            print('Relaxation POSCAR, intiial:', self.poscar)
+        return v
 
     # A static method to build a vasp input object
     @staticmethod

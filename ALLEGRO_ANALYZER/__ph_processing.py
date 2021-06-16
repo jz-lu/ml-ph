@@ -1,19 +1,16 @@
 from ____exit_with_error import exit_with_error
-
 from __directory_searchers import find # Will let us look for the different POSCAR-XYZ displacement files
 from __dirModifications import move, copy, rm, mkdir
 from __directory_searchers import checkPath, findFilesInDir, filesInDir
 from __run_vasp import run_vasp
 from __input_modifiers import modifyIncar
 from __ph_movers import moveRelevantFiles
-
 from ___constants_phonopy import *
 from ___constants_names import *
 from ___constants_misc import ERR_PH_FORCE_SETS, ERR_PH_FORCE_SETS_NOT_FOUND
 from ___constants_vasp import *
 
 import subprocess
-import threading
 import os
 from pymatgen.io.vasp.inputs import Poscar, VaspInput, Potcar # pylint: disable=import-error
 
@@ -27,7 +24,7 @@ def compute_vasp_ph_forces(index, dispNum, dirName, subdirName, disp_poscar_name
         # NOTE: no chgcar, the charge densities would be inaccurate now that we have displacements
         displaced_poscar = Poscar.from_file(dirName + disp_poscar_name)
         ph_vasp_obj = VaspInput(vaspObj['INCAR'], vaspObj['KPOINTS'], displaced_poscar, vaspObj['POTCAR'])
-        print('[THREAD %d] Starting VASP nonrelaxation forces calculation for displacement '%(index) + dispNum + '...')
+        print('[disp %d] Starting VASP nonrelaxation forces calculation for displacement '%(index+1) + dispNum + '...')
         print('Calculations to be stored in %s'%(dirName + subdirName))
         run_vasp(ph_vasp_obj, dirName + subdirName, run_type='phonon')
         print('VASP calculation complete.')
@@ -42,6 +39,7 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
 
     try:
         os.chdir(dirName)
+        print(f'WD changed to "{dirName}"')
         CMD_GET_DISPLACEMENTS = ['phonopy', '-d', '--dim={}'.format(supercellDim), '-c', dirName + Poscar_unitcell_name] # -c flag to indicate to phonopy where unit cell POSCAR is
         print('Running "%s" to shell...'%(' '.join(CMD_GET_DISPLACEMENTS)))
         phStarterMsg = subprocess.run(CMD_GET_DISPLACEMENTS, capture_output=True, universal_newlines=True)
@@ -79,22 +77,10 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
             print('New subdirectory %s created.'%(checkPath(dirName + subdirNames[i])))
 
         print("Submitting the following INCAR to VASP for phonon calculation:\n", vaspObj['INCAR'])
-                
-        # Multithread the VASP phonon supercell calculations.
-        # threads = list()
+        
         for i in range(numPoscars):
-            # print("[MAIN TH] Starting phonon VASP calculation thread %d..."%(i))
-            # th = threading.Thread(target=compute_vasp_ph_forces, 
-            #         args=(i, dispNums[i], dirName, subdirNames[i], poscarArray[i], vaspObj))
-            # threads.append(th)
-            # th.start() # Detach the thread
             compute_vasp_ph_forces(i, dispNums[i], dirName, subdirNames[i], poscarArray[i], vaspObj)
         print('Total number of displacement files generated: ' + dispNums[-1])
-
-        # Hold main until the last thread dies.
-        # for i, th in enumerate(threads):
-        #     print("[MAIN TH] Joining thread %d..."%(i))
-        #     th.join()
 
     return dispNums[-1] # Returns last displacement number so we can get force sets.
 

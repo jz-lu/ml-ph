@@ -65,6 +65,24 @@ INCAR_VDW_SETTINGS = {'METAGGA': 'SCAN',
                       'LASPH': '.TRUE.',
                       'LUSE_VDW': '.TRUE.',
                       'BPARAM': 15.7}
+INCAR_NORELAX_SCON_SETTINGS = {'ISTART': ISTART, 
+                          'ISMEAR': ISMEAR, 
+                          'SIGMA': SIGMA['narrow'], 
+                          'ENCUT': ENCUT, 
+                          'AMIN': AMIN, 
+                          'NSW': NSW['no_relax'], 
+                          'EDIFF': EDIFF['no_relax'], 
+                          'EDIFFG': EDIFFG['no_relax'], 
+                          'IBRION': IBRION['no_relax'], 
+                          'SYMPREC': SYMPREC, 
+                          'NPAR': NPAR, 
+                          'ADDGRID': ADDGRID, 
+                          'LREAL': LREAL, 
+                          'LWAVE': LWAVE, 
+                          'LCHARG': LCHARG['no_write_charge'], 
+                          'ALGO': ALGO, 
+                          'NELMIN': NELMIN, 
+                          'PREC': PREC}
 
 
 ## POTCAR

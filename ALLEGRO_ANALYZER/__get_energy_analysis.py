@@ -24,9 +24,9 @@ def get_energy_analysis(dirName, outcar, writeOut=False):
         
     return energyPair # A pair if it's useful for anything later
 
-def get_energies(DIR_RELAXATION, DIR_ANALYSIS, writeOut=False):
+def get_energies(indir, outdir, writeOut=False):
     print('Fetching total energy calculations from calculations...')
-    outcar = Outcar(DIR_RELAXATION + OUTCAR_NAME)
-    mkdir(TOTAL_ENER_DIR_NAME, DIR_ANALYSIS)
-    energy_pair = get_energy_analysis(checkPath(DIR_ANALYSIS + TOTAL_ENER_DIR_NAME), outcar, writeOut=writeOut) # energyPair = (total energy, fermi energy) tuple pair
+    outcar = Outcar(indir + OUTCAR_NAME)
+    mkdir(TOTAL_ENER_DIR_NAME, outdir)
+    energy_pair = get_energy_analysis(checkPath(outdir + TOTAL_ENER_DIR_NAME), outcar, writeOut=writeOut) # energyPair = (total energy, fermi energy) tuple pair
     return energy_pair

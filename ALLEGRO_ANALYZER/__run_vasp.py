@@ -1,13 +1,20 @@
 # Main file to be executed by user
 import os
 from pymatgen.io.vasp.inputs import VaspInput, Poscar
-
 from ____exit_with_error import exit_with_error
-
-from ___constants_names import BATCH_FILE_PATH, VASP_RUN_OUT_NAME, VASP_RUN_ERR_NAME, CHGCAR_NAME, CONTCAR_NAME, POSCAR_NAME
+from ___constants_names import (
+    BATCH_FILE_PATH, 
+    VASP_RUN_OUT_NAME, 
+    VASP_RUN_ERR_NAME, 
+    CHGCAR_NAME, 
+    CONTCAR_NAME, 
+    POSCAR_NAME, 
+    INCAR_RELAXATION_NAME,
+    KPOINTS_NAME
+)
 from ___constants_misc import ERR_VASP_RUN_RELAX, ERR_VASP_NOT_CONVERGED
 from ___constants_vasp import VASP_OUTFILE_LEN_THRESHOLD, VASP_MAX_CONVERGENCE_ATTEMPTS
-
+from __class_CarCollector import CarCollector
 from __directory_searchers import checkPath
 from __check_convergence import check_if_not_converged
 
@@ -64,6 +71,9 @@ def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax'):
     
     return
 
-
+def run_vasp_from_file(dirName, predefined_chgcar=None, run_type='ph'):
+    dirName = checkPath(dirName)
+    assert os.path.isdir(dirName)
+    # TODO (function unnecessary for now)
 
 

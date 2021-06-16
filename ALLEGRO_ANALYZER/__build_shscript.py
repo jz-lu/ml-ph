@@ -95,3 +95,6 @@ def one_job_run(user_input_settings, configposcar_shift_tuple, base_root_subpath
                                                       base_root_subpaths[i])).get() for i in range(len(configposcar_shift_tuple))]
 
     return bze_points
+
+def compute_displacements(BASE_ROOT):
+    pass

@@ -52,3 +52,22 @@ def findFilesInDir(dirName, fileName, searchType='exact'):
     arr.sort()
     print("Search done, returning list:", arr)
     return arr
+
+def findDirsinDir(dirName, subName, searchType='exact'):
+    dirName = checkPath(dirName)
+    print("Searching for matches '%s' of file '%s' in path %s with files:"%(searchType, subName, dirName), 
+        os.listdir(dirName))
+    arr = []
+    
+    if searchType == 'exact':
+        arr += list(filter(lambda x: x == subName and os.path.isdir(x), os.listdir()))
+    elif searchType == 'start':
+        arr += list(filter(lambda x: x.startswith(subName) and os.path.isdir(x), os.listdir()))
+    elif searchType == 'end':
+        arr += list(filter(lambda x: x.endswith(subName) and os.path.isdir(x), os.listdir()))
+    else:
+        exit_with_error(ERR_INVALID_FINDDIR_PARAM)
+
+    arr.sort()
+    print("Search done, returning list:", arr)
+    return arr

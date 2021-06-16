@@ -3,31 +3,8 @@ from ___constants_compute import *
 from ___constants_names import START_BATCH_NAME, ENERGIES, CMD_LINE_ARG_LIST, CODE_DIR
 from __directory_searchers import checkPath
 import sys, copy
+from ___helpers_parsing import warn, err, is_flag, check_not_flag
 
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
-def warn(s):
-    print(bcolors.WARNING + s + bcolors.ENDC)
-
-def err(s):
-    print(bcolors.FAIL + s + bcolors.ENDC)
-    sys.exit(1)
-
-def is_flag(s):
-    return s[0] == '-'
-
-def check_not_flag(s):
-    if is_flag(s):
-        err(f'Error: flag "{s}" found before argument for previous flag given')
 
 args = copy.deepcopy(sys.argv)[1:]; i = 0; n = len(args)
 compute_jobname = 'NoName'
