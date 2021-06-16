@@ -90,7 +90,7 @@ while i < n:
     elif args[i] == '-c':
         i += 1; check_not_flag(args[i])
         c = []
-        while args[i] in CMD_LINE_ARG_LIST:
+        while i < n and args[i] in CMD_LINE_ARG_LIST:
             c.append(args[i]); i += 1
         if not c or (i+1 < n and not is_flag(args[i+1])):
             err(f'Error: specified computations under flag "-c" invalid')
