@@ -4,14 +4,6 @@ from ___constants_names import START_BATCH_NAME, ENERGIES, CMD_LINE_ARG_LIST, CO
 from __directory_searchers import checkPath
 import sys, copy
 
-def is_flag(s):
-    return s[0] == '-'
-
-def check_not_flag(s):
-    if is_flag(s):
-        print(bcolors.FAIL + f'Error: flag "{s}" found before argument for previous flag given')
-        sys.exit(1)
-
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -22,6 +14,20 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+
+def warn(s):
+    print(bcolors.WARNING + s + bcolors.ENDC)
+
+def err(s):
+    print(bcolors.FAIL + s + bcolors.ENDC)
+    sys.exit(1)
+
+def is_flag(s):
+    return s[0] == '-'
+
+def check_not_flag(s):
+    if is_flag(s):
+        err(f'Error: flag "{s}" found before argument for previous flag given')
 
 args = copy.deepcopy(sys.argv)[1:]; i = 0; n = len(args)
 compute_jobname = 'NoName'
@@ -41,7 +47,7 @@ c = [ENERGIES]
 
 while i < n:
     if not is_flag(args[i]):
-        print(bcolors.WARNING + f'Warning: token "{args[i]}" is out of place and will be ignored')
+        warn(f'Warning: token "{args[i]}" is out of place and will be ignored')
         i += 1; continue
     if args[i] == '-filename':
         i += 1; check_not_flag(args[i]); fname = args[i]; i +=1
@@ -61,26 +67,25 @@ while i < n:
             int(args[i][0:2]); int(args[i][3:5]); int(args[i][6:8])
             assert args[i][2] == args[i][5] == ':' and len(args[i]) == 8
         except:
-            print(bcolors.FAIL +f'Error: specified time {args[i]} is invalid, format as HH:MM:SS')
-            sys.exit(1)
+            err('Error: specified time {args[i]} is invalid, format as HH:MM:SS')
         i += 1
     elif args[i] == '-dir':
         i +=1; check_not_flag(args[i])
         outdir = args[i]
         if args[i] in ['.', './', '..', '../'] or args[i][0] == '.':
-            print(bcolors.WARNING + f'Warning: specified directory "{args[i]}" may not work when running executable')
+            warn(f'Warning: specified directory "{args[i]}" may not work when running executable')
         i +=1
     elif args[i] == '-kpts':
         i +=1; check_not_flag(args[i])
         if args[i] == 'MP':
             kpts = 'MP'
         elif args[i] not in ['GAMMA', 'G', 'gamma', 'Gamma', 'Gam', 'gam', 'g']:
-            print(bcolors.WARNING + f'Warning: kpoints type "{args[i]}" not recognized, using Gamma-centered')
+            warn(f'Warning: kpoints type "{args[i]}" not recognized, using Gamma-centered')
         i += 1
     elif args[i] == '-vdw':
         i +=1; check_not_flag(args[i])
         if args[i] not in ['T', 'F']:
-            print(bcolors.WARNING + f'Warning: expected vdW flag to be "T" or "F", got "{args[i]}", using "T"')
+            warn(f'Warning: expected vdW flag to be "T" or "F", got "{args[i]}", using "T"')
         i += 1
     elif args[i] == '-c':
         i += 1; check_not_flag(args[i])
@@ -88,11 +93,10 @@ while i < n:
         while args[i] in CMD_LINE_ARG_LIST:
             c.append(args[i]); i += 1
         if not c or (i+1 < n and not is_flag(args[i+1])):
-            print(bcolors.FAIL + f'Error: specified computations under flag "-c" invalid')
-            sys.exit(1)
+            err(f'Error: specified computations under flag "-c" invalid')
         i += 1
     else:
-        print(bcolors.WARNING + f'Warning: unknown flag "{args[i]} ignored')
+        warn(f'Warning: unknown flag "{args[i]} ignored')
         i += 1
 
 outdir = checkPath(outdir)
@@ -112,4 +116,5 @@ with open(outdir + fname, 'w') as f:
     f.write('echo "Starting calculations..."\n')
     f.write('python3 $ALLEGRO_DIR/start.py 0 $WDIR %s %s %s\n'%(vdw, kpts, c))
     f.write('echo "Calculations complete!"\n')
-print(bcolors.OKGREEN + 'Executable bash file successfully written to %s'%(outdir))
+print(bcolors.OKGREEN + 'Executable bash file successfully written to %s'%(outdir) + bcolors.ENDC)
+
