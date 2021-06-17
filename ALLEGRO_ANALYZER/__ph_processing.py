@@ -2,6 +2,7 @@ from ____exit_with_error import exit_with_error
 from __directory_searchers import find # Will let us look for the different POSCAR-XYZ displacement files
 from __dirModifications import move, copy, rm, mkdir
 from __directory_searchers import checkPath, findFilesInDir, filesInDir
+from __build_shscript import compute_displacements
 from __run_vasp import run_vasp
 from __input_modifiers import modifyIncar
 from __ph_movers import moveRelevantFiles
@@ -33,9 +34,10 @@ def compute_vasp_ph_forces(index, dispNum, dirName, subdirName, disp_poscar_name
         exit_with_error('Error in preprocessing phonopy (parsing displacement files and running VASP force calculations): ' + str(err))
 
 # Function to handle all preprocessing of phonopy before the force calulation.
-def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name=POSCAR_UNIT_NAME):
+def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name=POSCAR_UNIT_NAME, onejob=True, user_input_settings=None):
     print(PHONOPY_DISP_MSG)
     dirName = checkPath(dirName)
+    assert user_input_settings or onejob
 
     try:
         os.chdir(dirName)
@@ -75,11 +77,21 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
             subdirNames.append(PHDISP_DIR_NAME%(dispNums[i]))
             mkdir(subdirNames[i], dirName)
             print('New subdirectory %s created.'%(checkPath(dirName + subdirNames[i])))
+            if not onejob:
+                move(poscarArray[i], dirName, dirName + subdirNames[i])
+                assert os.path.isfile(checkPath(dirName + subdirNames[i]) + poscarArray[i])
+            print(f'Moved {poscarArray[i]} to {checkPath(dirName + subdirNames[i])}')
 
-        print("Submitting the following INCAR to VASP for phonon calculation:\n", vaspObj['INCAR'])
-        
-        for i in range(numPoscars):
-            compute_vasp_ph_forces(i, dispNums[i], dirName, subdirNames[i], poscarArray[i], vaspObj)
+        if onejob:
+            print('Computing forces via VASP in this job')
+            print("Submitting the following INCAR to VASP for phonon calculation:\n", vaspObj['INCAR'])
+            for i in range(numPoscars):
+                compute_vasp_ph_forces(i, dispNums[i], dirName, subdirNames[i], poscarArray[i], vaspObj)
+        else:
+            print('Submitting a new job array to compute forces for each displacement...')
+            compute_displacements(dirName, user_input_settings, numPoscars)
+            print('Job array successfully submitted')
+            
         print('Total number of displacement files generated: ' + dispNums[-1])
 
     return dispNums[-1] # Returns last displacement number so we can get force sets.

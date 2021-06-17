@@ -9,4 +9,5 @@ COMPUTE_NCPU = '1'
 USE_NODE_INDICATOR = True
 COMPUTE_NNODE = '1'
 COMPUTE_JOBNAME = 'shifts'
+PHONON_JOBNAME = 'ph'
 COMPUTE_ANACONDA_ENV = 'anaconda_env' # computing requires anaconda

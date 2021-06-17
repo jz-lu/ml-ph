@@ -3,6 +3,7 @@ from ___constants_names import RELAXATION_DIR_NAME, ANALYSIS_DIR_NAME, CONTCAR_N
 from __directory_searchers import checkPath
 from __dirModifications import mkdir
 from __build_inputs import buildInitialInputs
+from __build_shscript import compute_displacements
 from __run_vasp import run_vasp
 from __get_energy_analysis import get_energies
 from __postprocess_relaxation import postProcess_relaxation
@@ -50,7 +51,7 @@ def relax_solid(user_input_settings, poscar=None, shift=None, user_inputted_root
         
     if user_input_settings.do_nonenergy_calculations():
         # Step 2, for ele/ph calculations, we transfer to postprocessing module
-        postProcess_relaxation(DIR_ANALYSIS, DIR_RELAXATION, init_vasp_obj, user_input_settings.get_calculation_list(), kpoints_line)
+        postProcess_relaxation(DIR_ANALYSIS, DIR_RELAXATION, init_vasp_obj, user_input_settings, kpoints_line)
     else:
         print('Successfully completed total energy calculation, which was the only specified calculation. Exiting relaxation...')
 

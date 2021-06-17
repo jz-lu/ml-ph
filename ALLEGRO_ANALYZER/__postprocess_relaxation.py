@@ -10,7 +10,7 @@ from __dirModifications import move, copy, mkdir, rm # Easy modules to the comma
 import copy
 from __directory_searchers import checkPath
 from __run_vasp import run_vasp
-from __ph_processing import ph_prepare_for_analysis
+from __ph_processing import ph_prepare_for_analysis, ph_preprocess
 from __get_ph_analysis import ph_get_dos, ph_get_band
 from __get_eledos_analysis import get_eledos_analysis
 from __get_eleband_analysis import get_eleband_analysis
@@ -24,7 +24,7 @@ import os
 
 
 # Process the command-line arguments
-def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, calculation_list, kpoints_line): # vasp input object generated at beginning of relaxation
+def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, user_input_settings, kpoints_line): # vasp input object generated at beginning of relaxation
     print('Postprocessing VASP relaxation beginning...')
     outDirName = checkPath(outDirName)
     relaxation_dirName = checkPath(relaxation_dirName)
@@ -57,12 +57,11 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
     
     # Since all processing for phonopy is done at once, we should flag so that if we want phband and phdos we don't preprocess twice
     ph_has_preprocessed = False
-    
     DIR_PHONOPY = None # This will be set during first processing
 
     # We want eleband to follow eledos if both are calculated since we can get a better CHGCAR for band from DOS
     # So we put it in the front of the array
-    calculation_list = list(calculation_list)
+    calculation_list = list(user_input_settings.get_calculation_list())
     calculation_list.sort()
     eledos_has_run = False
     if ELEDOS in calculation_list:
@@ -118,15 +117,17 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, ca
 
             # We use the line kpoints file that we imported in the command line parsing start.py
             eleband_vasp_obj = VaspInput(incar_nonselfcon, kpoints_line, poscar_relaxed, potcar)
-            
             print('Running VASP for electronic band calculations...')
-            
-            # Run vasp
             run_vasp(eleband_vasp_obj, DIR_ELEBAND, predefined_chgcar=chgcar, run_type=ELEBAND)
 
             # Get the analysis plots and data
             print('Parsing VASP run and retrieving band structure data...')
             eleband_obj = get_eleband_analysis(DIR_ELEBAND, DIR_ELEBAND_RESULTS, poscar_relaxed, extract_raw_data=True, extract_plot=True)
+        elif i == PH:
+            print('Now constructing phonon displacements and submitting jobs for force calculations.')
+            poscar_relaxed.write_file(outDirName + POSCAR_UNIT_NAME)
+            ph_preprocess(outDirName, None, Poscar_unitcell_name=POSCAR_UNIT_NAME, onejob=False, user_input_settings=user_input_settings)
+            print('Phonon displacement calculations kicked off successfully')
         else: 
             # Only case left is that we have phonon calculations to do.
             # First no matter what we need to preprocess to get FORCE_SETS. 
