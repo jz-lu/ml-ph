@@ -79,7 +79,7 @@ if abs_min_energy is None:
     do = DataOutput(data_dir, bze, cob)
 else:
     do = DataOutput(data_dir, bze, cob, abs_min_energy)
-do.output_all_analysis()
+do.plot_e_vs_b(101)
 print("Analyzer has finished running.")
 
 print("== Configuration Analyzer Complete (Time: %.3lf s) =="%(time()-start_time))

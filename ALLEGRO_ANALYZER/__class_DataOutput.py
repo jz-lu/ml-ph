@@ -51,9 +51,9 @@ class DataOutput:
             header="bx, by, relaxed z-spacing, energy\n")
    
     # Smoothly interpolate toal energy at various shifts.
-    def plot_e_vs_b(self):
+    def plot_e_vs_b(self, levels=NUM_LEVELS):
         fig, ax = plt.subplots()
-        cf = ax.tricontourf(self.xshifts, self.yshifts, self.__energies, levels=NUM_LEVELS, cmap="RdGy")
+        cf = ax.tricontourf(self.xshifts, self.yshifts, self.__energies, levels=levels, cmap="RdGy")
         fig.colorbar(cf, ax=ax)
         ax.set_xlabel(r"$b_x$")
         ax.set_ylabel(r"$b_y$")
