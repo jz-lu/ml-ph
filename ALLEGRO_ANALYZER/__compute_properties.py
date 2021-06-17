@@ -3,7 +3,6 @@ from ___constants_names import RELAXATION_DIR_NAME, ANALYSIS_DIR_NAME, CONTCAR_N
 from __directory_searchers import checkPath
 from __dirModifications import mkdir
 from __build_inputs import buildInitialInputs
-from __build_shscript import compute_displacements
 from __run_vasp import run_vasp
 from __get_energy_analysis import get_energies
 from __postprocess_relaxation import postProcess_relaxation
