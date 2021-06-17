@@ -97,35 +97,4 @@ def one_job_run(user_input_settings, configposcar_shift_tuple, base_root_subpath
 
     return bze_points
 
-# Builds and enqueues batch file for computing phonon displacements. BASE_ROOT should specify the path to the given displacment
-def compute_displacements(ROOT, user_input_settings, ndisp):
-    assert ROOT
-    ROOT = checkPath(ROOT)
-    print(f'Writing a job-array bash executable to {ROOT}')
-    rtfile = ROOT + START_BATCH_NAME
-    with open(rtfile, 'w') as f:
-        vdw = 'T' if user_input_settings.do_vdW else 'F'
-        kpts = 'GAMMA' if user_input_settings.kpoints_is_gamma_centered else 'MP'
-        f.write('#!/bin/bash\n')
-        f.write('#SBATCH -J %s\n'%(PHONON_JOBNAME))
-        if USE_NODE_INDICATOR:
-            f.write('#SBATCH -N %s\n'%(COMPUTE_NNODE))
-        f.write('#SBATCH -n %s\n#SBATCH -t %s\n#SBATCH -p %s\n#SBATCH --mem-per-cpu=%s\n'%(COMPUTE_NCPU, COMPUTE_TIME, COMPUTE_PARTITIONS, COMPUTE_MEM_PER_CPU))
-        f.write('#SBATCH -o shift_%A_%a.out\n#SBATCH -e shift_%A_%a.err\n')
-        f.write('#SBATCH --mail-type=%s\n#SBATCH --mail-user=%s\n'%(COMPUTE_EMAIL_TYPE, COMPUTE_EMAIL_TO))
-        f.write('source activate $HOME/%s\n'%(COMPUTE_ANACONDA_ENV))
-        f.write('WDIR="%s${SLURM_ARRAY_TASK_ID}"\n'%(ROOT + PHDISP_STATIC_NAME))
-        f.write('echo "WD: ${WDIR}"\n')
-        f.write('ALLEGRO_DIR="%s"\n'%CODE_DIR)
-        f.write('module list\nsource activate $HOME/%s\n'%(COMPUTE_ANACONDA_ENV))
-        f.write('echo "RUNNING new job"\n')
-        f.write('python3 $ALLEGRO_DIR/start.py 2 $WDIR %s %s %s\n'%(vdw, kpts, ENERGIES))
-        f.write('echo "FINISHED job"\n')
-    print('Executable built.')
-    runcmd = 'sbatch --array=1-%d'%(ndisp) + ' ' + rtfile
-    print('Running %s...'%runcmd)
-    stream = os.popen(runcmd)
-    print(stream.read())
-    return None
-
 
