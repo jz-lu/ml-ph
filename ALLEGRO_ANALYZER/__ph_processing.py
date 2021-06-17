@@ -29,7 +29,7 @@ def compute_displacements(ROOT, user_input_settings, ndisp):
         if USE_NODE_INDICATOR:
             f.write('#SBATCH -N %s\n'%(COMPUTE_NNODE))
         f.write('#SBATCH -n %s\n#SBATCH -t %s\n#SBATCH -p %s\n#SBATCH --mem-per-cpu=%s\n'%(COMPUTE_NCPU, COMPUTE_TIME, COMPUTE_PARTITIONS, COMPUTE_MEM_PER_CPU))
-        f.write('#SBATCH -o shift_%A_%a.out\n#SBATCH -e shift_%A_%a.err\n')
+        f.write('#SBATCH -o disp_%A_%a.out\n#SBATCH -e disp_%A_%a.err\n')
         f.write('#SBATCH --mail-type=%s\n#SBATCH --mail-user=%s\n'%(COMPUTE_EMAIL_TYPE, COMPUTE_EMAIL_TO))
         f.write('source activate $HOME/%s\n'%(COMPUTE_ANACONDA_ENV))
         f.write('WDIR="%s00${SLURM_ARRAY_TASK_ID}"\n'%(ROOT + PHDISP_STATIC_NAME))
