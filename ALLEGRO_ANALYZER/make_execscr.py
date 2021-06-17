@@ -3,7 +3,7 @@ from ___constants_compute import *
 from ___constants_names import START_BATCH_NAME, ENERGIES, CMD_LINE_ARG_LIST, CODE_DIR
 from __directory_searchers import checkPath
 import sys, copy
-from ___helpers_parsing import warn, err, is_flag, check_not_flag
+from ___helpers_parsing import succ, warn, err, is_flag, check_not_flag
 
 
 args = copy.deepcopy(sys.argv)[1:]; i = 0; n = len(args)
@@ -93,5 +93,5 @@ with open(outdir + fname, 'w') as f:
     f.write('echo "Starting calculations..."\n')
     f.write('python3 $ALLEGRO_DIR/start.py 0 $WDIR %s %s %s\n'%(vdw, kpts, c))
     f.write('echo "Calculations complete!"\n')
-print(bcolors.OKGREEN + 'Executable bash file successfully written to %s'%(outdir) + bcolors.ENDC)
+succ('Executable bash file successfully written to %s'%(outdir))
 
