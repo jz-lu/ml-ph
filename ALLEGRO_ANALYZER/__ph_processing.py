@@ -32,7 +32,7 @@ def compute_displacements(ROOT, user_input_settings, ndisp):
         f.write('#SBATCH -o shift_%A_%a.out\n#SBATCH -e shift_%A_%a.err\n')
         f.write('#SBATCH --mail-type=%s\n#SBATCH --mail-user=%s\n'%(COMPUTE_EMAIL_TYPE, COMPUTE_EMAIL_TO))
         f.write('source activate $HOME/%s\n'%(COMPUTE_ANACONDA_ENV))
-        f.write('WDIR="%s${SLURM_ARRAY_TASK_ID}"\n'%(ROOT + PHDISP_STATIC_NAME))
+        f.write('WDIR="%s00${SLURM_ARRAY_TASK_ID}"\n'%(ROOT + PHDISP_STATIC_NAME))
         f.write('echo "WD: ${WDIR}"\n')
         f.write('ALLEGRO_DIR="%s"\n'%CODE_DIR)
         f.write('module list\nsource activate $HOME/%s\n'%(COMPUTE_ANACONDA_ENV))
