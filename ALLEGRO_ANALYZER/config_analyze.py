@@ -26,6 +26,7 @@ USAGE_ERR_MSG = 'Usage: python3 <DIR>/config_analyze.py -n <NUM SHIFTS> -d <I/O 
 # Parse cmdline args
 cmdargs = list(copy.deepcopy(sys.argv))[1:]; i = 0; n = len(cmdargs)
 BASE_ROOT = None; abs_min_energy = None; nshifts = None
+nlevel = 101
 while i < n:
     if cmdargs[i] == '-n':
         i += 1; nshifts = int(cmdargs[i]); i += 1
@@ -34,10 +35,12 @@ while i < n:
         assert isdir(BASE_ROOT) # specify full path if not working properly
     elif cmdargs[i] == '-e':
         i += 1; abs_min_energy = float(cmdargs[i]); i += 1
+    elif cmdargs[i] == '-l':
+        i += 1; nlevel = int(cmdargs[i]); i += 1
     else:
         print(USAGE_ERR_MSG)
         sys.exit()
-assert BASE_ROOT and abs_min_energy
+assert BASE_ROOT and abs_min_energy and nlevel > 0
 
 print("== Configuration Analyzer Starting =="); start_time = time()
 print("WD: %s, number of shifts: %d, minimum energy (eV): %.6lf."%(BASE_ROOT, nshifts, abs_min_energy))
@@ -79,7 +82,7 @@ if abs_min_energy is None:
     do = DataOutput(data_dir, bze, cob)
 else:
     do = DataOutput(data_dir, bze, cob, abs_min_energy)
-do.plot_e_vs_b(101)
+do.plot_e_vs_b(nlevel)
 print("Analyzer has finished running.")
 
 print("== Configuration Analyzer Complete (Time: %.3lf s) =="%(time()-start_time))
