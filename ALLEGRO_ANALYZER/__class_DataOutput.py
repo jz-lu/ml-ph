@@ -4,9 +4,6 @@ import numpy as np
 from ___constants_config import DEFAULT_ABS_MIN_ENERGY
 from __directory_searchers import checkPath
 
-
-NUM_LEVELS = 21 # Controls contour plot smooothness, ensure it is odd for the middle to be captured.
-
 class DataOutput:
     # plot list is a list of tuples (b, z, e) = (shift, z-spacing, energy).
     # cob is the change-of-basis matrix to get fom lattice basis (which b is in) to Cartesian to plot.
@@ -55,7 +52,7 @@ class DataOutput:
             header="bx, by, relaxed z-spacing, energy\n")
    
     # Smoothly interpolate toal energy at various shifts.
-    def plot_e_vs_b(self, levels=NUM_LEVELS):
+    def plot_e_vs_b(self, levels=301):
         fig, ax = plt.subplots()
         cf = ax.tricontourf(self.xshifts, self.yshifts, self.__energies, levels=levels, cmap="RdGy")
         fig.colorbar(cf, ax=ax)
