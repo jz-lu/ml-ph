@@ -26,7 +26,7 @@ USAGE_ERR_MSG = 'Usage: python3 <DIR>/config_analyze.py -n <NUM SHIFTS> -d <I/O 
 # Parse cmdline args
 cmdargs = list(copy.deepcopy(sys.argv))[1:]; i = 0; n = len(cmdargs)
 BASE_ROOT = None; abs_min_energy = None; nshifts = None
-nlevel = 101
+nlevel = 201
 while i < n:
     if cmdargs[i] == '-n':
         i += 1; nshifts = int(cmdargs[i]); i += 1
@@ -45,7 +45,7 @@ assert BASE_ROOT and nlevel > 0
 print("== Configuration Analyzer Starting =="); start_time = time()
 print("WD: %s, number of shifts: %d, minimum energy (eV): %.6lf."%(BASE_ROOT, nshifts, abs_min_energy))
 if not abs_min_energy:
-    print("Using default minimum energy shift.")
+    print("Using automatic minimum energy shift.")
 else:
     print(f"Using minimum energy shift {abs_min_energy} eV.")
 
@@ -98,4 +98,4 @@ else:
 do.plot_e_vs_b(nlevel)
 print("Analyzer has finished running.")
 
-print("== Configuration Analyzer Complete (Time: %.3lf s) =="%(time()-start_time))
+print("== Configuration Analyzer Complete (Time: %.3lfs) =="%(time()-start_time))
