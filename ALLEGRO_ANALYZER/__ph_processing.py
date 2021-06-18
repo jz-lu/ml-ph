@@ -88,7 +88,7 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
         # print('Verification of existence in %s :'%(THIS_DIR), findFilesInDir(THIS_DIR, PH_DISP_YAML_NAME))
 
         # Check for the number of POSCAR-XYZ's made and organize them accordingly.
-        poscarArray = findFilesInDir(dirName, 'POSCAR-', 'start') # Again, phonopy hard string 'POSCAR-XYZ', no need to collect
+        poscarArray = findFilesInDir(dirName, POSCAR_PH_NAMEPRE, 'start') # Again, phonopy hard string 'POSCAR-XYZ', no need to collect
         poscarArray.sort() # Make sure displacements in order
         numPoscars = len(poscarArray)
         print('Result: {} displacement files found.'.format(numPoscars))
