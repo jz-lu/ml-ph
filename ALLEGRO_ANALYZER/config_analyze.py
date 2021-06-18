@@ -40,10 +40,14 @@ while i < n:
     else:
         print(USAGE_ERR_MSG)
         sys.exit()
-assert BASE_ROOT and abs_min_energy and nlevel > 0
+assert BASE_ROOT and nlevel > 0
 
 print("== Configuration Analyzer Starting =="); start_time = time()
 print("WD: %s, number of shifts: %d, minimum energy (eV): %.6lf."%(BASE_ROOT, nshifts, abs_min_energy))
+if not abs_min_energy:
+    print("Using default minimum energy shift.")
+else:
+    print(f"Using minimum energy shift {abs_min_energy} eV.")
 
 # Collect COB matrix
 data_dir = BASE_ROOT + checkPath(CONFIG_DATA_DIR)
@@ -52,32 +56,36 @@ cob = np.load(data_dir + COB_NPY_NAME)
 print("COB matrix retrieved.")
 
 # Collect shifts (including the 0 in the z direction)
-b = [0]*nshifts
+bshifts = [0]*nshifts
 print("Retrieving shift coordinates...")
 for i in range(nshifts):
     with open(BASE_ROOT + checkPath(CONFIG_SUBDIR_NAME + str(i)) + SHIFT_NAME, 'r') as f:
-        b[i] = tuple(map(float, f.read().splitlines()))
+        bshifts[i] = np.array(list(map(float, f.read().splitlines())))
 print("Shift coordinates retrieved.")
 
 # Collect z-spacings
 print("Retrieving z-spacings...")
-z = [0]*nshifts
+zspaces = [0]*nshifts
 for i in range(nshifts):
     relax_dir = BASE_ROOT + checkPath(CONFIG_SUBDIR_NAME + str(i)) + checkPath(RELAXATION_DIR_NAME)
-    z[i] = CarCollector.get_interlayer_spacing(relax_dir)
+    zspaces[i] = CarCollector.get_interlayer_spacing(relax_dir)
 print("z-spacings retrieved.")
 
 # Collect energies
 print("Retrieving energies...")
-e = [0]*nshifts
+energies = [0]*nshifts
 for i in range(nshifts):
     with open(BASE_ROOT + checkPath(CONFIG_SUBDIR_NAME + str(i)) 
                 + checkPath(ANALYSIS_DIR_NAME) + checkPath(TOTAL_ENER_DIR_NAME) + TOT_ENERGIES_NAME) as f:
-        e[i] = float(f.readline().split(' ')[-1])
+        energies[i] = float(f.readline().split(' ')[-1])
 print("Energies retrieved.")
 
 # Combine into (b, z, e) points and pass to DataOutput
 bze = []
+print("Combining data into bze-points data structure...")
+for b, z, e in zip(bshifts, zspaces, energies):
+    bze.append(np.array([b, z, e]))
+print("Successfully combined.")
 
 bze = np.array(bze)
 np.save(data_dir + 'bze', bze)
