@@ -43,7 +43,7 @@ while i < n:
 assert BASE_ROOT and nlevel > 0
 
 print("== Configuration Analyzer Starting =="); start_time = time()
-print("WD: %s, number of shifts: %d, minimum energy (eV): %.6lf."%(BASE_ROOT, nshifts, abs_min_energy))
+print("WD: %s, number of shifts: %d."%(BASE_ROOT, nshifts))
 if not abs_min_energy:
     print("Using automatic minimum energy shift.")
 else:
@@ -91,10 +91,7 @@ bze = np.array(bze)
 np.save(data_dir + 'bze', bze)
 do = None
 print("Parsing successful, passing to analyzer...")
-if abs_min_energy is None:
-    do = DataOutput(data_dir, bze, cob)
-else:
-    do = DataOutput(data_dir, bze, cob, abs_min_energy)
+do = DataOutput(data_dir, bze, cob, abs_min_energy=abs_min_energy)
 do.plot_e_vs_b(nlevel)
 print("Analyzer has finished running.")
 
