@@ -58,7 +58,7 @@ class DataOutput:
         ax.set_xlabel(r"$b_x$")
         ax.set_ylabel(r"$b_y$")
         ax.set_title(r"$E_{tot}(b) (meV)$")
-        out_file = self.__out_dir + "energy_config_plot.png"
+        out_file = self.__out_dir + f"energy_config_plot_{levels}.png"
         fig.savefig(out_file)
     
     # Smoothly interpolate interlayer spacing at various shifts.

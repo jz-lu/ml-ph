@@ -53,17 +53,19 @@ print("COB matrix retrieved.")
 
 # Collect shifts (including the 0 in the z direction)
 b = [0]*nshifts
+print("Retrieving shift coordinates...")
 for i in range(nshifts):
     with open(BASE_ROOT + checkPath(CONFIG_SUBDIR_NAME + str(i)) + SHIFT_NAME, 'r') as f:
         b[i] = tuple(map(float, f.read().splitlines()))
-# Combine into (b, z, e) points and pass to DataOutput
-bze = []
+print("Shift coordinates retrieved.")
 
 # Collect z-spacings
+print("Retrieving z-spacings...")
 z = [0]*nshifts
 for i in range(nshifts):
     relax_dir = BASE_ROOT + checkPath(CONFIG_SUBDIR_NAME + str(i)) + checkPath(RELAXATION_DIR_NAME)
     z[i] = CarCollector.get_interlayer_spacing(relax_dir)
+print("z-spacings retrieved.")
 
 # Collect energies
 print("Retrieving energies...")
@@ -71,8 +73,11 @@ e = [0]*nshifts
 for i in range(nshifts):
     with open(BASE_ROOT + checkPath(CONFIG_SUBDIR_NAME + str(i)) 
                 + checkPath(ANALYSIS_DIR_NAME) + checkPath(TOTAL_ENER_DIR_NAME) + TOT_ENERGIES_NAME) as f:
-        e[i] = float(f.readline.split(' ')[-1])
+        e[i] = float(f.readline().split(' ')[-1])
 print("Energies retrieved.")
+
+# Combine into (b, z, e) points and pass to DataOutput
+bze = []
 
 bze = np.array(bze)
 np.save(data_dir + 'bze', bze)
