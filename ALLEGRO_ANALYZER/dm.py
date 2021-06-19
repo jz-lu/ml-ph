@@ -7,31 +7,37 @@ import pymatgen.core.structure as struct
 import numpy.linalg as LA
 from math import pi, floor
 from itertools import product as prod
+import matplotlib.pyplot as plt
 from ___helpers_parsing import succ, warn, err, is_flag, check_not_flag
+from __directory_searchers import checkPath
+from ____exit_with_error import exit_with_error
 
 USAGE_MSG = 'Usage: python3 <DIR>/dm.py -deg <twist degree> -dir <main dir> -o <output dir>'
 
-def G_A_moire(theta, log=False):
-    # Generate G basis via rotation matrices
-    R1 = np.array([[np.cos(theta/2), -np.sin(theta/2)], [np.sin(theta/2), np.cos(theta/2)]])
-    R2 = LA.inv(R1)
-    G1 = np.matmul(R1, G0)
-    G2 = np.matmul(R2, G0) 
-    GM = G1 - G2 # moire G-basis
-    AM = LA.inv(GM).T / (2 * pi) # moire A-basis
-    if log:
-        print("Moire G-basis:\n", GM)
-        print("Moire A-basis:\n", AM)
-    return (GM, AM)
-
 class BZSampler:
-    def __init__(self):
-        self.g_idxs = None; self.g_arr = None
-        return
+    def __init__(self, theta, outdir='./', log=False, lattice_type='hexagonal'):
+        assert 180 > theta > 0
+        assert os.path.isdir(outdir)
+        self.outdir = outdir
+
+        # Generate G basis via rotation matrices
+        R1 = np.array([[np.cos(theta/2), -np.sin(theta/2)], [np.sin(theta/2), np.cos(theta/2)]])
+        R2 = LA.inv(R1)
+        G1 = np.matmul(R1, G0); G2 = np.matmul(R2, G0) 
+        self.GM = G1 - G2 # moire G-basis
+        self.AM = LA.inv(self.GM).T / (2 * pi) # moire A-basis
+        if log:
+            print("Moire G-basis:\n", self.GM)
+            print("Moire A-basis:\n", self.AM)
+        self.g_idxs = None; self.g_arr = None; self.kline = None; self.kmags = None; self.corners = None
+        self.ltype = lattice_type
+        if lattice_type != 'hexagonal':
+            exit_with_error("Error: k-points sampler does not (yet) support non-hexagonal lattices")
+
     # Sample Gtilde vectors
-    def sample_G(self, G_moire, mn_grid_sz, max_shell):
-        grid = np.arange(-mn_grid_sz, mn_grid_sz + 1)
-        GM1 = G_moire[:,0]; GM2 = G_moire[:,1] # Moire reciprocal lattice vectors
+    def sample_G(self, mn_grid_sz, max_shell):
+        grid = np.arange(-mn_grid_sz, mn_grid_sz + 1); self.nsh = max_shell
+        GM1 = self.GM[:,0]; GM2 = self.GM[:,1] # Moire reciprocal lattice vectors
         g_arr = np.array([np.array([m*GM1 + n*GM2]) for m, n in prod(grid, grid)])
         g_idxs = np.array(list(prod(grid, grid)))
 
@@ -43,19 +49,43 @@ class BZSampler:
         self.g_idxs = g_idxs; self.g_arr = g_arr
         return (g_idxs, g_arr)
 
-    # Sample k points along IBZ boundary line
-    def sample_k(self, nk, G0):
+    # Sample nk points along each IBZ boundary line
+    def sample_k(self, nk, G0, log=False):
+        assert self.ltype == 'hexagonal'
         G00 = G0[:,0]; G01 = G0[:,1]; d = G00.shape
         Gamma = np.zeros(d); K = 1/3 * (G00 + G01); M = 1/2 * G00
-        ptlen = 4; pt = np.zeros([ptlen, d]) # k-points boundaries
-        pt[0,:] = Gamma; pt[1,:] = K; pt[2,:] = M; pt[3,:] = Gamma
-        for kidx in range(ptlen-1):
-            pass # TODO
-        return
+        ncorners = 4; corners = np.zeros([ncorners, d]) # k-points IBZ boundary corners
+        corners[0,:] = Gamma; corners[1,:] = K; corners[2,:] = M; corners[3,:] = Gamma
+        self.corners = corners
+
+        # Sample nk-1 (drop last point) per line, but add 1 since we will index by 1
+        nsample = (nk-1) * (ncorners-1) + 1
+        kline = np.zeros([nsample, d]); kmags = np.zeros(nsample); kmag_start = LA.norm(Gamma)
+        for line in range(ncorners-1): # skip last point equals first, so skip it
+            kidx = line*(nk-1) + 1 # convert line index to k-index
+            # Drop second corner point in each line to avoid resampling corner points
+            kline[kidx : kidx+nk-1] = np.linspace(corners[line], corners[line+1], nk)[:-1]
+            dline_mag = LA.norm(corners[line+1] - corners[line])
+            mags = np.linspace(kmag_start, kmag_start + dline_mag, nk)
+            kmag_start = mags[-1] # update start point of magnitude to end of current line
+            kmags[kidx : kidx+nk-1] = mags[:-1]
+        self.kline = kline; self.kmags = kmags
+        if log:
+            pass
+        return (kline, kmags)
     
     def plot_sampling(self):
-        assert self.g_idxs and self.g_arr
-        # TODO
+        assert self.g_idxs and self.g_arr and self.corners and self.kline and self.kmags
+        labels = (r'$\Gamma$', r'K', r'M', r'$\Gamma$')
+        plt.clf()
+        plt.scatter(self.g_arr[:,0], self.g_arr[:,1], 
+                    c='black', 
+                    label=r'$\widetilde{\mathbf{G}}_{mn}$ in shell %d'%self.nsh)
+        plt.plot(self.kline[:,0], self.kline[:,1], 
+                 c='blue', 
+                 label=r'Sampled $\mathbf{k}$-points')
+        plt.axes().set_aspect('equal')
+        plt.savefig('sampling.png')
         return
 
 # Compute dynamical matrix block element for given q = Gtilde and phonopy object ph
@@ -69,6 +99,7 @@ def block_l1():
 # Create level-2 block matrix with intralayer and interlayer terms
 def block_l2(D_intras, D_inter):
     assert len(D_intras) == 2
+    assert D_intras[0].shape == D_intras[1].shape == D_inter.shape
     return np.block([[D_intras[0], D_inter], [D_inter.conjudate().T, D_intras[1]]])
 
 # Parse input
