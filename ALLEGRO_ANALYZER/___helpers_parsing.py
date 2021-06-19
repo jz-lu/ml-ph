@@ -22,6 +22,9 @@ def err(s):
     print(bcolors.FAIL + s + bcolors.ENDC)
     sys.exit(1)
 
+def greet(s):
+    print(bcolors.OKBLUE + s + bcolors.ENDC)
+
 def is_flag(s):
     return s[0] == '-'
 

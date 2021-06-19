@@ -7,18 +7,20 @@ import pymatgen.core.structure as struct
 import numpy.linalg as LA
 from math import pi, floor
 from itertools import product as prod
+from time import time, sleep
 import matplotlib.pyplot as plt
-from ___helpers_parsing import succ, warn, err, is_flag, check_not_flag
+from ___constants_names import DIR_SHORTCUTS
+from ___helpers_parsing import greet, succ, warn, err, is_flag, check_not_flag
 from __directory_searchers import checkPath
 from ____exit_with_error import exit_with_error
-
-USAGE_MSG = 'Usage: python3 <DIR>/dm.py -deg <twist degree> -dir <main dir> -o <output dir>'
+import pdb
 
 class BZSampler:
-    def __init__(self, theta, outdir='./', log=False, lattice_type='hexagonal'):
+    def __init__(self, G0, theta, outdir='./', log=False, lattice_type='hexagonal'):
+        G0 = np.array(G0) # ensure proper typing
         assert 180 > theta > 0
         assert os.path.isdir(outdir)
-        self.outdir = outdir
+        self.outdir = checkPath(outdir); self.theta = theta; self.G0 = G0
 
         # Generate G basis via rotation matrices
         R1 = np.array([[np.cos(theta/2), -np.sin(theta/2)], [np.sin(theta/2), np.cos(theta/2)]])
@@ -35,10 +37,10 @@ class BZSampler:
             exit_with_error("Error: k-points sampler does not (yet) support non-hexagonal lattices")
 
     # Sample Gtilde vectors
-    def sample_G(self, mn_grid_sz, max_shell):
+    def sample_G(self, mn_grid_sz=5, max_shell=1):
         grid = np.arange(-mn_grid_sz, mn_grid_sz + 1); self.nsh = max_shell
         GM1 = self.GM[:,0]; GM2 = self.GM[:,1] # Moire reciprocal lattice vectors
-        g_arr = np.array([np.array([m*GM1 + n*GM2]) for m, n in prod(grid, grid)])
+        g_arr = np.array([m*GM1 + n*GM2 for m, n in prod(grid, grid)])
         g_idxs = np.array(list(prod(grid, grid)))
 
         # Filter out any G that does not satisfy the closeness condition |GM| < (shell+0.1) * |GM1|
@@ -50,9 +52,9 @@ class BZSampler:
         return (g_idxs, g_arr)
 
     # Sample nk points along each IBZ boundary line
-    def sample_k(self, nk, G0, log=False):
+    def sample_k(self, nk=151, log=False):
         assert self.ltype == 'hexagonal'
-        G00 = G0[:,0]; G01 = G0[:,1]; d = G00.shape
+        G00 = G0[:,0]; G01 = G0[:,1]; d = G00.shape[0]
         Gamma = np.zeros(d); K = 1/3 * (G00 + G01); M = 1/2 * G00
         ncorners = 4; corners = np.zeros([ncorners, d]) # k-points IBZ boundary corners
         corners[0,:] = Gamma; corners[1,:] = K; corners[2,:] = M; corners[3,:] = Gamma
@@ -61,6 +63,7 @@ class BZSampler:
         # Sample nk-1 (drop last point) per line, but add 1 since we will index by 1
         nsample = (nk-1) * (ncorners-1) + 1
         kline = np.zeros([nsample, d]); kmags = np.zeros(nsample); kmag_start = LA.norm(Gamma)
+        corner_kmags = [kmag_start]
         for line in range(ncorners-1): # skip last point equals first, so skip it
             kidx = line*(nk-1) + 1 # convert line index to k-index
             # Drop second corner point in each line to avoid resampling corner points
@@ -68,25 +71,35 @@ class BZSampler:
             dline_mag = LA.norm(corners[line+1] - corners[line])
             mags = np.linspace(kmag_start, kmag_start + dline_mag, nk)
             kmag_start = mags[-1] # update start point of magnitude to end of current line
+            corner_kmags.append(kmag_start)
             kmags[kidx : kidx+nk-1] = mags[:-1]
         self.kline = kline; self.kmags = kmags
         if log:
-            pass
+            print("Corner magnitudes:", corner_kmags)
         return (kline, kmags)
-    
-    def plot_sampling(self):
-        assert self.g_idxs and self.g_arr and self.corners and self.kline and self.kmags
+
+    def plot_sampling(self, filename='sampling.png'):
+        assert self.g_idxs is not None, "Cannot plot sampling until G vectors have been sampled"
+        assert self.corners is not None, "Cannot plot sampling until k-points have been sampled"
         labels = (r'$\Gamma$', r'K', r'M', r'$\Gamma$')
         plt.clf()
+        _, ax = plt.subplots()
         plt.scatter(self.g_arr[:,0], self.g_arr[:,1], 
                     c='black', 
                     label=r'$\widetilde{\mathbf{G}}_{mn}$ in shell %d'%self.nsh)
         plt.plot(self.kline[:,0], self.kline[:,1], 
-                 c='blue', 
-                 label=r'Sampled $\mathbf{k}$-points')
-        plt.axes().set_aspect('equal')
-        plt.savefig('sampling.png')
-        return
+                 c='teal', 
+                 label=r'$\mathbf{k}$-points (%d pts)'%len(self.kline))
+        ax.set_aspect('equal') # prevent stretching of space in plot
+        for (x, y), lab in zip(self.corners, labels):
+            plt.annotate(lab, (x, y), # this is the point to label
+                 textcoords="offset points", # how to position the text
+                 xytext=(-10,0), # distance from text to points (x,y)
+                 ha='center') # horizontal alignment can be left, right or center
+        plt.legend(); plt.title("Sampling Space")
+        ax.set_xlabel(r'$k_x$'); ax.set_ylabel(r'$k_y$')
+        outname = self.outdir + filename
+        plt.savefig(outname); succ("Successfully wrote sampling plot out to " + outname)
 
 # Compute dynamical matrix block element for given q = Gtilde and phonopy object ph
 def dm(q, ph):
@@ -102,39 +115,63 @@ def block_l2(D_intras, D_inter):
     assert D_intras[0].shape == D_intras[1].shape == D_inter.shape
     return np.block([[D_intras[0], D_inter], [D_inter.conjudate().T, D_intras[1]]])
 
-# Parse input
-args = copy.deepcopy(sys.argv)[1:]; i = 0; n = len(args)
-theta = None; indir = '.'; outdir = None
-while i < n:
-    if not is_flag(args[i]):
-        warn(f'Warning: token "{args[i]}" is out of place and will be ignored')
-        i += 1; continue
-    if args[i] == '-deg':
-        i += 1; check_not_flag(args[i]); theta = np.deg2rad(float(args[i])); i +=1
-    elif args[i] == '-dir':
-        i +=1; check_not_flag(args[i])
-        indir = args[i]
-        if args[i] in ['.', './', '..', '../'] or args[i][0] == '.':
-            warn(f'Warning: specified directory "{args[i]}" may not work when running executable')
-        i +=1
-    elif args[i] == '-o':
-        i +=1; check_not_flag(args[i])
-        outdir = args[i]
-        if args[i] in ['.', './', '..', '../'] or args[i][0] == '.':
-            warn(f'Warning: specified directory "{args[i]}" may not work when running executable')
-        i +=1
+if __name__ == '__main__':
+    # Parse input
+    USAGE_MSG = 'Usage: python3 <DIR>/dm.py -deg <twist degree> -dir <main dir> -o <output dir> -f <POSCAR name>'
+    args = sys.argv[1:]; i = 0; n = len(args)
+    theta = None; indir = '.'; outdir = None; pname = 'POSCAR'; p_found = False
+    while i < n:
+        if not is_flag(args[i]):
+            warn(f'Warning: token "{args[i]}" is out of place and will be ignored')
+            i += 1; continue
+        if args[i] == '-deg':
+            i += 1; check_not_flag(args[i]); theta = np.deg2rad(float(args[i])); i +=1
+        elif args[i] == '-dir':
+            i +=1; check_not_flag(args[i])
+            indir = checkPath(args[i])
+            if args[i] in DIR_SHORTCUTS or args[i][0] == '.':
+                warn(f'Warning: specified directory "{args[i]}" may not work when running executable')
+            i +=1
+        elif args[i] == '-o':
+            i +=1; check_not_flag(args[i])
+            outdir = checkPath(args[i])
+            if args[i] in DIR_SHORTCUTS or args[i][0] == '.':
+                warn(f'Warning: specified directory "{args[i]}" may not work when running executable')
+            i +=1
+        elif args[i] == '-f' or '-p':
+            assert not p_found, 'Multiple POSCAR filenames given'
+            p_found = True
+            i +=1; check_not_flag(args[i])
+            pname = args[i]
+            i +=1
+        else:
+            err(f"Err: unknown token {args[i]}")
 
-if not (theta and indir):
-    err(USAGE_MSG)
-elif 180 < theta < 0:
-    err(f"Error: invalid twist angle {theta} degrees")
-elif not outdir:
-    outdir = indir
-assert os.path.isdir(indir) and os.path.isdir(outdir)
+    if not (theta and indir):
+        err(USAGE_MSG)
+    elif 180 < theta < 0:
+        err(f"Error: invalid twist angle {theta} degrees")
+    elif not outdir:
+        outdir = indir
+        warn(f"No output directory specified. Defaulting to input directory {indir}...")
+    if not p_found:
+        warn("No POSCAR name given as input. Defaulting to name 'POSCAR'...")
+    assert os.path.isdir(indir), f'Invalid input directory {indir}'
+    assert os.path.isdir(outdir), f'Invalid output directory {indir}'
+    assert os.path.isfile(indir + pname), f'No POSCAR with name {pname} found in {indir}'
+    greet("DM calculator starting...")
+    print(f"Twist angle: {np.rad2deg(theta)} deg/{theta} rad; WD: {indir}")
 
-# Build realspace A-basis and reciprocal space G-basis in the moire cell
-s = struct.Structure.from_file("POSCAR_MoS2")
-A0 = s.lattice.matrix[0:2, 0:2].T # makes realspace lattice A-basis matrix [a1 a2]
-G0 = 2 * pi * LA.inv(A0).T 
-print("A0:\n", A0)
-print("G0:\n", G0)
+    # Build realspace A-basis and reciprocal space G-basis in the moire cell
+    s = struct.Structure.from_file(indir + pname)
+    A0 = s.lattice.matrix[0:2, 0:2].T # makes realspace lattice A-basis matrix [a1 a2]
+    G0 = 2 * pi * LA.inv(A0).T 
+    print("A0:\n", A0)
+    print("G0:\n", G0)
+
+    sample = BZSampler(G0, theta, outdir=outdir, log=True)
+    sample.sample_G()
+    sample.sample_k()
+    sample.plot_sampling()
+    succ("Sampling successfully completed")
+

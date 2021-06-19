@@ -11,6 +11,7 @@ THIS_DIR = '/n/home04/jzlu/codes/ml-ph/start_job_batch/'
 
 # Default input specifications filename
 DEFAULT_INPUT_FILENAME = '/n/home04/jzlu/codes/ml-ph/inputfiles/input.txt'
+DIR_SHORTCUTS = ['.', './', '..', '../']
 
 # Command line arguments in relaxation postprocessing
 ELEDOS = 'eledos'
