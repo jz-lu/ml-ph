@@ -29,13 +29,13 @@ def compute_displacements(ROOT, user_input_settings, ndisp):
         if USE_NODE_INDICATOR:
             f.write('#SBATCH -N %s\n'%(COMPUTE_NNODE))
         f.write('#SBATCH -n %s\n#SBATCH -t %s\n#SBATCH -p %s\n#SBATCH --mem-per-cpu=%s\n'%(COMPUTE_NCPU, COMPUTE_TIME, COMPUTE_PARTITIONS, COMPUTE_MEM_PER_CPU))
-        f.write('#SBATCH -o disp_%A_%a.out\n#SBATCH -e disp_%A_%a.err\n')
+        f.write('#SBATCH -o scd_%A_%a.out\n#SBATCH -e scd_%A_%a.err\n')
         f.write('#SBATCH --mail-type=%s\n#SBATCH --mail-user=%s\n'%(COMPUTE_EMAIL_TYPE, COMPUTE_EMAIL_TO))
         f.write('source activate $HOME/%s\n'%(COMPUTE_ANACONDA_ENV))
         f.write('WDIR="%s00${SLURM_ARRAY_TASK_ID}"\n'%(ROOT + PHDISP_STATIC_NAME))
         f.write('echo "WD: ${WDIR}"\n')
         f.write('ALLEGRO_DIR="%s"\n'%CODE_DIR)
-        f.write('module list\nsource activate $HOME/%s\n'%(COMPUTE_ANACONDA_ENV))
+        f.write('module list\n')
         f.write('echo "RUNNING new job"\n')
         f.write('python3 $ALLEGRO_DIR/start.py 2 $WDIR %s %s %s\n'%(vdw, kpts, ENERGIES))
         f.write('echo "FINISHED job"\n')
@@ -68,7 +68,7 @@ def compute_vasp_ph_forces(index, dispNum, dirName, subdirName, disp_poscar_name
 def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name=POSCAR_UNIT_NAME, onejob=True, user_input_settings=None):
     print(PHONOPY_DISP_MSG)
     dirName = checkPath(dirName)
-    assert user_input_settings or onejob
+    assert user_input_settings ^ onejob
 
     try:
         os.chdir(dirName)

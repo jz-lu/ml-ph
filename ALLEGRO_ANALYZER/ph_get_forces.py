@@ -25,8 +25,8 @@ while i < n:
 disps = findDirsinDir(indir, PHDISP_STATIC_NAME, searchType='start')
 ndisp = '%03d'%(len(disps))
 ph_generate_forcesets(indir, ndisp)
-if PH_FORCE_SETS_NAME not in os.listdir():
-    err("Error: force constants file not found. Check phonopy output for log.")
+if PH_FORCE_SETS_NAME not in os.listdir(indir):
+    err(f"Error: force constants file not found at {indir}. Check phonopy output for log.")
 if indir != outdir:
     # Move the FORCE_SETS file to the desired directory
     move(PH_FORCE_SETS_NAME, indir, newPath=outdir)
