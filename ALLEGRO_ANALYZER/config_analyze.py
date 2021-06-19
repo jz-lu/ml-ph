@@ -95,4 +95,4 @@ do = DataOutput(data_dir, bze, cob, abs_min_energy=abs_min_energy)
 do.plot_e_vs_b(nlevel)
 print("Analyzer has finished running.")
 
-print("== Configuration Analyzer Complete (Time: %.3lfs) =="%(time()-start_time))
+print("== Configuration Analyzer Complete (Took %.3lfs) =="%(time()-start_time))

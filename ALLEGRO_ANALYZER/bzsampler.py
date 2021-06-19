@@ -7,7 +7,7 @@ import pymatgen.core.structure as struct
 import numpy.linalg as LA
 from math import pi, floor
 from itertools import product as prod
-from time import time, sleep
+from time import time
 import matplotlib.pyplot as plt
 from ___constants_names import DIR_SHORTCUTS
 from ___constants_sampling import *
@@ -33,11 +33,12 @@ class BZSampler:
             print("Moire A-basis:\n", self.AM)
         self.g_idxs = None; self.g_arr = None; self.kline = None; self.kmags = None; self.corners = None
         self.ltype = lattice_type
+        self.GM_sampled = False; self.k_sampled = False
         if lattice_type != 'hexagonal':
             exit_with_error("Error: k-points sampler does not (yet) support non-hexagonal lattices")
 
     # Sample Gtilde vectors
-    def sample_G(self, mn_grid_sz=DEFAULT_GRID_SIZE, max_shell=DEFAULT_MAX_SHELL):
+    def sample_GM(self, mn_grid_sz=DEFAULT_GRID_SIZE, max_shell=DEFAULT_MAX_SHELL):
         grid = np.arange(-mn_grid_sz, mn_grid_sz + 1); self.nsh = max_shell
         GM1 = self.GM[:,0]; GM2 = self.GM[:,1] # Moire reciprocal lattice vectors
         g_arr = np.array([m*GM1 + n*GM2 for m, n in prod(grid, grid)])
@@ -49,6 +50,7 @@ class BZSampler:
         g_idxs = g_idxs[cut_makers,:]
         g_arr = g_arr[cut_makers,:] # special numpy syntax for filtering by an indicator array `cut_makers`
         self.g_idxs = g_idxs; self.g_arr = g_arr
+        self.GM_sampled = True
         return (g_idxs, g_arr)
 
     # Sample nk points along each IBZ boundary line
@@ -74,6 +76,7 @@ class BZSampler:
             corner_kmags.append(kmag_start)
             kmags[kidx : kidx+nk-1] = mags[:-1]
         self.kline = kline; self.kmags = kmags
+        self.k_sampled = True
         if log:
             print("Corner magnitudes:", corner_kmags)
         return (kline, kmags)
@@ -101,8 +104,19 @@ class BZSampler:
         outname = self.outdir + filename
         plt.savefig(outname); succ("Successfully wrote sampling plot out to " + outname)
 
+    def get_GM_set(self):
+        assert self.GM_sampled, "Must run GM-sampler before retrieving GM-set"
+    
+    def get_kpts(self):
+        assert self.k_sampled, "Must run k-sampler before retrieving k-set"
+        return self.kline, self.kmags
+    
+    def sampled(self):
+        return self.GM_sampled and self.k_sampled
+
 if __name__ == '__main__':
     # Parse input
+    start = time()
     USAGE_MSG = '\nUsage: python3 <DIR>/bzsampler.py -deg <twist degree> -dir <main dir> -o <output dir> -f <POSCAR name>\n\n\t(Optional flags: -gsz <G grid size> -nk <kpts per line> -sh <max shell>)\n'
     args = sys.argv[1:]; i = 0; n = len(args)
     theta = None; indir = '.'; outdir = None; pname = 'POSCAR'; p_found = False
@@ -163,8 +177,8 @@ if __name__ == '__main__':
     print("G0:\n", G0)
 
     sample = BZSampler(G0, theta, outdir=outdir, log=True)
-    sample.sample_G(mn_grid_sz=gridsz, max_shell=max_shell)
+    sample.sample_GM(mn_grid_sz=gridsz, max_shell=max_shell)
     sample.sample_k(nk=nk, log=True)
     sample.plot_sampling()
-    succ("Sampling successfully completed.")
+    succ("Sampling successfully completed (took %.3lfs)."%(time()-start))
 
