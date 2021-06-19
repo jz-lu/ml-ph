@@ -24,24 +24,39 @@ def G_A_moire(theta, log=False):
         print("Moire A-basis:\n", AM)
     return (GM, AM)
 
-# Sample Gtilde vectors
-def sample_G(G_moire, mn_grid_sz, max_shell):
-    grid = np.arange(-mn_grid_sz, mn_grid_sz + 1)
-    GM1 = G_moire[:,0]; GM2 = G_moire[:,1] # Moire reciprocal lattice vectors
-    g_arr = np.array([np.array([m*GM1 + n*GM2]) for m, n in prod(grid, grid)])
-    g_idxs = np.array(list(prod(grid, grid)))
+class BZSampler:
+    def __init__(self):
+        self.g_idxs = None; self.g_arr = None
+        return
+    # Sample Gtilde vectors
+    def sample_G(self, G_moire, mn_grid_sz, max_shell):
+        grid = np.arange(-mn_grid_sz, mn_grid_sz + 1)
+        GM1 = G_moire[:,0]; GM2 = G_moire[:,1] # Moire reciprocal lattice vectors
+        g_arr = np.array([np.array([m*GM1 + n*GM2]) for m, n in prod(grid, grid)])
+        g_idxs = np.array(list(prod(grid, grid)))
 
-    # Filter out any G that does not satisfy the closeness condition |GM| < (shell+0.1) * |GM1|
-    g_cutoff = (floor(max_shell)+0.1) * LA.norm(GM1) # add 0.1 for numerical error
-    cut_makers = (np.sqrt(g_arr[:,0]**2 + g_arr[:,1]**2) <= g_cutoff) # indicators for which G made the cutoff
-    g_idxs = g_idxs[cut_makers,:]
-    g_arr = g_arr[cut_makers,:] # special numpy syntax for filtering by an indicator array `cut_makers`
-    return (g_idxs, g_arr)
+        # Filter out any G that does not satisfy the closeness condition |GM| < (shell+0.1) * |GM1|
+        g_cutoff = (floor(max_shell)+0.1) * LA.norm(GM1) # add 0.1 for numerical error
+        cut_makers = (np.sqrt(g_arr[:,0]**2 + g_arr[:,1]**2) <= g_cutoff) # indicators for which G made the cutoff
+        g_idxs = g_idxs[cut_makers,:]
+        g_arr = g_arr[cut_makers,:] # special numpy syntax for filtering by an indicator array `cut_makers`
+        self.g_idxs = g_idxs; self.g_arr = g_arr
+        return (g_idxs, g_arr)
 
-
-# Sample k points along IBZ boundary line
-def sample_k():
-    pass # TODO
+    # Sample k points along IBZ boundary line
+    def sample_k(self, nk, G0):
+        G00 = G0[:,0]; G01 = G0[:,1]; d = G00.shape
+        Gamma = np.zeros(d); K = 1/3 * (G00 + G01); M = 1/2 * G00
+        ptlen = 4; pt = np.zeros([ptlen, d]) # k-points boundaries
+        pt[0,:] = Gamma; pt[1,:] = K; pt[2,:] = M; pt[3,:] = Gamma
+        for kidx in range(ptlen-1):
+            pass # TODO
+        return
+    
+    def plot_sampling(self):
+        assert self.g_idxs and self.g_arr
+        # TODO
+        return
 
 # Compute dynamical matrix block element for given q = Gtilde and phonopy object ph
 def dm(q, ph):
