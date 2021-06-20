@@ -16,6 +16,7 @@ import numpy as np
 import sys, copy
 from os.path import isdir
 from time import time
+from ___helpers_parsing import succ, warn, err
 
 USAGE_ERR_MSG = 'Usage: python3 <DIR>/config_analyze.py -n <NUM SHIFTS> -d <I/O DIR FROM MAIN PROGRAM> -e <MIN ENERGY (eV)>'
 
@@ -40,8 +41,8 @@ while i < n:
     elif cmdargs[i] == '-r':
         i += 1; rot = float(cmdargs[i]); i += 1
     else:
-        print(USAGE_ERR_MSG)
-        sys.exit()
+        warn(f"Unrecognized token '{args[i]}'")
+        err(USAGE_ERR_MSG)
 assert BASE_ROOT and nlevel > 0
 
 print("== Configuration Analyzer Starting =="); start_time = time()
@@ -97,4 +98,4 @@ do = DataOutput(data_dir, bze, cob, abs_min_energy=abs_min_energy)
 do.plot_e_vs_b(levels=nlevel, rotation=rot)
 print("Analyzer has finished running.")
 
-print("== Configuration Analyzer Complete (Took %.3lfs) =="%(time()-start_time))
+succ("== Configuration Analyzer Complete (Took %.3lfs) =="%(time()-start_time))
