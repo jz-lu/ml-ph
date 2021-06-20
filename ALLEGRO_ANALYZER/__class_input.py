@@ -4,7 +4,7 @@ from ___constants_names import (
     CMD_LINE_ARG_LIST, 
     ENERGIES, ELEBAND, PHBAND, PHDOS, PH, 
     TYPE_FLAGS, 
-    TYPE_RELAX_BASIC, TYPE_RELAX_CONFIG, TYPE_NORELAX_BASIC
+    TYPE_RELAX_BASIC, TYPE_RELAX_CONFIG, TYPE_TWISTED_CONFIG, TYPE_NORELAX_BASIC
 )
 from __directory_searchers import checkPath
 import os

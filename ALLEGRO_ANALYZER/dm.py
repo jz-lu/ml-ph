@@ -1,26 +1,34 @@
 import numpy as np
+import numpy.linalg as LA
+import os
 from phonopy import Phonopy
 import phonopy
 import pymatgen.core.structure as struct
 from pymatgen.io.vasp.inputs import Poscar
 from itertools import product as prod
 from bzsampler import BZSampler
+import matplotlib.pyplot as plt
+from __directory_searchers import checkPath
 
 """
-Computes the twisted dynamical matrix from a set of sampled moire G vectors and k points along IBZ boundary.
+These classes together compute the twisted dynamical matrix from a sample of moire G vectors and k points along IBZ boundary.
 The large size of the matrix encourages breaking it into blocks. Define a level-0 block to be the intralayer dynamical 
 matrix for a specific choice of (GM, k) in a monolayer. A level-1 intralayer block is the concatenation of all such 
 level-0 matrices, indexed by the 2 indices of GM (for a given k). A level-0 interlayer block is the sum of over 
 all configurations (b-vectors) for a given GM (interlayer terms are independent of k by approximation). A level-1 
 interlayer block is exactly analogous to a level-1 intralayer block. Finally, a level-2 block combines the level-1
 blocks in the following fashion
+
       | L1_intra_1     L1_inter     |
 L2 =  |                             |    where L{i}_intra_{j} is level i for layer j
       | L1_inter_dag   L1_intra_2   |
+
 There is one level-2 matrix for every k, which are the twisted Fourier dynamical matrices. Diagonalization of each of these
 yields the phonon modes as a function of k.
 """
-class TDMCalculator:
+
+# Monolayer dynamical matrix
+class MonolayerDM:
     def __init__(self, poscar_uc : Poscar, poscar_sc : Poscar, GM_set, k_set):
         self.uc = poscar_uc.structure; self.sc = poscar_sc.structure # get structure objects from Poscar objects
         self.GM_set = GM_set; self.k_set = k_set
@@ -76,21 +84,70 @@ class TDMCalculator:
     def __block_intra_l1(self):
         pass # TODO
 
-    def __block_inter_l0(self):
+    def get_DM_set(self):
         pass # TODO
 
-    def __block_inter_l1(self):
-        pass # TODO
-
-    # Create level-2 block matrix with intralayer and interlayer terms
-    def __block_l2(self, D_intras, D_inter):
-        assert len(D_intras) == 2
-        assert D_intras[0].shape == D_intras[1].shape == D_inter.shape
-        return np.block([[D_intras[0], D_inter], [D_inter.conjudate().T, D_intras[1]]])
-
-    """
-    Build the set of dynamical matrices, one for each k in the k-set. Only the intralayer blocks 
-    change from one to the next, not the interlayer terms. Returns a list of pairs {k, D(k)}.
-    """
-    def build_DM_set(self):
+# Build interlayer dynamical matrix block via summing over configurations
+class InterlayerDM:
+    def __init__(self):
         pass
+
+    def get_DM(self):
+        pass
+
+# Build full dynamical matrix from intralayer and interlayer terms via the above 2 classes
+class TwistedDM:
+    def __init__(self, l1 : MonolayerDM, l2 : MonolayerDM, inter : InterlayerDM, k_set):
+        DMs_layer1 = l1.get_DM_set(); DMs_layer2 = l2.get_DM_set(); DM_inter = inter.get_DM()
+        self.DMs = [self.__block_l2([DMs_layer1[i], DMs_layer2[i]], DM_inter) for i in range(len(k_set))]
+        self.k_set = k_set
+        self.modes_built = False
+
+    # Create level-2 (final level--full matrix) block matrix with intralayer and interlayer terms
+    def __block_l2(self, DM_intras, DM_inter):
+        assert len(DM_intras) == 2
+        assert DM_intras[0].shape == DM_intras[1].shape == DM_inter.shape
+        return np.block([[DM_intras[0], DM_inter], [DM_inter.conjudate().T, DM_intras[1]]])
+    
+    # Retreieve list dynamical matrices corresponding to the list of sampled k-vectors
+    def get_DM_set(self):
+        return self.DMs
+    
+    def get_k_set(self):
+        return self.k_set
+
+    # Diagonalize the set of DMs to get phonon modes
+    def build_modes(self):
+        self.mode_set = np.zeros(len(self.k_set))
+        for i, (k, DM) in enumerate(zip(self.k_set, self.DMs)):
+            evals = LA.eigvals(DM); signs = (-1) * (evals < 0) # hack: pull negative sign out of square root
+            modes_k = signs * np.sqrt(np.abs(evals))
+            self.mode_set[i] = (k, modes_k)
+        self.k_plt = []; self.modes_plt = []
+        for k, modes in self.mode_set:
+            self.k_plt += [k]*len(modes)
+            self.modes_plt += list(modes)
+        self.modes_built = True
+        return self.mode_set
+    
+    # Plot phonon modes as a function of k
+    def plot_band(self, corner_kmags, name, angle, outdir='./', filename='phband.png'):
+        assert self.modes_built, "Must build modes before plotting band structure"
+        plt.clf()
+        for k, modes in self.mode_set:
+            plt.scatter([k] * len(modes), modes, c='blue')
+        xlabs = (r'$\Gamma$', r'K', r'M', r'$\Gamma$')
+        plt.xlabel(corner_kmags, xlabs)
+        plt.ylabel(r'$\omega\,(\mathrm{THz})$')
+        outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Invalid directory {outdir}"
+        title = r"Phonon modes of "
+        if isinstance(name, list):
+            title += f"{name} bilayer"
+        else:
+            title += f"{name[0]}-{name[1]} bilayer"
+        title += fr" at " + '%.1lf'%angle + "$^\circ$"
+        plt.title(title)
+        plt.savefig(outdir + fileame)
+        return
+
+

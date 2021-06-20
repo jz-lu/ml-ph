@@ -79,6 +79,7 @@ class BZSampler:
         self.k_sampled = True
         if log:
             print("Corner magnitudes:", corner_kmags)
+        self.corner_kmags = corner_kmags
         return (kline, kmags)
 
     def plot_sampling(self, filename='sampling.png'):
@@ -110,6 +111,9 @@ class BZSampler:
     def get_kpts(self):
         assert self.k_sampled, "Must run k-sampler before retrieving k-set"
         return self.kline, self.kmags
+
+    def get_corner_kmags(self):
+        return self.corner_kmags
     
     def sampled(self):
         return self.GM_sampled and self.k_sampled
