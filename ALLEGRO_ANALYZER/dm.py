@@ -20,9 +20,9 @@ all configurations (b-vectors) for a given GM (interlayer terms are independent 
 interlayer block is exactly analogous to a level-1 intralayer block. Finally, a level-2 block combines the level-1
 blocks in the following fashion
 
-      | L1_intra_1     L1_inter     |
-L2 =  |                             |    where L{i}_intra_{j} is level i for layer j
-      | L1_inter_dag   L1_intra_2   |
+      |  L1_intra_1     L1_inter  |
+L2 =  |                           |    where L{i}_intra_{j} is level i for layer j
+      | L1_inter_dag   L1_intra_2 |
 
 There is one level-2 matrix for every k, which are the twisted Fourier dynamical matrices. Diagonalization of each of these
 yields the phonon modes as a function of k.
@@ -105,8 +105,8 @@ class MonolayerDM:
 
 # Build interlayer dynamical matrix block via summing over configurations
 class InterlayerDM:
-    def __init__(self, b_set, ph_list, GM_set):
-        self.b_set = b_set; self.ph_list = ph_list
+    def __init__(self, b_set, ph, GM_set):
+        self.b_set = b_set; self.ph = ph
         self.GM_set = GM_set
         self.DM = None
 
