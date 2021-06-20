@@ -67,3 +67,7 @@ def cat(fileDirs, dirOut, outFileName):
         exit_with_error(ERR_BAD_DIR)
 
     return newFileObj.stdout
+
+def build_dir(pieces):
+    pieces = list(map(checkPath, pieces))
+    return ''.join(pieces)
