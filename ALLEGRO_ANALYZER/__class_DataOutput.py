@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
 from ___constants_config import DEFAULT_ABS_MIN_ENERGY
+from ___constants_output import DEFAULT_CONTOUR_LEVELS
 from __directory_searchers import checkPath
 
 class DataOutput:
@@ -52,7 +53,7 @@ class DataOutput:
             header="bx, by, relaxed z-spacing, energy\n")
    
     # Smoothly interpolate toal energy at various shifts.
-    def plot_e_vs_b(self, levels=301):
+    def plot_e_vs_b(self, levels=DEFAULT_CONTOUR_LEVELS):
         fig, ax = plt.subplots()
         cf = ax.tricontourf(self.xshifts, self.yshifts, self.__energies, levels=levels, cmap="RdGy")
         fig.colorbar(cf, ax=ax)
@@ -63,9 +64,9 @@ class DataOutput:
         fig.savefig(out_file)
     
     # Smoothly interpolate interlayer spacing at various shifts.
-    def plot_z_vs_b(self):
+    def plot_z_vs_b(self, levels=DEFAULT_CONTOUR_LEVELS):
         fig, ax = plt.subplots()
-        cf = ax.tricontourf(self.xshifts, self.yshifts, self.__zspacings, levels=NUM_LEVELS, cmap="twilight_shifted")
+        cf = ax.tricontourf(self.xshifts, self.yshifts, self.__zspacings, levels=levels, cmap="twilight_shifted")
         fig.colorbar(cf, ax=ax)
         ax.set_xlabel(r"$b_x$")
         ax.set_ylabel(r"$b_y$")

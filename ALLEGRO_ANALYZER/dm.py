@@ -10,6 +10,7 @@ from bzsampler import BZSampler
 import matplotlib.pyplot as plt
 from __directory_searchers import checkPath
 
+
 """
 These classes together compute the twisted dynamical matrix from a sample of moire G vectors and k points along IBZ boundary.
 The large size of the matrix encourages breaking it into blocks. Define a level-0 block to be the intralayer dynamical 
@@ -27,13 +28,15 @@ There is one level-2 matrix for every k, which are the twisted Fourier dynamical
 yields the phonon modes as a function of k.
 """
 
+
 # Monolayer dynamical matrix
 class MonolayerDM:
-    def __init__(self, poscar_uc : Poscar, poscar_sc : Poscar, GM_set, k_set):
+    def __init__(self, poscar_uc : Poscar, poscar_sc : Poscar, ph, GM_set, k_set):
         self.uc = poscar_uc.structure; self.sc = poscar_sc.structure # get structure objects from Poscar objects
-        self.GM_set = GM_set; self.k_set = k_set
+        self.GM_set = GM_set; self.k_set = k_set; self.ph = ph
         self.pos_sc_idx = self.__sc_idx()
         self.A0 = self.uc.lattice.matrix[:2, :2] # remove z-axis
+        self.DM_set = None
 
     # Return supercell index 
     def __sc_idx(self):
@@ -82,18 +85,46 @@ class MonolayerDM:
         
     # Create level-1 block matrix (each matrix becomes a block in level-2)
     def __block_intra_l1(self):
-        pass # TODO
+        n_GM = len(self.GM_set)
+        for k in self.k_set:
+            D = np.reshape([self.__block_intra_l0(k+GM, self.ph) for GM in self.GM_set], (n_GM, n_GM)) # TODO ???
+            self.DM_set.append(D)
+        return self.DM_set
 
     def get_DM_set(self):
-        pass # TODO
+        if self.DM_set is None:
+            self.__block_intra_l1()
+        return self.DM_set
+
+    def get_GM_set(self):
+        return self.GM_set
+
+    def get_k_set(self):
+        return self.k_set
+
 
 # Build interlayer dynamical matrix block via summing over configurations
 class InterlayerDM:
-    def __init__(self):
-        pass
+    def __init__(self, b_set, ph_list, GM_set):
+        self.b_set = b_set; self.ph_list = ph_list
+        self.GM_set = GM_set
+        self.DM = None
+
+    def __block_inter_l0(self, GM):
+        return self.DM # TODO sum over b with the strange phonopy method?
+
+    def __block_inter_l1(self):
+        n_GM = len(self.GM_set)
+        self.DM = np.reshape([self.__block_inter_l0(GM) for GM in self.GM_set], (n_GM, n_GM)) # TODO ??? GM indices
 
     def get_DM(self):
-        pass
+        if self.DM is None:
+            self.__block_inter_l1()
+        return self.DM
+
+    def get_GM_set(self):
+        return self.GM_set
+
 
 # Build full dynamical matrix from intralayer and interlayer terms via the above 2 classes
 class TwistedDM:
@@ -145,9 +176,9 @@ class TwistedDM:
             title += f"{name} bilayer"
         else:
             title += f"{name[0]}-{name[1]} bilayer"
-        title += fr" at " + '%.1lf'%angle + "$^\circ$"
+        title += r" at " + '%.1lf'%angle + r"$^\circ$"
         plt.title(title)
-        plt.savefig(outdir + fileame)
+        plt.savefig(outdir + filename)
         return
 
 
