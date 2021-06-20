@@ -1,21 +1,24 @@
+from ____debug import DEBUGGING, DEBUG_NOTICE_MSG
 from ___constants_config import GRID_SAMPLE_LOW, GRID_SAMPLE_HIGH
 from ___constants_misc import NUM_AVAILABLE_CORES
 from ___constants_vasp import Z_LAYER_SEP
+from ___constants_compute import DEFAULT_NUM_LAYERS, MONOLAYER_JOBNAME, CONFIG_JOBNAME
 from ___constants_names import (
-    CONFIG_DATA_DIR, 
-    COB_NPY_NAME, 
-    TYPE_RELAX_BASIC, 
-    TYPE_RELAX_CONFIG, 
-    TYPE_NORELAX_BASIC, 
-    POSCAR_NAME
+    CONFIG_DATA_DIR, COB_NPY_NAME, 
+    TYPE_RELAX_BASIC, TYPE_RELAX_CONFIG, TYPE_TWISTED_CONFIG, TYPE_NORELAX_BASIC, 
+    POSCAR_NAME, POSCAR_CONFIG_NAMEPRE,
+    MONOLAYER_DIR_NAME, CONFIG_DIR_NAME,
+    PH
 )
 from __class_input import InputData
 from __class_Configuration import Configuration
 from __directory_searchers import checkPath, findFilesInDir
+from __dirModifications import mkdir, copy, move
 from __build_shscript import compute_configs
 from __compute_properties import relax_solid, solve_electronic
 from __class_DataOutput import DataOutput
 from pymatgen.io.vasp.inputs import Poscar
+from make_execscr import build_bash_exe
 import os
 import numpy as np
 
@@ -23,6 +26,8 @@ import numpy as np
 def begin_computation(user_input_settings):
     flg = user_input_settings.get_type_flag()
     BASE_ROOT = user_input_settings.get_base_root_dir()
+    vdw = 'T' if user_input_settings.do_vdW else 'F'
+    kpts = 'GAMMA' if user_input_settings.kpoints_is_gamma_centered() else 'MP'
     if flg == TYPE_RELAX_BASIC:
         print('Set to run standard single computation. Results to be stored to base root directory.')
         relax_solid(user_input_settings)
@@ -64,6 +69,35 @@ def begin_computation(user_input_settings):
         print("Configuration analysis (raw data file dump) complete. Returning data to `start.py`...")
         print("**IMPORTANT**: when computation on all shifts complete, run `config_analyze.py` to get data analysis")
         return bze_points
+    elif flg == TYPE_TWISTED_CONFIG:
+        print('Splitting into 2 basic monolayer relaxations and 1 configuration calculation')
+        poscars = sorted(findFilesInDir(BASE_ROOT, POSCAR_CONFIG_NAMEPRE, searchType='start'))
+        assert len(poscars) > 1, "Must give at least 2 POSCARs, 1 per layer, for twist calculations"
+        assert len(poscars) == DEFAULT_NUM_LAYERS, "Twist calculations for more than 2 layers not supported (yet)"
+
+        print("Making new subdirectories, building I/O for monolayer and configuration calculations...")
+        inter_path = checkPath(BASE_ROOT + CONFIG_DIR_NAME)
+        mkdir(CONFIG_DIR_NAME, BASE_ROOT)
+        for i, p in enumerate(poscars):
+            i = str(i)
+            intra_path = checkPath(BASE_ROOT + MONOLAYER_DIR_NAME + i)
+            mkdir(MONOLAYER_DIR_NAME + i, BASE_ROOT)
+            copy(p, BASE_ROOT, newPath=intra_path)
+            move(p, BASE_ROOT, newPath=BASE_ROOT+CONFIG_DIR_NAME)
+            exepath = build_bash_exe(calc_type=TYPE_RELAX_BASIC, calc_list=[PH], outdir=intra_path,
+                   compute_jobname=MONOLAYER_JOBNAME+i, vdw=vdw, kpts=kpts)
+            if not DEBUGGING:
+                print("Submitting monolayer job for layer " + i + "...")
+                stream = os.popen('sbatch ' + exepath)
+                print(stream.read())
+        exepath = build_bash_exe(calc_type=TYPE_RELAX_CONFIG, calc_list=[PH], outdir=inter_path,
+                   compute_jobname=CONFIG_JOBNAME, vdw=vdw, kpts=kpts)
+        if not DEBUGGING:
+            print("Submitting configuration job...")
+            stream = os.popen('sbatch ' + exepath)
+            print(stream.read())
+        else:
+            print(DEBUG_NOTICE_MSG)
     else:
         print('Set to run analytical calculations directly, without relaxation')
         os.chdir(BASE_ROOT)

@@ -53,10 +53,10 @@ class DataOutput:
             header="bx, by, relaxed z-spacing, energy\n")
    
     # Smoothly interpolate toal energy at various shifts.
-    def plot_e_vs_b(self, levels=DEFAULT_CONTOUR_LEVELS, rotation=None):
+    def plot_e_vs_b(self, levels=DEFAULT_CONTOUR_LEVELS):
         fig, ax = plt.subplots()
         cf = ax.tricontourf(self.xshifts, self.yshifts, self.__energies, 
-                            levels=levels, cmap="RdGy", rotation=rotation)
+                            levels=levels, cmap="RdGy")
         fig.colorbar(cf, ax=ax)
         ax.set_xlabel(r"$b_x$")
         ax.set_ylabel(r"$b_y$")
@@ -65,10 +65,10 @@ class DataOutput:
         fig.savefig(out_file)
     
     # Smoothly interpolate interlayer spacing at various shifts.
-    def plot_z_vs_b(self, levels=DEFAULT_CONTOUR_LEVELS, rotation=None):
+    def plot_z_vs_b(self, levels=DEFAULT_CONTOUR_LEVELS,):
         fig, ax = plt.subplots()
         cf = ax.tricontourf(self.xshifts, self.yshifts, self.__zspacings, 
-                            levels=levels, cmap="twilight_shifted", rotation=rotation)
+                            levels=levels, cmap="twilight_shifted")
         fig.colorbar(cf, ax=ax)
         ax.set_xlabel(r"$b_x$")
         ax.set_ylabel(r"$b_y$")

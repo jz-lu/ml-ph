@@ -48,6 +48,8 @@ CONFIG_DATA_DIR = 'config_data/'
 CONFIG_SUBDIR_NAME = 'shift_'
 SHIFT_NAME = 'shiftcoord.txt'
 COB_NPY_NAME = 'cob.npy' # must end in .npy
+MONOLAYER_DIR_NAME = 'layer_'
+CONFIG_DIR_NAME = 'config'
 
 # File names
 POSCAR_NAME = 'POSCAR'
