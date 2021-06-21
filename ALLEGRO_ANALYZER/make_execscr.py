@@ -30,10 +30,10 @@ def build_bash_exe(calc_type=TYPE_RELAX_BASIC, outdir='.', wdir=None, calc_list=
     assert isinstance(calc_list, list), "Calculation list must be of type list"
     assert vdw in ['T', 'F'], "vdw parameter must be either 'T' or 'F'"
     assert kpts in ['GAMMA', 'MP'], "k-points parameter must be either 'GAMMA' or 'MP'"
-    greet("Building new bash exe file...")
+    calc_list = ' '.join(calc_list)
+    greet(f"Building new bash exe file of type {calc_type} (calc list={calc_list})...")
     outdir = checkPath(outdir); exepath = outdir + fname
     wdir = outdir if wdir is None else wdir
-    calc_list = ' '.join(calc_list)
 
     with open(exepath, 'w') as f:
         f.write('#!/bin/bash\n')
