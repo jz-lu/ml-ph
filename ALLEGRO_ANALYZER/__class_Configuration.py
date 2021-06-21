@@ -32,7 +32,7 @@ class Configuration:
         self.__get_normed_fixed_lattice()
         self.__get_lattice_constants()
         self.__check_lattice_consistency()
-        self.__check_poscar_atoms()
+        # self.__check_poscar_atoms()
         print('All basic consistency checks and verifications complete. Configuration object constructed.')
 
     # Import all the initial POSCARs and return them in a list of pmg poscar objects.
@@ -124,14 +124,14 @@ class Configuration:
         return True
 
     # Check that the atoms in the same layer are coplanar.
-    def __check_poscar_atoms(self):
-        print('Checking coplanarity of atomic sublattice sites in POSCARs...')
-        for i in range(len(self.__poscars)):
-            mat = self.__poscars[i].structure.frac_coords
-            for j in range(len(mat)):
-                if mat[j][2] != mat[0][2]:
-                    exit_with_error(ERR_ATOMS_OUT_OF_PLANE%(i+1, j+1))
-        print('Atomic coplanarity validated.')
+    # def __check_poscar_atoms(self):
+    #     print('Checking coplanarity of atomic sublattice sites in POSCARs...')
+    #     for i in range(len(self.__poscars)):
+    #         mat = self.__poscars[i].structure.frac_coords
+    #         for j in range(len(mat)):
+    #             if mat[j][2] != mat[0][2]:
+    #                 exit_with_error(ERR_ATOMS_OUT_OF_PLANE%(i+1, j+1))
+    #     print('Atomic coplanarity validated.')
 
         # Return a list of selective dynamics bool arrays for interlayer relaxation
     

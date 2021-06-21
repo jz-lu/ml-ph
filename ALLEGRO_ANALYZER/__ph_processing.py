@@ -68,7 +68,7 @@ def compute_vasp_ph_forces(index, dispNum, dirName, subdirName, disp_poscar_name
 def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name=POSCAR_UNIT_NAME, onejob=True, user_input_settings=None):
     print(PHONOPY_DISP_MSG)
     dirName = checkPath(dirName)
-    assert user_input_settings ^ onejob
+    assert (user_input_settings is not None) ^ onejob
 
     try:
         os.chdir(dirName)
