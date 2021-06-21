@@ -10,7 +10,7 @@ from ___constants_names import *
 from ___constants_misc import ERR_PH_FORCE_SETS, ERR_PH_FORCE_SETS_NOT_FOUND
 from ___constants_vasp import *
 from ___constants_compute import *
-
+from make_execscr import build_bash_exe
 import subprocess
 import os
 from pymatgen.io.vasp.inputs import Poscar, VaspInput, Potcar # pylint: disable=import-error
@@ -20,6 +20,8 @@ def compute_displacements(ROOT, user_input_settings, ndisp):
     assert ROOT
     ROOT = checkPath(ROOT)
     print(f'Writing a job-array bash executable to {ROOT}')
+    # TODO toss repetitive code
+    # build_bash_exe(...)
     rtfile = ROOT + START_BATCH_NAME
     with open(rtfile, 'w') as f:
         vdw = 'T' if user_input_settings.do_vdW else 'F'

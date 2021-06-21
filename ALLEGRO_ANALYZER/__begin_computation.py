@@ -78,13 +78,14 @@ def begin_computation(user_input_settings):
         print("Making new subdirectories, building I/O for monolayer and configuration calculations...")
         inter_path = checkPath(BASE_ROOT + CONFIG_DIR_NAME)
         mkdir(CONFIG_DIR_NAME, BASE_ROOT)
+        clist = user_input_settings.get_calculation_list()
         for i, p in enumerate(poscars):
             i = str(i+1)
             intra_path = checkPath(BASE_ROOT + MONOLAYER_DIR_NAME + i)
             mkdir(MONOLAYER_DIR_NAME + i, BASE_ROOT)
             copy(p, BASE_ROOT, newPath=intra_path, newName=POSCAR_NAME)
             move(p, BASE_ROOT, newPath=BASE_ROOT+CONFIG_DIR_NAME)
-            exepath = build_bash_exe(calc_type=TYPE_RELAX_BASIC, calc_list=[PH], outdir=intra_path,
+            exepath = build_bash_exe(calc_type=TYPE_RELAX_BASIC, calc_list=clist, outdir=intra_path,
                    compute_jobname=MONOLAYER_JOBNAME+i, vdw=vdw, kpts=kpts)
             if not DEBUGGING:
                 os.chdir(intra_path)
@@ -93,8 +94,9 @@ def begin_computation(user_input_settings):
                 print(stream.read())
             else:
                 print(DEBUG_NOTICE_MSG)
-        exepath = build_bash_exe(calc_type=TYPE_RELAX_CONFIG, calc_list=[PH], outdir=inter_path,
-                   compute_jobname=CONFIG_JOBNAME, vdw=vdw, kpts=kpts, wdir=inter_path+CONFIG_SUBDIR_NAME)
+        exepath = build_bash_exe(calc_type=TYPE_RELAX_CONFIG, calc_list=clist, outdir=inter_path,
+                   compute_jobname=CONFIG_JOBNAME, vdw=vdw, kpts=kpts, wdir=inter_path+CONFIG_SUBDIR_NAME,
+                   compute_time='01:00:00') # this just kicks off a bunch of jobs, so it doesn't need any time
         if not DEBUGGING:
             os.chdir(inter_path)
             print(f"Submitting configuration job (wdir={inter_path+CONFIG_SUBDIR_NAME})...")
