@@ -136,7 +136,7 @@ class InputData:
 
     # Get calculation list
     def get_calculation_list(self):
-        return self.calculation_list
+        return list(self.calculation_list)
 
 
 
