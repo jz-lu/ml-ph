@@ -79,7 +79,7 @@ def begin_computation(user_input_settings):
         inter_path = checkPath(BASE_ROOT + CONFIG_DIR_NAME)
         mkdir(CONFIG_DIR_NAME, BASE_ROOT)
         for i, p in enumerate(poscars):
-            i = str(i)
+            i = str(i+1)
             intra_path = checkPath(BASE_ROOT + MONOLAYER_DIR_NAME + i)
             mkdir(MONOLAYER_DIR_NAME + i, BASE_ROOT)
             copy(p, BASE_ROOT, newPath=intra_path)

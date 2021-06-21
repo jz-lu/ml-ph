@@ -18,9 +18,10 @@ def succ(s):
 def warn(s):
     print(bcolors.WARNING + s + bcolors.ENDC)
 
-def err(s):
+def err(s, q=True):
     print(bcolors.FAIL + s + bcolors.ENDC)
-    sys.exit(1)
+    if q:
+        sys.exit(q)
 
 def greet(s):
     print(bcolors.OKBLUE + s + bcolors.ENDC)

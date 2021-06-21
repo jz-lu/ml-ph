@@ -62,7 +62,7 @@ class BZSampler:
     # Sample nk points along each IBZ boundary line
     def sample_k(self, nk=DEFAULT_NK, log=False):
         assert self.ltype == 'hexagonal'
-        G00 = G0[:,0]; G01 = G0[:,1]; d = G00.shape[0]
+        G00 = self.G0[:,0]; G01 = self.G0[:,1]; d = G00.shape[0]
         Gamma = np.zeros(d); K = 1/3 * (G00 + G01); M = 1/2 * G00
         ncorners = 4; corners = np.zeros([ncorners, d]) # k-points IBZ boundary corners
         corners[0,:] = Gamma; corners[1,:] = K; corners[2,:] = M; corners[3,:] = Gamma
@@ -113,6 +113,7 @@ class BZSampler:
 
     def get_GM_set(self):
         assert self.GM_sampled, "Must run GM-sampler before retrieving GM-set"
+        return self.g_idxs, self.g_arr
     
     def get_kpts(self):
         assert self.k_sampled, "Must run k-sampler before retrieving k-set"
@@ -123,3 +124,5 @@ class BZSampler:
     
     def sampled(self):
         return self.GM_sampled and self.k_sampled
+
+

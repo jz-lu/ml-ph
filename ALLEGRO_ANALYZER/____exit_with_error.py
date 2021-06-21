@@ -1,6 +1,6 @@
 import sys
 from datetime import datetime
+from ___helpers_parsing import err
 
 def exit_with_error(errorMsg):
-    print(errorMsg)
-    sys.exit('Time program terminated: ' + str(datetime.now()))
+    err(errorMsg, q='Time program terminated: ' + str(datetime.now()))

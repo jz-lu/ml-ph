@@ -38,9 +38,9 @@ class MonolayerDM:
         self.A0 = self.uc.lattice.matrix[:2, :2] # remove z-axis
         self.DM_set = None
 
-    # Return supercell index 
+    # Return supercell index (labeling which unit cell each atom in the supercell is in)
     def __sc_idx(self):
-        # TODO ??? 90% of the function isn't even used?
+        # TODO ??? 90% of the function isn't even used in the return object?
         uc_coords = self.uc.cart_coords; sc_coords = self.sc.cart_coords
 
         sc_nat = len(sc_coords); magic = int(len(sc_coords)/3)

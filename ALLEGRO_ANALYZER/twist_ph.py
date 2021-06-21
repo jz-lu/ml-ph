@@ -1,33 +1,45 @@
 # Compute the phonon modes for a twisted cell
 import numpy as np
+from time import time
 from phonopy import Phonopy
 import phonopy
+import pymatgen.core.structure as struct
+from pymatgen.io.vasp.inputs import Poscar
 from __class_DM import TwistedDM, InterlayerDM, MonolayerDM
 from __class_PhonopyAPI import PhonopyAPI
 from bzsampler import get_bz_sample
 from ___constants_names import (
     SPOSCAR_NAME, PH_FORCE_SETS_NAME, 
     ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME, 
-    MONOLAYER_DIR_NAME, CONFIG_DIR_NAME, CONFIG_SUBDIR_NAME
+    MONOLAYER_DIR_NAME, CONFIG_DIR_NAME, CONFIG_SUBDIR_NAME, 
+    POSCAR_CONFIG_NAMEPRE
 )
-from __directory_searchers import checkPath, findDirsinDir
+from ___constants_compute import DEFAULT_NUM_LAYERS
+from __directory_searchers import checkPath, findDirsinDir, findFilesInDir
 from __dirModifications import build_dir
 from ___helpers_parsing import greet, succ, warn, err, is_flag, check_not_flag
 import os, sys
 
 if __name__ == '__main__':
-    USAGE_MSG = f"Usage: python3 {sys.argv[0]} -deg <twist angle (deg)> -dir <directory given in twist calculation>"
+    start = time()
+    USAGE_MSG = f"Usage: python3 {sys.argv[0]} -deg <twist angle (deg)> -dir <base I/O dir> -o <output dir>"
     greet("Building twisted crystal phonon modes...")
     warn("Note: you must have already ran twisted calculation in given directory and retrieved forces from phonopy")
     args = sys.argv[1:]; i = 0; n = len(args)
-    indir = None; theta = None
+    indir = None; outdir = None; theta = None
     while i < n:
         if not is_flag(args[i]):
             warn(f'Warning: token "{args[i]}" is out of place and will be ignored')
             i += 1; continue
         if args[i] == '-dir':
             i += 1; check_not_flag(args[i])
-            indir = args[i]
+            indir = checkPath(args[i])
+            if args[i] in ['.', './', '..', '../'] or args[i][0] == '.':
+                warn(f'Warning: specified directory "{args[i]}" may not work when running executable')
+            i += 1
+        elif args[i] == '-o':
+            i += 1; check_not_flag(args[i])
+            outdir = checkPath(args[i])
             if args[i] in ['.', './', '..', '../'] or args[i][0] == '.':
                 warn(f'Warning: specified directory "{args[i]}" may not work when running executable')
             i += 1
@@ -38,21 +50,53 @@ if __name__ == '__main__':
             i += 1
     if not indir or not theta:
         err(USAGE_MSG)
+    assert os.path.isdir(indir), f"Directory {indir} does not exist"
+    assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
 
     print("Searching for POSCAR inputs...")
-    # TODO
+    poscars_uc = sorted(findFilesInDir(indir, POSCAR_CONFIG_NAMEPRE, searchType='start')); npos = len(poscars_uc)
+    assert npos > 1, "Must give at least 2 POSCARs, 1 per layer, for twist calculations"
+    assert npos == DEFAULT_NUM_LAYERS, "Twist calculations for more than 2 layers not supported (yet)"
+    s0 = struct.Structure.from_file(poscars_uc[0]).lattice.matrix[0:2, 0:2]
+    s1 = struct.Structure.from_file(poscars_uc[1]).lattice.matrix[0:2, 0:2]
+    assert np.allclose(s0, s1), "Input POSCARs must have the same lattice matrices"
     print("POSCAR inputs found.")
+
+    print("Searching for SPOSCAR inputs...")
+    poscars_sc = [''] * npos
+    for i in range(npos):
+        sposcar_path = build_dir([indir, MONOLAYER_DIR_NAME + str(i+1), ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME]) + SPOSCAR_NAME
+        assert os.path.isfile(sposcar_path), f"SPOSCAR not found at {sposcar_path}"
+        poscars_sc[i] = Poscar.from_file(sposcar_path)
+    print("SPOSCAR inputs found.")
     
     print("Generating phonopy objects via API...")
     ph_api = PhonopyAPI(indir) # retreive phonopy objects
+    ml_ph_list = ph_api.intra_ph_list()
+    config_ph_list = ph_api.inter_ph_list()
     print("Phonopy objects generated.")
 
     print("Sampling G and k sets...")
-    bzsamples = get_bz_sample(theta, )
+    bzsamples = get_bz_sample(theta, indir+poscars_uc[0], outdir, make_plot=True)
+    _, GM_set = bzsamples.get_GM_set(); k_set, _ = bzsamples.get_kpts()
     print("Sampling complete.")
 
+    print("Constructing intralayer dynamical matrix objects...")
+    MLDMs = [MonolayerDM(uc, sc, ph, GM_set, k_set) for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
+    print("Intralayer DM objects constructed.")
 
+    print("Constructing interlayer dynamical matrix objects...")
+    # TODO
+    print("Interlayer DM objects constructed.")
 
+    print("Combining into a single twisted dynamical matrix object...")
+    # TODO
+    print("Twisted dynamical matrix object constructed.")
 
+    print("Diagonalizing and outputting modes...")
+    # TODO
+    print("Modes outputted.")
+
+    succ("Successfully completed phonon mode analysis (Took %.3lfs)."%(time()-start))
 
 
