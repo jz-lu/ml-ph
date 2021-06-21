@@ -131,6 +131,9 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, us
         elif i == PH:
             print('Now constructing phonon displacements and submitting jobs for force calculations.')
             ph_dir = checkPath(outDirName + PHONOPY_DIR_NAME)
+            if not os.path.isdir(ph_dir):
+                print(f"Making directory {ph_dir}...")
+                mkdir(PHONOPY_DIR_NAME, outDirName)
             poscar_relaxed.write_file(ph_dir + POSCAR_UNIT_NAME)
             ph_preprocess(ph_dir, None, Poscar_unitcell_name=POSCAR_UNIT_NAME, onejob=False, user_input_settings=user_input_settings)
             print('Phonon displacement calculations kicked off successfully')
