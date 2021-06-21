@@ -7,7 +7,7 @@ from ___constants_names import (
     CONFIG_DATA_DIR, COB_NPY_NAME, 
     TYPE_RELAX_BASIC, TYPE_RELAX_CONFIG, TYPE_TWISTED_CONFIG, TYPE_NORELAX_BASIC, 
     POSCAR_NAME, POSCAR_CONFIG_NAMEPRE,
-    MONOLAYER_DIR_NAME, CONFIG_DIR_NAME,
+    MONOLAYER_DIR_NAME, CONFIG_DIR_NAME, CONFIG_SUBDIR_NAME, 
     PH
 )
 from __class_input import InputData
@@ -94,10 +94,10 @@ def begin_computation(user_input_settings):
             else:
                 print(DEBUG_NOTICE_MSG)
         exepath = build_bash_exe(calc_type=TYPE_RELAX_CONFIG, calc_list=[PH], outdir=inter_path,
-                   compute_jobname=CONFIG_JOBNAME, vdw=vdw, kpts=kpts)
+                   compute_jobname=CONFIG_JOBNAME, vdw=vdw, kpts=kpts, wdir=inter_path+CONFIG_SUBDIR_NAME)
         if not DEBUGGING:
             os.chdir(inter_path)
-            print("Submitting configuration job...")
+            print(f"Submitting configuration job (wdir={inter_path+CONFIG_SUBDIR_NAME})...")
             stream = os.popen('sbatch ' + exepath)
             print(stream.read())
         else:
