@@ -82,17 +82,21 @@ def begin_computation(user_input_settings):
             i = str(i+1)
             intra_path = checkPath(BASE_ROOT + MONOLAYER_DIR_NAME + i)
             mkdir(MONOLAYER_DIR_NAME + i, BASE_ROOT)
-            copy(p, BASE_ROOT, newPath=intra_path)
+            copy(p, BASE_ROOT, newPath=intra_path, newName=POSCAR_NAME)
             move(p, BASE_ROOT, newPath=BASE_ROOT+CONFIG_DIR_NAME)
             exepath = build_bash_exe(calc_type=TYPE_RELAX_BASIC, calc_list=[PH], outdir=intra_path,
                    compute_jobname=MONOLAYER_JOBNAME+i, vdw=vdw, kpts=kpts)
             if not DEBUGGING:
+                os.chdir(intra_path)
                 print("Submitting monolayer job for layer " + i + "...")
                 stream = os.popen('sbatch ' + exepath)
                 print(stream.read())
+            else:
+                print(DEBUG_NOTICE_MSG)
         exepath = build_bash_exe(calc_type=TYPE_RELAX_CONFIG, calc_list=[PH], outdir=inter_path,
                    compute_jobname=CONFIG_JOBNAME, vdw=vdw, kpts=kpts)
         if not DEBUGGING:
+            os.chdir(inter_path)
             print("Submitting configuration job...")
             stream = os.popen('sbatch ' + exepath)
             print(stream.read())

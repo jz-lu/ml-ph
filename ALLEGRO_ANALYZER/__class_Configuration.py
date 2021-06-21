@@ -177,9 +177,9 @@ class Configuration:
                 at.frac_coords = (at.frac_coords + shift) % 1
                 
                 # Since it is on a different layer we need to separate the layers in the z-coordinate
-                at.frac_coords[2] = i * init_interlayer_spacing
+                at.frac_coords[2] += i * init_interlayer_spacing
 
-                # Push it into the fxed lattice poscar object, which will be the b-space poscar
+                # Push it into the fixed lattice poscar object, which will be the b-space poscar
                 bspace_structure.append(at.species, at.frac_coords)
             
         # SD: interlayer relaxation allowed for every 
