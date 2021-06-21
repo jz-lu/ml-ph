@@ -54,8 +54,9 @@ def filesInDir(dirName):
 #     return arr
 
 def findFilesInDir(dirName, fileName, searchType='exact'):
+    assert os.path.isdir(dirName); os.chdir(dirName)
     dirName = checkPath(dirName)
-    print("Searching for matches '%s' of filename'%s' in directory %s with list:"%(searchType, fileName, dirName), 
+    print("Searching for matches '%s' of filename '%s' in directory %s with list:"%(searchType, fileName, dirName), 
         os.listdir(dirName))
     arr = []
     
@@ -73,6 +74,7 @@ def findFilesInDir(dirName, fileName, searchType='exact'):
     return arr
 
 def findDirsinDir(dirName, subName, searchType='exact'):
+    assert os.path.isdir(dirName); os.chdir(dirName)
     dirName = checkPath(dirName)
     print("Searching for matches '%s' of subdirectory '%s' in directory %s with list:"%(searchType, subName, dirName), 
         os.listdir(dirName))
