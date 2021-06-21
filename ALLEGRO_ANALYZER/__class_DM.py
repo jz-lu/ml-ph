@@ -40,20 +40,19 @@ class MonolayerDM:
 
     # Return supercell index (labeling which unit cell each atom in the supercell is in)
     def __sc_idx(self):
-        # TODO ??? 90% of the function isn't even used in the return object?
+        # TODO
         uc_coords = self.uc.cart_coords; sc_coords = self.sc.cart_coords
 
-        sc_nat = len(sc_coords); magic = int(len(sc_coords)/3)
+        sc_nat = len(sc_coords); n_uc = int(len(sc_coords)/3)
         assert sc_nat % 3 == 0
-        pos_m = sc_coords[:magic] - uc_coords[0]; msz = len(pos_m)
-        pos_x1 = sc_coords[magic : 2*magic] - uc_coords[1]
-        pos_x2 = sc_coords[2*magic:] - uc_coords[2]
+        pos_m = sc_coords[:n_uc] - uc_coords[0]; msz = len(pos_m)
 
         pos_sc_idx = np.zeros(sc_nat)
         for i in range(msz):
             pos_sc_idx[i] = 0
             pos_sc_idx[i + msz] = 1
             pos_sc_idx[i + 2*msz] = 2 # sublattice index
+        self.pos_sc_idx = pos_sc_idx
         return pos_sc_idx
     
     # Compute intralayer dynamical matrix block element for given some center `q` and phonopy object `ph`

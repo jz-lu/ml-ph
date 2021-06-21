@@ -74,7 +74,8 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
         os.chdir(dirName)
         print(f'WD changed to "{dirName}"')
         CMD_GET_DISPLACEMENTS = ['phonopy', '-d', '--dim="{}"'.format(supercellDim), '-c', dirName + Poscar_unitcell_name] # -c flag to indicate to phonopy where unit cell POSCAR is
-        print('Running "%s" to shell...'%(' '.join(CMD_GET_DISPLACEMENTS)))
+        CMD_GET_DISPLACEMENTS = ' '.join(CMD_GET_DISPLACEMENTS)
+        print('Running "%s" to shell...'%(CMD_GET_DISPLACEMENTS))
         stream = os.popen(CMD_GET_DISPLACEMENTS)
         print(stream.read())
 
