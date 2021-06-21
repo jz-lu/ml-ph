@@ -17,7 +17,12 @@ from __get_eleband_analysis import get_eleband_analysis
 from __get_elecombined_analysis import get_elecombined_analysis
 from __cleanup import cleanRelevantFiles
 from ___constants_vasp import NEDOS, ICHARG, SIGMA, PHONOPY_GRID_DENSITY, PHONOPY_GRID_SHIFT
-from ___constants_names import *
+from ___constants_names import (
+    ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME, 
+    POSCAR_NAME, CHGCAR_NAME, CONTCAR_NAME, 
+    ELEDOS, ELEBAND, PH, PHDOS, PHBAND, ENERGIES, 
+    OUTPUT_DIR_NAME, DOSCAR_NAME, THIS_DIR
+)
 from ___constants_misc import BAD_INPUT_ERR_MSG, GENERAL_ERR_USAGE_MSG
 from ___constants_phonopy import POSCAR_UNIT_NAME
 import os
@@ -51,9 +56,9 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, us
     kpoints_mesh_ph = modifyKpointsMesh(kpoints_mesh_ph, meshDensity=PHONOPY_GRID_DENSITY, totShift=PHONOPY_GRID_SHIFT)
 
     # Objects useful for plotting data
-    eledos_obj = None
-    eleband_obj = None
-    combinedPlot = None
+    eledos_obj = None # pylint: disable=unused-variable
+    eleband_obj = None # pylint: disable=unused-variable
+    combinedPlot = None # pylint: disable=unused-variable
     
     # Since all processing for phonopy is done at once, we should flag so that if we want phband and phdos we don't preprocess twice
     ph_has_preprocessed = False
@@ -125,8 +130,9 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, us
             eleband_obj = get_eleband_analysis(DIR_ELEBAND, DIR_ELEBAND_RESULTS, poscar_relaxed, extract_raw_data=True, extract_plot=True)
         elif i == PH:
             print('Now constructing phonon displacements and submitting jobs for force calculations.')
-            poscar_relaxed.write_file(outDirName + POSCAR_UNIT_NAME)
-            ph_preprocess(outDirName, None, Poscar_unitcell_name=POSCAR_UNIT_NAME, onejob=False, user_input_settings=user_input_settings)
+            ph_dir = checkPath(outDirName + PHONOPY_DIR_NAME)
+            poscar_relaxed.write_file(ph_dir + POSCAR_UNIT_NAME)
+            ph_preprocess(ph_dir, None, Poscar_unitcell_name=POSCAR_UNIT_NAME, onejob=False, user_input_settings=user_input_settings)
             print('Phonon displacement calculations kicked off successfully')
         else: 
             # Only case left is that we have phonon calculations to do.

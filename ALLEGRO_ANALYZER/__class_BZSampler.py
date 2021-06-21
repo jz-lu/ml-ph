@@ -44,14 +44,14 @@ class BZSampler:
             exit_with_error("Error: k-points sampler does not (yet) support non-hexagonal lattices")
 
     # Sample Gtilde vectors
-    def sample_GM(self, mn_grid_sz=DEFAULT_GRID_SIZE, max_shell=DEFAULT_MAX_SHELL):
+    def sample_GM(self, mn_grid_sz=DEFAULT_GRID_SIZE, max_shell=DEFAULT_MAX_SHELL, tol=0.1):
         grid = np.arange(-mn_grid_sz, mn_grid_sz + 1); self.nsh = max_shell
         GM1 = self.GM[:,0]; GM2 = self.GM[:,1] # Moire reciprocal lattice vectors
         g_arr = np.array([m*GM1 + n*GM2 for m, n in prod(grid, grid)])
         g_idxs = np.array(list(prod(grid, grid)))
 
         # Filter out any G that does not satisfy the closeness condition |GM| < (shell+0.1) * |GM1|
-        g_cutoff = (floor(max_shell)+0.1) * LA.norm(GM1) # add 0.1 for numerical error
+        g_cutoff = (floor(max_shell) + tol) * LA.norm(GM1) # add 0.1 for numerical error
         cut_makers = (np.sqrt(g_arr[:,0]**2 + g_arr[:,1]**2) <= g_cutoff) # indicators for which G made the cutoff
         g_idxs = g_idxs[cut_makers,:]
         g_arr = g_arr[cut_makers,:] # special numpy syntax for filtering by an indicator array `cut_makers`

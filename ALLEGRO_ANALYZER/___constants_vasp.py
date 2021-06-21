@@ -97,6 +97,7 @@ NONRELAXATION_GRID_SHIFT = (0, 0, 0)
 PHONOPY_GRID_DENSITY = (11, 11, 1)
 PHONOPY_GRID_SHIFT = (0, 0, 0)
 KPOINTS_LINE_INTS = 50 # Number of sampling k-points on each line
+# pylint: disable=anomalous-backslash-in-string
 KPOINTS_LINE_HEX_STR = 'k-points along high symmetry lines\n50\nLine_mode\nReciprocal\n0.0 0.0 0.0 ! \Gamma\n0.5 0.5 0.0 ! M\n\n0.5 0.5 0.0 ! M\n0.666667 0.333333 0.0 ! K\n\n0.666667 0.333333 0.0 ! K\n0.0 0.0 0.0 ! \Gamma'
 
 ## POSCAR

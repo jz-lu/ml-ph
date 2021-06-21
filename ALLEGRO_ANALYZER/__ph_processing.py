@@ -75,8 +75,8 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name
         print(f'WD changed to "{dirName}"')
         CMD_GET_DISPLACEMENTS = ['phonopy', '-d', '--dim="{}"'.format(supercellDim), '-c', dirName + Poscar_unitcell_name] # -c flag to indicate to phonopy where unit cell POSCAR is
         print('Running "%s" to shell...'%(' '.join(CMD_GET_DISPLACEMENTS)))
-        phStarterMsg = subprocess.run(CMD_GET_DISPLACEMENTS, capture_output=True, universal_newlines=True)
-        print(phStarterMsg.stdout)
+        stream = os.popen(CMD_GET_DISPLACEMENTS)
+        print(stream.read())
 
         # Phonopy places all their files in the directory of this script. 
         # We want it in phDir, so we scane for all files that are not .py scripts or related and move them over.

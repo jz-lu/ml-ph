@@ -1,16 +1,27 @@
 from ____exit_with_error import exit_with_error
-from ___constants_config import *
+from ___constants_config import GRID_SAMPLE_LOW, GRID_SAMPLE_HIGH
 from ___constants_names import POSCAR_NAME, POSCAR_CONFIG_NAMEPRE
-from ___constants_misc import *
-from ___constants_vasp import Z_LATTICE_SIZE, POSCAR_PRECISION, POSCAR_PREC_COMP_THRESHOLD, NO_RELAX_SELECTIVE_DYNAMICS_ARR, LAYER_RELAX_SELECTIVE_DYNAMICS_ARR
+from ___constants_misc import (
+    ERR_BAD_CONFIG_POSCAR, 
+    ERR_INCONSISTENT_NORMS, ERR_INCONSISTENT_LATTICES, 
+    WARN_LOW_INPLANE_PREC, 
+    ERR_WRONG_ZVEC, ERR_INVALID_GRID
+)
+from ___constants_vasp import (
+    Z_LATTICE_SIZE, 
+    POSCAR_PRECISION, POSCAR_PREC_COMP_THRESHOLD, 
+    NO_RELAX_SELECTIVE_DYNAMICS_ARR, LAYER_RELAX_SELECTIVE_DYNAMICS_ARR
+)
 from __directory_searchers import checkPath, findFilesInDir
 from pymatgen.io.vasp.inputs import Poscar # pylint: disable=import-error
 import numpy as np # pylint: disable=import-error 
 import copy
 
-# Class Configuration
-#    Stores the POSCAR and shift information for each displacement sampling.
-#    Executes the strain-shift algorithm to prepare the composite layered material for relaxation.
+"""
+Class Configuration:
+   * Stores the POSCAR and shift information for each displacement sampling.
+   * Executes the strain-shift algorithm to prepare the composite layered material for relaxation.
+"""
 
 class Configuration:
     # Import the POSCARs and check validity 
