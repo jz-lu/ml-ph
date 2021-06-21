@@ -9,7 +9,8 @@ from itertools import product as prod
 from bzsampler import BZSampler
 import matplotlib.pyplot as plt
 from __directory_searchers import checkPath
-
+from ___constants_phonopy import SUPER_DIM
+from scipy.linalg import block_diag
 
 """
 These classes together compute the twisted dynamical matrix from a sample of moire G vectors and k points along IBZ boundary.
@@ -34,42 +35,39 @@ class MonolayerDM:
     def __init__(self, poscar_uc : Poscar, poscar_sc : Poscar, ph, GM_set, k_set):
         self.uc = poscar_uc.structure; self.sc = poscar_sc.structure # get structure objects from Poscar objects
         self.GM_set = GM_set; self.k_set = k_set; self.ph = ph
-        self.pos_sc_idx = self.__sc_idx()
+        self.pos_sc_id = self.__sc_atomic_id()
         self.A0 = self.uc.lattice.matrix[:2, :2] # remove z-axis
         self.DM_set = None
 
-    # Return supercell index (labeling which unit cell each atom in the supercell is in)
-    def __sc_idx(self):
-        # TODO
+    # Assign each atom a unique ID in the supercell
+    def __sc_atomic_id(self):
         uc_coords = self.uc.cart_coords; sc_coords = self.sc.cart_coords
+        sc_nat = len(sc_coords); uc_nat = len(uc_coords) # num sc/uc atoms
+        pos_sc_id = []; n_uc = int(sc_nat/uc_nat) # num unnit cells
 
-        sc_nat = len(sc_coords); n_uc = int(len(sc_coords)/3)
-        assert sc_nat % 3 == 0
-        pos_m = sc_coords[:n_uc] - uc_coords[0]; msz = len(pos_m)
-
-        pos_sc_idx = np.zeros(sc_nat)
-        for i in range(msz):
-            pos_sc_idx[i] = 0
-            pos_sc_idx[i + msz] = 1
-            pos_sc_idx[i + 2*msz] = 2 # sublattice index
-        self.pos_sc_idx = pos_sc_idx
-        return pos_sc_idx
+        # SPOSCAR arranges all atoms of each type contiguously, so the indexes must
+        # be the same for each contiguous region of `n_uc`.
+        for i in range(uc_nat):
+            pos_sc_id += [i]*n_uc
+        pos_sc_id = np.array(pos_sc_id); self.pos_sc_id = pos_sc_id
+        return pos_sc_id
     
     # Compute intralayer dynamical matrix block element for given some center `q` and phonopy object `ph`
     def __block_intra_l0(self, q, ph):
-        assert self.pos_sc_idx is not None, "Fatal error in class initialization"
+        assert self.pos_sc_id is not None, "Fatal error in class initialization"
         smallest_vectors, multiplicity = ph.primitive.get_smallest_vectors()
         species = self.uc.species; uc_nat = len(species); d = 3 # Cartesian DOF
         fc = ph.force_constants
         D = np.zeros([uc_nat*d, uc_nat*d], dtype=complex) # size: n_at x d (n_at of uc)
 
         """
-        Iteration: choose a pair of atoms (may be the same), fix one, then iterate through all instances
-        of the other. TODO ??? 
+        Iteration: choose a pair of atoms (given by sc ID, may be the same), fix one, 
+        then iterate through all instances of the other. Add to the matrix the Fourier term
+        divided by the multiplicity, which is determined by phonopy based on nearest-neighbor symmetry.
         """
         for x, y in prod(range(uc_nat), range(uc_nat)):
-            idxs_x = self.pos_sc_idx[self.pos_sc_idx == x]; n_xidxs = len(idxs_x)
-            idxs_y = self.pos_sc_idx[self.pos_sc_idx == y]; n_yidxs = len(idxs_y)
+            idxs_x = self.pos_sc_id[self.pos_sc_id == x]; n_xidxs = len(idxs_x)
+            idxs_y = self.pos_sc_id[self.pos_sc_id == y]; n_yidxs = len(idxs_y)
             id1 = d * x; id2 = d * y
             Mx = species[x].atomic_mass; My = species[y].atomic_mass
             for a in range(n_yidxs): # iterate over all the sublattice y in the supercell
