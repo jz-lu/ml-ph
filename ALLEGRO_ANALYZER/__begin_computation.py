@@ -27,7 +27,7 @@ def begin_computation(user_input_settings):
     flg = user_input_settings.get_type_flag()
     BASE_ROOT = user_input_settings.get_base_root_dir()
     vdw = 'T' if user_input_settings.do_vdW else 'F'
-    kpts = 'GAMMA' if user_input_settings.kpoints_is_gamma_centered() else 'MP'
+    kpts = 'GAMMA' if user_input_settings.kpoints_is_gamma_centered else 'MP'
     if flg == TYPE_RELAX_BASIC:
         print('Set to run standard single computation. Results to be stored to base root directory.')
         relax_solid(user_input_settings)

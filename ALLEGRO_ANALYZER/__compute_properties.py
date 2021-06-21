@@ -77,12 +77,11 @@ def solve_electronic(user_input_settings, poscar=None, user_inputted_root=None):
     print('Created new folder %s to store self-consistent electronic step results.'%(DIR_ANALYSIS))
 
     print('Running VASP electronic step calculations...results to be sent to %s'%(DIR_ANALYSIS))
-    # print(init_vasp_obj)
     run_vasp(init_vasp_obj, DIR_ANALYSIS, run_type='no_relax')
     print('VASP electronic step calculations complete.')
     if user_input_settings.do_energy_calculation():
         get_energies(DIR_ANALYSIS, DIR_ANALYSIS, writeOut=True)    
-    print('Successfully completed total energy calculation, which was the only specified calculation. Exiting relaxation...')
+        print('Successfully completed total energy calculation.')
     return None
 
     
