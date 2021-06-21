@@ -3,7 +3,7 @@ from ___constants_config import *
 from ___constants_names import POSCAR_NAME, POSCAR_CONFIG_NAMEPRE
 from ___constants_misc import *
 from ___constants_vasp import Z_LATTICE_SIZE, POSCAR_PRECISION, POSCAR_PREC_COMP_THRESHOLD, NO_RELAX_SELECTIVE_DYNAMICS_ARR, LAYER_RELAX_SELECTIVE_DYNAMICS_ARR
-from __directory_searchers import findFilesInDir, checkPath
+from __directory_searchers import checkPath, findFilesInDir
 from pymatgen.io.vasp.inputs import Poscar # pylint: disable=import-error
 import numpy as np # pylint: disable=import-error 
 import copy

@@ -53,7 +53,7 @@ def filesInDir(dirName):
 #     print("Search done, returning list:", arr)
 #     return arr
 
-def findFilesinDir(dirName, fileName, searchType='exact'):
+def findFilesInDir(dirName, fileName, searchType='exact'):
     dirName = checkPath(dirName)
     print("Searching for matches '%s' of filename'%s' in directory %s with list:"%(searchType, fileName, dirName), 
         os.listdir(dirName))
