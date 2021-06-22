@@ -15,12 +15,6 @@ from ___helpers_parsing import greet, succ, warn, err, is_flag, check_not_flag
 from __directory_searchers import checkPath
 from ____exit_with_error import exit_with_error
 
-"""
-TODOs
-1. The G-sampling is 1-dimensional here (there aren't 2 indices to go over)--is the cutoff condition right here?
-2. Parts of the supercell index function and dm_calc I don't fully understand
-"""
-
 class BZSampler:
     def __init__(self, G0, theta, outdir='./', log=False, lattice_type='hexagonal'):
         G0 = np.array(G0) # ensure proper typing

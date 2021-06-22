@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from __directory_searchers import checkPath
 from ___constants_phonopy import SUPER_DIM
 from scipy.linalg import block_diag
+from scipy.sparse import bmat # block matrix
 
 """
 These classes together compute the twisted dynamical matrix from a sample of moire G vectors and k points along IBZ boundary.
@@ -120,14 +121,27 @@ class InterlayerDM:
 
     def __block_inter_l1(self):
         n_GM = len(self.GM_set)
-        self.DM = np.reshape([self.__block_inter_l0(GM) for GM in self.GM_set], (n_GM, n_GM)) # TODO ??? GM indices
+        assert LA.norm(self.GM_set[0]) == 0, f"GM[0] should be 0, but is {LA.norm(self.GM_set[0])}"
+        D0 = self.__block_inter_l0(self.GM_set[0]); block_l0_shape = D0.shape
+        self.DM = [[None]*n_GM for _ in range(n_GM)] # NoneType interpreted by scippy as 0 matrix block
+        for i in range(n_GM): # fill diagonal
+            self.DM[i][i] = D0
+        for i in range(1, n_GM): # fill first row/col
+            self.DM[0][i] = self.__block_inter_l0(self.GM_set[i])
+            self.DM[i][0] = self.__block_inter_l1(-self.GM_set[i])
+            assert self.DM[0][i].shape == block_l0_shape and self.DM[i][0].shape == block_l0_shape, f"Shape GM0{i}={self.DM[0][i].shape}, GM{i}0={self.DM[i][0].shape}, expected {block_l0_shape}"
+            assert np.isclose(self.DM[0][i], self.DM[i][0]), f"Level-0 interlayer DM blocks for GM{i} not inversion-symmetric {self.DM[0][i]}, {self.DM[i][0]}"
+        self.DM = bmat(self.DM).toarray() # convert NoneTypes to zero-matrix blocks to make sparse matrix
+        return self.DM
 
     def get_DM(self):
+        print("Retrieved interlayer dynamical matrix.")
         if self.DM is None:
             self.__block_inter_l1()
         return self.DM
 
     def get_GM_set(self):
+        print("Retrieved GM sample set.")
         return self.GM_set
 
 
