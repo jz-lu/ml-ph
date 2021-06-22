@@ -38,6 +38,7 @@ class MonolayerDM:
         self.pos_sc_id = self.__sc_atomic_id()
         self.A0 = self.uc.lattice.matrix[:2, :2] # remove z-axis
         self.DM_set = None
+        self.name = poscar_uc.comment
 
     # Assign each atom a unique ID in the supercell
     def __sc_atomic_id(self):
@@ -82,33 +83,40 @@ class MonolayerDM:
         
     # Create level-1 block matrix (each matrix becomes a block in level-2)
     def __block_intra_l1(self):
-        n_GM = len(self.GM_set)
-        for k in self.k_set:
-            D = np.reshape([self.__block_intra_l0(k+GM, self.ph) for GM in self.GM_set], (n_GM, n_GM)) # TODO ???
-            self.DM_set.append(D)
+        self.DM_set = [block_diag(*[self.__block_intra_l0(k+GM, self.ph) for GM in self.GM_set]) for k in self.k_set]
         return self.DM_set
 
     def get_DM_set(self):
         if self.DM_set is None:
             self.__block_intra_l1()
+        print(f"Retrieved monolayer dynamical matrix for solid {self.name}")
         return self.DM_set
 
     def get_GM_set(self):
+        print(f"Retrieved GM sample set for solid {self.name}")
         return self.GM_set
 
     def get_k_set(self):
+        print(f"Retrieved k sample set for solid {self.name}")
         return self.k_set
 
 
 # Build interlayer dynamical matrix block via summing over configurations
 class InterlayerDM:
-    def __init__(self, b_set, ph, GM_set):
-        self.b_set = b_set; self.ph = ph
+    def __init__(self, b_set, ph_list, GM_set):
+        assert len(b_set[0]) == 2, "Shift vectors must be 2-dimensional"
+        self.b_set = b_set; self.ph_list = ph_list # list of phonopy objects for each config
+        self.nshift = len(b_set)
         self.GM_set = GM_set
         self.DM = None
+        # The force constants matrix for each configuration is equivalent to the dynamical matrix
+        # at the Gamma point, since the Fourier transform cancels for G = Gamma.
+        self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in ph_list]
 
     def __block_inter_l0(self, GM):
-        return self.DM # TODO sum over b with the strange phonopy method?
+        # TODO the GM set actually needs to be a G set
+        D = sum([force_matrix * np.exp(1j * np.dot(GM, b)) for force_matrix, b in zip(self.force_matrices, self.b_set)])
+        return D / (self.nshift**2)
 
     def __block_inter_l1(self):
         n_GM = len(self.GM_set)
@@ -126,7 +134,9 @@ class InterlayerDM:
 # Build full dynamical matrix from intralayer and interlayer terms via the above 2 classes
 class TwistedDM:
     def __init__(self, l1 : MonolayerDM, l2 : MonolayerDM, inter : InterlayerDM, k_set):
+        print("Building dynamical matrix intra(er) blocks...")
         DMs_layer1 = l1.get_DM_set(); DMs_layer2 = l2.get_DM_set(); DM_inter = inter.get_DM()
+        print("Blocks built...")
         self.DMs = [self.__block_l2([DMs_layer1[i], DMs_layer2[i]], DM_inter) for i in range(len(k_set))]
         self.k_set = k_set
         self.modes_built = False

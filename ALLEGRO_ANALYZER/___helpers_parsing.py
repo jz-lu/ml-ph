@@ -26,6 +26,9 @@ def err(s, q=True):
 def greet(s):
     print(bcolors.OKBLUE + s + bcolors.ENDC)
 
+def update(s):
+    print(bcolors.OKCYAN + s + bcolors.ENDC)
+
 def is_flag(s):
     return s[0] == '-'
 

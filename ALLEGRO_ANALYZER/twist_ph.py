@@ -12,12 +12,13 @@ from ___constants_names import (
     SPOSCAR_NAME, PH_FORCE_SETS_NAME, 
     ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME, 
     MONOLAYER_DIR_NAME, CONFIG_DIR_NAME, CONFIG_SUBDIR_NAME, 
-    POSCAR_CONFIG_NAMEPRE
+    POSCAR_CONFIG_NAMEPRE, 
+    SHIFT_NAME
 )
 from ___constants_compute import DEFAULT_NUM_LAYERS
 from __directory_searchers import checkPath, findDirsinDir, findFilesInDir
 from __dirModifications import build_dir
-from ___helpers_parsing import greet, succ, warn, err, is_flag, check_not_flag
+from ___helpers_parsing import greet, update, succ, warn, err, is_flag, check_not_flag
 import os, sys
 
 if __name__ == '__main__':
@@ -53,6 +54,7 @@ if __name__ == '__main__':
     assert os.path.isdir(indir), f"Directory {indir} does not exist"
     assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
 
+    update("Working on intralayer components...")
     print("Searching for POSCAR inputs...")
     poscars_uc = sorted(findFilesInDir(indir, POSCAR_CONFIG_NAMEPRE, searchType='start')); npos = len(poscars_uc)
     assert npos > 1, "Must give at least 2 POSCARs, 1 per layer, for twist calculations"
@@ -73,7 +75,6 @@ if __name__ == '__main__':
     print("Generating phonopy objects via API...")
     ph_api = PhonopyAPI(indir) # retreive phonopy objects
     ml_ph_list = ph_api.intra_ph_list()
-    config_ph_list = ph_api.inter_ph_list()
     print("Phonopy objects generated.")
 
     print("Sampling G and k sets...")
@@ -83,8 +84,24 @@ if __name__ == '__main__':
 
     print("Constructing intralayer dynamical matrix objects...")
     MLDMs = [MonolayerDM(uc, sc, ph, GM_set, k_set) for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
-    print("Intralayer DM objects constructed.")
+    update("Intralayer DM objects constructed.")
 
+    update("Working on interlayer components...")
+    print("Importing shift vectors...")
+    nshift = len(findDirsinDir(build_dir([indir, CONFIG_DIR_NAME]), CONFIG_SUBDIR_NAME, searchType='start'))
+    b_set = ['']*nshift
+    for i in range(nshift):
+        shift_file_path = build_dir([indir, CONFIG_DIR_NAME, CONFIG_SUBDIR_NAME + str(i)]) + SHIFT_NAME
+        assert os.path.isfile(shift_file_path), f"{shift_file_path} not found"
+        with open(shift_file_path) as f:
+            b_set[i] = list(map(float, f.read().splitlines()))[:2] # shifts must be 2-dimensional
+    print("Shift vectors imported.")
+
+    print("Getting interlayer phonopy objects from API...")
+    config_ph_list = ph_api.inter_ph_list()
+    print("Phonopy objects retrieved.")
+
+    print("Note: Using GM sampling set from intralayer calculations.")
     print("Constructing interlayer dynamical matrix objects...")
     # TODO
     print("Interlayer DM objects constructed.")
