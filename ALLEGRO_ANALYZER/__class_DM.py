@@ -128,7 +128,7 @@ class InterlayerDM:
             self.DM[i][i] = D0
         for i in range(1, n_GM): # fill first row/col
             self.DM[0][i] = self.__block_inter_l0(self.GM_set[i])
-            self.DM[i][0] = self.__block_inter_l1(-self.GM_set[i])
+            self.DM[i][0] = self.__block_inter_l0(-self.GM_set[i])
             assert self.DM[0][i].shape == block_l0_shape and self.DM[i][0].shape == block_l0_shape, f"Shape GM0{i}={self.DM[0][i].shape}, GM{i}0={self.DM[i][0].shape}, expected {block_l0_shape}"
             assert np.isclose(self.DM[0][i], self.DM[i][0]), f"Level-0 interlayer DM blocks for GM{i} not inversion-symmetric {self.DM[0][i]}, {self.DM[i][0]}"
         self.DM = bmat(self.DM).toarray() # convert NoneTypes to zero-matrix blocks to make sparse matrix
