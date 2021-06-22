@@ -13,7 +13,8 @@ from ___constants_names import (
     ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME, 
     MONOLAYER_DIR_NAME, CONFIG_DIR_NAME, CONFIG_SUBDIR_NAME, 
     POSCAR_CONFIG_NAMEPRE, 
-    SHIFT_NAME
+    SHIFT_NAME, 
+    DEFAULT_PH_BAND_PLOT_NAME
 )
 from ___constants_compute import DEFAULT_NUM_LAYERS
 from __directory_searchers import checkPath, findDirsinDir, findFilesInDir
@@ -23,11 +24,11 @@ import os, sys
 
 if __name__ == '__main__':
     start = time()
-    USAGE_MSG = f"Usage: python3 {sys.argv[0]} -deg <twist angle (deg)> -dir <base I/O dir> -o <output dir>"
+    USAGE_MSG = f"Usage: python3 {sys.argv[0]} -deg <twist angle (deg)> -name <solid name> -dir <base I/O dir> -o <output dir>"
     greet("Building twisted crystal phonon modes...")
     warn("Note: you must have already ran twisted calculation in given directory and retrieved forces from phonopy")
     args = sys.argv[1:]; i = 0; n = len(args)
-    indir = None; outdir = None; theta = None
+    indir = None; outdir = None; theta = None; name = None; outname = DEFAULT_PH_BAND_PLOT_NAME
     while i < n:
         if not is_flag(args[i]):
             warn(f'Warning: token "{args[i]}" is out of place and will be ignored')
@@ -46,11 +47,18 @@ if __name__ == '__main__':
             i += 1
         elif args[i] == '-deg':
             i += 1; check_not_flag(args[i]); theta = np.deg2rad(float(args[i])); i += 1
+        elif args[i] == '-name':
+            i += 1; check_not_flag(args[i]); name = args[i]; i += 1
+        elif args[i] == '-fout':
+            i += 1; check_not_flag(args[i]); outname = args[i]; i += 1
+        elif args[i] in ['--usage', '--help']:
+            print(USAGE_MSG)
+            sys.exit(0)
         else:
             warn(f'Warning: unknown flag "{args[i]} ignored')
             i += 1
     if not indir or not theta:
-        err(USAGE_MSG)
+        err(f"Error: must supply twist angle and input directory. Run `python3 {sys.argv[0]} --usage` for help.")
     assert os.path.isdir(indir), f"Directory {indir} does not exist"
     assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
 
@@ -79,11 +87,13 @@ if __name__ == '__main__':
 
     print("Sampling G and k sets...")
     bzsamples = get_bz_sample(theta, indir+poscars_uc[0], outdir, make_plot=True)
-    _, GM_set = bzsamples.get_GM_set(); k_set, _ = bzsamples.get_kpts()
+    _, GM_set = bzsamples.get_GM_set(); _, G0_set = bzsamples.get_G0_set()
+    k_set, _ = bzsamples.get_kpts(); corner_kmags = bzsamples.get_corner_kmags()
     print("Sampling complete.")
 
     print("Constructing intralayer dynamical matrix objects...")
     MLDMs = [MonolayerDM(uc, sc, ph, GM_set, k_set) for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
+    assert len(MLDMs) == 2, f"Only 2-layer solids supported for twisted DM (for now), got {len(MLDMs)}"
     update("Intralayer DM objects constructed.")
 
     update("Working on interlayer components...")
@@ -94,7 +104,7 @@ if __name__ == '__main__':
         shift_file_path = build_dir([indir, CONFIG_DIR_NAME, CONFIG_SUBDIR_NAME + str(i)]) + SHIFT_NAME
         assert os.path.isfile(shift_file_path), f"{shift_file_path} not found"
         with open(shift_file_path) as f:
-            b_set[i] = list(map(float, f.read().splitlines()))[:2] # shifts must be 2-dimensional
+            b_set[i] = np.array(list(map(float, f.read().splitlines()))[:2]) # shifts must be 2-dimensional
     print("Shift vectors imported.")
 
     print("Getting interlayer phonopy objects from API...")
@@ -103,15 +113,15 @@ if __name__ == '__main__':
 
     print("Note: Using GM sampling set from intralayer calculations.")
     print("Constructing interlayer dynamical matrix objects...")
-    # TODO
+    ILDM = InterlayerDM(b_set, config_ph_list, GM_set, G0_set)
     print("Interlayer DM objects constructed.")
 
     print("Combining into a single twisted dynamical matrix object...")
-    # TODO
+    TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_set)
     print("Twisted dynamical matrix object constructed.")
 
     print("Diagonalizing and outputting modes...")
-    # TODO
+    TDM.plot_band(corner_kmags, theta, outdir=outdir, name=name, filename=outname)
     print("Modes outputted.")
 
     succ("Successfully completed phonon mode analysis (Took %.3lfs)."%(time()-start))

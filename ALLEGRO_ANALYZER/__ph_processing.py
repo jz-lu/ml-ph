@@ -16,17 +16,17 @@ import os
 from pymatgen.io.vasp.inputs import Poscar, VaspInput, Potcar # pylint: disable=import-error
 
 # Builds and enqueues batch file for computing phonon displacements. BASE_ROOT should specify the path to the given displacment
-def compute_displacements(ROOT, user_input_settings, ndisp, idx=None):
-    jobname = PHONON_JOBNAME if idx is None else PHONON_JOBNAME + str(idx)
+def compute_displacements(ROOT, user_input_settings, ndisp):
     assert os.path.isdir(ROOT), f"Directory {ROOT} does not exist"
     ROOT = checkPath(ROOT)
     print(f'Writing a job-array bash executable to {ROOT}')
     vdw = 'T' if user_input_settings.do_vdW else 'F'
     kpts = 'GAMMA' if user_input_settings.kpoints_is_gamma_centered else 'MP'
-    exepath = build_bash_exe(calc_type=TYPE_NORELAX_BASIC, outdir=ROOT, 
-                   calc_list=[ENERGIES], compute_jobname=jobname, vdw=vdw, kpts=kpts)
+    exepath = build_bash_exe(calc_type=TYPE_NORELAX_BASIC, outdir=ROOT, wdir=ROOT+PHDISP_STATIC_NAME+'00', 
+                   calc_list=[ENERGIES], compute_jobname=PHONON_JOBNAME, vdw=vdw, kpts=kpts,
+                   as_arr=True, compute_ncpu='8')
     print('Executable built.')
-    runcmd = 'sbatch ' + exepath
+    runcmd = 'sbatch --array=1-%d'%(ndisp) + ' ' + exepath
     print('Running %s...'%runcmd)
     stream = os.popen(runcmd)
     print(stream.read())
@@ -51,7 +51,7 @@ def compute_vasp_ph_forces(index, dispNum, dirName, subdirName, disp_poscar_name
         exit_with_error('Error in preprocessing phonopy (parsing displacement files and running VASP force calculations): ' + str(err))
 
 # Function to handle all preprocessing of phonopy before the force calulation.
-def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM_STR, Poscar_unitcell_name=POSCAR_UNIT_NAME, onejob=True, user_input_settings=None):
+def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name=POSCAR_UNIT_NAME, onejob=True, user_input_settings=None):
     print(PHONOPY_DISP_MSG)
     dirName = checkPath(dirName)
     assert (user_input_settings is not None) ^ onejob
@@ -99,7 +99,6 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM_STR, Poscar_unitcell_
                 move(poscarArray[i], dirName, dirName + subdirNames[i])
                 assert os.path.isfile(checkPath(dirName + subdirNames[i]) + poscarArray[i])
             print(f'Moved {poscarArray[i]} to {checkPath(dirName + subdirNames[i])}')
-            compute_displacements(dirName + subdirNames[i], user_input_settings, numPoscars)
 
         if onejob:
             print('Computing forces via VASP in this job')
@@ -107,7 +106,9 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM_STR, Poscar_unitcell_
             for i in range(numPoscars):
                 compute_vasp_ph_forces(i, dispNums[i], dirName, subdirNames[i], poscarArray[i], vaspObj)
         else:
-            print('Submitteda new set of jobs to compute forces for each displacement...')
+            print('Submitting a new job array to compute forces for each displacement...')
+            compute_displacements(dirName, user_input_settings, numPoscars)
+            print('Job array successfully submitted')
             
         print('Total number of displacement files generated: ' + dispNums[-1])
 

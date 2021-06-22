@@ -60,6 +60,7 @@ class DataOutput:
         fig.colorbar(cf, ax=ax)
         ax.set_xlabel(r"$b_x$")
         ax.set_ylabel(r"$b_y$")
+        ax.set_aspect('equal') # prevent axis stretching
         ax.set_title(r"$E_{tot}(b) (meV)$")
         out_file = self.__out_dir + f"energy_config_plot_{levels}.png"
         fig.savefig(out_file)
@@ -72,6 +73,7 @@ class DataOutput:
         fig.colorbar(cf, ax=ax)
         ax.set_xlabel(r"$b_x$")
         ax.set_ylabel(r"$b_y$")
+        ax.set_aspect('equal') # prevent axis stretching
         ax.set_title("Relaxed interlayer spacing (z)")
         out_file = self.__out_dir + "z_config_plot.png"
         fig.savefig(out_file)
@@ -79,9 +81,9 @@ class DataOutput:
     # Evaluate energy vs. interlayer spacing over all of the shifts.
     def plot_e_vs_z(self):
         # Line plot
-        fig, ax = plt.subplots()
-        ax.plot(self.__zspacings, self.__energies)
-        fig.savefig(self.__out_dir + "energy_vs_interlayer_spacing_line.png")
+        # fig, ax = plt.subplots()
+        # ax.plot(self.__zspacings, self.__energies)
+        # fig.savefig(self.__out_dir + "energy_vs_interlayer_spacing_line.png")
         
         # Scatter plot
         scat, ax2 = plt.subplots()

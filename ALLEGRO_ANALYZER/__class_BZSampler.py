@@ -23,15 +23,16 @@ class BZSampler:
         self.outdir = checkPath(outdir); self.theta = theta; self.G0 = G0
 
         # Generate G basis via rotation matrices
-        R1 = np.array([[np.cos(theta/2), -np.sin(theta/2)], [np.sin(theta/2), np.cos(theta/2)]])
-        R2 = LA.inv(R1)
-        G1 = np.matmul(R1, G0); G2 = np.matmul(R2, G0) 
+        R1 = np.array([[np.cos(theta/2), -np.sin(theta/2)], [np.sin(theta/2), np.cos(theta/2)]]) # rot by theta/2
+        R2 = LA.inv(R1) # rot by -theta/2
+        G1 = np.matmul(R1, G0); G2 = np.matmul(R2, G0); self.G0 = G0
         self.GM = G1 - G2 # moire G-basis
         self.AM = LA.inv(self.GM).T / (2 * pi) # moire A-basis
         if log:
             print("Moire G-basis:\n", self.GM)
             print("Moire A-basis:\n", self.AM)
-        self.g_idxs = None; self.g_arr = None; self.kline = None; self.kmags = None; self.corners = None
+        self.g_idxs = None; self.GM_set = None; self.G0_set = None
+        self.k_set = None; self.kmags = None; self.corners = None
         self.ltype = lattice_type
         self.GM_sampled = False; self.k_sampled = False
         if lattice_type != 'hexagonal':
@@ -40,18 +41,20 @@ class BZSampler:
     # Sample Gtilde vectors
     def sample_GM(self, mn_grid_sz=DEFAULT_GRID_SIZE, max_shell=DEFAULT_MAX_SHELL, tol=0.1):
         grid = np.arange(-mn_grid_sz, mn_grid_sz + 1); self.nsh = max_shell
+        G01 = self.G0[:,0]; G02 = self.G0[:,1] # untwisted monolayer reciprocal lattice vectors
         GM1 = self.GM[:,0]; GM2 = self.GM[:,1] # Moire reciprocal lattice vectors
-        g_arr = np.array([m*GM1 + n*GM2 for m, n in prod(grid, grid)])
+        GM_set = np.array([m*GM1 + n*GM2 for m, n in prod(grid, grid)])
+        G0_set = np.array([m*G01 + n*G02 for m, n in prod(grid, grid)])
         g_idxs = np.array(list(prod(grid, grid)))
 
         # Filter out any G that does not satisfy the closeness condition |GM| < (shell+0.1) * |GM1|
         g_cutoff = (floor(max_shell) + tol) * LA.norm(GM1) # add 0.1 for numerical error
-        cut_makers = (np.sqrt(g_arr[:,0]**2 + g_arr[:,1]**2) <= g_cutoff) # indicators for which G made the cutoff
-        g_idxs = g_idxs[cut_makers,:]
-        g_arr = g_arr[cut_makers,:] # special numpy syntax for filtering by an indicator array `cut_makers`
-        self.g_idxs = g_idxs; self.g_arr = g_arr
+        cut_makers = (np.sqrt(GM_set[:,0]**2 + GM_set[:,1]**2) <= g_cutoff) # indicators for which G made the cutoff
+        self.g_idxs = g_idxs[cut_makers,:]
+        self.GM_set = GM_set[cut_makers,:] # special numpy syntax for filtering by an indicator array `cut_makers`
+        self.G0_set = G0_set[cut_makers,:]
         self.GM_sampled = True
-        return (g_idxs, g_arr)
+        return (g_idxs, GM_set)
 
     # Sample nk points along each IBZ boundary line
     def sample_k(self, nk=DEFAULT_NK, log=False):
@@ -64,23 +67,23 @@ class BZSampler:
 
         # Sample nk-1 (drop last point) per line (ncorners-1 lines)
         nsample = (nk-1) * (ncorners-1)
-        kline = np.zeros([nsample, d]); kmags = np.zeros(nsample); kmag_start = LA.norm(Gamma)
+        k_set = np.zeros([nsample, d]); kmags = np.zeros(nsample); kmag_start = LA.norm(Gamma)
         corner_kmags = [kmag_start]
-        for line in range(ncorners-1): # skip last point equals first, so skip it
+        for line in range(ncorners-1): # last point equals first, so skip it
             kidx = line*(nk-1) # convert line index to k-index
             # Drop second corner point in each line to avoid resampling corner points
-            kline[kidx : kidx+nk-1] = np.linspace(corners[line], corners[line+1], nk)[:-1]
+            k_set[kidx : kidx+nk-1] = np.linspace(corners[line], corners[line+1], nk)[:-1]
             dline_mag = LA.norm(corners[line+1] - corners[line])
             mags = np.linspace(kmag_start, kmag_start + dline_mag, nk)
-            kmag_start = mags[-1] # update start point of magnitude to end of current line
             corner_kmags.append(kmag_start)
+            kmag_start = mags[-1] # update start point of magnitude to end of current line
             kmags[kidx : kidx+nk-1] = mags[:-1]
-        self.kline = kline; self.kmags = kmags
+        self.k_set = k_set; self.kmags = kmags
         self.k_sampled = True
         if log:
             print("Corner magnitudes:", corner_kmags)
         self.corner_kmags = corner_kmags
-        return (kline, kmags)
+        return (k_set, kmags)
 
     def plot_sampling(self, filename='sampling.png'):
         assert self.g_idxs is not None, "Cannot plot sampling until G vectors have been sampled"
@@ -88,12 +91,12 @@ class BZSampler:
         labels = (r'$\Gamma$', r'K', r'M', r'$\Gamma$')
         plt.clf()
         _, ax = plt.subplots()
-        plt.scatter(self.g_arr[:,0], self.g_arr[:,1], 
+        plt.scatter(self.GM_set[:,0], self.GM_set[:,1], 
                     c='black', 
                     label=r'$\widetilde{\mathbf{G}}_{mn}$ in shell %d'%self.nsh)
-        plt.plot(self.kline[:,0], self.kline[:,1], 
+        plt.plot(self.k_set[:,0], self.k_set[:,1], 
                  c='teal', 
-                 label=r'$\mathbf{k}$-points (%d pts)'%len(self.kline))
+                 label=r'$\mathbf{k}$-points (%d pts)'%len(self.k_set))
         ax.set_aspect('equal') # prevent stretching of space in plot
         for (x, y), lab in zip(self.corners, labels):
             plt.annotate(lab, (x, y), # this is the point to label
@@ -107,11 +110,15 @@ class BZSampler:
 
     def get_GM_set(self):
         assert self.GM_sampled, "Must run GM-sampler before retrieving GM-set"
-        return self.g_idxs, self.g_arr
+        return self.g_idxs, self.GM_set
     
+    def get_G0_set(self):
+        assert self.GM_sampled, "Must run GM-sampler before retrieving G0-set"
+        return self.g_idxs, self.G0_set
+
     def get_kpts(self):
         assert self.k_sampled, "Must run k-sampler before retrieving k-set"
-        return self.kline, self.kmags
+        return self.k_set, self.kmags
 
     def get_corner_kmags(self):
         return self.corner_kmags

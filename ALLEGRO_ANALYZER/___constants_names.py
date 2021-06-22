@@ -84,6 +84,7 @@ PH_MESH_CONF_NAME = 'mesh.conf'
 PH_BAND_CONF_NAME = 'band.conf'
 PH_BAND_RAW_DATA_NAME = 'ph_dos_raw'
 PH_DISP_YAML_NAME = 'phonopy_disp.yaml'
+DEFAULT_PH_BAND_PLOT_NAME = 'phband.png'
 
 # Output names
 ELEDOS_RAW_DATA_NAME = 'total_ele_dos_pmg'
