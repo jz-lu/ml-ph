@@ -46,7 +46,7 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
         vdw = 'T' if user_input_settings.do_vdW else 'F'
         kpts = 'GAMMA' if user_input_settings.kpoints_is_gamma_centered else 'MP'
         build_bash_exe(calc_type=TYPE_RELAX_BASIC, outdir=BASE_ROOT, compute_jobname=COMPUTE_JOBNAME,
-                   vdw=vdw, kpts=kpts, fname=START_BATCH_NAME, as_arr=True, 
+                   vdw=vdw, kpts=kpts, fname=START_BATCH_NAME, as_arr=True, compute_ncpu='4', 
                    wdir=BASE_ROOT+CONFIG_SUBDIR_NAME, calc_list=user_input_settings.get_calculation_list())
 
         for i, shpath in enumerate(base_root_subpaths):
