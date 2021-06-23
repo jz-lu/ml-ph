@@ -22,9 +22,9 @@ def compute_displacements(ROOT, user_input_settings, ndisp):
     print(f'Writing a job-array bash executable to {ROOT}')
     vdw = 'T' if user_input_settings.do_vdW else 'F'
     kpts = 'GAMMA' if user_input_settings.kpoints_is_gamma_centered else 'MP'
-    exepath = build_bash_exe(calc_type=TYPE_NORELAX_BASIC, outdir=ROOT, wdir=ROOT+PHDISP_STATIC_NAME+'00', 
+    exepath = build_bash_exe(calc_type=TYPE_NORELAX_BASIC, outdir=ROOT, wdir=ROOT+PHDISP_STATIC_NAME, 
                    calc_list=[ENERGIES], compute_jobname=PHONON_JOBNAME, vdw=vdw, kpts=kpts,
-                   as_arr=True, compute_ncpu='8')
+                   as_arr=True, compute_ncpu='12')
     print('Executable built.')
     runcmd = 'sbatch --array=1-%d'%(ndisp) + ' ' + exepath
     print('Running %s...'%runcmd)
@@ -92,7 +92,7 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM_STR, Poscar_unitcell_
         # Create new directories
         for i in range(numPoscars): 
             dispNums.append((poscarArray[i])[-3:]) # Gives the XYZ in POSCAR-XYZ. THIS IS A STRING!
-            subdirNames.append(PHDISP_DIR_NAME%(dispNums[i]))
+            subdirNames.append(PHDISP_DIR_NAME%(int(dispNums[i])))
             mkdir(subdirNames[i], dirName)
             print('New subdirectory %s created.'%(checkPath(dirName + subdirNames[i])))
             if not onejob:
