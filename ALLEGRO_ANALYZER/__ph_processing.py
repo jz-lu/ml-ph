@@ -51,7 +51,7 @@ def compute_vasp_ph_forces(index, dispNum, dirName, subdirName, disp_poscar_name
         exit_with_error('Error in preprocessing phonopy (parsing displacement files and running VASP force calculations): ' + str(err))
 
 # Function to handle all preprocessing of phonopy before the force calulation.
-def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name=POSCAR_UNIT_NAME, onejob=True, user_input_settings=None):
+def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM_STR, Poscar_unitcell_name=POSCAR_UNIT_NAME, onejob=True, user_input_settings=None):
     print(PHONOPY_DISP_MSG)
     dirName = checkPath(dirName)
     assert (user_input_settings is not None) ^ onejob
