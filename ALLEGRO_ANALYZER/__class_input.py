@@ -138,5 +138,10 @@ class InputData:
     def get_calculation_list(self):
         return list(self.calculation_list)
 
-
+    # Get full calculation list, including energies
+    def get_raw_calculation_list(self):
+        if self.need_energies:
+            return [ENERGIES] + self.get_calculation_list()
+        else:
+            return self.get_calculation_list()
 
