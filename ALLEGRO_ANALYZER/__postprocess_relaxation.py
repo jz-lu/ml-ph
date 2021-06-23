@@ -35,7 +35,10 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, us
     relaxation_dirName = checkPath(relaxation_dirName)
 
     # Get the relevant objects for the next set of calculations
-    chgcar = Chgcar.from_file(relaxation_dirName + CHGCAR_NAME) # Need to retrieve the last charge density to get good calculations
+    calculation_list = sorted(list(user_input_settings.get_calculation_list()))
+    chgcar = None
+    if ELEDOS in calculation_list or ELEBAND in calculation_list:
+        chgcar = Chgcar.from_file(relaxation_dirName + CHGCAR_NAME) # Need to retrieve the last charge density to get good calculations
     poscar_relaxed = Poscar.from_file(relaxation_dirName + CONTCAR_NAME) # Get the relaxed positions from CONTCAR
     # Make deep copies here since we'll need the original
     relaxation_incar_1 = copy.deepcopy(unrelaxed_vaspObj['INCAR']) # For the inspective code reviewer: these are pymatgen's hard strings so no need to collect them
@@ -66,8 +69,6 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, us
 
     # We want eleband to follow eledos if both are calculated since we can get a better CHGCAR for band from DOS
     # So we put it in the front of the array
-    calculation_list = list(user_input_settings.get_calculation_list())
-    calculation_list.sort()
     eledos_has_run = False
     if ELEDOS in calculation_list:
         calculation_list.insert(0, ELEDOS)
