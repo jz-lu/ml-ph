@@ -94,9 +94,9 @@ POT_NOPMG_DIR = '/n/kaxiras_lab/vasp.5.4.4/PPs/potpaw_PBE.54/' # This is the met
 ## KPOINTS
 RELAXATION_GRID_DENSITY = (11, 11, 1)
 RELAXATION_GRID_SHIFT = (0, 0, 0)
-NONRELAXATION_GRID_DENSITY = (42, 42, 1) # For precise calculations like DOS
+NONRELAXATION_GRID_DENSITY = (13, 13, 1) # For precise calculations like DOS
 NONRELAXATION_GRID_SHIFT = (0, 0, 0)
-PHONOPY_GRID_DENSITY = (6, 6, 1)
+PHONOPY_GRID_DENSITY = (11, 11, 1)
 PHONOPY_GRID_SHIFT = (0, 0, 0)
 KPOINTS_LINE_INTS = 50 # Number of sampling k-points on each line
 # pylint: disable=anomalous-backslash-in-string
