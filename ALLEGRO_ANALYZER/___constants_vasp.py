@@ -1,5 +1,7 @@
 # All the constants and hard strings for vasp are here.
 # NOTE: all directory strings must end in '/'
+from ___constants_phonopy import SUPER_DIM
+from math import ceil
 
 # POSCAR z-basis vector magnitude, increase if we add a lot more (>3) layers
 Z_LATTICE_SIZE = 26.0
@@ -29,7 +31,7 @@ NEDOS = 6001 # Number of samples for electronic DOS calculation in the fixed ene
 IBRION = {'relax': 1, 'no_relax': -1} # 2 is a flag for do ionic relaxation, set to -1 when relaxation calculation is complete
 ICHARG = {'default': 2, 'no_relax_sc': 1, 'no_relax_nsc': 11} # 2 is default initial charge density, 1 is self-consistent CONTCAR import, 11 is non self-consistent (fixed density) CONTCAR
 SYMPREC = 0.0001
-NPAR = 6
+NPAR = 2
 ADDGRID = '.TRUE.'
 LREAL = '.FALSE.'
 LWAVE = '.FALSE.'
@@ -94,7 +96,7 @@ RELAXATION_GRID_DENSITY = (11, 11, 1)
 RELAXATION_GRID_SHIFT = (0, 0, 0)
 NONRELAXATION_GRID_DENSITY = (42, 42, 1) # For precise calculations like DOS
 NONRELAXATION_GRID_SHIFT = (0, 0, 0)
-PHONOPY_GRID_DENSITY = (11, 11, 1)
+PHONOPY_GRID_DENSITY = (6, 6, 1)
 PHONOPY_GRID_SHIFT = (0, 0, 0)
 KPOINTS_LINE_INTS = 50 # Number of sampling k-points on each line
 # pylint: disable=anomalous-backslash-in-string
