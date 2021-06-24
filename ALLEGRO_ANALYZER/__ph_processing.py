@@ -24,7 +24,7 @@ def compute_displacements(ROOT, user_input_settings, ndisp):
     kpts = 'GAMMA' if user_input_settings.kpoints_is_gamma_centered else 'MP'
     exepath = build_bash_exe(calc_type=TYPE_NORELAX_BASIC, outdir=ROOT, wdir=ROOT+PHDISP_STATIC_NAME, 
                    calc_list=[ENERGIES], compute_jobname=PHONON_JOBNAME, vdw=vdw, kpts=kpts,
-                   as_arr=True, compute_ncpu='12')
+                   as_arr=True, compute_ncpu='24')
     print('Executable built.')
     runcmd = 'sbatch --array=1-%d'%(ndisp) + ' ' + exepath
     print('Running %s...'%runcmd)
@@ -51,7 +51,8 @@ def compute_vasp_ph_forces(index, dispNum, dirName, subdirName, disp_poscar_name
         exit_with_error('Error in preprocessing phonopy (parsing displacement files and running VASP force calculations): ' + str(err))
 
 # Function to handle all preprocessing of phonopy before the force calulation.
-def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM_STR, Poscar_unitcell_name=POSCAR_UNIT_NAME, onejob=True, user_input_settings=None):
+def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM_STR, Poscar_unitcell_name=POSCAR_UNIT_NAME, 
+                  onejob=True, user_input_settings=None):
     print(PHONOPY_DISP_MSG)
     dirName = checkPath(dirName)
     assert (user_input_settings is not None) ^ onejob

@@ -13,7 +13,7 @@ from ___constants_vasp import (
 from ___constants_misc import ERR_NO_POSCAR
 from __directory_searchers import checkPath
 from __query_inputs import getInputName
-from pymatgen.io.vasp.inputs import Poscar, Kpoints, Potcar, Incar, VaspInput # pylint: disable=import-error
+from pymatgen.io.vasp.inputs import Poscar, Kpoints, Potcar, Incar, VaspInput
 import os
 
 # Not a typo, just a naming convention for "*CAR" of VASP I/O files.
@@ -136,7 +136,7 @@ class CarCollector:
             if grid == RELAXATION_GRID_DENSITY and shift == RELAXATION_GRID_SHIFT:
                 print('No KPOINTS file found. Generating default relaxation mesh...')
             else:
-                print('No KPOINTS file found. Generating mesh according to user inputted grid...')
+                print(f'No KPOINTS file found. Generating mesh according to user inputted grid {grid} and shift {shift}...')
 
             if self.kpoints_is_gamma:
                 print('Using Gamma-centered scheme...')
@@ -170,8 +170,10 @@ class CarCollector:
             #print(atoms)
 
             # Get a pymatgen Potcar object with our lab group settings in .pmgrc.yaml
+            func = 'PBE' if self.do_vdW else 'LDA_54'
+            print('POTCAR SETTINGS: using ' + func + ' functional')
             try:
-                potcar = Potcar(atoms)
+                potcar = Potcar(atoms, functional=func)
                 if writeOut:
                     print('POTCARs fetched by pymatgen. Writing to file path %s'%(self.ROOT + POTCAR_NAME))
                     potcar.write_file(self.ROOT + POTCAR_NAME)
@@ -200,9 +202,10 @@ class CarCollector:
 
         return v
 
-    def build_norelax_input(self, print_key_info=False, print_all_info=False):
+    def build_norelax_input(self, print_key_info=False, print_all_info=False, 
+                            grid=NONRELAXATION_GRID_DENSITY, shift=NONRELAXATION_GRID_SHIFT):
         incar = self.get_norelax_scon_incar()
-        kpoints = self.get_mesh_kpoints(grid=NONRELAXATION_GRID_DENSITY, shift=NONRELAXATION_GRID_SHIFT)
+        kpoints = self.get_mesh_kpoints(grid=grid, shift=shift)
         potcar = self.get_potcar()
         v = VaspInput(incar, kpoints, self.poscar, potcar)
         if print_all_info:

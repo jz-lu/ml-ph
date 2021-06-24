@@ -1,4 +1,5 @@
 from ____exit_with_error import exit_with_error
+from ___constants_vasp import BPARAM
 from ___constants_misc import *
 from ___constants_names import (
     CMD_LINE_ARG_LIST, 
@@ -59,8 +60,10 @@ class InputData:
     def __check_vdW_settings(self):
         if self.do_vdW == 'T' or self.do_vdW == 'True':
             self.do_vdW = True
-            print('Turning on (SCAN-rVV10 functional, BPARAM=15.7) van der Waals settings...')
+            print("Using SCAN electronic algorithm...")
+            print(f'Turning on (SCAN-rVV10 functional, BPARAM={BPARAM}) van der Waals settings...')
         elif self.do_vdW == 'F' or self.do_vdW == 'False':
+            print("Using LDA electronic algorithm...")
             self.do_vdW = False
         else:
             print(ERR_INVALID_VDW_FLAG)

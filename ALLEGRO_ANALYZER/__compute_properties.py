@@ -1,5 +1,6 @@
 from ____exit_with_error import exit_with_error
-from ___constants_names import RELAXATION_DIR_NAME, ANALYSIS_DIR_NAME, CONTCAR_NAME
+from ___constants_names import RELAXATION_DIR_NAME, ANALYSIS_DIR_NAME, CONTCAR_NAME, PH
+from ___constants_vasp import NONRELAXATION_GRID_DENSITY, SUPERCELL_GRID_DENSITY
 from __directory_searchers import checkPath
 from __dirModifications import mkdir
 from __build_inputs import buildInitialInputs
@@ -66,10 +67,11 @@ def solve_electronic(user_input_settings, poscar=None, user_inputted_root=None):
     if user_inputted_root:
         ROOT = user_inputted_root
     ROOT = checkPath(ROOT)
+    print("SUPERCELL ELECTRONIC CALCULATION: USING LOW DENSITY")
 
     # Collect input files
     vasp_input_initializers = CarCollector(ROOT, user_input_settings.do_vdW, user_input_settings.kpoints_is_gamma_centered, user_input_settings.need_line_kpoints(), poscar=poscar)
-    init_vasp_obj = vasp_input_initializers.build_norelax_input(print_all_info=True)
+    init_vasp_obj = vasp_input_initializers.build_norelax_input(print_all_info=True, grid=SUPERCELL_GRID_DENSITY)
 
     # Similarly we want to run the analyses post-relaxation in a separate subfolder
     mkdir(ANALYSIS_DIR_NAME, ROOT)

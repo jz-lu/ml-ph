@@ -25,7 +25,7 @@ SIGMA = {'wide': 0.1, 'narrow': 0.01} # Width of smear
 ENCUT = 800 # Plane wave expansion cutoff index
 AMIN = 0.01 # Parameter in initial approximation of dielectric function for screening
 NSW = {'relax': 300, 'no_relax': 0, 'relax_low': 100, 'relax_very_low': 80} # Number of ionic relaxation steps
-EDIFF = {'relax': 1E-6, 'no_relax': 1E-8} # Acceptable self-consistent energy difference in electronic relaxation 
+EDIFF = {'relax': 1E-6, 'no_relax': 1E-7} # Acceptable self-consistent energy difference in electronic relaxation 
 EDIFFG = {'relax': -1E-5, 'no_relax': -1E-8} # Acceptable self-consistent RELAXATION energy difference (or forces if with negative sign as flag) in ionic relaxation
 NEDOS = 6001 # Number of samples for electronic DOS calculation in the fixed energy range
 IBRION = {'relax': 1, 'no_relax': -1} # 2 is a flag for do ionic relaxation, set to -1 when relaxation calculation is complete
@@ -63,10 +63,10 @@ INCAR_RELAX_SETTINGS = {'ISTART': ISTART,
                           'ALGO': ALGO, 
                           'NELMIN': NELMIN, 
                           'PREC': PREC} # We'll add in SYSTEM manually, EDIFFG can be larger if not phonon calc.
-INCAR_VDW_SETTINGS = {'METAGGA': 'SCAN',
-                      'LASPH': '.TRUE.',
-                      'LUSE_VDW': '.TRUE.',
-                      'BPARAM': 15.7}
+INCAR_VDW_SETTINGS = {'METAGGA': METAGGA,
+                      'LASPH': LASPH,
+                      'LUSE_VDW': LUSE_VDW,
+                      'BPARAM': BPARAM}
 INCAR_NORELAX_SCON_SETTINGS = {'ISTART': ISTART, 
                           'ISMEAR': ISMEAR, 
                           'SIGMA': SIGMA['narrow'], 
@@ -88,13 +88,14 @@ INCAR_NORELAX_SCON_SETTINGS = {'ISTART': ISTART,
 
 
 ## POTCAR
-POT_PMG_INIT_CMD = 'cat “PMG_VASP_PSP_DIR: /n/kaxiras_lab/atomate_PPs” > ~/.pmgrc.yaml'
+POT_PMG_INIT_CMD = 'cat “PMG_VASP_PSP_DIR: /n/kaxiras_lab/atomate_PPs” >> ~/.pmgrc.yaml'
 POT_NOPMG_DIR = '/n/kaxiras_lab/vasp.5.4.4/PPs/potpaw_PBE.54/' # This is the method of direct POTCAR without pymatgen!
 
 ## KPOINTS
 RELAXATION_GRID_DENSITY = (11, 11, 1)
 RELAXATION_GRID_SHIFT = (0, 0, 0)
-NONRELAXATION_GRID_DENSITY = (13, 13, 1) # For precise calculations like DOS
+NONRELAXATION_GRID_DENSITY = (21, 21, 1)
+SUPERCELL_GRID_DENSITY = (3, 3, 1)
 NONRELAXATION_GRID_SHIFT = (0, 0, 0)
 PHONOPY_GRID_DENSITY = (11, 11, 1)
 PHONOPY_GRID_SHIFT = (0, 0, 0)
