@@ -93,7 +93,7 @@ def ph_get_band_path_labels(kpoints_line_obj):
     for i in range(0, len(labelArr)):
         if labelArr[i] == '\\Gamma':
             gammaIndex = i
-    labelArr[gammaIndex] = r'$\Gamma$'
+    labelArr[gammaIndex] = 'G'
 
     # like with get_band_path, we append to the end the first label to close the path
     labelArr.append(labelArr[0])
