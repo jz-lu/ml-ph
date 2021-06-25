@@ -43,6 +43,7 @@ if __name__ == '__main__':
             twisted = (args[i] == 'T'); i += 1
         else:
             err(f"Usage: python3 {sys.argv[0]} -dir <DISP DIRECTORY> -o <PRINT DIR (optional)>")
+    indir = checkPath(os.path.abspath(indir)); outdir = checkPath(os.path.abspath(outdir))
 
     if twisted:
         get_twisted_forces(indir)
