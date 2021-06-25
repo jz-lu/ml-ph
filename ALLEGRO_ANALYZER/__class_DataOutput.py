@@ -13,7 +13,8 @@ class DataOutput:
         print("Initalizing DataOutput object.")
         # plot_list: list of (b, z, e) points
         self.__plot_list = plot_list
-        self.__zspacings = np.array([i[1] for i in plot_list])
+        minz = min([i[1] for i in plot_list])
+        self.__zspacings = np.array([(i[1]-minz)*1000 for i in plot_list])
         if not abs_min_energy:
             abs_min_energy = min([i[2] for i in plot_list])
         print(f"Shifting by minimum energy {abs_min_energy} eV")
@@ -80,12 +81,6 @@ class DataOutput:
     
     # Evaluate energy vs. interlayer spacing over all of the shifts.
     def plot_e_vs_z(self):
-        # Line plot
-        # fig, ax = plt.subplots()
-        # ax.plot(self.__zspacings, self.__energies)
-        # fig.savefig(self.__out_dir + "energy_vs_interlayer_spacing_line.png")
-        
-        # Scatter plot
         scat, ax2 = plt.subplots()
         ax2.scatter(self.__zspacings, self.__energies)
         scat.savefig(self.__out_dir + "energy_vs_interlayer_spacing_scatter.png")
