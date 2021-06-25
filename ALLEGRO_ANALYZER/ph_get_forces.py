@@ -51,8 +51,8 @@ if __name__ == '__main__':
         # Call FORCE_SETS generator
         disps = findDirsinDir(indir, PHDISP_STATIC_NAME, searchType='start')
         ph_generate_forcesets(indir, len(disps), path_pad=ANALYSIS_DIR_NAME)
-        if not os.path.isfile(indir + PHDISP_STATIC_NAME):
-            err(f"Error: could not find FORCE_SETS in {indir}. Check phonopy output for log.")
+        if not os.path.isfile(indir + PH_FORCE_SETS_NAME):
+            err(f"Error: could not find {indir + PH_FORCE_SETS_NAME}. Check phonopy output for log.")
         if indir != outdir:
             # Move the FORCE_SETS file to the desired directory
             move(PH_FORCE_SETS_NAME, indir, newPath=outdir)
