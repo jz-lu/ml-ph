@@ -18,9 +18,6 @@ from __class_CarCollector import CarCollector
 from __directory_searchers import checkPath
 from __check_convergence import check_if_not_converged
 
-# TODO (s): future, in command line arguments add a setting of alreadyRelaxed so that if so we skip the relaxation and go to calculation
-# TODO (s): get the automatic k-point line generation
-
 def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax'):
     dirName = checkPath(dirName)
 

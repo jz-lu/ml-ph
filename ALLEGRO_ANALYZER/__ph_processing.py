@@ -116,24 +116,18 @@ def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM_STR, Poscar_unitcell_
     return dispNums[-1] # Returns last displacement number so we can get force sets.
 
 # Takes as input dispNum, the output of phPreProcess
-def ph_generate_forcesets(dirName, dispNum):
-    assert isinstance(dispNum, str), "dispNum must be a string of format `00X`"
-    assert int(dispNum) >= 1, "dispNum must be at least 1"
-    dirName = checkPath(dirName)
-    os.chdir(dirName) # Move to the new directory
+def ph_generate_forcesets(dirName, dispNum, path_pad=None):
+    assert int(dispNum) >= 1, f"Invalid number of displacements {int(dispNum)}: must be at least 1"
+    dispNum = str(dispNum); dirName = checkPath(dirName); os.chdir(dirName) # Move to the new directory
     print('CHANGED WD to %s for storing phonopy calculations.'%(dirName))
     print('Files/directories in CWD:', os.listdir())
     try:
+        pad = checkPath(path_pad) if path_pad else ''
+        cmd = 'phonopy -f %s{1..%s}/%s%s -c %s'%(dirName + PHDISP_STATIC_NAME, dispNum, pad, VASP_RUN_XML_NAME, POSCAR_UNIT_NAME)
         print('Generating force sets now...')
-        if dispNum == '001':
-            print('Running command to shell: phonopy -f %s001/%s -c %s'%(dirName + PHDISP_STATIC_NAME, VASP_RUN_XML_NAME, POSCAR_UNIT_NAME))
-            phForce_output = subprocess.run('phonopy -f %s001/%s -c %s'%(dirName + PHDISP_STATIC_NAME, VASP_RUN_XML_NAME, POSCAR_UNIT_NAME), shell=True, capture_output=True, universal_newlines=True)
-            print(phForce_output.stdout)
-        else:
-            # We run a generator of force sets with phonopy on the shell
-            print('Running command to shell: phonopy -f %s{001..%s}/%s -c %s'%(dirName + PHDISP_STATIC_NAME, dispNum, VASP_RUN_XML_NAME, POSCAR_UNIT_NAME))
-            phForce_output = subprocess.run('phonopy -f %s{001..%s}/%s -c %s'%(dirName + PHDISP_STATIC_NAME, dispNum, VASP_RUN_XML_NAME, POSCAR_UNIT_NAME), shell=True, capture_output=True, universal_newlines=True)
-            print(phForce_output.stdout)
+        print('Running command to shell: ' + cmd)
+        phForce_output = subprocess.run(cmd, shell=True, capture_output=True, universal_newlines=True)
+        print(phForce_output.stdout)
     except Exception as err:
         print(ERR_PH_FORCE_SETS)
         print('Command log: {}'.format(phForce_output.stderr))

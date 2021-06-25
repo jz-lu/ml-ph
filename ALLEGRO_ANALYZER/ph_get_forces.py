@@ -22,8 +22,7 @@ def get_twisted_forces(indir):
     for path in paths: # intralayer terms
         assert os.path.isdir(path), f"Directory {path} does not exist"
         disps = findDirsinDir(path, PHDISP_STATIC_NAME, searchType='start')
-        ndisp = '%03d'%(len(disps))
-        ph_generate_forcesets(path, ndisp)
+        ph_generate_forcesets(path, len(disps), path_pad=ANALYSIS_DIR_NAME)
         if not os.path.isfile(path + PH_FORCE_SETS_NAME):
             err(f"Error: could not find FORCE_SETS in {path}. Check phonopy output for log.")
     return
@@ -51,8 +50,7 @@ if __name__ == '__main__':
     else:
         # Call FORCE_SETS generator
         disps = findDirsinDir(indir, PHDISP_STATIC_NAME, searchType='start')
-        ndisp = '%03d'%(len(disps))
-        ph_generate_forcesets(indir, ndisp)
+        ph_generate_forcesets(indir, len(disps))
         if not os.path.isfile(indir + PHDISP_STATIC_NAME):
             err(f"Error: could not find FORCE_SETS in {indir}. Check phonopy output for log.")
         if indir != outdir:
