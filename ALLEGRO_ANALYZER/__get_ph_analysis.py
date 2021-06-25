@@ -93,7 +93,7 @@ def ph_get_band_path_labels(kpoints_line_obj):
     for i in range(0, len(labelArr)):
         if labelArr[i] == '\\Gamma':
             gammaIndex = i
-    labelArr[gammaIndex] = 'G'
+    labelArr[gammaIndex] = r'$\Gamma$'
 
     # like with get_band_path, we append to the end the first label to close the path
     labelArr.append(labelArr[0])
@@ -116,7 +116,8 @@ def ph_create_band_conf(kpoints_line_obj, poscar_obj, outDir):
     f.write('ATOM_NAME = ' + site_symbols_str + '\n')
     f.write('DIM = ' + SUPER_DIM_STR + '\n')
     f.write('BAND = ' + ph_get_band_path(kpoints_line_obj) + '\n')
-    f.write('BAND_LABELS = ' + ph_get_band_path_labels(kpoints_line_obj) + '\n')
+    # pdflatex is acting up and doesn't like this, so no auto labels for now
+    # f.write('BAND_LABELS = ' + ph_get_band_path_labels(kpoints_line_obj) + '\n')
     if PHONOPY_NUM_LINE_INTS > 51:
         f.write('BAND_POINTS = ' + str(PHONOPY_NUM_LINE_INTS) + '\n')
     f.close()
