@@ -116,8 +116,7 @@ def ph_create_band_conf(kpoints_line_obj, poscar_obj, outDir):
     f.write('ATOM_NAME = ' + site_symbols_str + '\n')
     f.write('DIM = ' + SUPER_DIM_STR + '\n')
     f.write('BAND = ' + ph_get_band_path(kpoints_line_obj) + '\n')
-    # TODO: uncomment this when you figure it out
-    # f.write('BAND_LABELS = ' + ph_get_band_path_labels(kpoints_line_obj) + '\n')
+    f.write('BAND_LABELS = ' + ph_get_band_path_labels(kpoints_line_obj) + '\n')
     if PHONOPY_NUM_LINE_INTS > 51:
         f.write('BAND_POINTS = ' + str(PHONOPY_NUM_LINE_INTS) + '\n')
     f.close()
