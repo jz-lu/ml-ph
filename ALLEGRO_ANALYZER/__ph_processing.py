@@ -138,12 +138,6 @@ def ph_generate_forcesets(dirName, dispNum, path_pad=None):
         exit_with_error(ERR_PH_FORCE_SETS_NOT_FOUND)
     
     print("[DEBUG] FORCE_SETS put in directory " + dirName)
-    print("[DEBUG] Files in alleged FORCE_SETS directory:", os.listdir())
-    
-    # Move FORCE_SETS to the proper place
-    # copy(PH_FORCE_SETS_NAME, THIS_DIR, dirName)
-    # print(PH_FORCE_SETS_NAME + ' successfully copied to ' + dirName + '. Phonopy postprocessing complete.')
-
     return 
     
 # Get a neat function that uses the above functions to handle all processing

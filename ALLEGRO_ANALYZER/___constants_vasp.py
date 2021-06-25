@@ -22,7 +22,7 @@ VASP_OUTFILE_CONVERGENCE_LINE_CUT = 6 # Number of lines from the bottom we scan 
 ISTART = 0 # No WAVECAR input
 ISMEAR = 0 # Gaussian smearing
 SIGMA = {'wide': 0.1, 'narrow': 0.01} # Width of smear
-ENCUT = 800 # Plane wave expansion cutoff index
+ENCUT = 500 # Plane wave expansion cutoff index
 AMIN = 0.01 # Parameter in initial approximation of dielectric function for screening
 NSW = {'relax': 300, 'no_relax': 0, 'relax_low': 100, 'relax_very_low': 80} # Number of ionic relaxation steps
 EDIFF = {'relax': 1E-6, 'no_relax': 1E-7} # Acceptable self-consistent energy difference in electronic relaxation 
@@ -44,6 +44,8 @@ METAGGA = 'SCAN'
 LASPH = '.TRUE.'
 LUSE_VDW = '.TRUE.'
 BPARAM = 15.7
+GGA = 'PE'
+IVDW = 12
 
 INCAR_RELAX_SETTINGS = {'ISTART': ISTART, 
                           'ISMEAR': ISMEAR, 
@@ -63,10 +65,14 @@ INCAR_RELAX_SETTINGS = {'ISTART': ISTART,
                           'ALGO': ALGO, 
                           'NELMIN': NELMIN, 
                           'PREC': PREC} # We'll add in SYSTEM manually, EDIFFG can be larger if not phonon calc.
-INCAR_VDW_SETTINGS = {'METAGGA': METAGGA,
-                      'LASPH': LASPH,
-                      'LUSE_VDW': LUSE_VDW,
-                      'BPARAM': BPARAM}
+INCAR_VDW_SETTINGS = {
+    'GGA': GGA,
+    'IVDW': IVDW
+}
+# {'METAGGA': METAGGA,
+#                       'LASPH': LASPH,
+#                       'LUSE_VDW': LUSE_VDW,
+#                       'BPARAM': BPARAM}
 INCAR_NORELAX_SCON_SETTINGS = {'ISTART': ISTART, 
                           'ISMEAR': ISMEAR, 
                           'SIGMA': SIGMA['narrow'], 

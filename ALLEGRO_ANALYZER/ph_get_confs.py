@@ -35,6 +35,8 @@ if __name__ == '__main__':
     greet(f"Building phonopy {'band' if conf_t == 'b' else 'mesh'} configuration file...")
 
     if conf_t == 'b':
+        with open(kpath, 'r') as f:
+            assert 'Line' in f.read().splitlines(), f"{kpath} not a line kpoints file"
         ph_create_band_conf(k, p, outdir)
     else:
         ph_create_mesh_conf(k, p, outdir)
