@@ -93,7 +93,7 @@ def ph_get_band_path_labels(kpoints_line_obj):
     for i in range(0, len(labelArr)):
         if labelArr[i] == '\\Gamma':
             gammaIndex = i
-    labelArr[gammaIndex] = '$\Gamma$'
+    labelArr[gammaIndex] = r'$\Gamma$'
 
     # like with get_band_path, we append to the end the first label to close the path
     labelArr.append(labelArr[0])
@@ -123,7 +123,6 @@ def ph_create_band_conf(kpoints_line_obj, poscar_obj, outDir):
     f.close()
 
     print('band.conf built. Written to %s'%(outDir + PH_BAND_CONF_NAME))
-
     return
 
 # Generate DOS raw data and plot
