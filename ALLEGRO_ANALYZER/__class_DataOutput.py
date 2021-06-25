@@ -91,8 +91,8 @@ class DataOutput:
         scat.savefig(self.__out_dir + "energy_vs_interlayer_spacing_scatter.png")
     
     # Do all available functions.
-    def output_all_analysis(self):
+    def output_all_analysis(self, levels=DEFAULT_ABS_MIN_ENERGY):
         self.save_raw_data()
-        self.plot_e_vs_b()
-        self.plot_z_vs_b()
+        self.plot_e_vs_b(levels=levels)
+        self.plot_z_vs_b(levels=levels)
         self.plot_e_vs_z()

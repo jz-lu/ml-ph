@@ -27,7 +27,7 @@ USAGE_ERR_MSG = 'Usage: python3 <DIR>/config_analyze.py -n <NUM SHIFTS> -d <I/O 
 # Parse cmdline args
 cmdargs = list(copy.deepcopy(sys.argv))[1:]; i = 0; n = len(cmdargs)
 BASE_ROOT = None; abs_min_energy = None; nshifts = None
-nlevel = 201
+nlevel = 301
 while i < n:
     if cmdargs[i] == '-n':
         i += 1; nshifts = int(cmdargs[i]); i += 1
@@ -93,7 +93,7 @@ np.save(data_dir + 'bze', bze)
 do = None
 print("Parsing successful, passing to analyzer...")
 do = DataOutput(data_dir, bze, cob, abs_min_energy=abs_min_energy)
-do.plot_e_vs_b(levels=nlevel)
+do.output_all_analysis(levels=nlevel)
 print("Analyzer has finished running.")
 
 succ("== Configuration Analyzer Complete (Took %.3lfs) =="%(time()-start_time))
