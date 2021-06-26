@@ -23,21 +23,18 @@ def check_if_not_converged(dirName, fileName):
     # Check the file for convergence errors
     string = last_N_lines(filePath, VASP_OUTFILE_CONVERGENCE_LINE_CUT)
 
-    not_converged_yet = True # Initialized to true, if we don't find one of those keywords we falsify it
+    fatal_bracket = True
     for i in convergence_err_keywords:
         if string.find(i) == -1:
-            not_converged_yet = False
+            fatal_bracket = False
             break
-    if not_converged_yet:
-        nsw = None
-        with open(dirName + OSZICAR_NAME, 'r') as f:
-            nsw = f.readlines()[-1].split(' ')
-            while not nsw[0]:
-                del nsw[0]
-            nsw = int(nsw[0])
-
-            print(f"Took {nsw} out of max {NSW} steps")
-        if nsw < NSW:
-            not_converged_yet = False
+    nsw = None; nsw_reached = False
+    with open(dirName + OSZICAR_NAME, 'r') as f:
+        nsw = f.readlines()[-1].split(' ')
+        while not nsw[0]:
+            del nsw[0]
+        nsw = int(nsw[0])
+        print(f"Took {nsw} out of max {NSW} steps")
+        nsw_reached = True if nsw >= NSW else False
     
-    return not_converged_yet
+    return fatal_bracket or nsw_reached
