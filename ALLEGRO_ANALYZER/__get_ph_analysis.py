@@ -57,7 +57,7 @@ def ph_create_mesh_conf(kpoints_mesh_obj, poscar_obj, outDir):
 # The next two functions are necessary to create band.conf
 # Get the path string for phonopy from LINE_KPOINTS
 def ph_get_band_path(kpoints_line_obj):
-    print('Getting phononpy band path from Kpoints line object for band.conf...')
+    print('Getting phonopy band path from Kpoints line object for band.conf...')
     # Fancy way of removing duplicate rows, which VASP needs but phonopy does not want
     # NOTE: this function doesn't work well for complicated paths, but 2D materials are probably fine. See github's homepage README for more info.
     new_array = kpoints_line_obj.kpts

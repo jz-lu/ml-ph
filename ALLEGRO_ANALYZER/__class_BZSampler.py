@@ -68,7 +68,7 @@ class BZSampler:
         # Sample nk-1 (drop last point) per line (ncorners-1 lines)
         nsample = (nk-1) * (ncorners-1)
         k_set = np.zeros([nsample, d]); kmags = np.zeros(nsample); kmag_start = LA.norm(Gamma)
-        corner_kmags = [kmag_start]
+        corner_kmags = []
         for line in range(ncorners-1): # last point equals first, so skip it
             kidx = line*(nk-1) # convert line index to k-index
             # Drop second corner point in each line to avoid resampling corner points
@@ -78,6 +78,7 @@ class BZSampler:
             corner_kmags.append(kmag_start)
             kmag_start = mags[-1] # update start point of magnitude to end of current line
             kmags[kidx : kidx+nk-1] = mags[:-1]
+        corner_kmags += [kmag_start]
         self.k_set = k_set; self.kmags = kmags
         self.k_sampled = True
         if log:

@@ -36,7 +36,7 @@ def begin_computation(user_input_settings):
         print('Set to run parallel computations over grid sample in configuration space, defaulted to layer 1 (z = 0). Starting...')
         # Sample the grid here! Then pool them over to relax and run an iterator to get energy pairs for graphing
         # Num processes (in pool arg below) = number of grid points, i.e. (a, b, c) |-> a * b * c
-        grid_size = GRID_SAMPLE_LOW # TODO: change LOW to HIGH in var name for super-accurate calculations
+        grid_size = GRID_SAMPLE_HIGH # TODO: change LOW to HIGH in var name for super-accurate calculations
         init_interlayer_spacing = Z_LAYER_SEP
 
         sampling_set = Configuration.sample_grid(grid=grid_size)
@@ -84,7 +84,7 @@ def begin_computation(user_input_settings):
             intra_path = checkPath(BASE_ROOT + MONOLAYER_DIR_NAME + i)
             mkdir(MONOLAYER_DIR_NAME + i, BASE_ROOT)
             copy(p, BASE_ROOT, newPath=intra_path, newName=POSCAR_NAME)
-            move(p, BASE_ROOT, newPath=BASE_ROOT+CONFIG_DIR_NAME)
+            copy(p, BASE_ROOT, newPath=BASE_ROOT+CONFIG_DIR_NAME)
             exepath = build_bash_exe(calc_type=TYPE_RELAX_BASIC, calc_list=clist, outdir=intra_path,
                    compute_jobname=MONOLAYER_JOBNAME+i, vdw=vdw, kpts=kpts)
             if not DEBUGGING:

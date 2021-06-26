@@ -34,17 +34,9 @@ if __name__ == '__main__':
             warn(f'Warning: token "{args[i]}" is out of place and will be ignored')
             i += 1; continue
         if args[i] == '-dir':
-            i += 1; check_not_flag(args[i])
-            indir = checkPath(args[i])
-            if args[i] in ['.', './', '..', '../'] or args[i][0] == '.':
-                warn(f'Warning: specified directory "{args[i]}" may not work when running executable')
-            i += 1
+            i += 1; check_not_flag(args[i]); indir = checkPath(os.path.abspath(args[i])); i += 1
         elif args[i] == '-o':
-            i += 1; check_not_flag(args[i])
-            outdir = checkPath(args[i])
-            if args[i] in ['.', './', '..', '../'] or args[i][0] == '.':
-                warn(f'Warning: specified directory "{args[i]}" may not work when running executable')
-            i += 1
+            i += 1; check_not_flag(args[i]); outdir = checkPath(os.path.abspath(args[i])); i += 1
         elif args[i] == '-deg':
             i += 1; check_not_flag(args[i]); theta = np.deg2rad(float(args[i])); i += 1
         elif args[i] == '-name':
@@ -65,10 +57,11 @@ if __name__ == '__main__':
     update("Working on intralayer components...")
     print("Searching for POSCAR inputs...")
     poscars_uc = sorted(findFilesInDir(indir, POSCAR_CONFIG_NAMEPRE, searchType='start')); npos = len(poscars_uc)
+    poscars_uc = [Poscar.from_file(indir + pname) for pname in poscars_uc]
     assert npos > 1, "Must give at least 2 POSCARs, 1 per layer, for twist calculations"
     assert npos == DEFAULT_NUM_LAYERS, "Twist calculations for more than 2 layers not supported (yet)"
-    s0 = struct.Structure.from_file(poscars_uc[0]).lattice.matrix[0:2, 0:2]
-    s1 = struct.Structure.from_file(poscars_uc[1]).lattice.matrix[0:2, 0:2]
+    s0 = poscars_uc[0].structure.lattice.matrix[0:2, 0:2]
+    s1 = poscars_uc[1].structure.lattice.matrix[0:2, 0:2]
     assert np.allclose(s0, s1), "Input POSCARs must have the same lattice matrices"
     print("POSCAR inputs found.")
 
