@@ -15,6 +15,7 @@ from __class_CarCollector import CarCollector
 import numpy as np
 import sys, copy
 from os.path import isdir
+import os
 from time import time
 from ___helpers_parsing import succ, warn, err
 
@@ -26,7 +27,7 @@ USAGE_ERR_MSG = 'Usage: python3 <DIR>/config_analyze.py -n <NUM SHIFTS> -d <I/O 
 
 # Parse cmdline args
 cmdargs = list(copy.deepcopy(sys.argv))[1:]; i = 0; n = len(cmdargs)
-BASE_ROOT = None; abs_min_energy = None; nshifts = None
+BASE_ROOT = '.'; abs_min_energy = None; nshifts = None
 nlevel = 301
 while i < n:
     if cmdargs[i] == '-n':
@@ -42,6 +43,7 @@ while i < n:
         warn(f"Unrecognized token '{cmdargs[i]}'")
         err(USAGE_ERR_MSG)
 assert BASE_ROOT and nlevel > 0
+BASE_ROOT = os.path.abspath(BASE_ROOT)
 
 print("== Configuration Analyzer Starting =="); start_time = time()
 print("WD: %s, number of shifts: %d."%(BASE_ROOT, nshifts))
