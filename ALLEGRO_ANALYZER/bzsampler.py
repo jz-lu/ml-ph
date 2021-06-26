@@ -4,6 +4,7 @@ import sys, copy, os
 from phonopy import Phonopy
 import phonopy
 import pymatgen.core.structure as struct
+from pymatgen.io.vasp.inputs import Poscar
 import numpy.linalg as LA
 from math import pi, floor
 from itertools import product as prod
@@ -16,15 +17,17 @@ from ___helpers_parsing import greet, succ, warn, err, is_flag, check_not_flag
 from __directory_searchers import checkPath
 from ____exit_with_error import exit_with_error
 
-def get_bz_sample(theta, poscar_path, outdir, 
+def get_bz_sample(theta, poscar, outdir, 
                   max_shell=DEFAULT_MAX_SHELL, gridsz=DEFAULT_GRID_SIZE, nk=DEFAULT_NK, 
                   log=True, make_plot=False):
-    assert os.path.isfile(poscar_path), f"Invalid path {poscar_path}"
+    assert isinstance(poscar, Poscar) or isinstance(poscar, str), "Input 'poscar' must either be a 'Poscar' obj or a path to a POSCAR file"
+    s = poscar.structure if isinstance(poscar, Poscar) else struct.Structure.from_file(poscar)
+    if isinstance(poscar, str):
+        assert os.path.isfile(poscar), f"Invalid path {poscar}"
     assert os.path.isdir(outdir), f"Invalid directory {outdir}"
     assert max_shell >= 1 and gridsz > 1 and nk > 1 and theta > 0, "Invalid sampling parameters"
 
     # Build realspace A-basis and reciprocal space G-basis in the moire cell
-    s = struct.Structure.from_file(poscar_path)
     A0 = s.lattice.matrix[0:2, 0:2].T # makes realspace lattice A-basis matrix [a1 a2]
     G0 = 2 * pi * LA.inv(A0).T 
     if log:
