@@ -43,7 +43,7 @@ while i < n:
         warn(f"Unrecognized token '{cmdargs[i]}'")
         err(USAGE_ERR_MSG)
 assert BASE_ROOT and nlevel > 0
-BASE_ROOT = os.path.abspath(BASE_ROOT)
+BASE_ROOT = checkPath(os.path.abspath(BASE_ROOT))
 
 print("== Configuration Analyzer Starting =="); start_time = time()
 print("WD: %s, number of shifts: %d."%(BASE_ROOT, nshifts))
