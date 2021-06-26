@@ -34,7 +34,7 @@ def check_if_not_converged(dirName, fileName):
         while not nsw[0]:
             del nsw[0]
         nsw = int(nsw[0])
-        print(f"Took {nsw} out of max {NSW} steps")
-        nsw_reached = True if nsw >= NSW else False
+        print(f"Took {nsw} out of max {NSW['relax']} steps")
+        nsw_reached = True if nsw >= NSW['relax'] else False
     
     return fatal_bracket or nsw_reached
