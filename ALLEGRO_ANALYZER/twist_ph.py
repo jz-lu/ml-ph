@@ -54,7 +54,7 @@ if __name__ == '__main__':
     assert os.path.isdir(indir), f"Directory {indir} does not exist"
     assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
 
-    update("Working on intralayer components...")
+    greet("Working on intralayer components...")
     print("Searching for POSCAR inputs...")
     poscars_uc = sorted(findFilesInDir(indir, POSCAR_CONFIG_NAMEPRE, searchType='start')); npos = len(poscars_uc)
     poscars_uc = [Poscar.from_file(indir + pname) for pname in poscars_uc]
@@ -73,23 +73,23 @@ if __name__ == '__main__':
         poscars_sc[i] = Poscar.from_file(sposcar_path)
     print("SPOSCAR inputs found.")
     
-    print("Generating phonopy objects via API...")
+    update("Generating phonopy objects via API...")
     ph_api = PhonopyAPI(indir) # retreive phonopy objects
     ml_ph_list = ph_api.intra_ph_list()
     print("Phonopy objects generated.")
 
-    print("Sampling G and k sets...")
+    update("Sampling G and k sets...")
     bzsamples = get_bz_sample(theta, poscars_uc[0], outdir, make_plot=True)
     _, GM_set = bzsamples.get_GM_set(); _, G0_set = bzsamples.get_G0_set()
     k_set, _ = bzsamples.get_kpts(); corner_kmags = bzsamples.get_corner_kmags()
     print("Sampling complete.")
 
-    print("Constructing intralayer dynamical matrix objects...")
+    update("Constructing intralayer dynamical matrix objects...")
     MLDMs = [MonolayerDM(uc, sc, ph, GM_set, k_set) for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
     assert len(MLDMs) == 2, f"Only 2-layer solids supported for twisted DM (for now), got {len(MLDMs)}"
-    update("Intralayer DM objects constructed.")
+    print("Intralayer DM objects constructed.")
 
-    update("Working on interlayer components...")
+    greet("Working on interlayer components...")
     print("Importing shift vectors...")
     nshift = len(findDirsinDir(build_dir([indir, CONFIG_DIR_NAME]), CONFIG_SUBDIR_NAME, searchType='start'))
     b_set = ['']*nshift
@@ -98,7 +98,7 @@ if __name__ == '__main__':
         assert os.path.isfile(shift_file_path), f"{shift_file_path} not found"
         with open(shift_file_path) as f:
             b_set[i] = np.array(list(map(float, f.read().splitlines()))[:2]) # shifts must be 2-dimensional
-    print("Shift vectors imported.")
+    print("Shift vectors imported:", b_set)
 
     print("Getting interlayer phonopy objects from API...")
     config_ph_list = ph_api.inter_ph_list()

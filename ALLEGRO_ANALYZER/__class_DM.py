@@ -13,6 +13,7 @@ from ___constants_phonopy import SUPER_DIM
 from ___constants_names import DEFAULT_PH_BAND_PLOT_NAME
 from scipy.linalg import block_diag
 from scipy.sparse import bmat # block matrix
+import pdb
 
 """
 These classes together compute the twisted dynamical matrix from a sample of moire G vectors and k points along IBZ boundary.
@@ -41,12 +42,13 @@ class MonolayerDM:
         self.A0 = self.uc.lattice.matrix[:2, :2] # remove z-axis
         self.DM_set = None
         self.name = poscar_uc.comment
+        print(f"MonolayerDM intralayer atomic IDs for {self.name}:", self.pos_sc_id)
 
     # Assign each atom a unique ID in the supercell
     def __sc_atomic_id(self):
         uc_coords = self.uc.cart_coords; sc_coords = self.sc.cart_coords
         sc_nat = len(sc_coords); uc_nat = len(uc_coords) # num sc/uc atoms
-        pos_sc_id = []; n_uc = int(sc_nat/uc_nat) # num unnit cells
+        pos_sc_id = []; n_uc = int(sc_nat/uc_nat) # num unit cells
 
         # SPOSCAR arranges all atoms of each type contiguously, so the indexes must
         # be the same for each contiguous region of `n_uc`.
@@ -69,6 +71,7 @@ class MonolayerDM:
         divided by the multiplicity, which is determined by phonopy based on nearest-neighbor symmetry.
         """
         for x, y in prod(range(uc_nat), range(uc_nat)):
+            pdb.set_trace()
             idxs_x = self.pos_sc_id[self.pos_sc_id == x]; n_xidxs = len(idxs_x)
             idxs_y = self.pos_sc_id[self.pos_sc_id == y]; n_yidxs = len(idxs_y)
             id1 = d * x; id2 = d * y
