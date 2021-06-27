@@ -50,9 +50,11 @@ class BZSampler:
         # Filter out any G that does not satisfy the closeness condition |GM| < (shell+0.1) * |GM1|
         g_cutoff = (floor(max_shell) + tol) * LA.norm(GM1) # add 0.1 for numerical error
         cut_makers = (np.sqrt(GM_set[:,0]**2 + GM_set[:,1]**2) <= g_cutoff) # indicators for which G made the cutoff
-        self.g_idxs = g_idxs[cut_makers,:]
-        self.GM_set = GM_set[cut_makers,:] # special numpy syntax for filtering by an indicator array `cut_makers`
-        self.G0_set = G0_set[cut_makers,:]
+        self.g_idxs = g_idxs[cut_makers,:]; self.GM_set = GM_set[cut_makers,:]; self.G0_set = G0_set[cut_makers,:]
+        normsort = lambda x: LA.norm(x[0])
+        self.g_idxs = [g for _,g in sorted(zip(self.GM_set, self.g_idxs), key=normsort)]
+        self.G0_set = [g for _,g in sorted(zip(self.GM_set, self.G0_set), key=normsort)]
+        self.GM_set = sorted(self.GM_set, key=LA.norm)
         print(f"GM set: \n{self.GM_set}\nG0 set: \n{self.G0_set}\nG indices: \n{self.g_idxs}")
         self.GM_sampled = True
         return (g_idxs, GM_set)
