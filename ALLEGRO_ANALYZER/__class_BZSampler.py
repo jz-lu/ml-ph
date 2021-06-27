@@ -52,9 +52,9 @@ class BZSampler:
         cut_makers = (np.sqrt(GM_set[:,0]**2 + GM_set[:,1]**2) <= g_cutoff) # indicators for which G made the cutoff
         self.g_idxs = g_idxs[cut_makers,:]; self.GM_set = GM_set[cut_makers,:]; self.G0_set = G0_set[cut_makers,:]
         normsort = lambda x: LA.norm(x[0])
-        self.g_idxs = [g for _,g in sorted(zip(self.GM_set, self.g_idxs), key=normsort)]
-        self.G0_set = [g for _,g in sorted(zip(self.GM_set, self.G0_set), key=normsort)]
-        self.GM_set = sorted(self.GM_set, key=LA.norm)
+        self.g_idxs = np.array([g for _,g in sorted(zip(self.GM_set, self.g_idxs), key=normsort)]) # sort by norm of GM
+        self.G0_set = np.array([g for _,g in sorted(zip(self.GM_set, self.G0_set), key=normsort)])
+        self.GM_set = np.array(sorted(self.GM_set, key=LA.norm))
         print(f"GM set: \n{self.GM_set}\nG0 set: \n{self.G0_set}\nG indices: \n{self.g_idxs}")
         self.GM_sampled = True
         return (g_idxs, GM_set)
