@@ -35,10 +35,10 @@ yields the phonon modes as a function of k.
 
 # Monolayer dynamical matrix
 class MonolayerDM:
-    def __init__(self, poscar_uc : Poscar, poscar_sc : Poscar, ph, GM_set, k_set):
+    def __init__(self, poscar_uc : Poscar, poscar_sc : Poscar, ph, GM_set, k_set, using_flex=False):
         self.uc = poscar_uc.structure; self.sc = poscar_sc.structure # get structure objects from Poscar objects
         self.GM_set = GM_set; self.k_set = k_set; self.ph = ph
-        self.pos_sc_id = self.__sc_atomic_id()
+        self.pos_sc_id = self.__sc_atomic_id() if using_flex else None
         self.A0 = self.uc.lattice.matrix[:2, :2] # remove z-axis
         self.DM_set = None
         self.name = poscar_uc.comment
@@ -59,6 +59,10 @@ class MonolayerDM:
     
     # Compute intralayer dynamical matrix block element for given some center `q` and phonopy object `ph`
     def __block_intra_l0(self, q, ph):
+        return ph.get_dynamical_matrix_at_q(q)
+    
+    # Deprecated: Calculates dynamical matrix elements for direct or Cartesian coordinates `q`
+    def __flex_block_intra_l0(self, q, ph):
         assert self.pos_sc_id is not None, "Fatal error in class initialization"
         smallest_vectors, multiplicity = ph.primitive.get_smallest_vectors()
         species = self.uc.species; uc_nat = len(species); d = 3 # Cartesian DOF

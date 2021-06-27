@@ -52,7 +52,7 @@ class InputData:
         print('Calculation type flag validated.')
 
     def __check_root_dir(self):
-        self.ROOT = checkPath(self.ROOT)
+        self.ROOT = checkPath(os.path.abspath(self.ROOT))
         if not os.path.isdir(self.ROOT):
             exit_with_error(ERR_BAD_INPUT_DIR)
         print('Root directory input validated.')
