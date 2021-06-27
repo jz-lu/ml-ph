@@ -2,7 +2,6 @@ import os, fnmatch
 from ____exit_with_error import exit_with_error
 from ___constants_misc import ERR_INVALID_FINDDIR_PARAM
 
-# Not currently used for anything.
 def find(pattern, path):
     result = []
     for root, dirs, files in os.walk(path):
@@ -53,11 +52,12 @@ def filesInDir(dirName):
 #     print("Search done, returning list:", arr)
 #     return arr
 
-def findFilesInDir(dirName, fileName, searchType='exact'):
+def findFilesInDir(dirName, fileName, searchType='exact', dump=False):
     assert os.path.isdir(dirName); os.chdir(dirName)
     dirName = checkPath(dirName)
-    print("Searching for matches '%s' of filename '%s' in directory %s with list:"%(searchType, fileName, dirName), 
-        os.listdir(dirName))
+    if dump:
+        print("Searching for matches '%s' of filename '%s' in directory %s with list:"%(searchType, fileName, dirName), 
+            os.listdir(dirName))
     arr = []
     
     if searchType == 'exact':
@@ -70,16 +70,17 @@ def findFilesInDir(dirName, fileName, searchType='exact'):
         exit_with_error(ERR_INVALID_FINDDIR_PARAM)
 
     arr.sort()
-    print("Search done, returning list:", arr)
+    if dump:
+        print("Search done, returning list:", arr)
     return arr
 
-def findDirsinDir(dirName, subName, searchType='exact'):
+def findDirsinDir(dirName, subName, searchType='exact', dump=False):
     assert os.path.isdir(dirName); os.chdir(dirName)
     dirName = checkPath(dirName)
-    print("Searching for matches '%s' of subdirectory '%s' in directory %s with list:"%(searchType, subName, dirName), 
-        os.listdir(dirName))
+    if dump:
+        print("Searching for matches '%s' of subdirectory '%s' in directory %s with list:"%(searchType, subName, dirName), 
+            os.listdir(dirName))
     arr = []
-    
     if searchType == 'exact':
         arr += list(filter(lambda x: x == subName and os.path.isdir(x), os.listdir()))
     elif searchType == 'start':
@@ -90,5 +91,6 @@ def findDirsinDir(dirName, subName, searchType='exact'):
         exit_with_error(ERR_INVALID_FINDDIR_PARAM)
 
     arr.sort()
-    print("Search done, returning list:", arr)
+    if dump:
+        print("Search done, returning list:", arr)
     return arr

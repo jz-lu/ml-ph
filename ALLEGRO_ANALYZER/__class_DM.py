@@ -39,7 +39,7 @@ class MonolayerDM:
         self.GM_set = GM_set; self.k_set = k_set; self.ph = ph
         self.pos_sc_id = self.__sc_atomic_id() if using_flex else None
         self.A0 = self.uc.lattice.matrix[:2, :2] # remove z-axis
-        self.DM_set = None
+        self.DM_set = None; self.dbgprint = False
         self.name = poscar_uc.comment
         if self.pos_sc_id is not None:
             print(f"MonolayerDM intralayer atomic IDs for {self.name}:", self.pos_sc_id)
@@ -59,6 +59,8 @@ class MonolayerDM:
     
     # Compute intralayer dynamical matrix block element for given some center `q` and phonopy object `ph`
     def __block_intra_l0(self, q, ph):
+        if not self.dbgprint:
+            print(f"Intralayer Level-0 shape: {ph.get_dynamical_matrix_at_q(q).shape}")
         return ph.get_dynamical_matrix_at_q(q)
     
     # Deprecated: Calculates dynamical matrix elements for direct or Cartesian coordinates `q`
@@ -136,7 +138,7 @@ class InterlayerDM:
             self.DM[0][i] = self.__block_inter_l0(self.G0_set[i])
             self.DM[i][0] = self.__block_inter_l0(-self.G0_set[i])
             assert self.DM[0][i].shape == block_l0_shape and self.DM[i][0].shape == block_l0_shape, f"Shape GM0{i}={self.DM[0][i].shape}, GM{i}0={self.DM[i][0].shape}, expected {block_l0_shape}"
-            assert np.isclose(LA.norm(self.DM[0][i]), LA.norm(self.DM[i][0]), rtol=1e-2), f"Level-0 interlayer DM blocks for G0{i} not inversion-symmetric:\n {LA.norm(self.DM[0][i])}\nvs. \n{LA.norm(self.DM[i][0])}"
+            assert np.isclose(LA.norm(self.DM[0][i]), LA.norm(self.DM[i][0]), rtol=1e-5), f"Level-0 interlayer DM blocks for G0{i} not inversion-symmetric:\n {LA.norm(self.DM[0][i])}\nvs. \n{LA.norm(self.DM[i][0])}"
         self.DM = bmat(self.DM).toarray() # convert NoneTypes to zero-matrix blocks to make sparse matrix
         return self.DM
 
