@@ -13,7 +13,6 @@ from ___constants_phonopy import SUPER_DIM
 from ___constants_names import DEFAULT_PH_BAND_PLOT_NAME
 from scipy.linalg import block_diag
 from scipy.sparse import bmat # block matrix
-import pdb
 
 """
 These classes together compute the twisted dynamical matrix from a sample of moire G vectors and k points along IBZ boundary.
@@ -42,7 +41,8 @@ class MonolayerDM:
         self.A0 = self.uc.lattice.matrix[:2, :2] # remove z-axis
         self.DM_set = None
         self.name = poscar_uc.comment
-        print(f"MonolayerDM intralayer atomic IDs for {self.name}:", self.pos_sc_id)
+        if self.pos_sc_id is not None:
+            print(f"MonolayerDM intralayer atomic IDs for {self.name}:", self.pos_sc_id)
 
     # Assign each atom a unique ID in the supercell
     def __sc_atomic_id(self):
@@ -75,7 +75,6 @@ class MonolayerDM:
         divided by the multiplicity, which is determined by phonopy based on nearest-neighbor symmetry.
         """
         for x, y in prod(range(uc_nat), range(uc_nat)):
-            pdb.set_trace()
             idxs_x = self.pos_sc_id[self.pos_sc_id == x]; n_xidxs = len(idxs_x)
             idxs_y = self.pos_sc_id[self.pos_sc_id == y]; n_yidxs = len(idxs_y)
             id1 = d * x; id2 = d * y
@@ -98,7 +97,7 @@ class MonolayerDM:
     def get_DM_set(self):
         if self.DM_set is None:
             self.__block_intra_l1()
-        print(f"Retrieved monolayer dynamical matrix for solid {self.name}")
+        print(f"Retrieved monolayer dynamical matrix of shape {self.DM_set[0].shape} for solid {self.name}")
         return self.DM_set
 
     def get_GM_set(self):
@@ -142,13 +141,14 @@ class InterlayerDM:
         return self.DM
 
     def get_DM(self):
-        print("Retrieved interlayer dynamical matrix.")
         if self.DM is None:
+            print("Building interlayer dynamical matrix...")
             self.__block_inter_l1()
+        print(f"Retrieved interlayer dynamical matrix of shape {self.DM.shape}")
         return self.DM
 
     def get_GM_set(self):
-        print("Retrieved GM sample set.")
+        print("Retrieved GM sample set")
         return self.GM_set
 
 
@@ -170,7 +170,7 @@ class TwistedDM:
     
     # Retreieve list dynamical matrices corresponding to the list of sampled k-vectors
     def get_DM_set(self):
-        print("Retrieved DM set from twisted DM object")
+        print(f"Retrieved DM set of shape {self.DMs[0].shape} from twisted DM object")
         return self.DMs
     
     def get_k_set(self):

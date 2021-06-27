@@ -53,6 +53,7 @@ class BZSampler:
         self.g_idxs = g_idxs[cut_makers,:]
         self.GM_set = GM_set[cut_makers,:] # special numpy syntax for filtering by an indicator array `cut_makers`
         self.G0_set = G0_set[cut_makers,:]
+        print(f"GM set: \n{self.GM_set}\nG0 set: \n{self.G0_set}\nG indices: \n{self.g_idxs}")
         self.GM_sampled = True
         return (g_idxs, GM_set)
 
@@ -78,7 +79,7 @@ class BZSampler:
             corner_kmags.append(kmag_start)
             kmag_start = mags[-1] # update start point of magnitude to end of current line
             kmags[kidx : kidx+nk-1] = mags[:-1]
-        corner_kmags += [kmag_start]
+        corner_kmags += [corner_kmags[0]]
         self.k_set = k_set; self.kmags = kmags
         self.k_sampled = True
         if log:

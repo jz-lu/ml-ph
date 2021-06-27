@@ -25,8 +25,6 @@ import os, sys
 if __name__ == '__main__':
     start = time()
     USAGE_MSG = f"Usage: python3 {sys.argv[0]} -deg <twist angle (deg)> -name <solid name> -dir <base I/O dir> -o <output dir>"
-    greet("Building twisted crystal phonon modes...")
-    warn("Note: you must have already ran twisted calculation in given directory and retrieved forces from phonopy")
     args = sys.argv[1:]; i = 0; n = len(args)
     indir = None; outdir = None; theta = None; name = None; outname = DEFAULT_PH_BAND_PLOT_NAME
     while i < n:
@@ -53,6 +51,8 @@ if __name__ == '__main__':
         err(f"Error: must supply twist angle and input directory. Run `python3 {sys.argv[0]} --usage` for help.")
     assert os.path.isdir(indir), f"Directory {indir} does not exist"
     assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
+    print("Building twisted crystal phonon modes...")
+    warn("Note: you must have already ran twisted calculation in given directory and retrieved forces from phonopy")
 
     greet("Working on intralayer components...")
     print("Searching for POSCAR inputs...")
