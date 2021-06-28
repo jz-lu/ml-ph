@@ -32,9 +32,9 @@ if __name__ == '__main__':
             warn(f'Warning: token "{args[i]}" is out of place and will be ignored')
             i += 1; continue
         if args[i] == '-dir':
-            i += 1; check_not_flag(args[i]); indir = checkPath(os.path.abspath(args[i])); i += 1
+            i += 1; check_not_flag(args[i]); indir = args[i]; i += 1
         elif args[i] == '-o':
-            i += 1; check_not_flag(args[i]); outdir = checkPath(os.path.abspath(args[i])); i += 1
+            i += 1; check_not_flag(args[i]); outdir = args[i]; i += 1
         elif args[i] == '-deg':
             i += 1; check_not_flag(args[i]); theta = np.deg2rad(float(args[i])); i += 1
         elif args[i] == '-name':
@@ -47,10 +47,12 @@ if __name__ == '__main__':
         else:
             warn(f'Warning: unknown flag "{args[i]} ignored')
             i += 1
-    if not indir or not theta:
-        err(f"Error: must supply twist angle and input directory. Run `python3 {sys.argv[0]} --usage` for help.")
+    if not theta:
+        err(f"Error: must supply twist angle. Run `python3 {sys.argv[0]} --usage` for help.")
+    indir = checkPath(os.path.abspath(indir)); outdir = checkPath(os.path.abspath(outdir))
     assert os.path.isdir(indir), f"Directory {indir} does not exist"
     assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
+    print(f"WD: {indir}, Output to: {outdir}")
     print("Building twisted crystal phonon modes...")
     warn("Note: you must have already ran twisted calculation in given directory and retrieved forces from phonopy")
 
