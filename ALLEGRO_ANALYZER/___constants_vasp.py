@@ -12,7 +12,7 @@ POSCAR_PREC_COMP_THRESHOLD = 0.0001
 
 # Error checker for vasp.out
 VASP_OUTFILE_LEN_THRESHOLD = 1000
-VASP_MAX_CONVERGENCE_ATTEMPTS = 4 # Number of times we rerun the relaxation before we quit and say we failed to relax.
+VASP_MAX_CONVERGENCE_ATTEMPTS = 1 # Number of times we rerun the relaxation before we quit and say we failed to relax.
 VASP_OUTFILE_CONVERGENCE_LINE_CUT = 6 # Number of lines from the bottom we scan looking for an error message
 
 ### PARAMETERS FOR VASP INPUT FILES ###
@@ -28,7 +28,7 @@ NSW = {'relax': 300, 'no_relax': 0, 'relax_low': 100, 'relax_very_low': 80} # Nu
 EDIFF = {'relax': 1E-6, 'no_relax': 1E-7} # Acceptable self-consistent energy difference in electronic relaxation 
 EDIFFG = {'relax': -1E-5, 'no_relax': -1E-8} # Acceptable self-consistent RELAXATION energy difference (or forces if with negative sign as flag) in ionic relaxation
 NEDOS = 6001 # Number of samples for electronic DOS calculation in the fixed energy range
-IBRION = {'relax': 1, 'no_relax': -1} # 2 is a flag for do ionic relaxation, set to -1 when relaxation calculation is complete
+IBRION = {'relax': 2, 'no_relax': -1} # set to -1 to indicate not to relax
 ICHARG = {'default': 2, 'no_relax_sc': 1, 'no_relax_nsc': 11} # 2 is default initial charge density, 1 is self-consistent CONTCAR import, 11 is non self-consistent (fixed density) CONTCAR
 SYMPREC = 0.0001
 NPAR = 2
@@ -39,6 +39,7 @@ LCHARG = {'write_charge': '.TRUE.', "no_write_charge": '.FALSE.'}
 ALGO = 'N'
 NELMIN = 5
 PREC = 'Accurate'
+POTIM = 0.05
 # vdW settings
 METAGGA = 'SCAN'
 LASPH = '.TRUE.'
@@ -64,7 +65,8 @@ INCAR_RELAX_SETTINGS = {'ISTART': ISTART,
                           'LCHARG': LCHARG['write_charge'], 
                           'ALGO': ALGO, 
                           'NELMIN': NELMIN, 
-                          'PREC': PREC} # We'll add in SYSTEM manually, EDIFFG can be larger if not phonon calc.
+                          'PREC': PREC, 
+                          'POTIM': POTIM} # We'll add in SYSTEM manually, EDIFFG can be larger if not phonon calc.
 INCAR_VDW_SETTINGS = {
     'GGA': GGA,
     'IVDW': IVDW

@@ -39,7 +39,7 @@ class MonolayerDM:
         self.GM_set = GM_set; self.k_set = k_set; self.ph = ph
         self.pos_sc_id = self.__sc_atomic_id() if using_flex else None
         self.A0 = self.uc.lattice.matrix[:2, :2] # remove z-axis
-        self.DM_set = None; self.dbgprint = False
+        self.DM_set = None; self.dbgprint = True
         self.name = poscar_uc.comment
         if self.pos_sc_id is not None:
             print(f"MonolayerDM intralayer atomic IDs for {self.name}:", self.pos_sc_id)
@@ -59,8 +59,9 @@ class MonolayerDM:
     
     # Compute intralayer dynamical matrix block element for given some center `q` and phonopy object `ph`
     def __block_intra_l0(self, q, ph):
-        if not self.dbgprint:
+        if self.dbgprint:
             print(f"Intralayer Level-0 shape: {ph.get_dynamical_matrix_at_q(q).shape}")
+            self.dbgprint = False
         return ph.get_dynamical_matrix_at_q(q)
     
     # Deprecated: Calculates dynamical matrix elements for direct or Cartesian coordinates `q`
