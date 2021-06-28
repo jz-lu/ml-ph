@@ -23,9 +23,9 @@ all configurations (b-vectors) for a given GM (interlayer terms are independent 
 interlayer block is exactly analogous to a level-1 intralayer block. Finally, a level-2 block combines the level-1
 blocks in the following fashion
 
-      |  L1_intra_1     L1_inter  |
-L2 =  |                           |    where L{i}_intra_{j} is level i for layer j (dag is adjoint)
-      | L1_inter_dag   L1_intra_2 |
+      |   L1_intra_1       L1_inter_12  |
+L2 =  |                                 |    where L{i}_intra_{j} is level i for layer j (dag is adjoint)
+      | L1_inter_dag_12    L1_intra_2   |
 
 There is one level-2 matrix for every k, which are the twisted Fourier dynamical matrices. Diagonalization of each of these
 yields the phonon modes as a function of k.
@@ -123,10 +123,13 @@ class InterlayerDM:
         # The force constants matrix for each configuration is equivalent to the dynamical matrix
         # at the Gamma point, since the Fourier transform cancels for G = Gamma.
         self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in ph_list]
+        assert self.force_matrices[0].shape[0] == self.force_matrices[0].shape[1], f"Force matrix is not square: shape {self.force_matrices[0].shape}"
+        assert self.force_matrices[0].shape[0] % 2 == 0, f"Force matrix size is odd: shape {self.force_matrices[0].shape}"
+        self.half_pt = self.force_matrices[0].shape[0] // 2
 
     def __block_inter_l0(self, G0):
         D = sum([force_matrix * np.exp(1j * np.dot(G0, b)) for force_matrix, b in zip(self.force_matrices, self.b_set)])
-        return D / (self.nshift**2)
+        return D[:-self.half_pt,-self.half_pt:] / (self.nshift**2) # keep top right corner only
 
     def __block_inter_l1(self):
         n_GM = len(self.GM_set); assert len(self.G0_set) == n_GM, f"|G0_set| {len(self.G0_set)} != |GM_set| = {n_GM}"
