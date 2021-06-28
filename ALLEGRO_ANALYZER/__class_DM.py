@@ -132,7 +132,7 @@ class InterlayerDM:
         n_GM = len(self.GM_set); assert len(self.G0_set) == n_GM, f"|G0_set| {len(self.G0_set)} != |GM_set| = {n_GM}"
         assert LA.norm(self.G0_set[0]) == 0, f"G0[0] should be 0, but is {LA.norm(self.GM_set[0])}"
         D0 = self.__block_inter_l0(self.G0_set[0]); block_l0_shape = D0.shape
-        self.DM = [[None]*n_GM for _ in range(n_GM)] # NoneType interpreted by scippy as 0 matrix block
+        self.DM = [[None]*n_GM for _ in range(n_GM)] # NoneType interpreted by scipy as 0 matrix block
         for i in range(n_GM): # fill diagonal
             self.DM[i][i] = D0
         for i in range(1, n_GM): # fill first row/col
