@@ -172,7 +172,7 @@ class TwistedDM:
     def __block_l2(self, DM_intras, DM_inter):
         assert len(DM_intras) == 2
         assert DM_intras[0].shape == DM_intras[1].shape == DM_inter.shape
-        return np.block([[DM_intras[0], DM_inter], [DM_inter.conjudate().T, DM_intras[1]]])
+        return np.block([[DM_intras[0], DM_inter], [DM_inter.conjugate().T, DM_intras[1]]])
     
     # Retreieve list dynamical matrices corresponding to the list of sampled k-vectors
     def get_DM_set(self):
