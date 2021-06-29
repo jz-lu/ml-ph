@@ -73,7 +73,7 @@ class DataOutput:
                             levels=levels, cmap="RdGy"); fig.colorbar(cf, ax=ax)
         ax.set_xlabel(r"$a_1$")
         ax.set_ylabel(r"$a_2$")
-        ax.set_title(r"$E_{tot}(\mathbf{b}=a_1 \mathbf{b}_1 + a_2 \mathbf{b}_2) (meV)$")
+        ax.set_title(r"$E_{tot}(\mathbf{b}=b_1 \mathbf{a}_1 + b_2 \mathbf{a}_2) (meV)$")
         out_file = self.__out_dir + f"energy_config_plot_direct_{levels}"
         fig.savefig(out_file + "_eqasp.png")
     
