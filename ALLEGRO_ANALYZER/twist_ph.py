@@ -83,7 +83,7 @@ if __name__ == '__main__':
     update("Sampling G and k sets...")
     bzsamples = get_bz_sample(theta, poscars_uc[0], outdir, make_plot=True)
     _, GM_set = bzsamples.get_GM_set(); _, G0_set = bzsamples.get_G0_set()
-    k_set, _ = bzsamples.get_kpts(); corner_kmags = bzsamples.get_corner_kmags()
+    k_set, k_mags = bzsamples.get_kpts(); corner_kmags = bzsamples.get_corner_kmags()
     print("Sampling complete.")
 
     update("Constructing intralayer dynamical matrix objects...")
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     print("Interlayer DM objects constructed.")
 
     print("Combining into a single twisted dynamical matrix object...")
-    TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_set)
+    TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags)
     print("Twisted dynamical matrix object constructed.")
 
     print("Diagonalizing and outputting modes...")
