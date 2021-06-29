@@ -185,7 +185,7 @@ class TwistedDM:
 
     # Diagonalize the set of DMs to get phonon modes
     def build_modes(self):
-        self.mode_set = np.zeros(len(self.k_mags))
+        self.mode_set = [0]*len(self.k_mags)
         for i, (k_mag, DM) in enumerate(zip(self.k_mags, self.DMs)):
             evals = LA.eigvals(DM); signs = (-1) * (evals < 0) # hack: pull negative sign out of square root to plot imaginary frequencies
             modes_k = signs * np.sqrt(np.abs(evals)) * (15.633302*33.356) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
@@ -199,6 +199,7 @@ class TwistedDM:
     
     # Plot phonon modes as a function of k
     def plot_band(self, corner_kmags, angle, outdir='./', filename=DEFAULT_PH_BAND_PLOT_NAME, name=None):
+        outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Invalid directory {outdir}"
         if not self.modes_built:
             print("Modes not built yet, building...")
             self.build_modes()
@@ -209,7 +210,6 @@ class TwistedDM:
         xlabs = (r'$\Gamma$', r'K', r'M', r'$\Gamma$')
         plt.xlabel(corner_kmags, xlabs)
         plt.ylabel(r'$\omega\,(\mathrm{cm}^{-1})$')
-        outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Invalid directory {outdir}"
         title = r"Phonon modes"
         if name is not None:
             title += f" of {name} bilayer"
