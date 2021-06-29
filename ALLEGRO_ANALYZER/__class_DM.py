@@ -13,7 +13,6 @@ from ___constants_phonopy import SUPER_DIM
 from ___constants_names import DEFAULT_PH_BAND_PLOT_NAME
 from scipy.linalg import block_diag
 from scipy.sparse import bmat # block matrix
-import pdb
 
 """
 These classes together compute the twisted dynamical matrix from a sample of moire G vectors and k points along IBZ boundary.
@@ -207,7 +206,6 @@ class TwistedDM:
             print("Modes built.")
         plt.clf()
         for k_mag, modes in self.mode_set:
-            pdb.set_trace()
             plt.scatter([k_mag] * len(modes), modes, c='royalblue')
         xlabs = (r'$\Gamma$', r'K', r'M', r'$\Gamma$')
         plt.xlabel(corner_kmags, xlabs)
