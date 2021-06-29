@@ -17,12 +17,10 @@ VASP_OUTFILE_CONVERGENCE_LINE_CUT = 6 # Number of lines from the bottom we scan 
 
 ### PARAMETERS FOR VASP INPUT FILES ###
 ## INCAR
-#INCAR_DEFAULT_KEYS = ['SYSTEM', 'ISTART', 'ISMEAR', 'SIGMA', 'ENCUT', 'AMIN', 'NSW', 'EDIFF', 'EDIFFG', 'IBRION', 'SYMPREC', 'NPAR', 'ADDGRID', 'LREAL', 'LWAVE', 'LCHARG', 'ALGO', 'NELMIN', 'PREC']
-#INCAR_VDW_KEYS = ['METAGGA', 'LASPH', 'LUSE_VDW', 'BPARAM']
 ISTART = 0 # No WAVECAR input
 ISMEAR = 0 # Gaussian smearing
 SIGMA = {'wide': 0.1, 'narrow': 0.01} # Width of smear
-ENCUT = 500 # Plane wave expansion cutoff index
+ENCUT = 800 # Plane wave expansion cutoff index
 AMIN = 0.01 # Parameter in initial approximation of dielectric function for screening
 NSW = {'relax': 300, 'no_relax': 0, 'relax_low': 100, 'relax_very_low': 80} # Number of ionic relaxation steps
 EDIFF = {'relax': 1E-5, 'no_relax': 1E-7} # Acceptable self-consistent energy difference in electronic relaxation 
@@ -65,7 +63,8 @@ INCAR_RELAX_SETTINGS = {'ISTART': ISTART,
                           'ALGO': ALGO, 
                           'NELMIN': NELMIN, 
                           'PREC': PREC, 
-                          'POTIM': POTIM} # We'll add in SYSTEM manually, EDIFFG can be larger if not phonon calc.
+                          'POTIM': POTIM
+                        } # We'll add in SYSTEM manually, EDIFFG can be larger if not phonon calc.
 INCAR_VDW_SETTINGS = {
     'GGA': GGA,
     'IVDW': IVDW
@@ -110,6 +109,6 @@ KPOINTS_LINE_INTS = 50 # Number of sampling k-points on each line
 KPOINTS_LINE_HEX_STR = 'k-points along high symmetry lines\n50\nLine_mode\nReciprocal\n0.0 0.0 0.0 ! \Gamma\n0.5 0.5 0.0 ! M\n\n0.5 0.5 0.0 ! M\n0.666667 0.333333 0.0 ! K\n\n0.666667 0.333333 0.0 ! K\n0.0 0.0 0.0 ! \Gamma'
 
 ## POSCAR
-FULL_RELAX_SELECTIVE_DYNAMICS_ARR = [True, True, True] # This is per-atom so you append this for every atom.
-NO_RELAX_SELECTIVE_DYNAMICS_ARR = [False, False, False] # Completely fix an atom
-LAYER_RELAX_SELECTIVE_DYNAMICS_ARR = [False, False, True] # Same deal as above, only fixes interlayer spacing.
+FULL_RELAX_SELECTIVE_DYNAMICS_ARR = [True, True, True] # Free movement
+NO_RELAX_SELECTIVE_DYNAMICS_ARR = [False, False, False] # Fixes position
+LAYER_RELAX_SELECTIVE_DYNAMICS_ARR = [False, False, True] # Fixes in-plane position
