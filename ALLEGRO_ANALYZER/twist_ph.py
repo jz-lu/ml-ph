@@ -116,7 +116,7 @@ if __name__ == '__main__':
     print("Twisted dynamical matrix object constructed.")
 
     print(f"Diagonalizing and outputting modes with corners {corner_kmags}...")
-    TDM.plot_band(corner_kmags, theta, outdir=outdir, name=name, filename=outname)
+    TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, filename=outname)
     print("Modes outputted.")
 
     succ("Successfully completed phonon mode analysis (Took %.3lfs)."%(time()-start))

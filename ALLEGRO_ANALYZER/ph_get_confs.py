@@ -25,6 +25,7 @@ if __name__ == '__main__':
     if outdir is None:
         outdir = ppath
     kname = KPOINTS_LINE_NAME if conf_t == 'b' else KPOINTS_NAME
+    ppath = checkPath(os.path.abspath(ppath)); kpath = checkPath(os.path.abspath(kpath)); outdir = checkPath(os.path.abspath(outdir))
     if os.path.isdir(ppath):
         ppath = checkPath(ppath) + POSCAR_NAME
     if os.path.isdir(kpath):
