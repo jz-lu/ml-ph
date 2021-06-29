@@ -9,18 +9,22 @@ from math import pi, floor
 from itertools import product as prod
 from time import time
 import matplotlib.pyplot as plt
+from ____exit_with_error import exit_with_error
 from ___constants_names import DIR_SHORTCUTS
 from ___constants_sampling import *
+from ___constants_phonopy import SUPER_DIM
 from ___helpers_parsing import greet, succ, warn, err, is_flag, check_not_flag
+from __class_CarCollector import CarCollector
 from __directory_searchers import checkPath
-from ____exit_with_error import exit_with_error
 
 class BZSampler:
-    def __init__(self, G0, theta, outdir='./', log=False, lattice_type='hexagonal'):
+    def __init__(self, A0, G0, theta, outdir='./', log=False, lattice_type='hexagonal', super_dim=SUPER_DIM[:2]):
         G0 = np.array(G0) # ensure proper typing
         assert 180 > theta > 0
         assert os.path.isdir(outdir)
-        self.outdir = checkPath(outdir); self.theta = theta; self.G0 = G0
+        self.outdir = checkPath(outdir); self.theta = theta; self.G0 = G0; self.A0 = A0
+        self.lattice_angle = CarCollector.lattice_basis_angle(self.A0)
+        self.super_dim = super_dim
 
         # Generate G basis via rotation matrices
         R1 = np.array([[np.cos(theta/2), -np.sin(theta/2)], [np.sin(theta/2), np.cos(theta/2)]]) # rot by theta/2
@@ -62,8 +66,13 @@ class BZSampler:
     # Sample nk points along each IBZ boundary line
     def sample_k(self, nk=DEFAULT_NK, log=False):
         assert self.ltype == 'hexagonal'
-        G00 = self.G0[:,0]; G01 = self.G0[:,1]; d = G00.shape[0]
+        G00 = self.G0[:,0] / self.super_dim[0]; G01 = self.G0[:,1] / self.super_dim[1]; d = G00.shape[0]
+        print(f"k-sampler reduced size of sampling region by {self.super_dim} to account for supercell IBZ reduction")
         Gamma = np.zeros(d); K = 1/3 * (G00 + G01); M = 1/2 * G00
+        if np.isclose(self.lattice_angle, 60):
+            M += 1/2 * G01
+        
+        assert np.isclose(self.lattice_angle, 60) or np.isclose(self.lattice_angle, 120), f"k-sampler expects lattice angle to be 120 or 60 deg, but is {self.lattice_angle}"
         ncorners = 4; corners = np.zeros([ncorners, d]) # k-points IBZ boundary corners
         corners[0,:] = Gamma; corners[1,:] = K; corners[2,:] = M; corners[3,:] = Gamma
         self.corners = corners

@@ -15,9 +15,10 @@ from ___constants_sampling import *
 from __class_BZSampler import BZSampler
 from ___helpers_parsing import greet, succ, warn, err, is_flag, check_not_flag
 from __directory_searchers import checkPath
+from ___constants_phonopy import SUPER_DIM
 from ____exit_with_error import exit_with_error
 
-def get_bz_sample(theta, poscar, outdir, 
+def get_bz_sample(theta, poscar, outdir, super_dim=SUPER_DIM[:2], 
                   max_shell=DEFAULT_MAX_SHELL, gridsz=DEFAULT_GRID_SIZE, nk=DEFAULT_NK, 
                   log=True, make_plot=False):
     assert isinstance(poscar, Poscar) or isinstance(poscar, str), "Input 'poscar' must either be a 'Poscar' obj or a path to a POSCAR file"
@@ -34,7 +35,7 @@ def get_bz_sample(theta, poscar, outdir,
         print("A0:\n", A0)
         print("G0:\n", G0)
 
-    sample = BZSampler(G0, theta, outdir=outdir, log=log)
+    sample = BZSampler(A0, G0, theta, outdir=outdir, log=log, super_dim=super_dim)
     sample.sample_GM(mn_grid_sz=gridsz, max_shell=max_shell)
     sample.sample_k(nk=nk, log=True)
     if make_plot:

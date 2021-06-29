@@ -22,6 +22,7 @@ from __dirModifications import build_dir
 from ___helpers_parsing import greet, update, succ, warn, err, is_flag, check_not_flag
 import os, sys
 
+
 if __name__ == '__main__':
     start = time()
     USAGE_MSG = f"Usage: python3 {sys.argv[0]} -deg <twist angle (deg)> -name <solid name> -dir <base I/O dir> -o <output dir>"
@@ -75,13 +76,20 @@ if __name__ == '__main__':
         poscars_sc[i] = Poscar.from_file(sposcar_path)
     print("SPOSCAR inputs found.")
     
+    S0 = poscars_sc[0].structure.lattice.matrix[:2,:2]
+    Xcol = S0[:,0]; Ycol = S0[:,1]; xcol = s0[:,0]; ycol = s0[:,1]
+    xscale = [round(X/x) for x, X in zip(xcol, Xcol) if not np.isclose(x, 0)][0]
+    yscale = [round(Y/y) for y, Y in zip(ycol, Ycol) if not np.isclose(y, 0)][0]
+    super_dim = (xscale, yscale)
+    print(f"Found supercell dimensions to be {super_dim}")
+    
     update("Generating phonopy objects via API...")
     ph_api = PhonopyAPI(indir) # retreive phonopy objects
     ml_ph_list = ph_api.intra_ph_list()
     print("Phonopy objects generated.")
 
     update("Sampling G and k sets...")
-    bzsamples = get_bz_sample(theta, poscars_uc[0], outdir, make_plot=True)
+    bzsamples = get_bz_sample(theta, poscars_uc[0], outdir, make_plot=True, super_dim=super_dim)
     _, GM_set = bzsamples.get_GM_set(); _, G0_set = bzsamples.get_G0_set()
     k_set, k_mags = bzsamples.get_kpts(); corner_kmags = bzsamples.get_corner_kmags()
     print("Sampling complete.")

@@ -13,6 +13,8 @@ from ___constants_vasp import (
 from ___constants_misc import ERR_NO_POSCAR
 from __directory_searchers import checkPath
 from __query_inputs import getInputName
+import numpy.linalg as LA
+import numpy as np
 from pymatgen.io.vasp.inputs import Poscar, Kpoints, Potcar, Incar, VaspInput
 import os
 
@@ -239,6 +241,12 @@ class CarCollector:
     @staticmethod
     def poscar_from_file(dirName):
         return Poscar.from_file(checkPath(dirName) + POSCAR_NAME)
+    
+    @staticmethod
+    def lattice_basis_angle(lattice_matrix):
+        a1 = lattice_matrix[0,:2]; a2 = lattice_matrix[1,:2]
+        a1 = a1 / LA.norm(a1); a2 = a2 / LA.norm(a2)
+        return round(np.rad2deg(np.arccos(np.dot(a1,a2))), 3)
 
     # Get the layer distance
     @staticmethod

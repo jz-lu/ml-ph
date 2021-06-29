@@ -50,11 +50,17 @@ def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax'):
             print('Relaxation has not converged. Proceeding to rerun relaxation with updated ionic positions...')
             print('Loop counter: ' + str(loopCounter))
             loopCounter += 1
-            # Loop counter and exit function
             if loopCounter > VASP_MAX_CONVERGENCE_ATTEMPTS:
-                # exit_with_error(ERR_VASP_NOT_CONVERGED)
-                print(ERR_VASP_NOT_CONVERGED)
-                break
+                if vaspObj['INCAR']['EDIFFG'] < 1e-3:
+                    vaspObj['INCAR']['EDIFFG'] *= 10
+                    vaspObj['INCAR']['EDIFF'] *= 10
+                    print(f"Exceeded maximum convergence attempts...loosening threshold EDIFFG to {vaspObj['INCAR']['EDIFFG']}")
+                    print("Loop counter reset.")
+                    loopCounter = 1
+                else:
+                    print("Unable to further loosen EDIFFG threshold.")
+                    print(ERR_VASP_NOT_CONVERGED)
+                    break
             
             new_poscar = Poscar.from_file(dirName + CONTCAR_NAME)
             vaspObj['POSCAR'] = new_poscar # Update POSCAR to be the new CONTCAR
