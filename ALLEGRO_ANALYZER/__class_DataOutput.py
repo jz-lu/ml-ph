@@ -70,7 +70,7 @@ class DataOutput:
         fig.savefig(out_file + "_eqasp.png")
         plt.clf(); fig, ax = plt.subplots()
         cf = ax.tricontourf(self.b1shifts, self.b2shifts, self.__energies, 
-                            levels=levels, cmap="RdGy")
+                            levels=levels, cmap="RdGy"); fig.colorbar(cf, ax=ax)
         ax.set_xlabel(r"$a_1$")
         ax.set_ylabel(r"$a_2$")
         ax.set_title(r"$E_{tot}(\mathbf{b}=a_1 \mathbf{b}_1 + a_2 \mathbf{b}_2) (meV)$")
