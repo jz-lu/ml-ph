@@ -23,7 +23,10 @@ class DataOutput:
         print("Output to be stored in %s"%(out_dir))
 
         # Get the shifts in Cartesian coordinates via COB
-        self.__shifts = [np.dot(cob_matrix, np.array(i[0][:-1])) for i in plot_list] # Exclude z-coordinate since plot is 2D
+        self.__direct_shifts = [np.array(i[0][:-1]) for i in plot_list]
+        self.b1shifts = np.array([i[0] for i in self.__direct_shifts]) # direct coordinates
+        self.b2shifts = np.array([i[1] for i in self.__direct_shifts])
+        self.__shifts = [np.dot(cob_matrix, i) for i in self.__direct_shifts] # Cartesian coordinates
         self.xshifts = np.array([i[0] for i in self.__shifts])
         self.yshifts = np.array([i[1] for i in self.__shifts])
         print("DIRECT SHIFTS:", [np.array(i[0][:-1]) for i in plot_list])
@@ -55,16 +58,23 @@ class DataOutput:
    
     # Smoothly interpolate toal energy at various shifts.
     def plot_e_vs_b(self, levels=DEFAULT_CONTOUR_LEVELS):
-        fig, ax = plt.subplots()
+        plt.clf(); fig, ax = plt.subplots()
         cf = ax.tricontourf(self.xshifts, self.yshifts, self.__energies, 
                             levels=levels, cmap="RdGy")
         fig.colorbar(cf, ax=ax)
         ax.set_xlabel(r"$b_x$")
         ax.set_ylabel(r"$b_y$")
-        ax.set_title(r"$E_{tot}(b) (meV)$")
-        out_file = self.__out_dir + f"energy_config_plot_{levels}"
-        fig.savefig(out_file + ".png")
+        ax.set_title(r"$E_{tot}(\mathbf{b}) (meV)$")
+        out_file = self.__out_dir + f"energy_config_plot_cart_{levels}"
         ax.set_aspect('equal') # prevent axis stretching
+        fig.savefig(out_file + "_eqasp.png")
+        plt.clf(); fig, ax = plt.subplots()
+        cf = ax.tricontourf(self.b1shifts, self.b2shifts, self.__energies, 
+                            levels=levels, cmap="RdGy")
+        ax.set_xlabel(r"$a_1$")
+        ax.set_ylabel(r"$a_2$")
+        ax.set_title(r"$E_{tot}(\mathbf{b}=a_1 \mathbf{b}_1 + a_2 \mathbf{b}_2) (meV)$")
+        out_file = self.__out_dir + f"energy_config_plot_direct_{levels}"
         fig.savefig(out_file + "_eqasp.png")
     
     # Smoothly interpolate interlayer spacing at various shifts.
@@ -76,7 +86,7 @@ class DataOutput:
         ax.set_xlabel(r"$b_x$")
         ax.set_ylabel(r"$b_y$")
         ax.set_title("Relaxed interlayer spacing (z)")
-        out_file = self.__out_dir + "z_config_plot"
+        out_file = self.__out_dir + "z_config_plot_cart"
         fig.savefig(out_file + ".png")
         ax.set_aspect('equal') # prevent axis stretching
         fig.savefig(out_file + "_eqasp.png")
