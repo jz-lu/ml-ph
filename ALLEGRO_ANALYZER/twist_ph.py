@@ -115,7 +115,7 @@ if __name__ == '__main__':
     TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags)
     print("Twisted dynamical matrix object constructed.")
 
-    print("Diagonalizing and outputting modes...")
+    print(f"Diagonalizing and outputting modes with corners {corner_kmags}...")
     TDM.plot_band(corner_kmags, theta, outdir=outdir, name=name, filename=outname)
     print("Modes outputted.")
 

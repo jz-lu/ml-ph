@@ -203,12 +203,12 @@ class TwistedDM:
         if not self.modes_built:
             print("Modes not built yet, building...")
             self.build_modes()
-            print("Modes built.")
+            print("Modes built")
         plt.clf()
         for k_mag, modes in self.mode_set:
             plt.scatter([k_mag] * len(modes), modes, c='royalblue')
         xlabs = (r'$\Gamma$', r'K', r'M', r'$\Gamma$')
-        plt.xlabel(corner_kmags, xlabs)
+        plt.xticks(corner_kmags, xlabs)
         plt.ylabel(r'$\omega\,(\mathrm{cm}^{-1})$')
         title = r"Phonon modes"
         if name is not None:
