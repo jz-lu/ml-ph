@@ -2,6 +2,7 @@
 import os
 from pymatgen.io.vasp.inputs import VaspInput, Poscar
 from ____exit_with_error import exit_with_error
+from ____debug import DEBUG_NOTICE_MSG, DEBUGGING
 from ___constants_names import (
     BATCH_FILE_PATH, 
     VASP_RUN_OUT_NAME, 
@@ -19,6 +20,9 @@ from __directory_searchers import checkPath
 from __check_convergence import check_if_not_converged
 
 def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax'):
+    if DEBUGGING:
+        print(DEBUG_NOTICE_MSG)
+        return
     dirName = checkPath(dirName)
 
     # pymatgen doesn't handle other files well. We will manually print chgcar in the outdir so VASP will take it when it runs.
