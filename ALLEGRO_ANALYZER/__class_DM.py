@@ -207,7 +207,7 @@ class TwistedDM:
             print("Modes built.")
         plt.clf()
         for k_mag, modes in self.mode_set:
-            pdf.set_trace()
+            pdb.set_trace()
             plt.scatter([k_mag] * len(modes), modes, c='royalblue')
         xlabs = (r'$\Gamma$', r'K', r'M', r'$\Gamma$')
         plt.xlabel(corner_kmags, xlabs)
