@@ -184,16 +184,23 @@ class TwistedDM:
         return self.k_mags
 
     # Diagonalize the set of DMs to get phonon modes
-    def build_modes(self):
+    def build_modes(self, dump=False, outdir=None):
         self.mode_set = [0]*len(self.k_mags)
         for i, (k_mag, DM) in enumerate(zip(self.k_mags, self.DMs)):
-            evals = LA.eigvals(DM); signs = (-1) * (evals < 0) # hack: pull negative sign out of square root to plot imaginary frequencies
+            evals = LA.eigvals(DM)
+            signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
             modes_k = signs * np.sqrt(np.abs(evals)) * (15.633302*33.356) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
-            self.mode_set[i] = (k_mag, modes_k)
-        # self.k_plt = []; self.modes_plt = []
-        # for k_mag, modes in self.mode_set:
-        #     self.k_plt += [k_mag]*len(modes)
-        #     self.modes_plt += list(modes)
+            self.mode_set[i] = (k_mag, modes_k[modes_k != 0])
+        if dump:
+            outdir = checkPath(os.path.abspath(outdir))
+            assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
+            k_dump = []; mode_dump = []
+            for k_mag, modes in self.mode_set:
+                    k_dump += [k_mag]*len(modes)
+                    mode_dump += list(modes)
+            with open(outdir + 'modes.txt', 'w') as f:
+                for k_mag, mode in zip(k_dump, mode_dump):
+                    f.write(f"{k_mag}\t{mode}\n")
         self.modes_built = True
         return self.mode_set
     
@@ -202,11 +209,11 @@ class TwistedDM:
         outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Invalid directory {outdir}"
         if not self.modes_built:
             print("Modes not built yet, building...")
-            self.build_modes()
+            self.build_modes(dump=True, outdir=outdir)
             print("Modes built")
         plt.clf()
         for k_mag, modes in self.mode_set:
-            plt.scatter([k_mag] * len(modes), modes, c='royalblue')
+            plt.scatter([k_mag] * len(modes), modes, c='royalblue', s=0.1)
         xlabs = (r'$\Gamma$', r'K', r'M', r'$\Gamma$')
         plt.xticks(corner_kmags, xlabs)
         plt.ylabel(r'$\omega\,(\mathrm{cm}^{-1})$')
