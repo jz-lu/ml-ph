@@ -111,7 +111,6 @@ def buildPotcar_noPMG(dirName, poscarObj, potcarDir=POT_NOPMG_DIR):
     return 0
 
 # Build a POTCAR object using pymatgen, not testable unless on Odyssey
-# TODO: test this on Odyssey.
 def buildPotcar(dirName, poscarObj, useGivenPotcar=False, writeOut=False): # Just specify useGivenPotcar and dirName (if not ROOT) if POTCAR file given.
     if useGivenPotcar:
         try:

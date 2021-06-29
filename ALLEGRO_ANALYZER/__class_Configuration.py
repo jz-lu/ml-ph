@@ -245,13 +245,3 @@ class Configuration:
         
         return tuple(sample_points)
 
-
-
-# c = Configuration.sample_grid(GRID_SAMPLE_LOW)
-# print(c)
-
-
-# p = Poscar.from_file('POSCAR')
-# q = Poscar.from_file('POSCAR')
-# c = Configuration('.', [p,q])
-# print(c.get_init_poscars())

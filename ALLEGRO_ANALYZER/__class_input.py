@@ -26,6 +26,8 @@ class InputData:
             if cmdline_arg_tuple[0] in ['LOW', 'HIGH', 'L', 'H']:
                 self.cfg_grid_sz = GRID_SAMPLE_LOW if cmdline_arg_tuple[0] in ['LOW', 'L'] else GRID_SAMPLE_HIGH
                 cmdline_arg_tuple[0] = 1
+            if self.cfg_grid_sz is None:
+                self.cfg_grid_sz = GRID_SAMPLE_LOW
             self.type_flag = int(cmdline_arg_tuple[0])
         except ValueError as err:
             print('Error:', err)
@@ -39,7 +41,6 @@ class InputData:
         self.__check_input_style()
         if len(self.calculation_list) == 0:
             self.calculation_list = [ENERGIES]
-            # TODO add dynamical matrix stuff?
         self.__parse_calculation_input()
 
         print('Final calculation list (except energies if specified):', self.calculation_list)
