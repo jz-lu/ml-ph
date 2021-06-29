@@ -193,11 +193,15 @@ class Configuration:
                 # Push it into the fixed lattice poscar object, which will be the b-space poscar
                 bspace_structure.append(at.species, at.frac_coords)
             
-        # SD: interlayer relaxation allowed for every 
-        sd_mat = self.__get_sd_matrix(num_fixed_atoms, num_nonfixed_atoms)
+        # SD option 1 (deprecated): interlayer relaxation allowed for every layer except first
+        # sd_mat = self.__get_sd_matrix(num_fixed_atoms, num_nonfixed_atoms)
+        # SD option 2: interlayer relaxation allowed for every layer
+        assert bspace_structure.num_sites == num_fixed_atoms + num_nonfixed_atoms
+        sd_mat = self.__get_sd_matrix(0, bspace_structure.num_sites)
         
         # Created a new fixed poscar with selective dynamics adjusted
         bspace_poscar = Poscar(bspace_structure, selective_dynamics=sd_mat)
+        bspace_poscar.structure.sort() # must sort to be parsed properly by phonopy and VASP
         print('Build complete.')
         return bspace_poscar
         

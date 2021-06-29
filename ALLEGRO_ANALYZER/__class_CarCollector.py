@@ -33,6 +33,7 @@ class CarCollector:
                 exit_with_error(ERR_NO_POSCAR)
         else:
             self.poscar = poscar
+        self.poscar.structure.sort() # sort poscar
 
         # Get the name of the crystal for naming purposes
         self.mat_name = getInputName(self.poscar)

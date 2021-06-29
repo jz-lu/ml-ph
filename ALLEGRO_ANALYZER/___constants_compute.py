@@ -2,7 +2,7 @@
 # must all be strings
 COMPUTE_PARTITIONS = 'shared'
 COMPUTE_MEM_PER_CPU = '4000'
-COMPUTE_TIME = '16:00:00' # HR:MN:SC
+COMPUTE_TIME = '08:00:00' # HR:MN:SC
 COMPUTE_EMAIL_TO = 'jlu@college.harvard.edu'
 COMPUTE_EMAIL_TYPE = 'END,FAIL' # no spaces
 COMPUTE_NCPU = '8'

@@ -44,7 +44,10 @@ def build_bash_exe(calc_type=TYPE_RELAX_BASIC, outdir='.', wdir=None, calc_list=
         if USE_NODE_INDICATOR:
             f.write('#SBATCH -N %s\n'%(compute_nnode))
         f.write('#SBATCH -n %s\n#SBATCH -t %s\n#SBATCH -p %s\n#SBATCH --mem-per-cpu=%s\n'%(compute_ncpu, compute_time, compute_partitions, compute_mem_per_cpu))
-        f.write('#SBATCH -o %s_%%j.out\n#SBATCH -e er_%s_%%j.err\n'%(compute_jobname, compute_jobname))
+        if as_arr:
+            f.write('#SBATCH -o %s_%%A_%%a.out\n#SBATCH -e er_%s_%%A_%%a.err\n'%(compute_jobname, compute_jobname))
+        else:
+            f.write('#SBATCH -o %s_%%j.out\n#SBATCH -e er_%s_%%j.err\n'%(compute_jobname, compute_jobname))
         f.write('#SBATCH --mail-type=%s\n#SBATCH --mail-user=%s\n'%(compute_email_type, compute_email_to))
         f.write('source activate $HOME/%s\n'%(COMPUTE_ANACONDA_ENV))
         if as_arr:
