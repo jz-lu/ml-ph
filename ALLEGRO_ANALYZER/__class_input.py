@@ -1,6 +1,7 @@
 from ____exit_with_error import exit_with_error
 from ___constants_vasp import BPARAM
 from ___constants_misc import *
+from ___constants_config import GRID_SAMPLE_HIGH, GRID_SAMPLE_LOW
 from ___constants_names import (
     CMD_LINE_ARG_LIST, 
     ENERGIES, ELEBAND, PHBAND, PHDOS, PH, 
@@ -21,6 +22,10 @@ class InputData:
         self.cmdargs = cmdline_arg_tuple
         print('Command line arguments initiated in InputData class constructor. Arguments: ', self.cmdargs)
         try:
+            self.cfg_grid_sz = None
+            if cmdline_arg_tuple[0] in ['LOW', 'HIGH', 'L', 'H']:
+                self.cfg_grid_sz = GRID_SAMPLE_LOW if cmdline_arg_tuple[0] in ['LOW', 'L'] else GRID_SAMPLE_HIGH
+                cmdline_arg_tuple[0] = 1
             self.type_flag = int(cmdline_arg_tuple[0])
         except ValueError as err:
             print('Error:', err)
@@ -147,4 +152,7 @@ class InputData:
             return [ENERGIES] + self.get_calculation_list()
         else:
             return self.get_calculation_list()
+
+    def get_cfg_grid_sz(self):
+        return self.cfg_grid_sz
 

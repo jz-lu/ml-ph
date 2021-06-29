@@ -34,9 +34,8 @@ def begin_computation(user_input_settings):
         return None # Indicate to start.py that there is no further data parsing necessary
     elif flg == TYPE_RELAX_CONFIG:
         print('Set to run parallel computations over grid sample in configuration space, defaulted to layer 1 (z = 0). Starting...')
-        # Sample the grid here! Then pool them over to relax and run an iterator to get energy pairs for graphing
-        # Num processes (in pool arg below) = number of grid points, i.e. (a, b, c) |-> a * b * c
-        grid_size = GRID_SAMPLE_LOW # TODO: change LOW to HIGH in var name for super-accurate calculations
+        grid_size = user_input_settings.get_cfg_grid_sz()
+        print(f"Configuration grid: {grid_size}")
         init_interlayer_spacing = Z_LAYER_SEP
 
         sampling_set = Configuration.sample_grid(grid=grid_size)
