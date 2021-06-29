@@ -16,7 +16,7 @@ class InputData:
     input_imported = False
 
     def __init__(self, cmdline_arg_tuple):
-        cmdline_arg_tuple = tuple(cmdline_arg_tuple)
+        cmdline_arg_tuple = list(cmdline_arg_tuple)
         if (len(cmdline_arg_tuple) < 5) or (len(cmdline_arg_tuple) > 10):
             exit_with_error(GENERAL_ERR_USAGE_MSG) # Need at least one calculation in addition to settings
         self.cmdargs = cmdline_arg_tuple
@@ -65,8 +65,7 @@ class InputData:
     def __check_vdW_settings(self):
         if self.do_vdW == 'T' or self.do_vdW == 'True':
             self.do_vdW = True
-            print("Using SCAN electronic algorithm...")
-            print(f'Turning on (SCAN-rVV10 functional, BPARAM={BPARAM}) van der Waals settings...')
+            print(f'Turning on van der Waals settings...')
         elif self.do_vdW == 'F' or self.do_vdW == 'False':
             print("Using LDA electronic algorithm...")
             self.do_vdW = False
