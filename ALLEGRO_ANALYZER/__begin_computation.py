@@ -41,13 +41,14 @@ def begin_computation(user_input_settings):
 
         sampling_set = None
         if user_input_settings.sampling_is_diagonal():
-            # angle = config.get_lattice_angle()
-            # if not (np.isclose(angle, 60) or np.isclose(angle, 120)):
-            #     exit_with_error('Error: lattice angle must be 60 or 120')
-            # diag = np.array([0.333333, 0.333333]) if np.isclose(angle, 60) else np.array([0.333333, 0.666666])
-            diag = np.array([0.333333, 0.666666])
+            print("Sampling line points uniformly along diagonal...")
+            angle = config.get_lattice_angle()
+            if not (np.isclose(angle, 60) or np.isclose(angle, 120)):
+                exit_with_error('Error: lattice angle must be 60 or 120')
+            diag = np.array([0.333333, 0.333333]) if np.isclose(angle, 60) else np.array([0.333333, 0.666666])
             sampling_set = Configuration.sample_line(npts=grid_size, basis=diag)
         else:
+            print("Sampling grid points uniformly along unit cell...")
             sampling_set = Configuration.sample_grid(grid=grid_size)
 
         # Get a set of tuples (shift vector, poscar object) for each shift vector.
@@ -104,7 +105,7 @@ def begin_computation(user_input_settings):
                 print(DEBUG_NOTICE_MSG)
         exepath = build_bash_exe(calc_type=TYPE_RELAX_CONFIG, calc_list=clist, outdir=inter_path,
                    compute_jobname=CONFIG_JOBNAME, vdw=vdw, kpts=kpts, wdir=inter_path+CONFIG_SUBDIR_NAME,
-                   compute_time='01:00:00') # this just kicks off a bunch of jobs, so it doesn't need any time
+                   compute_time='01:00:00', compute_ncpu='1') # this just kicks off a bunch of jobs, so it doesn't need any time
         if not DEBUGGING:
             os.chdir(inter_path)
             print(f"Submitting configuration job (wdir={inter_path+CONFIG_SUBDIR_NAME})...")

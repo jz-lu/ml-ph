@@ -212,8 +212,9 @@ class Configuration:
         bspace_poscar = Poscar(bspace_structure, selective_dynamics=sd_mat)
 
         if self.layer_idxs is None:
-            layer_idxs = [j for i in at_per_layer for j in i] # indexes which layer each atom came from in POSCAR
+            layer_idxs = np.concatenate([[i+1]*n for i, n in enumerate(at_per_layer)]) # indexes which layer each atom came from in POSCAR
             self.layer_idxs = [i for _,i in sorted(zip(bspace_poscar.structure, layer_idxs))] # permute to sorted location
+            print(f"Final layer indices: {self.layer_idxs}")
         bspace_poscar.structure.sort() # must sort to be parsed properly by phonopy and VASP
         print('Build complete.')
         return bspace_poscar
