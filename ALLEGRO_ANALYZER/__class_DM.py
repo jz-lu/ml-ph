@@ -114,22 +114,30 @@ class MonolayerDM:
 
 # Build interlayer dynamical matrix block via summing over configurations
 class InterlayerDM:
-    def __init__(self, b_set, ph_list, GM_set, G0_set):
+    def __init__(self, per_layer_at_idxs, b_set, ph_list, GM_set, G0_set):
         assert len(b_set[0]) == 2, "Shift vectors must be 2-dimensional"
         self.b_set = b_set; self.ph_list = ph_list # list of phonopy objects for each config
         self.nshift = len(b_set)
         self.GM_set = GM_set; self.G0_set = G0_set
         self.DM = None
+        self.per_layer_at_idxs = per_layer_at_idxs; assert len(self.per_layer_at_idxs) == 2, f"Only 2 layers supported"
         # The force constants matrix for each configuration is equivalent to the dynamical matrix
         # at the Gamma point, since the Fourier transform cancels for G = Gamma.
         self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in ph_list]
         assert self.force_matrices[0].shape[0] == self.force_matrices[0].shape[1], f"Force matrix is not square: shape {self.force_matrices[0].shape}"
         assert self.force_matrices[0].shape[0] % 2 == 0, f"Force matrix size is odd: shape {self.force_matrices[0].shape}"
-        self.half_pt = self.force_matrices[0].shape[0] // 2
+        # self.half_pt = self.force_matrices[0].shape[0] // 2
 
     def __block_inter_l0(self, G0):
         D = sum([force_matrix * np.exp(1j * np.dot(G0, b)) for force_matrix, b in zip(self.force_matrices, self.b_set)])
-        return D[:-self.half_pt,-self.half_pt:] / (self.nshift**2) # keep top right corner only
+        # Extract a submatrix with rows of atoms from layer 1 
+        # and columns of atoms from layer 2, which is the interlayer 1-2 interactions.
+        D_inter = D[np.ix_(self.per_layer_at_idxs[0], self.per_layer_at_idxs[1])] / (self.nshift**2)
+        assert len(D.shape) == 2 and D.shape[0] == D.shape[1], f"D with shape {D.shape} not square matrix"
+        assert len(D_inter.shape) == 2 and D_inter.shape[0] == D_inter.shape[1], f"D_inter with shape {D_inter.shape} not square matrix"
+        assert 2*D_inter.shape[0] == D.shape[0] and 2*D_inter.shape[1] == D.shape[1], f"D_inter shape {D_inter.shape} should be half of D shape {D.shape}"
+        return D_inter
+        # return D[:-self.half_pt,-self.half_pt:] / (self.nshift**2) # keep top right corner only
 
     def __block_inter_l1(self):
         n_GM = len(self.GM_set); assert len(self.G0_set) == n_GM, f"|G0_set| {len(self.G0_set)} != |GM_set| = {n_GM}"

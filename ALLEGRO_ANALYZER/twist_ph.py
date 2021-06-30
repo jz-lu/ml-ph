@@ -19,6 +19,7 @@ from ___constants_names import (
 from ___constants_compute import DEFAULT_NUM_LAYERS
 from __directory_searchers import checkPath, findDirsinDir, findFilesInDir
 from __dirModifications import build_dir
+from __class_Configuration import Configuration
 from ___helpers_parsing import greet, update, succ, warn, err, is_flag, check_not_flag
 import os, sys
 
@@ -82,6 +83,11 @@ if __name__ == '__main__':
     yscale = [round(Y/y) for y, Y in zip(ycol, Ycol) if not np.isclose(y, 0)][0]
     super_dim = (xscale, yscale)
     print(f"Found supercell dimensions to be {super_dim}")
+
+    update("Retrieving per-layer atomic indices...")
+    per_layer_at_idxs = Configuration.load_at_idxs(build_dir([indir, CONFIG_DIR_NAME]))
+    assert len(per_layer_at_idxs) == 2, f"Only 2 layers supported (for now), got {len(per_layer_at_idxs)}"
+    print(f"Found per-layer atomic indices: {per_layer_at_idxs}")
     
     update("Generating phonopy objects via API...")
     ph_api = PhonopyAPI(indir) # retreive phonopy objects

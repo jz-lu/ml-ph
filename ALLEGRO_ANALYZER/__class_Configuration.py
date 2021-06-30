@@ -1,6 +1,6 @@
 from ____exit_with_error import exit_with_error
 from ___constants_config import GRID_SAMPLE_LOW, GRID_SAMPLE_HIGH, DIAG_SAMPLE_LOW, DIAG_SAMPLE_HIGH
-from ___constants_names import POSCAR_NAME, POSCAR_CONFIG_NAMEPRE
+from ___constants_names import POSCAR_NAME, POSCAR_CONFIG_NAMEPRE, CONFIG_DATA_DIR, LIDXS_NPY_NAME
 from ___constants_misc import (
     ERR_BAD_CONFIG_POSCAR, 
     ERR_INCONSISTENT_NORMS, ERR_INCONSISTENT_LATTICES, 
@@ -14,9 +14,10 @@ from ___constants_vasp import (
     FULL_RELAX_SELECTIVE_DYNAMICS_ARR
 )
 from __directory_searchers import checkPath, findFilesInDir
+from __dirModifications import build_dir
 from pymatgen.io.vasp.inputs import Poscar # pylint: disable=import-error
 import numpy as np # pylint: disable=import-error 
-import copy
+import copy, os
 
 """
 Class Configuration:
@@ -244,6 +245,8 @@ class Configuration:
         return self.lattice_basis_angle
     
     @staticmethod
+    # Converts a set indexing which layer each atom in POSCAR belongs to into a set of sets, one for each layer, 
+    # that give the index (in POSCAR order) of atoms in that layer. Optionally expands 3-fold to include Cartesian DOF.
     def layer_to_at_idxs(lidxs, expand=True):
         at_idxs = [np.array([i for i, l in enumerate(lidxs) if l == j]) for j in range(1, 1+max(lidxs))]
         assert len(at_idxs) == 2, f"Number of layers is {len(at_idxs)} but only 2 supported (for now), layer indices: {lidxs}"
@@ -251,6 +254,16 @@ class Configuration:
             at_idxs = [np.concatenate((3*li, 3*li+1, 3*li+2)) for li in at_idxs]
         print("Final atomic indices (%sexpanded in Cartesian DOFs):"%("" if expand else "not "), at_idxs)
         return at_idxs
+    
+    @staticmethod
+    def load_lidxs(indir):
+        assert os.path.isdir(indir), f"Directory {indir} does not exist"
+        indir = checkPath(os.path.abspath(indir))
+        return np.load(build_dir([indir, CONFIG_DATA_DIR]) + LIDXS_NPY_NAME)
+    
+    @staticmethod
+    def load_at_idxs(indir, expand=True):
+        return Configuration.layer_to_at_idxs(Configuration.load_lidxs(indir), expand=expand)
     
     @staticmethod
     # Returns a list of numpy row-vectors, each of which is a shift (expressed in arbitrary lattice basis).
