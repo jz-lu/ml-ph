@@ -81,13 +81,12 @@ class DataOutput:
     def plot_z_vs_b(self, levels=DEFAULT_CONTOUR_LEVELS,):
         fig, ax = plt.subplots()
         cf = ax.tricontourf(self.xshifts, self.yshifts, self.__zspacings, 
-                            levels=levels, cmap="twilight_shifted")
+                            levels=levels, cmap="RdGy") # or try cmap="twilight_shifted" for a fun twist
         fig.colorbar(cf, ax=ax)
         ax.set_xlabel(r"$b_x$")
         ax.set_ylabel(r"$b_y$")
         ax.set_title("Relaxed interlayer spacing (z)")
         out_file = self.__out_dir + "z_config_plot_cart"
-        fig.savefig(out_file + ".png")
         ax.set_aspect('equal') # prevent axis stretching
         fig.savefig(out_file + "_eqasp.png")
     
