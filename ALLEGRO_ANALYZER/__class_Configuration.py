@@ -10,7 +10,8 @@ from ___constants_misc import (
 from ___constants_vasp import (
     Z_LATTICE_SIZE, 
     POSCAR_PRECISION, POSCAR_PREC_COMP_THRESHOLD, 
-    NO_RELAX_SELECTIVE_DYNAMICS_ARR, LAYER_RELAX_SELECTIVE_DYNAMICS_ARR
+    NO_RELAX_SELECTIVE_DYNAMICS_ARR, LAYER_RELAX_SELECTIVE_DYNAMICS_ARR, 
+    FULL_RELAX_SELECTIVE_DYNAMICS_ARR
 )
 from __directory_searchers import checkPath, findFilesInDir
 from pymatgen.io.vasp.inputs import Poscar # pylint: disable=import-error
@@ -153,7 +154,8 @@ class Configuration:
         for _ in range(num_fixed):
             sd_mat.append(NO_RELAX_SELECTIVE_DYNAMICS_ARR)
         for _ in range(num_nonfixed):
-            sd_mat.append(LAYER_RELAX_SELECTIVE_DYNAMICS_ARR)
+            # sd_mat.append(LAYER_RELAX_SELECTIVE_DYNAMICS_ARR)
+            sd_mat.append(FULL_RELAX_SELECTIVE_DYNAMICS_ARR)
         return sd_mat
 
     # For each shift, construct a single POSCAR input file containing all the validated layers,

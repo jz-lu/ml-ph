@@ -85,7 +85,7 @@ class DataOutput:
         fig.colorbar(cf, ax=ax)
         ax.set_xlabel(r"$b_x$")
         ax.set_ylabel(r"$b_y$")
-        ax.set_title("Relaxed interlayer spacing (z)")
+        ax.set_title("Relaxed interlayer spacing (normed units)")
         out_file = self.__out_dir + "z_config_plot_cart"
         ax.set_aspect('equal') # prevent axis stretching
         fig.savefig(out_file + "_eqasp.png")
