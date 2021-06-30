@@ -20,7 +20,6 @@ from __class_Configuration import Configuration
 from __directory_searchers import checkPath
 from __dirModifications import mkdir
 from __compute_properties import relax_solid
-from __class_DataOutput import DataOutput
 from multiprocessing import Pool
 from make_execscr import build_bash_exe
 import os

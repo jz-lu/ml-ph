@@ -6,7 +6,7 @@ from ___constants_names import (
     RELAXATION_DIR_NAME, ANALYSIS_DIR_NAME, 
     TOTAL_ENER_DIR_NAME, TOT_ENERGIES_NAME
 )
-from __class_DataOutput import DataOutput
+from __class_ConfigOutput import ConfigOutput
 from __directory_searchers import checkPath
 from __class_CarCollector import CarCollector
 import numpy as np
@@ -19,7 +19,7 @@ from ___helpers_parsing import succ, warn, err
 if __name__ == '__main__':
     USAGE_ERR_MSG = 'Usage: python3 <DIR>/config_analyze.py -n <NUM SHIFTS> -d <I/O DIR FROM MAIN PROGRAM> -e <MIN ENERGY (eV)>'
 
-    # The DataOutput class expects a COB matrix and 
+    # The ConfigOutput class expects a COB matrix and 
     # a list of (config vector b, z-spacing, energy in eV), as well as a minimum energy in eV to shift by.
     # This was all outputted in various files in the calculations, which need to be parsed.
 
@@ -83,7 +83,7 @@ if __name__ == '__main__':
             energies[i] = float(f.readline().split(' ')[-1])
     print("Energies retrieved.")
 
-    # Combine into (b, z, e) points and pass to DataOutput
+    # Combine into (b, z, e) points and pass to ConfigOutput
     bze = []
     print("Combining data into bze-points data structure...")
     for b, z, e in zip(bshifts, zspaces, energies):
@@ -94,7 +94,7 @@ if __name__ == '__main__':
     np.save(data_dir + 'bze', bze)
     do = None
     print("Parsing successful, passing to analyzer...")
-    do = DataOutput(data_dir, bze, cob, abs_min_energy=abs_min_energy)
+    do = ConfigOutput(data_dir, bze, cob, abs_min_energy=abs_min_energy)
     do.output_all_analysis(levels=nlevel)
     print("Analyzer has finished running.")
 

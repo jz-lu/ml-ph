@@ -49,6 +49,8 @@ CONFIG_SUBDIR_NAME = 'shift_'
 SHIFT_NAME = 'shiftcoord.txt'
 COB_NPY_NAME = 'cob.npy' # must end in .npy
 LIDXS_NPY_NAME = 'lidxs.npy' # must end in .npy
+DSAMPLE_ENERGIES_NAME = 'd_energies.npy'
+DSAMPLE_SPACINGS_NAME = 'd_spacings.npy'
 MONOLAYER_DIR_NAME = 'layer_'
 CONFIG_DIR_NAME = 'config'
 

@@ -16,7 +16,6 @@ from __directory_searchers import checkPath, findFilesInDir
 from __dirModifications import mkdir, copy, move
 from __build_shscript import compute_configs
 from __compute_properties import relax_solid, solve_electronic
-from __class_DataOutput import DataOutput
 from pymatgen.io.vasp.inputs import Poscar
 from make_execscr import build_bash_exe
 import os

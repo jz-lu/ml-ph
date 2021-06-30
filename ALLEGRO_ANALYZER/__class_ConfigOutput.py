@@ -2,14 +2,55 @@ import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
 from ___constants_config import DEFAULT_ABS_MIN_ENERGY
-from ___constants_output import DEFAULT_CONTOUR_LEVELS
+from ___constants_names import DSAMPLE_ENERGIES_NAME, DSAMPLE_SPACINGS_NAME
+from ___constants_output import DEFAULT_CONTOUR_LEVELS, HIGH_SYMMETRY_LABELS
 from __directory_searchers import checkPath
+from scipy.interpolate import make_interp_spline as interpolate_scatter
 
-class DataOutput:
+class DSamplingOutput:
+    def __init__(self, out_dir, npts, special_pts=None, energies=None, spacings=None, type='hexagonal'):
+        self.out_dir = checkPath(out_dir); self.npts = npts + 1 # add 1 for periodici boundary conditions
+        minenergy = min(energies); self.energies = 1000*(np.array(energies)-minenergy)
+        self.spacings = np.array(spacings)
+        assert special_pts is None or len(special_pts) == 4, f"Must give list of 4 special points, but is {special_pts}"
+        self.special_pts = np.array(special_pts); self.special_pts = np.append(self.special_pts, 1.0)
+        self.energies = np.append(self.energies, self.energies[0])
+        self.spacings = np.append(self.spacings, self.spacings[0]) # impose periodic boundary conditions
+        print("Initialized DSamplingOutput object")
+    def save_raw_data(self):
+        np.save(self.out_dir + DSAMPLE_ENERGIES_NAME, self.energies)
+        np.save(self.out_dir + DSAMPLE_SPACINGS_NAME, self.spacings)
+        np.savetxt(self.out_dir + DSAMPLE_ENERGIES_NAME, self.energies)
+        np.savetxt(self.out_dir + DSAMPLE_SPACINGS_NAME, self.spacings)
+        print(f"Saved raw data over {self.npts} diagonally sampled points to {self.out_dir}")
+    def __diag_plot(self, arr, plt_type='energy'):
+        assert isinstance(plt_type, str); plt.clf(); fig, ax = plt.subplots()
+        ax.set_aspect('equal') # prevent axis stretching
+        ax.set_title(f"{'Energies' if plt_type == 'energy' else 'Interlayer spacing'} along diagonal")
+        if self.special_pts is not None:
+            plt.xticks(ticks=self.special_pts, labels=HIGH_SYMMETRY_LABELS)
+        else:
+            plt.tick_params(
+                axis='x',          # changes apply to the x-axis
+                which='both',      # both major and minor ticks are affected
+                bottom=False,      # ticks along the bottom edge are off
+                top=False,         # ticks along the top edge are off
+                labelbottom=False) # labels along the bottom edge are off
+        ax.set_ylabel(r"$E_{tot} (meV)$")
+        ax.scatter(np.linspace(0, 1, self.npts), self.energies)
+        fig.savefig(self.out_dir + f"diag_{plt_type}_plot.png")
+    def plot_energies(self):
+        self.__diag_plot(self.energies, plt_type='energy')
+    def plot_spacings(self):
+        self.__diag_plot(self.spacings, plt_type='z')
+    def output_all_analysis(self):
+        self.save_raw_data(); self.plot_energies(); self.output_all_analysis()
+
+class ConfigOutput:
     # plot list is a list of tuples (b, z, e) = (shift, z-spacing, energy).
     # cob is the change-of-basis matrix to get fom lattice basis (which b is in) to Cartesian to plot.
     def __init__(self, out_dir, plot_list, cob_matrix, abs_min_energy=None):
-        print("Initalizing DataOutput object.")
+        print("Initalizing ConfigOutput object.")
         # plot_list: list of (b, z, e) points
         self.__plot_list = plot_list
         self.__zspacings = np.array([i[1] for i in plot_list])
@@ -35,7 +76,7 @@ class DataOutput:
         print("Interlayer spacings:", self.__zspacings)
         np.save(self.__out_dir + 'bze', self.__plot_list)
 
-        print('[DEBUG] RAW DATA OUTPUTTING!')
+        print(f'Saving raw data to {self.__out_dir}')
         with open(self.__out_dir + "shifts.txt", 'w+') as f1:
             f1.write(str(self.__plot_list))
         with open(self.__out_dir + "xshifts.txt", 'w+') as f1:
@@ -83,7 +124,7 @@ class DataOutput:
         fig.colorbar(cf, ax=ax)
         ax.set_xlabel(r"$b_x$")
         ax.set_ylabel(r"$b_y$")
-        ax.set_title(r"Relaxed interlayer spacing ($\AA$)")
+        ax.set_title(r"Relaxed interlayer spacing (direct coordinates)")
         out_file = self.__out_dir + "z_config_plot_cart"
         ax.set_aspect('equal') # prevent axis stretching
         fig.savefig(out_file + "_eqasp.png")
