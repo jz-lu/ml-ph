@@ -1,4 +1,5 @@
 from ____debug import DEBUGGING, DEBUG_NOTICE_MSG
+from ____exit_with_error import exit_with_error
 from ___constants_config import GRID_SAMPLE_LOW, GRID_SAMPLE_HIGH
 from ___constants_misc import NUM_AVAILABLE_CORES
 from ___constants_vasp import Z_LAYER_SEP
@@ -36,9 +37,18 @@ def begin_computation(user_input_settings):
         grid_size = user_input_settings.get_cfg_grid_sz()
         print(f"Configuration grid: {grid_size}")
         init_interlayer_spacing = Z_LAYER_SEP
-
-        sampling_set = Configuration.sample_grid(grid=grid_size)
         config = Configuration(BASE_ROOT)
+
+        sampling_set = None
+        if user_input_settings.sampling_is_diagonal():
+            sampling_set = Configuration.sample_grid(grid=grid_size)
+        else:
+            # angle = config.get_lattice_angle()
+            # if not (np.isclose(angle, 60) or np.isclose(angle, 120)):
+            #     exit_with_error('Error: lattice angle must be 60 or 120')
+            # diag = np.array([0.333333, 0.333333]) if np.isclose(angle, 60) else np.array([0.333333, 0.666666])
+            diag = np.array([0.333333, 0.666666])
+            sampling_set = Configuration.sample_line(npts=grid_size, basis=diag)
 
         # Get a set of tuples (shift vector, poscar object) for each shift vector.
         configposcar_shift_tuple = config.build_config_poscar_set(sampling_set, init_interlayer_spacing)

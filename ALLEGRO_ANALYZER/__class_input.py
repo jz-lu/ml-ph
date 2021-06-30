@@ -1,7 +1,7 @@
 from ____exit_with_error import exit_with_error
 from ___constants_vasp import BPARAM
 from ___constants_misc import *
-from ___constants_config import GRID_SAMPLE_HIGH, GRID_SAMPLE_LOW
+from ___constants_config import GRID_SAMPLE_HIGH, GRID_SAMPLE_LOW, DIAG_SAMPLE_HIGH, DIAG_SAMPLE_LOW
 from ___constants_names import (
     CMD_LINE_ARG_LIST, 
     ENERGIES, ELEBAND, PHBAND, PHDOS, PH, 
@@ -19,13 +19,16 @@ class InputData:
         cmdline_arg_tuple = list(cmdline_arg_tuple)
         if (len(cmdline_arg_tuple) < 5) or (len(cmdline_arg_tuple) > 10):
             exit_with_error(GENERAL_ERR_USAGE_MSG) # Need at least one calculation in addition to settings
-        self.cmdargs = cmdline_arg_tuple
+        self.cmdargs = cmdline_arg_tuple; self.sampling_diagonal = False
         print('Command line arguments initiated in InputData class constructor. Arguments: ', self.cmdargs)
         try:
             self.cfg_grid_sz = None
             if cmdline_arg_tuple[0] in ['LOW', 'HIGH', 'L', 'H']:
                 self.cfg_grid_sz = GRID_SAMPLE_LOW if cmdline_arg_tuple[0] in ['LOW', 'L'] else GRID_SAMPLE_HIGH
-                cmdline_arg_tuple[0] = 1
+                cmdline_arg_tuple[0] = TYPE_RELAX_CONFIG
+            elif cmdline_arg_tuple[0] in ['DLOW', 'DHIGH', 'DL', 'DH']:
+                self.cfg_grid_sz = DIAG_SAMPLE_LOW if cmdline_arg_tuple[0] in ['DLOW', 'DL'] else DIAG_SAMPLE_HIGH
+                cmdline_arg_tuple[0] = TYPE_RELAX_CONFIG; self.sampling_diagonal = True
             if self.cfg_grid_sz is None:
                 self.cfg_grid_sz = GRID_SAMPLE_LOW
             self.type_flag = int(cmdline_arg_tuple[0])
@@ -155,4 +158,7 @@ class InputData:
 
     def get_cfg_grid_sz(self):
         return self.cfg_grid_sz
+    
+    def sampling_is_diagonal(self):
+        return self.sampling_diagonal
 

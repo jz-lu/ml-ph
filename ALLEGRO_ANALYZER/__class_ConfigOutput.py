@@ -8,7 +8,8 @@ from __directory_searchers import checkPath
 from scipy.interpolate import make_interp_spline as interpolate_scatter
 
 class DSamplingOutput:
-    def __init__(self, out_dir, npts, special_pts=None, energies=None, spacings=None, type='hexagonal'):
+    def __init__(self, out_dir, npts, special_pts=None, energies=None, spacings=None, ltype='hexagonal'):
+        assert ltype == 'hexagonal', f"Only hexagonal lattices supported (for now), but got {ltype}"
         self.out_dir = checkPath(out_dir); self.npts = npts + 1 # add 1 for periodici boundary conditions
         minenergy = min(energies); self.energies = 1000*(np.array(energies)-minenergy)
         self.spacings = np.array(spacings)

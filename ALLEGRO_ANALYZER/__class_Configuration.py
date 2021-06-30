@@ -1,5 +1,5 @@
 from ____exit_with_error import exit_with_error
-from ___constants_config import GRID_SAMPLE_LOW, GRID_SAMPLE_HIGH
+from ___constants_config import GRID_SAMPLE_LOW, GRID_SAMPLE_HIGH, DIAG_SAMPLE_LOW, DIAG_SAMPLE_HIGH
 from ___constants_names import POSCAR_NAME, POSCAR_CONFIG_NAMEPRE
 from ___constants_misc import (
     ERR_BAD_CONFIG_POSCAR, 
@@ -36,6 +36,7 @@ class Configuration:
         self.__poscars = tuple(poscars)
         print('POSCARs imported successfully.')
         self.layer_idxs = None # indexes which layer each atom is in
+        self.__lattices = []; self.__normed_fixed_lattice = None
 
         # Get all the lattice information stored in self instance, and check validity of input.
         # self.__lattices: list of matrices of lattice basis vectors, each matrix for a POSCAR.
@@ -45,6 +46,7 @@ class Configuration:
         self.__get_lattice_constants()
         self.__check_lattice_consistency()
         # self.__check_poscar_atoms()
+        self.lattice_basis_angle = self.__lattice_angle()
         print('All basic consistency checks and verifications complete. Configuration object constructed.')
 
     # Import all the initial POSCARs and return them in a list of pmg poscar objects.
@@ -73,7 +75,6 @@ class Configuration:
     def __get_lattices(self):
         print('Extracting set of lattices from POSCARs...')
         # Get lattice matrices in an array.
-        self.__lattices = []
         for i in self.__poscars:
             p_dict = i.as_dict()
             lattice = np.array(p_dict['structure']['lattice']['matrix'])
@@ -81,6 +82,11 @@ class Configuration:
         np.set_printoptions(precision=POSCAR_PRECISION)
         print('Lattices extracted. Ordered list:\n', self.__lattices)
         return self.__lattices
+    
+    def __lattice_angle(self):
+        assert self.__normed_fixed_lattice is not None, f"Fatal error in class initialization"
+        a1 = self.__normed_fixed_lattice[0][:2]; a2 = self.__normed_fixed_lattice[1][:2]
+        return round(np.rad2deg(np.arccos(np.dot(a1,a2))), 3)
 
     # Extract the lattice constant of the POSCARs for straining.
     def __get_lattice_constants(self):
@@ -233,6 +239,9 @@ class Configuration:
         assert self.layer_idxs is not None, "Configuration POSCARs not yet built."
         return self.layer_idxs
     
+    def get_lattice_angle(self):
+        return self.lattice_basis_angle
+    
     @staticmethod
     def layer_to_at_idxs(lidxs, expand=True):
         at_idxs = [np.array([i for i, l in enumerate(lidxs) if l == j]) for j in range(1, 1+max(lidxs))]
@@ -249,7 +258,7 @@ class Configuration:
         sample_points = [] # All possible combinations of the points in sample_coord_sets, with size grid[0]*grid[1]*grid[2]
 
         # Grid format validation.
-        if len(grid) != 3 or grid[2] != 1: # Only shift in dimensions 1 annd 2 out of 3
+        if len(grid) != 3 or grid[2] != 1: # Only shift in dimensions 1 and 2 out of 3
             exit_with_error(ERR_INVALID_GRID)
 
         # Generate a set of shifts in each coordinate.
@@ -266,6 +275,14 @@ class Configuration:
                     sample_point = (i, j, k)
                     sample_point = np.array(sample_point)
                     sample_points.append(sample_point)
-        
         return tuple(sample_points)
+    
+    @staticmethod
+    # Sample along some line. If basis is None, then returns points in direct coordinates, otherwise in Cartesian
+    def sample_line(npts=DIAG_SAMPLE_LOW, basis=None):
+        assert isinstance(npts, int), f"Number of points should be (an odd) integer, but is {npts}"
+        pts = np.linspace(0, 1, num=npts, endpoint=False)
+        if basis is not None:
+            pts = [c*basis for c in pts]
+        return pts
 
