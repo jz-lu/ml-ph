@@ -35,7 +35,7 @@ class Configuration:
             poscars = self.import_init_poscars()
         self.__poscars = tuple(poscars)
         print('POSCARs imported successfully.')
-        self.layer_idxs = None
+        self.layer_idxs = None # indexes which layer each atom is in
 
         # Get all the lattice information stored in self instance, and check validity of input.
         # self.__lattices: list of matrices of lattice basis vectors, each matrix for a POSCAR.
@@ -232,6 +232,15 @@ class Configuration:
     def get_layer_idxs(self):
         assert self.layer_idxs is not None, "Configuration POSCARs not yet built."
         return self.layer_idxs
+    
+    @staticmethod
+    def layer_to_at_idxs(lidxs, expand=True):
+        at_idxs = [np.array([i for i, l in enumerate(lidxs) if l == j]) for j in range(1, 1+max(lidxs))]
+        assert len(at_idxs) == 2, f"Number of layers is {len(at_idxs)} but only 2 supported (for now), layer indices: {lidxs}"
+        if expand:
+            at_idxs = [np.concatenate((3*li, 3*li+1, 3*li+2)) for li in at_idxs]
+        print("Final atomic indices (%sexpanded in Cartesian DOFs):"%("" if expand else "not "), at_idxs)
+        return at_idxs
     
     @staticmethod
     # Returns a list of numpy row-vectors, each of which is a shift (expressed in arbitrary lattice basis).

@@ -8,7 +8,6 @@ from __directory_searchers import checkPath
 class DataOutput:
     # plot list is a list of tuples (b, z, e) = (shift, z-spacing, energy).
     # cob is the change-of-basis matrix to get fom lattice basis (which b is in) to Cartesian to plot.
-    #   Note cob_matrix must be a numpy matrix.
     def __init__(self, out_dir, plot_list, cob_matrix, abs_min_energy=None):
         print("Initalizing DataOutput object.")
         # plot_list: list of (b, z, e) points

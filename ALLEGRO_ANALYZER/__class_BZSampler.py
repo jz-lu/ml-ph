@@ -66,11 +66,12 @@ class BZSampler:
     # Sample nk points along each IBZ boundary line
     def sample_k(self, nk=DEFAULT_NK, log=False):
         assert self.ltype == 'hexagonal'
-        G00 = self.G0[:,0] / self.super_dim[0]; G01 = self.G0[:,1] / self.super_dim[1]; d = G00.shape[0]
+        GM1 = self.GM[:,0]; GM2 = self.GM[:,1] # Moire reciprocal lattice vectors
+        d = GM1.shape[0]
         print(f"k-sampler reduced size of sampling region by {self.super_dim} to account for supercell IBZ reduction")
-        Gamma = np.zeros(d); K = 1/3 * (G00 + G01); M = 1/2 * G00
+        Gamma = np.zeros(d); K = 1/3 * (GM1 + GM2); M = 1/2 * GM1
         if np.isclose(self.lattice_angle, 60):
-            M += 1/2 * G01
+            M += 1/2 * GM2
         
         assert np.isclose(self.lattice_angle, 60) or np.isclose(self.lattice_angle, 120), f"k-sampler expects lattice angle to be 120 or 60 deg, but is {self.lattice_angle}"
         ncorners = 4; corners = np.zeros([ncorners, d]) # k-points IBZ boundary corners
