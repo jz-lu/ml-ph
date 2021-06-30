@@ -41,14 +41,14 @@ def begin_computation(user_input_settings):
 
         sampling_set = None
         if user_input_settings.sampling_is_diagonal():
-            sampling_set = Configuration.sample_grid(grid=grid_size)
-        else:
             # angle = config.get_lattice_angle()
             # if not (np.isclose(angle, 60) or np.isclose(angle, 120)):
             #     exit_with_error('Error: lattice angle must be 60 or 120')
             # diag = np.array([0.333333, 0.333333]) if np.isclose(angle, 60) else np.array([0.333333, 0.666666])
             diag = np.array([0.333333, 0.666666])
             sampling_set = Configuration.sample_line(npts=grid_size, basis=diag)
+        else:
+            sampling_set = Configuration.sample_grid(grid=grid_size)
 
         # Get a set of tuples (shift vector, poscar object) for each shift vector.
         configposcar_shift_tuple = config.build_config_poscar_set(sampling_set, init_interlayer_spacing)
