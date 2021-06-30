@@ -1,13 +1,10 @@
 # Parses data output from main program and passes to analyzer
 from ___constants_names import (
-    CONFIG_SUBDIR_NAME, 
-    CONFIG_DATA_DIR, 
+    CONFIG_SUBDIR_NAME, CONFIG_DATA_DIR, 
     SHIFT_NAME, 
-    COB_NPY_NAME, 
-    RELAXATION_DIR_NAME, 
-    ANALYSIS_DIR_NAME, 
-    TOTAL_ENER_DIR_NAME, 
-    TOT_ENERGIES_NAME
+    COB_NPY_NAME, LIDXS_NPY_NAME, 
+    RELAXATION_DIR_NAME, ANALYSIS_DIR_NAME, 
+    TOTAL_ENER_DIR_NAME, TOT_ENERGIES_NAME
 )
 from __class_DataOutput import DataOutput
 from __directory_searchers import checkPath
@@ -53,11 +50,13 @@ if __name__ == '__main__':
     else:
         print(f"Using minimum energy shift {abs_min_energy} eV.")
 
-    # Collect COB matrix
+    # Collect COB matrix and layer indices
     data_dir = BASE_ROOT + checkPath(CONFIG_DATA_DIR)
-    print("Retrieving COB matrix from '%s'..."%data_dir)
+    print("Retrieving COB matrix and layer indices from '%s'..."%data_dir)
     cob = np.load(data_dir + COB_NPY_NAME)
     print("COB matrix retrieved.")
+    lidxs = np.load(data_dir + LIDXS_NPY_NAME)
+    print("Layer indices retrieved.")
 
     # Collect shifts (including the 0 in the z direction)
     bshifts = [0]*nshifts
@@ -72,7 +71,7 @@ if __name__ == '__main__':
     zspaces = [0]*nshifts
     for i in range(nshifts):
         relax_dir = BASE_ROOT + checkPath(CONFIG_SUBDIR_NAME + str(i)) + checkPath(RELAXATION_DIR_NAME)
-        zspaces[i] = CarCollector.get_interlayer_spacing(relax_dir)
+        zspaces[i] = CarCollector.get_interlayer_spacing(lidxs, DIR_RELAXATION=relax_dir)
     print("z-spacings retrieved.")
 
     # Collect energies

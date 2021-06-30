@@ -12,8 +12,7 @@ class DataOutput:
         print("Initalizing DataOutput object.")
         # plot_list: list of (b, z, e) points
         self.__plot_list = plot_list
-        minz = min([i[1] for i in plot_list])
-        self.__zspacings = np.array([(i[1]-minz)*1000 for i in plot_list])
+        self.__zspacings = np.array([i[1] for i in plot_list])
         if not abs_min_energy:
             abs_min_energy = min([i[2] for i in plot_list])
         print(f"Shifting by minimum energy {abs_min_energy} eV")
@@ -84,7 +83,7 @@ class DataOutput:
         fig.colorbar(cf, ax=ax)
         ax.set_xlabel(r"$b_x$")
         ax.set_ylabel(r"$b_y$")
-        ax.set_title("Relaxed interlayer spacing (normed units)")
+        ax.set_title(r"Relaxed interlayer spacing ($\AA$)")
         out_file = self.__out_dir + "z_config_plot_cart"
         ax.set_aspect('equal') # prevent axis stretching
         fig.savefig(out_file + "_eqasp.png")
