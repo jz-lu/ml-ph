@@ -45,7 +45,7 @@ def begin_computation(user_input_settings):
             angle = config.get_lattice_angle()
             if not (np.isclose(angle, 60) or np.isclose(angle, 120)):
                 exit_with_error('Error: lattice angle must be 60 or 120')
-            diag = np.array([0.333333, 0.333333]) if np.isclose(angle, 60) else np.array([0.333333, 0.666667])
+            diag = np.array([0.333333, 0.333333, 0]) if np.isclose(angle, 60) else np.array([0.333333, 0.666667, 0])
             sampling_set = Configuration.sample_line(npts=grid_size, basis=diag)
             print(f"Sampled {grid_size} points along line {diag}")
         else:
