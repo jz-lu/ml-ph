@@ -264,6 +264,6 @@ class CarCollector:
         if dump:
             print(f"Layer indices: {layer_idxs}")
         assert (spacings > 0).all(), f"Spacing must be positive, check that layer indexing is correct"
-        return round(np.mean(spacings), 4)
+        return np.mean(spacings)
 
 
