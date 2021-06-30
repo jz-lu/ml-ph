@@ -35,7 +35,7 @@ class Configuration:
             poscars = self.import_init_poscars()
         self.__poscars = tuple(poscars)
         print('POSCARs imported successfully.')
-
+        self.layer_idxs = None
 
         # Get all the lattice information stored in self instance, and check validity of input.
         # self.__lattices: list of matrices of lattice basis vectors, each matrix for a POSCAR.
@@ -176,13 +176,14 @@ class Configuration:
 
         bspace_structure = copy.deepcopy(poscars[0].structure)
         num_fixed_atoms = bspace_structure.num_sites # Number of atoms in fixed layer, needed for SD below
+        at_per_layer = [num_fixed_atoms]
         num_nonfixed_atoms = 0 # Number of atoms we need to add to the first layer config space
 
         # Get a full structure object, except for SD, with strain-shift.
         for i in range(1, len(poscars)): # Don't modify the first (fixed) layer
             p = poscars[i]
             num_nonfixed_atoms += p.structure.num_sites
-            n_at = p.structure.num_sites
+            n_at = p.structure.num_sites; at_per_layer.append(n_at)
             for _ in range(n_at): # Loop through each atom per layer sublattice
                 at = p.structure.pop(0)
                 # Shift it (no scaling is necessary since the lattice constant is already there!), 
@@ -196,13 +197,17 @@ class Configuration:
                 bspace_structure.append(at.species, at.frac_coords)
             
         # SD option 1 (deprecated): interlayer relaxation allowed for every layer except first
-        # sd_mat = self.__get_sd_matrix(num_fixed_atoms, num_nonfixed_atoms)
+        #       sd_mat = self.__get_sd_matrix(num_fixed_atoms, num_nonfixed_atoms)
         # SD option 2: interlayer relaxation allowed for every layer
         assert bspace_structure.num_sites == num_fixed_atoms + num_nonfixed_atoms
         sd_mat = self.__get_sd_matrix(0, bspace_structure.num_sites)
         
         # Created a new fixed poscar with selective dynamics adjusted
         bspace_poscar = Poscar(bspace_structure, selective_dynamics=sd_mat)
+
+        if self.layer_idxs is None:
+            layer_idxs = [j for i in at_per_layer for j in i] # indexes which layer each atom came from in POSCAR
+            self.layer_idxs = [i for _,i in sorted(zip(bspace_poscar.structure, layer_idxs))] # permute to sorted location
         bspace_poscar.structure.sort() # must sort to be parsed properly by phonopy and VASP
         print('Build complete.')
         return bspace_poscar
@@ -223,6 +228,10 @@ class Configuration:
     # Get the poscar of the fixed layer.
     def get_fixed_layer_poscar(self):
         return self.__poscars[0]
+
+    def get_layer_idxs(self):
+        assert self.layer_idxs is not None, "Configuration POSCARs not yet built."
+        return self.layer_idxs
     
     @staticmethod
     # Returns a list of numpy row-vectors, each of which is a shift (expressed in arbitrary lattice basis).
