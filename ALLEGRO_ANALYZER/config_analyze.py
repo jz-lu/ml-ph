@@ -39,6 +39,9 @@ if __name__ == '__main__':
             i += 1; nlevel = int(cmdargs[i]); i += 1
         elif cmdargs[i] == '--diag':
             diag = True; i += 1
+        elif cmdargs[i] == '--usage':
+            print(USAGE_ERR_MSG)
+            sys.exit(0)
         else:
             warn(f"Unrecognized token '{cmdargs[i]}'")
             err(USAGE_ERR_MSG)

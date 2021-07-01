@@ -57,11 +57,9 @@ class Configuration:
         # NOTE: the fixed layer is the first one in alphabetic order
         poscar_names = findFilesInDir(self.BASE_ROOT, POSCAR_CONFIG_NAMEPRE, searchType='start')
         print("POSCAR files found:", poscar_names)
-        print('Fixed layer set to POSCAR named ' + poscar_names[0])
-
         if len(poscar_names) < 2:
             exit_with_error(ERR_BAD_CONFIG_POSCAR)
-        
+        print('Fixed layer set to POSCAR named ' + poscar_names[0])
         poscars = []
         for i in poscar_names:
             poscars.append(Poscar.from_file(self.BASE_ROOT + i))

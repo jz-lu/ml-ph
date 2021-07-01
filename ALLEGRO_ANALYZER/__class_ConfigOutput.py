@@ -13,7 +13,7 @@ class DSamplingOutput:
         self.out_dir = checkPath(out_dir); self.npts = npts + 1 # add 1 for periodici boundary conditions
         minenergy = min(energies); self.energies = 1000*(np.array(energies)-minenergy)
         self.spacings = np.array(spacings)
-        assert special_pts is None or len(special_pts) == 4, f"Must give list of 4 special points, but is {special_pts}"
+        assert special_pts is None or len(special_pts) == 3, f"Must give list of 3 special points, but is {special_pts}"
         self.special_pts = np.array(special_pts); self.special_pts = np.append(self.special_pts, 1.0)
         self.energies = np.append(self.energies, self.energies[0])
         self.spacings = np.append(self.spacings, self.spacings[0]) # impose periodic boundary conditions
