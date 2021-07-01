@@ -218,7 +218,7 @@ class TwistedDM:
         if not self.modes_built:
             print("Modes not built yet, building...")
             self.build_modes(dump=True, outdir=outdir)
-            print("Modes built")
+            print("Modes built.")
         plt.clf()
         for k_mag, modes in self.mode_set:
             plt.scatter([k_mag] * len(modes), modes, c='royalblue', s=0.1)
@@ -231,7 +231,7 @@ class TwistedDM:
         title += r" at " + '%.1lf'%angle + r"$^\circ$"
         plt.title(title)
         plt.savefig(outdir + filename)
-        print(f"Plotting completed and written to {outdir+filename}")
+        print(f"Plot written to {outdir+filename}")
         return
 
 

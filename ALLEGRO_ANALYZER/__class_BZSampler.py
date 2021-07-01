@@ -68,7 +68,7 @@ class BZSampler:
         assert self.ltype == 'hexagonal'
         GM1 = self.GM[:,0]; GM2 = self.GM[:,1] # Moire reciprocal lattice vectors
         d = GM1.shape[0]
-        print(f"k-sampler reduced size of sampling region by {self.super_dim} to account for supercell IBZ reduction")
+        print("k-sampler using Gamma-K-M sequence defined by moire reciprocal lattice vectors GM")
         Gamma = np.zeros(d); K = 1/3 * (GM1 + GM2); M = 1/2 * GM1
         if np.isclose(self.lattice_angle, 60):
             M += 1/2 * GM2

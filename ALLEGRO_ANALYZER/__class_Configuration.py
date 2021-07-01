@@ -159,8 +159,7 @@ class Configuration:
         for _ in range(num_fixed):
             sd_mat.append(NO_RELAX_SELECTIVE_DYNAMICS_ARR)
         for _ in range(num_nonfixed):
-            # sd_mat.append(LAYER_RELAX_SELECTIVE_DYNAMICS_ARR)
-            sd_mat.append(FULL_RELAX_SELECTIVE_DYNAMICS_ARR)
+            sd_mat.append(LAYER_RELAX_SELECTIVE_DYNAMICS_ARR)
         return sd_mat
 
     # For each shift, construct a single POSCAR input file containing all the validated layers,
@@ -200,12 +199,14 @@ class Configuration:
 
                 # Push it into the fixed lattice poscar object, which will be the b-space poscar
                 bspace_structure.append(at.species, at.frac_coords)
-            
+
+        assert bspace_structure.num_sites == num_fixed_atoms + num_nonfixed_atoms
         # SD option 1 (deprecated): interlayer relaxation allowed for every layer except first
         #       sd_mat = self.__get_sd_matrix(num_fixed_atoms, num_nonfixed_atoms)
-        # SD option 2: interlayer relaxation allowed for every layer
-        assert bspace_structure.num_sites == num_fixed_atoms + num_nonfixed_atoms
-        sd_mat = self.__get_sd_matrix(0, bspace_structure.num_sites)
+        # SD option 2 (deprecated): interlayer relaxation allowed for every layer
+        #       sd_mat = self.__get_sd_matrix(0, bspace_structure.num_sites)
+        # SD option 3: interlayer relaxation allowed for every atom except one in the first layer (serves as point of reference)
+        sd_mat = self.__get_sd_matrix(1, bspace_structure.num_sites-1)
         
         # Created a new fixed poscar with selective dynamics adjusted
         bspace_poscar = Poscar(bspace_structure, selective_dynamics=sd_mat)
@@ -230,7 +231,7 @@ class Configuration:
         self.config_space_poscar_set = configposcar_shift_tuple
         print('All shift poscar objects built.')
         return tuple(configposcar_shift_tuple)
-        
+    
     # Get the poscar of the fixed layer.
     def get_fixed_layer_poscar(self):
         return self.__poscars[0]
