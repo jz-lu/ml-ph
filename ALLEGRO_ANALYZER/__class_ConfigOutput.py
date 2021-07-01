@@ -27,7 +27,7 @@ class DSamplingOutput:
         print(f"Saved raw data over {self.npts-1} diagonally sampled points to {self.out_dir}")
     def __diag_plot(self, arr, plt_type='energy'):
         assert isinstance(plt_type, str); plt.clf(); fig, ax = plt.subplots()
-        ax.set_aspect('equal') # prevent axis stretching
+        # ax.set_aspect('equal') # prevent axis stretching
         ax.set_title(f"{'Energies' if plt_type == 'energy' else 'Interlayer spacing'} along diagonal")
         x = np.linspace(0, 1, self.npts); y = self.energies if plt_type == 'energy' else self.spacings
         if self.special_pts is not None:
