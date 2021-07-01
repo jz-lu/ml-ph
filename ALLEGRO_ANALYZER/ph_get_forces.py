@@ -20,6 +20,7 @@ def get_twisted_forces(indir):
     configs = [build_dir([indir, CONFIG_DIR_NAME, config, ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME]) for config in configs]
     paths = layers + configs # concatenate all paths together
     for path in paths: # intralayer terms
+        print(f"Generating {PH_FORCE_SETS_NAME} in {path}...")
         assert os.path.isdir(path), f"Directory {path} does not exist"
         disps = findDirsinDir(path, PHDISP_STATIC_NAME, searchType='start')
         ph_generate_forcesets(path, len(disps), path_pad=ANALYSIS_DIR_NAME)
@@ -30,6 +31,7 @@ def get_twisted_forces(indir):
 if __name__ == '__main__':
     args = copy.deepcopy(sys.argv)[1:]; i = 0; n = len(args)
     indir = '.'; outdir = None; twisted = True
+    USAGE_ERR_MSG = f"Usage: python3 <DIR>/{sys.argv[0]} -dir <MAIN PHONON DIRECTORY> -o <PRINT DIR (optional)> -tw (if twisted)"
     while i < n:
         if not is_flag(args[i]):
             warn(f'Warning: token "{args[i]}" is out of place and will be ignored')
@@ -41,8 +43,11 @@ if __name__ == '__main__':
         elif args[i] == '-tw':
             i += 1; check_not_flag(args[i]); assert args[i] in ['T', 'F'], "-tw flag must be 'T' or 'F'"
             twisted = (args[i] == 'T'); i += 1
+        elif args[i] == '--usage':
+            print(USAGE_ERR_MSG)
+            sys.exit(0)
         else:
-            err(f"Usage: python3 {sys.argv[0]} -dir <MAIN PHONON DIRECTORY> -o <PRINT DIR (optional)>")
+            err(USAGE_ERR_MSG)
     outdir = indir if outdir is None else outdir
     indir = checkPath(os.path.abspath(indir)); outdir = checkPath(os.path.abspath(outdir))
 
