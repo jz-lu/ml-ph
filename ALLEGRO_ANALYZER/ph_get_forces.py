@@ -30,7 +30,7 @@ def get_twisted_forces(indir):
 
 if __name__ == '__main__':
     args = copy.deepcopy(sys.argv)[1:]; i = 0; n = len(args)
-    indir = '.'; outdir = None; twisted = True
+    indir = '.'; outdir = None; twisted = False
     USAGE_ERR_MSG = f"Usage: python3 <DIR>/{sys.argv[0]} -dir <MAIN PHONON DIRECTORY> -o <PRINT DIR (optional)> -tw (if twisted)"
     while i < n:
         if not is_flag(args[i]):
@@ -40,9 +40,8 @@ if __name__ == '__main__':
             i += 1; check_not_flag(args[i]); indir = checkPath(args[i]); i += 1
         elif args[i] == '-o':
             i += 1; check_not_flag(args[i]); outdir = checkPath(args[i]); i += 1
-        elif args[i] == '-tw':
-            i += 1; check_not_flag(args[i]); assert args[i] in ['T', 'F'], "-tw flag must be 'T' or 'F'"
-            twisted = (args[i] == 'T'); i += 1
+        elif args[i] == '--tw':
+            twisted = True; i += 1
         elif args[i] == '--usage':
             print(USAGE_ERR_MSG)
             sys.exit(0)

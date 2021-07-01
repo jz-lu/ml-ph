@@ -136,8 +136,7 @@ def ph_generate_forcesets(dirName, dispNum, path_pad=None):
     # If force sets created then proceed, if not exit with error. Use find function to find out.
     if not os.path.isfile(dirName + PH_FORCE_SETS_NAME):
         exit_with_error(ERR_PH_FORCE_SETS_NOT_FOUND)
-    
-    print("[DEBUG] FORCE_SETS put in directory " + dirName)
+    print("FORCE_SETS put in directory " + dirName)
     return 
     
 # Get a neat function that uses the above functions to handle all processing

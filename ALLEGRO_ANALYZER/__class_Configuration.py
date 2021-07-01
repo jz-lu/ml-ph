@@ -249,7 +249,7 @@ class Configuration:
         at_idxs = [np.array([i for i, l in enumerate(lidxs) if l == j]) for j in range(1, 1+max(lidxs))]
         assert len(at_idxs) == 2, f"Number of layers is {len(at_idxs)} but only 2 supported (for now), layer indices: {lidxs}"
         if expand:
-            at_idxs = [np.concatenate((3*li, 3*li+1, 3*li+2)) for li in at_idxs]
+            at_idxs = [sorted(np.concatenate((3*li, 3*li+1, 3*li+2))) for li in at_idxs]
         print("Final atomic indices (%sexpanded in Cartesian DOFs):"%("" if expand else "not "), at_idxs)
         return at_idxs
     
