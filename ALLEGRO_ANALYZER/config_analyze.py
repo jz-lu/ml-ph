@@ -91,7 +91,7 @@ if __name__ == '__main__':
 
     if diag:
         pts = [0, nshifts//3, 2*nshifts//3]
-        print("Parsing successful, passing to analyzer...")
+        print(f"Parsing successful (special points: {pts}), passing to analyzer...")
         do = DSamplingOutput(data_dir, nshifts, special_pts=pts, energies=energies, spacings=zspaces)
         do.output_all_analysis()
     else:

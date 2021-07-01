@@ -14,7 +14,7 @@ class DSamplingOutput:
         minenergy = min(energies); self.energies = 1000*(np.array(energies)-minenergy)
         self.spacings = np.array(spacings)
         assert special_pts is None or len(special_pts) == 3, f"Must give list of 3 special points, but is {special_pts}"
-        self.special_pts = np.array(special_pts); self.special_pts = np.append(self.special_pts, 1.0)
+        self.special_pts = np.array(special_pts); self.special_pts = np.append(self.special_pts, npts)
         self.energies = np.append(self.energies, self.energies[0])
         self.spacings = np.append(self.spacings, self.spacings[0]) # impose periodic boundary conditions
         print("Initialized DSamplingOutput object")
@@ -23,13 +23,14 @@ class DSamplingOutput:
         np.save(self.out_dir + DSAMPLE_SPACINGS_NAME, self.spacings)
         np.savetxt(self.out_dir + DSAMPLE_ENERGIES_NAME, self.energies)
         np.savetxt(self.out_dir + DSAMPLE_SPACINGS_NAME, self.spacings)
-        print(f"Saved raw data over {self.npts} diagonally sampled points to {self.out_dir}")
+        print(f"Saved raw data over {self.npts-1} diagonally sampled points to {self.out_dir}")
     def __diag_plot(self, arr, plt_type='energy'):
         assert isinstance(plt_type, str); plt.clf(); fig, ax = plt.subplots()
         ax.set_aspect('equal') # prevent axis stretching
         ax.set_title(f"{'Energies' if plt_type == 'energy' else 'Interlayer spacing'} along diagonal")
         x = np.linspace(0, 1, self.npts); y = self.energies if plt_type == 'energy' else self.spacings
         if self.special_pts is not None:
+            print(f"Adding high-symmetry tick labels {HIGH_SYMMETRY_LABELS} at {x[self.special_pts]}")
             plt.xticks(ticks=x[self.special_pts], labels=HIGH_SYMMETRY_LABELS)
         else:
             plt.tick_params(
