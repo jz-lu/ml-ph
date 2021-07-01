@@ -6,7 +6,7 @@ from ___constants_names import (
     RELAXATION_DIR_NAME, ANALYSIS_DIR_NAME, 
     TOTAL_ENER_DIR_NAME, TOT_ENERGIES_NAME
 )
-from __class_ConfigOutput import ConfigOutput
+from __class_ConfigOutput import ConfigOutput, DSamplingOutput
 from __directory_searchers import checkPath
 from __class_CarCollector import CarCollector
 import numpy as np
@@ -17,7 +17,7 @@ from time import time
 from ___helpers_parsing import succ, warn, err
 
 if __name__ == '__main__':
-    USAGE_ERR_MSG = 'Usage: python3 <DIR>/config_analyze.py -n <NUM SHIFTS> -d <I/O DIR FROM MAIN PROGRAM> -e <MIN ENERGY (eV)>'
+    USAGE_ERR_MSG = 'Usage: python3 <DIR>/config_analyze.py -n <NUM SHIFTS> -d <I/O DIR FROM MAIN PROGRAM> -e <MIN ENERGY (eV)> --diag (if diagonal)'
 
     # The ConfigOutput class expects a COB matrix and 
     # a list of (config vector b, z-spacing, energy in eV), as well as a minimum energy in eV to shift by.
@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     # Parse cmdline args
     cmdargs = list(copy.deepcopy(sys.argv))[1:]; i = 0; n = len(cmdargs)
-    BASE_ROOT = '.'; abs_min_energy = None; nshifts = None
+    BASE_ROOT = '.'; abs_min_energy = None; nshifts = None; diag = False
     nlevel = 301
     while i < n:
         if cmdargs[i] == '-n':
@@ -37,6 +37,8 @@ if __name__ == '__main__':
             i += 1; abs_min_energy = float(cmdargs[i]); i += 1
         elif cmdargs[i] == '-l':
             i += 1; nlevel = int(cmdargs[i]); i += 1
+        elif cmdargs[i] == '--diag':
+            diag = True; i += 1
         else:
             warn(f"Unrecognized token '{cmdargs[i]}'")
             err(USAGE_ERR_MSG)
@@ -49,6 +51,7 @@ if __name__ == '__main__':
         print("Using automatic minimum energy shift.")
     else:
         print(f"Using minimum energy shift {abs_min_energy} eV.")
+    print(f"Analysis type: {'along diagonal' if diag else 'grid configurations'}")
 
     # Collect COB matrix and layer indices
     data_dir = BASE_ROOT + checkPath(CONFIG_DATA_DIR)
@@ -83,19 +86,25 @@ if __name__ == '__main__':
             energies[i] = float(f.readline().split(' ')[-1])
     print("Energies retrieved.")
 
-    # Combine into (b, z, e) points and pass to ConfigOutput
-    bze = []
-    print("Combining data into bze-points data structure...")
-    for b, z, e in zip(bshifts, zspaces, energies):
-        bze.append(np.array([b, z, e]))
-    print("Successfully combined.")
+    if diag:
+        pts = [0, nshifts//3, 2*nshifts//3]
+        print("Parsing successful, passing to analyzer...")
+        do = DSamplingOutput(data_dir, nshifts, special_pts=pts, energies=energies, spacings=zspaces)
+        do.output_all_analysis()
+    else:
+        # Combine into (b, z, e) points and pass to ConfigOutput
+        bze = []
+        print("Combining data into bze-points data structure...")
+        for b, z, e in zip(bshifts, zspaces, energies):
+            bze.append(np.array([b, z, e]))
+        print("Successfully combined.")
 
-    bze = np.array(bze)
-    np.save(data_dir + 'bze', bze)
-    do = None
-    print("Parsing successful, passing to analyzer...")
-    do = ConfigOutput(data_dir, bze, cob, abs_min_energy=abs_min_energy)
-    do.output_all_analysis(levels=nlevel)
+        bze = np.array(bze)
+        np.save(data_dir + 'bze', bze)
+        do = None
+        print("Parsing successful, passing to analyzer...")
+        do = ConfigOutput(data_dir, bze, cob, abs_min_energy=abs_min_energy)
+        do.output_all_analysis(levels=nlevel)
     print("Analyzer has finished running.")
 
     succ("== Configuration Analyzer Complete (Took %.3lfs) =="%(time()-start_time))

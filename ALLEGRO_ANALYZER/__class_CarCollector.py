@@ -243,7 +243,9 @@ class CarCollector:
         return Poscar.from_file(checkPath(dirName) + POSCAR_NAME)
     
     @staticmethod
-    def lattice_basis_angle(lattice_matrix):
+    def lattice_basis_angle(lattice_matrix, col=False):
+        if col:
+            lattice_matrix = lattice_matrix.T
         a1 = lattice_matrix[0,:2]; a2 = lattice_matrix[1,:2]
         a1 = a1 / LA.norm(a1); a2 = a2 / LA.norm(a2)
         return round(np.rad2deg(np.arccos(np.dot(a1,a2))), 3)

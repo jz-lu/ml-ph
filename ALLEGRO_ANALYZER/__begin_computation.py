@@ -46,6 +46,7 @@ def begin_computation(user_input_settings):
             if not (np.isclose(angle, 60) or np.isclose(angle, 120)):
                 exit_with_error('Error: lattice angle must be 60 or 120')
             diag = np.array([0.333333, 0.333333, 0]) if np.isclose(angle, 60) else np.array([0.333333, 0.666667, 0])
+            assert grid_size % 3 == 0, f"Number of points must be a multiple of 3 to properly assess high-symmetry points"
             sampling_set = Configuration.sample_line(npts=grid_size, basis=diag)
             print(f"Sampled {grid_size} points along line {diag}")
         else:

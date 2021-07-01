@@ -23,7 +23,7 @@ class BZSampler:
         assert 180 > theta > 0
         assert os.path.isdir(outdir)
         self.outdir = checkPath(outdir); self.theta = theta; self.G0 = G0; self.A0 = A0
-        self.lattice_angle = CarCollector.lattice_basis_angle(self.A0)
+        self.lattice_angle = CarCollector.lattice_basis_angle(self.A0, col=True)
         self.super_dim = super_dim
 
         # Generate G basis via rotation matrices

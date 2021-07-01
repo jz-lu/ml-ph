@@ -28,8 +28,9 @@ class DSamplingOutput:
         assert isinstance(plt_type, str); plt.clf(); fig, ax = plt.subplots()
         ax.set_aspect('equal') # prevent axis stretching
         ax.set_title(f"{'Energies' if plt_type == 'energy' else 'Interlayer spacing'} along diagonal")
+        x = np.linspace(0, 1, self.npts); y = self.energies if plt_type == 'energy' else self.spacings
         if self.special_pts is not None:
-            plt.xticks(ticks=self.special_pts, labels=HIGH_SYMMETRY_LABELS)
+            plt.xticks(ticks=x[self.special_pts], labels=HIGH_SYMMETRY_LABELS)
         else:
             plt.tick_params(
                 axis='x',          # changes apply to the x-axis
@@ -38,8 +39,14 @@ class DSamplingOutput:
                 top=False,         # ticks along the top edge are off
                 labelbottom=False) # labels along the bottom edge are off
         ax.set_ylabel(r"$E_{tot} (meV)$")
-        ax.scatter(np.linspace(0, 1, self.npts), self.energies)
-        fig.savefig(self.out_dir + f"diag_{plt_type}_plot.png")
+        ax.scatter(x, y); fig.savefig(self.out_dir + f"diag_{plt_type}_scatter.png")
+        line = ax.plot(x, y, c='k')
+        fig.savefig(self.out_dir + f"diag_{plt_type}_jagged.png")
+        line.pop(0).remove()
+        interpol = interpolate_scatter(x, y)
+        xp = np.linspace(0, 1, 301); yp = interpol(xp)
+        ax.plot(xp, yp, c='k')
+        fig.savefig(self.out_dir + f"diag_{plt_type}_smooth.png")
     def plot_energies(self):
         self.__diag_plot(self.energies, plt_type='energy')
     def plot_spacings(self):
