@@ -87,7 +87,7 @@ if __name__ == '__main__':
         with open(BASE_ROOT + checkPath(CONFIG_SUBDIR_NAME + str(i)) 
                     + checkPath(ANALYSIS_DIR_NAME) + checkPath(TOTAL_ENER_DIR_NAME) + TOT_ENERGIES_NAME) as f:
             energies[i] = float(f.readline().split(' ')[-1])
-    print("Energies retrieved.")
+    print(f"Energies retrieved: {energies}")
 
     if diag:
         pts = [0, nshifts//3, 2*nshifts//3]
