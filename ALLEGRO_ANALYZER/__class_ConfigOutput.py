@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
 from ___constants_config import DEFAULT_ABS_MIN_ENERGY
-from ___constants_names import DSAMPLE_ENERGIES_NAME, DSAMPLE_SPACINGS_NAME
+from ___constants_names import DSAMPLE_ENERGIES_NAME, DSAMPLE_SPACINGS_NAME, DSAMPLE_ENERGIES_TXT, DSAMPLE_SPACINGS_TXT
 from ___constants_output import DEFAULT_CONTOUR_LEVELS, HIGH_SYMMETRY_LABELS
 from __directory_searchers import checkPath
 from scipy.interpolate import make_interp_spline as interpolate_scatter
@@ -12,6 +12,7 @@ class DSamplingOutput:
         assert ltype == 'hexagonal', f"Only hexagonal lattices supported (for now), but got {ltype}"
         self.out_dir = checkPath(out_dir); self.npts = npts + 1 # add 1 for periodici boundary conditions
         minenergy = min(energies); self.energies = 1000*(np.array(energies)-minenergy)
+        print(f"Adjusted energies (meV): {self.energies}")
         self.spacings = np.array(spacings)
         assert special_pts is None or len(special_pts) == 3, f"Must give list of 3 special points, but is {special_pts}"
         self.special_pts = np.array(special_pts); self.special_pts = np.append(self.special_pts, npts)
@@ -21,8 +22,8 @@ class DSamplingOutput:
     def save_raw_data(self):
         np.save(self.out_dir + DSAMPLE_ENERGIES_NAME, self.energies)
         np.save(self.out_dir + DSAMPLE_SPACINGS_NAME, self.spacings)
-        np.savetxt(self.out_dir + DSAMPLE_ENERGIES_NAME, self.energies)
-        np.savetxt(self.out_dir + DSAMPLE_SPACINGS_NAME, self.spacings)
+        np.savetxt(self.out_dir + DSAMPLE_ENERGIES_TXT, self.energies)
+        np.savetxt(self.out_dir + DSAMPLE_SPACINGS_TXT, self.spacings)
         print(f"Saved raw data over {self.npts-1} diagonally sampled points to {self.out_dir}")
     def __diag_plot(self, arr, plt_type='energy'):
         assert isinstance(plt_type, str); plt.clf(); fig, ax = plt.subplots()
