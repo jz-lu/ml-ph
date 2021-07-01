@@ -40,7 +40,7 @@ class DSamplingOutput:
                 bottom=False,      # ticks along the bottom edge are off
                 top=False,         # ticks along the top edge are off
                 labelbottom=False) # labels along the bottom edge are off
-        ax.set_ylabel(r"$E_{tot} (meV)$")
+        ax.set_ylabel(r"$E_{tot} (meV)$" if plt_type == 'energy' else 'Interlayer spacing (unitless)')
         ax.scatter(x, y); fig.savefig(self.out_dir + f"diag_{plt_type}_scatter.png")
         line = ax.plot(x, y, c='k')
         fig.savefig(self.out_dir + f"diag_{plt_type}_jagged.png")
