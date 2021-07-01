@@ -53,7 +53,7 @@ class DSamplingOutput:
     def plot_spacings(self):
         self.__diag_plot(self.spacings, plt_type='z')
     def output_all_analysis(self):
-        self.save_raw_data(); self.plot_energies(); self.output_all_analysis()
+        self.save_raw_data(); self.plot_energies(); self.plot_spacings()
 
 class ConfigOutput:
     # plot list is a list of tuples (b, z, e) = (shift, z-spacing, energy).
