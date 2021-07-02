@@ -7,7 +7,7 @@ from ___constants_names import (
     DSAMPLE_ENERGIES_NAME, DSAMPLE_SPACINGS_NAME, 
     DSAMPLE_ENERGIES_TXT, DSAMPLE_SPACINGS_TXT, 
     DSAMPLE_FORCES_NAME, 
-    FGSFE_COEFF_NAME, FGSFE_SCORE_NAME, FGSFE_PLOT_NAME, FGSFE_SCATTER_NAME
+    FGSFE_COEFF_NAME, FGSFE_SCORE_NAME, FGSFE_PLOT_NAME
 )
 from ___constants_output import DEFAULT_CONTOUR_LEVELS, HIGH_SYMMETRY_LABELS
 from __directory_searchers import checkPath
@@ -74,9 +74,6 @@ class DSamplingOutput:
                 labelbottom=False) # labels along the bottom edge are off
         ax.set_ylabel(y_lab)
         ax.scatter(x, y); fig.savefig(self.out_dir + f"diag_{plt_type}_scatter.png")
-        line = ax.plot(x, y, c='k')
-        fig.savefig(self.out_dir + f"diag_{plt_type}_jagged.png")
-        line.pop(0).remove()
         interpol = interpolate_scatter(x, y)
         xp = np.linspace(0, 1, 301); yp = interpol(xp)
         ax.plot(xp, yp, c='k')
@@ -283,16 +280,14 @@ class FourierGSFE:
         self.__ensure_fitted(); return self.reg.score(self.X, self.GSFE)
     def predict(self, b_matrix):
         self.__ensure_fitted(); return self.reg.predict(self.__b_to_fourier_basis(b_matrix))
-    def plot_pred_vs_actual(self, outdir, outname=FGSFE_PLOT_NAME, scatname=FGSFE_SCATTER_NAME):
+    def plot_pred_vs_actual(self, outdir, outname=FGSFE_PLOT_NAME):
         print("Plotting predicted vs. actual...")
         assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
         outdir = checkPath(outdir); plt.clf(); fig, ax = plt.subplots()
         x = self.predict(self.b_matrix); y = self.GSFE
         maxmax = max(max(x), max(y)); minmin = min(min(x), min(y))
-        ax.set_xlabel("Fourier prediction"); ax.set_ylabel("Actual")
+        ax.set_xlabel("Predicted"); ax.set_ylabel("Actual")
         ax.set_title(f"GSFE Fourier fitting on {self.stype} sampling")
-        ax.scatter(x, y, c='k')
-        fig.savefig(outdir + scatname)
         ax.plot([minmin, maxmax], [minmin, maxmax], c='royalblue') # y=x line
         print(f"Predicted:\n {x}\nActual: \n{y}")
         fig.savefig(outdir + outname)
