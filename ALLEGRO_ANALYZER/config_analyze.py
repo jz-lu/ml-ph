@@ -71,9 +71,9 @@ if __name__ == '__main__':
     print("Retrieving shift coordinates...")
     for i in range(nshifts):
         with open(BASE_ROOT + checkPath(CONFIG_SUBDIR_NAME + str(i)) + SHIFT_NAME, 'r') as f:
-            bshifts[i] = np.array(list(map(float, f.read().splitlines())))
+            bshifts[i] = list(map(float, f.read().splitlines()))
+    bshifts = np.array(bshifts)
     print("Shift coordinates retrieved.")
-    breakpoint()
 
     # Collect z-spacings
     print("Retrieving z-spacings...")
