@@ -14,6 +14,7 @@ import sys, copy
 from os.path import isdir
 import os
 from time import time
+from math import sqrt
 from ___helpers_parsing import succ, warn, err, update, greet
 
 if __name__ == '__main__':
@@ -98,9 +99,6 @@ if __name__ == '__main__':
         update(f"Parsing successful (special points: {pts}), passing to analyzer...")
         do = DSamplingOutput(data_dir, nshifts, special_pts=pts, energies=energies, spacings=zspaces)
         do.output_all_analysis()
-        if ff:
-            ff_gsfe = FourierGSFE(energies, bshifts)
-            ff_gsfe.output_all_analysis(data_dir)
     else:
         # Combine into (b, z, e) points and pass to ConfigOutput
         bze = []
@@ -108,13 +106,18 @@ if __name__ == '__main__':
         for b, z, e in zip(bshifts, zspaces, energies):
             bze.append(np.array([b, z, e]))
         print("Successfully combined.")
-
         bze = np.array(bze)
         np.save(data_dir + 'bze', bze)
         do = None
         print("Parsing successful, passing to analyzer...")
         do = ConfigOutput(data_dir, bze, cob, abs_min_energy=abs_min_energy)
         do.output_all_analysis(levels=nlevel)
+    if ff:
+        stype = '%d-%s'%(nshifts if diag else int(sqrt(nshifts)), 'diagonal' if diag else 'grid')
+        ff_gsfe = FourierGSFE(energies, bshifts, cob, sampling_type=stype)
+        ff_gsfe.output_all_analysis(data_dir)
+            
+
     print("Analyzer has finished running.")
 
     succ("== Configuration Analyzer Complete (Took %.3lfs) =="%(time()-start_time))

@@ -234,7 +234,8 @@ class ConfigOutput:
 # See Eq(4), Carr 2018
 # Bugs: may not work if unit cell vectors is 60 deg instead of 120
 class FourierGSFE:
-    def __init__(self, energies, b_matrix, lattice_matrix, ltype='hexagonal'):
+    def __init__(self, energies, b_matrix, lattice_matrix, ltype='hexagonal', sampling_type='grid'):
+        self.stype = sampling_type; assert isinstance(self.stype, str)
         self.__A = lattice_matrix
         print("Initializing FourierGSFE object")
         assert ltype == 'hexagonal', "Non-hexagonal lattices not supported"
@@ -289,7 +290,7 @@ class FourierGSFE:
         x = self.predict(self.b_matrix); y = self.GSFE
         maxmax = max(max(x), max(y)); minmin = min(min(x), min(y))
         ax.set_xlabel("Fourier prediction"); ax.set_ylabel("Actual")
-        ax.set_title("GSFE fit to 6-term Fourier series")
+        ax.set_title(f"GSFE Fourier fitting on {self.stype} sampling")
         ax.scatter(x, y, c='k')
         fig.savefig(outdir + scatname)
         ax.plot([minmin, maxmax], [minmin, maxmax], c='royalblue') # y=x line
