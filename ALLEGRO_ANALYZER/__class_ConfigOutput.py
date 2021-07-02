@@ -7,7 +7,8 @@ from ___constants_names import (
     DSAMPLE_ENERGIES_NAME, DSAMPLE_SPACINGS_NAME, 
     DSAMPLE_ENERGIES_TXT, DSAMPLE_SPACINGS_TXT, 
     DSAMPLE_FORCES_NAME, 
-    FGSFE_COEFF_NAME, FGSFE_SCORE_NAME, FGSFE_PLOT_NAME
+    FGSFE_COEFF_NAME, FGSFE_COEFF_TXT, 
+    FGSFE_SCORE_NAME, FGSFE_PLOT_NAME
 )
 from ___constants_output import DEFAULT_CONTOUR_LEVELS, HIGH_SYMMETRY_LABELS
 from __directory_searchers import checkPath
@@ -273,6 +274,7 @@ class FourierGSFE:
         outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
         self.__ensure_fitted()
         np.save(outdir + FGSFE_COEFF_NAME, self.coeffs)
+        np.save(outdir + FGSFE_COEFF_TXT, self.coeffs)
         np.save(outdir + FGSFE_SCORE_NAME, self.get_score())
     def get_coeffs(self):
         self.__ensure_fitted(); return self.coeffs
