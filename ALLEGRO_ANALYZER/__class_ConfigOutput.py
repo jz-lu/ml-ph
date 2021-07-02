@@ -246,12 +246,12 @@ class FourierGSFE:
         M = 2 * pi * np.array([[1, -1/sqrt(3)], [0, 2/sqrt(3)]]) # for hexagonal lattices of 120 lattice angle only
         return (M @ b_mat.T).T
     def __vw_to_fourier_basis(self, vw):
-        X = np.ones((self.nb, 6)); v = vw[:,0]; w = vw[:,1] # col 0 is bias
-        X[:,1] = np.cos(v) + np.cos(w) + np.cos(v + w)
-        X[:,2] = np.cos(v + 2*w) + np.cos(v - w) + np.cos(2*v + w) 
-        X[:,3] = np.cos(2*v) + np.cos(2*w) + np.cos(2*v + 2*w) 
-        X[:,4] = np.sin(v) + np.sin(w) - np.sin(v + w)
-        X[:,5] = np.sin(2*v + 2*w) - np.sin(2*v) - np.sin(2*w)
+        X = np.ones((self.nb, 5)); v = vw[:,0]; w = vw[:,1] # col 0 is bias
+        X[:,0] = np.cos(v) + np.cos(w) + np.cos(v + w)
+        X[:,1] = np.cos(v + 2*w) + np.cos(v - w) + np.cos(2*v + w) 
+        X[:,2] = np.cos(2*v) + np.cos(2*w) + np.cos(2*v + 2*w) 
+        X[:,3] = np.sin(v) + np.sin(w) - np.sin(v + w)
+        X[:,4] = np.sin(2*v + 2*w) - np.sin(2*v) - np.sin(2*w)
         return X
     def __b_to_fourier_basis(self, b_mat):
         return self.__vw_to_fourier_basis(self.__b_to_vw(b_mat))
