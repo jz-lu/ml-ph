@@ -38,11 +38,14 @@ ALGO = 'N'
 NELMIN = 5
 PREC = 'Accurate'
 POTIM = 0.05
-# vdW settings
+
+# SCAN-rvv10 vdW settings
 METAGGA = 'SCAN'
 LASPH = '.TRUE.'
 LUSE_VDW = '.TRUE.'
 BPARAM = 15.7
+
+# DFT-D3 vdW settings
 GGA = 'PE'
 IVDW = 12
 

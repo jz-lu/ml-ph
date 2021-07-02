@@ -1,34 +1,60 @@
 import matplotlib.pyplot as plt
-import matplotlib
+import matplotlib.colors as mcolors
 import numpy as np
 from ___constants_config import DEFAULT_ABS_MIN_ENERGY
-from ___constants_names import DSAMPLE_ENERGIES_NAME, DSAMPLE_SPACINGS_NAME, DSAMPLE_ENERGIES_TXT, DSAMPLE_SPACINGS_TXT
+from ___constants_names import (
+    DSAMPLE_ENERGIES_NAME, DSAMPLE_SPACINGS_NAME, 
+    DSAMPLE_ENERGIES_TXT, DSAMPLE_SPACINGS_TXT, 
+    DSAMPLE_FORCES_NAME
+)
 from ___constants_output import DEFAULT_CONTOUR_LEVELS, HIGH_SYMMETRY_LABELS
 from __directory_searchers import checkPath
 from scipy.interpolate import make_interp_spline as interpolate_scatter
+from pymatgen.io.vasp.inputs import Poscar
+import phonopy, copy
 
 class DSamplingOutput:
-    def __init__(self, out_dir, npts, special_pts=None, energies=None, spacings=None, ltype='hexagonal'):
+    def __init__(self, out_dir, npts, special_pts=None, energies=None, spacings=None, ph_list=None, ltype='hexagonal'):
         assert ltype == 'hexagonal', f"Only hexagonal lattices supported (for now), but got {ltype}"
+        print("Initializing DSamplingOutput object")
         self.out_dir = checkPath(out_dir); self.npts = npts + 1 # add 1 for periodici boundary conditions
-        minenergy = min(energies); self.energies = 1000*(np.array(energies)-minenergy)
-        print(f"Adjusted energies (meV): {self.energies}")
-        self.spacings = np.array(spacings)
+        self.spacings = None; self.energies = None; self.force_matrices = None
+        if energies is not None:
+            minenergy = min(energies); self.energies = 1000*(np.array(energies)-minenergy)
+            print(f"Adjusted energies (meV): {self.energies}")
+            self.energies = np.append(self.energies, self.energies[0])
+            print("Initialized energies")
+        if spacings is not None:
+            self.spacings = np.array(spacings)
+            self.spacings = np.append(self.spacings, self.spacings[0]) # impose periodic boundary conditions
+            print("Initialized interlayer spacings")
         assert special_pts is None or len(special_pts) == 3, f"Must give list of 3 special points, but is {special_pts}"
-        self.special_pts = np.array(special_pts); self.special_pts = np.append(self.special_pts, npts)
-        self.energies = np.append(self.energies, self.energies[0])
-        self.spacings = np.append(self.spacings, self.spacings[0]) # impose periodic boundary conditions
-        print("Initialized DSamplingOutput object")
+        if special_pts is not None:
+            self.special_pts = np.array(special_pts); self.special_pts = np.append(self.special_pts, npts)
+            print("Initialized special points")
+        if ph_list is None:
+            self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in ph_list]
+            print("Initialized phonopy object list")
+
     def save_raw_data(self):
-        np.save(self.out_dir + DSAMPLE_ENERGIES_NAME, self.energies)
-        np.save(self.out_dir + DSAMPLE_SPACINGS_NAME, self.spacings)
-        np.savetxt(self.out_dir + DSAMPLE_ENERGIES_TXT, self.energies)
-        np.savetxt(self.out_dir + DSAMPLE_SPACINGS_TXT, self.spacings)
+        if self.energies is not None:
+            np.save(self.out_dir + DSAMPLE_ENERGIES_NAME, self.energies)
+            np.savetxt(self.out_dir + DSAMPLE_ENERGIES_TXT, self.energies)
+        if self.spacings is not None:
+            np.save(self.out_dir + DSAMPLE_SPACINGS_NAME, self.spacings)
+            np.savetxt(self.out_dir + DSAMPLE_SPACINGS_TXT, self.spacings)
+        if self.force_matrices is not None:
+            np.savez(self.out_dir + DSAMPLE_FORCES_NAME, *self.force_matrices)
         print(f"Saved raw data over {self.npts-1} diagonally sampled points to {self.out_dir}")
+
     def __diag_plot(self, arr, plt_type='energy'):
-        assert isinstance(plt_type, str); plt.clf(); fig, ax = plt.subplots()
-        # ax.set_aspect('equal') # prevent axis stretching
-        ax.set_title(f"{'Energies' if plt_type == 'energy' else 'Interlayer spacing'} along diagonal")
+        assert plt_type in ['energy', 'z', 'forces']; plt.clf(); fig, ax = plt.subplots()
+        title = 'Energies'; y_lab = r"$E_{tot} (meV)$"; y = self.energies
+        if plt_type == 'z':
+            title = 'Interlayer spacing'; y_lab = 'Interlayer spacing (unitless)'
+        elif plt_type == 'forces':
+            pass
+        ax.set_title(f"{title} along diagonal")
         x = np.linspace(0, 1, self.npts); y = self.energies if plt_type == 'energy' else self.spacings
         if self.special_pts is not None:
             print(f"Adding high-symmetry tick labels {HIGH_SYMMETRY_LABELS} at {x[self.special_pts]}")
@@ -40,7 +66,7 @@ class DSamplingOutput:
                 bottom=False,      # ticks along the bottom edge are off
                 top=False,         # ticks along the top edge are off
                 labelbottom=False) # labels along the bottom edge are off
-        ax.set_ylabel(r"$E_{tot} (meV)$" if plt_type == 'energy' else 'Interlayer spacing (unitless)')
+        ax.set_ylabel(y_lab)
         ax.scatter(x, y); fig.savefig(self.out_dir + f"diag_{plt_type}_scatter.png")
         line = ax.plot(x, y, c='k')
         fig.savefig(self.out_dir + f"diag_{plt_type}_jagged.png")
@@ -49,12 +75,57 @@ class DSamplingOutput:
         xp = np.linspace(0, 1, 301); yp = interpol(xp)
         ax.plot(xp, yp, c='k')
         fig.savefig(self.out_dir + f"diag_{plt_type}_smooth.png")
+    
     def plot_energies(self):
+        assert self.energies is not None, "Energy data was not provided to analyzer"
         self.__diag_plot(self.energies, plt_type='energy')
+    
     def plot_spacings(self):
+        assert self.spacings is not None, "Interlayer spacings data was not provided to analyzer"
         self.__diag_plot(self.spacings, plt_type='z')
+    
     def output_all_analysis(self):
         self.save_raw_data(); self.plot_energies(); self.plot_spacings()
+    
+    def plot_forces(self, atomic_idx_pairs, layer_idx_pairs, cart_idxs, poscar : Poscar):
+        cols = list(mcolors.TABLEAU_COLORS.keys()); ncol = len(cols)
+        assert (len(atomic_idx_pairs) == len(layer_idx_pairs) == len(cart_idxs), 
+            f"[Set 1] Number of atomic, layer, and Cartesian indices must be the same, but is {len(atomic_idx_pairs)}, {len(layer_idx_pairs)}, and {len(cart_idxs)}")
+        atomic_sites = list(map(lambda x: x.species.elements[0].symbol, poscar.structure.sites)); n_at = len(atomic_sites)
+        cart_letters = copy.deepcopy(cart_idxs)
+        for i, idx in enumerate(cart_idxs):
+                if idx == 'x':
+                    cart_idxs[i] = 0
+                elif idx == 'y':
+                    cart_idxs[i] = 1
+                elif idx == 'z':
+                    cart_idxs[i] = 2
+                else:
+                    assert False, f"Invalid Cartesian element {idx} at position {i, j}"
+        print(f"Transformed Cartesian pairs to {cart_idxs}")
+        plt.clf(); fig, ax = plt.subplots(); x = np.linspace(0, 1, self.npts)
+        ax.set_title(f"Forces along diagonal")
+        if self.special_pts is not None:
+            print(f"Adding high-symmetry tick labels {HIGH_SYMMETRY_LABELS} at {x[self.special_pts]}")
+            plt.xticks(ticks=x[self.special_pts], labels=HIGH_SYMMETRY_LABELS)
+        else:
+            plt.tick_params(
+                axis='x',          # changes apply to the x-axis
+                which='both',      # both major and minor ticks are affected
+                bottom=False,      # ticks along the bottom edge are off
+                top=False,         # ticks along the top edge are off
+                labelbottom=False) # labels along the bottom edge are off
+        ax.set_ylabel(r"Force (ev/$\AA$)")
+        for i, (ats, ls, c, cl) in enumerate(zip(atomic_idx_pairs, layer_idx_pairs, cart_idxs, cart_letters)):
+            ats = np.array(ats); ls = np.array(ls); c = np.array(c)
+            assert len(ats) == len(ls) == len(c) == 2
+            assert ls[0] in [1, 2] and ls[1] in [1,2]; assert 0 <= ats[0] < n_at and 0 <= ats[1] < n_at
+            idxs = 3*ats + c; y = np.array([f[idxs[0], idxs[1]] for f in self.force_matrices])
+            interpol = interpolate_scatter(x, y); xp = np.linspace(0, 1, 301); yp = interpol(xp)
+            lab = '%s%d-%s%d(%x)'%(atomic_sites[ats[0]], ls[0], atomic_sites[ats[1]], ls[1], cl)
+            ax.scatter(x, y, c=cols[i%ncol]); ax.plot(xp, yp, c=cols[i%ncol], label=lab)
+        ax.legend()
+        fig.savefig(self.out_dir + f"diag_forces.png")
 
 class ConfigOutput:
     # plot list is a list of tuples (b, z, e) = (shift, z-spacing, energy).
