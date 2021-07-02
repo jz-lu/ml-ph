@@ -287,6 +287,7 @@ class FourierGSFE:
         x = self.predict(self.b_matrix); y = self.GSFE
         maxmax = max(max(x), max(y)); minmin = min(min(x), min(y))
         ax.set_xlabel("Predicted"); ax.set_ylabel("Actual")
+        ax.scatter(x, y, c='k')
         ax.set_title(f"GSFE Fourier fitting on {self.stype} sampling")
         ax.plot([minmin, maxmax], [minmin, maxmax], c='royalblue') # y=x line
         print(f"Predicted:\n {x}\nActual: \n{y}")
