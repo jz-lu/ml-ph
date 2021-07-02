@@ -60,7 +60,7 @@ class DSamplingOutput:
             pass
         ax.set_title(f"{title} along diagonal")
         x = np.linspace(0, 1, self.npts); y = self.energies if plt_type == 'energy' else self.spacings
-        print("Now plotting TYPE=", plt_type)
+        print(f"Now plotting TYPE={plt_type}")
         if self.special_pts is not None:
             print(f"Adding high-symmetry tick labels {HIGH_SYMMETRY_LABELS} at {x[self.special_pts]}")
             plt.xticks(ticks=x[self.special_pts], labels=HIGH_SYMMETRY_LABELS)
@@ -239,7 +239,9 @@ class FourierGSFE:
         assert len(energies) == len(b_matrix), f"Must have same number of configurations as energies, but got {len(b_matrix)} vs. {len(energies)}"
         b_matrix = b_matrix[:,:2]
         print(f"Configurations:\n {b_matrix}")
-        self.GSFE = energies; self.nb = len(b_matrix); self.b_matrix = b_matrix
+        minenergy = min(energies); self.GSFE = 1000*(np.array(energies)-minenergy)
+        print(f"Adjusted energies (meV): {self.GSFE}")
+        self.nb = len(b_matrix); self.b_matrix = b_matrix
         self.__fitted = False; self.coeffs = None; self.reg = None
         self.X = self.__b_to_fourier_basis(b_matrix)
     def __b_to_vw(self, b_mat):
