@@ -11,6 +11,7 @@ from ___constants_output import DEFAULT_CONTOUR_LEVELS, HIGH_SYMMETRY_LABELS
 from __directory_searchers import checkPath
 from scipy.interpolate import make_interp_spline as interpolate_scatter
 from pymatgen.io.vasp.inputs import Poscar
+from ___helpers_parsing import warn
 import phonopy, copy
 
 class DSamplingOutput:
@@ -124,6 +125,8 @@ class DSamplingOutput:
             interpol = interpolate_scatter(x, y); xp = np.linspace(0, 1, 301); yp = interpol(xp)
             lab = '%s%d-%s%d(%x)'%(atomic_sites[ats[0]], ls[0], atomic_sites[ats[1]], ls[1], cl)
             ax.scatter(x, y, c=cols[i%ncol]); ax.plot(xp, yp, c=cols[i%ncol], label=lab)
+        if len(cart_letters) > ncol:
+            warn("Warning: there are more force lines than colors available. Some lines will be ambiguous.")
         ax.legend()
         fig.savefig(self.out_dir + f"diag_forces.png")
 
