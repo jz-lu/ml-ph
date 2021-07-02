@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
+import numpy.linalg as LA
 from ___constants_config import DEFAULT_ABS_MIN_ENERGY
 from ___constants_names import (
     DSAMPLE_ENERGIES_NAME, DSAMPLE_SPACINGS_NAME, 
@@ -233,8 +234,9 @@ class ConfigOutput:
 # See Eq(4), Carr 2018
 # Bugs: may not work if unit cell vectors is 60 deg instead of 120
 class FourierGSFE:
-    def __init__(self, energies, b_matrix, ltype='hexagonal'):
-        print("Initilaizing FourierGSFE object")
+    def __init__(self, energies, b_matrix, lattice_matrix, ltype='hexagonal'):
+        self.__A = lattice_matrix
+        print("Initializing FourierGSFE object")
         assert ltype == 'hexagonal', "Non-hexagonal lattices not supported"
         assert len(energies) == len(b_matrix), f"Must have same number of configurations as energies, but got {len(b_matrix)} vs. {len(energies)}"
         b_matrix = b_matrix[:,:2]
@@ -245,7 +247,7 @@ class FourierGSFE:
         self.__fitted = False; self.coeffs = None; self.reg = None
         self.X = self.__b_to_fourier_basis(b_matrix)
     def __b_to_vw(self, b_mat):
-        M = 2 * pi * np.array([[1, -1/sqrt(3)], [0, 2/sqrt(3)]]) / 3.1 # for hexagonal lattices of 120 lattice angle only
+        M = 2 * pi * np.array([[1, -1/sqrt(3)], [0, 2/sqrt(3)]]) / LA.norm(self.__A[0]) # for hexagonal lattices of 120 lattice angle only
         return (M @ b_mat.T).T
     def __vw_to_fourier_basis(self, vw):
         X = np.ones((self.nb, 5)); v = vw[:,0]; w = vw[:,1] # col 0 is bias
