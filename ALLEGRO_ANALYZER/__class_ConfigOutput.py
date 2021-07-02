@@ -282,12 +282,13 @@ class FourierGSFE:
         print("Plotting predicted vs. actual...")
         assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
         outdir = checkPath(outdir); plt.clf(); fig, ax = plt.subplots()
-        x = self.predict(self.b_matrix); y = self.GSFE; maxmax = max(max(x), max(y))
+        x = self.predict(self.b_matrix); y = self.GSFE
+        maxmax = max(max(x), max(y)); minmin = min(min(x), min(y))
         ax.set_xlabel("Fourier prediction"); ax.set_ylabel("Actual")
         ax.set_title("GSFE fit to 6-term Fourier series")
         ax.scatter(x, y, c='k')
         fig.savefig(outdir + scatname)
-        ax.plot([0, maxmax], [0, maxmax], c='royalblue') # y=x line
+        ax.plot([minmin, maxmax], [minmin, maxmax], c='royalblue') # y=x line
         print(f"Predicted:\n {x}\nActual: \n{y}")
         fig.savefig(outdir + outname)
     def output_all_analysis(self, outdir):
