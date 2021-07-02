@@ -237,10 +237,10 @@ class FourierGSFE:
         assert ltype == 'hexagonal', "Non-hexagonal lattices not supported"
         assert len(energies) == len(b_matrix), f"Must have same number of configurations as energies, but got {len(b_matrix)} vs. {len(energies)}"
         b_matrix = b_matrix[:,:2]
-        print(f"Configurations: {b_matrix}")
+        print(f"Configurations:\n {b_matrix}")
         self.GSFE = energies; self.nb = len(b_matrix); self.b_matrix = b_matrix
         self.M = 2 * pi * np.array([[1, -1/sqrt(3)], [0, 2/sqrt(3)]]) # for hexagonal lattices
-        self.fitted = False; self.coeffs = None
+        self.__fitted = False; self.coeffs = None
         self.__vw = self.__cfg_to_uc_vectors(b_matrix); self.X = self.__fourier_basis_transform()
         self.reg = None
     def __cfg_to_uc_vectors(self, b_mat):
@@ -254,13 +254,14 @@ class FourierGSFE:
         X[:,5] = np.sin(2*v + 2*w) - np.sin(2*v) - np.sin(2*w)
         return X
     def __fit_coeff(self):
-        assert not self.fitted, f"Fitting already done"
+        assert not self.__fitted, f"Fitting already done"
         print("Fitting energies to Fourier series...")
         self.reg = LinearRegression().fit(self.X, self.GSFE)
         self.coeffs = np.append(self.reg.intercept_, self.reg.coef_)
+        self.__fitted = True
         return self.coeffs
     def __ensure_fitted(self):
-        if not self.fitted:
+        if not self.__fitted:
             self.__fit_coeff()
         assert self.coeffs is not None and self.reg is not None, f"Fitting failed"
     def save_raw_data(self, outdir):
@@ -274,11 +275,12 @@ class FourierGSFE:
     def get_score(self):
         self.__ensure_fitted(); return self.reg.score(self.X, self.GSFE)
     def predict(self, b_matrix):
+        breakpoint()
         self.__ensure_fitted(); return self.reg.predict(self.__cfg_to_uc_vectors(b_matrix))
     def plot_pred_vs_actual(self, outdir, outname=FGSFE_PLOT_NAME):
         print("Plotting predicted vs. actual...")
         assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
-        self.__ensure_fitted(); plt.clf(); fig, ax = plt.subplots()
+        plt.clf(); fig, ax = plt.subplots()
         x = self.predict(self.b_matrix); y = self.GSFE; maxmax = max(max(x), max(y))
         ax.scatter(x, y, c='k')
         ax.plot([0, maxmax], [0, maxmax], c='royalblue') # y=x line
