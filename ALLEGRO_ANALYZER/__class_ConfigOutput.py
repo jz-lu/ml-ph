@@ -101,7 +101,7 @@ class DSamplingOutput:
                 elif idx == 'z':
                     cart_idxs[i] = 2
                 else:
-                    assert False, f"Invalid Cartesian element {idx} at position {i, j}"
+                    assert False, f"Invalid Cartesian element {idx} at position {i}"
         print(f"Transformed Cartesian pairs to {cart_idxs}")
         plt.clf(); fig, ax = plt.subplots(); x = np.linspace(0, 1, self.npts)
         ax.set_title(f"Forces along diagonal")
