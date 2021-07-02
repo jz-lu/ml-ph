@@ -60,6 +60,7 @@ class DSamplingOutput:
             pass
         ax.set_title(f"{title} along diagonal")
         x = np.linspace(0, 1, self.npts); y = self.energies if plt_type == 'energy' else self.spacings
+        print("Now plotting TYPE=", plt_type)
         if self.special_pts is not None:
             print(f"Adding high-symmetry tick labels {HIGH_SYMMETRY_LABELS} at {x[self.special_pts]}")
             plt.xticks(ticks=x[self.special_pts], labels=HIGH_SYMMETRY_LABELS)

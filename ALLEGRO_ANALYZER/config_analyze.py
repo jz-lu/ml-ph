@@ -14,7 +14,7 @@ import sys, copy
 from os.path import isdir
 import os
 from time import time
-from ___helpers_parsing import succ, warn, err
+from ___helpers_parsing import succ, warn, err, update, greet
 
 if __name__ == '__main__':
     USAGE_ERR_MSG = 'Usage: python3 <DIR>/config_analyze.py -n <NUM SHIFTS> -d <I/O DIR FROM MAIN PROGRAM> -e <MIN ENERGY (eV)> (optional: --diag --nff)'
@@ -50,8 +50,8 @@ if __name__ == '__main__':
     assert BASE_ROOT and nlevel > 0
     BASE_ROOT = checkPath(os.path.abspath(BASE_ROOT))
 
-    print("== Configuration Analyzer Starting =="); start_time = time()
-    print("WD: %s, number of shifts: %d."%(BASE_ROOT, nshifts))
+    greet("== Configuration Analyzer Starting =="); start_time = time()
+    update("WD: %s, number of shifts: %d."%(BASE_ROOT, nshifts))
     if not abs_min_energy:
         print("Using automatic minimum energy shift.")
     else:
@@ -73,6 +73,7 @@ if __name__ == '__main__':
         with open(BASE_ROOT + checkPath(CONFIG_SUBDIR_NAME + str(i)) + SHIFT_NAME, 'r') as f:
             bshifts[i] = np.array(list(map(float, f.read().splitlines())))
     print("Shift coordinates retrieved.")
+    breakpoint()
 
     # Collect z-spacings
     print("Retrieving z-spacings...")
@@ -93,7 +94,7 @@ if __name__ == '__main__':
 
     if diag:
         pts = [0, nshifts//3, 2*nshifts//3]
-        print(f"Parsing successful (special points: {pts}), passing to analyzer...")
+        update(f"Parsing successful (special points: {pts}), passing to analyzer...")
         do = DSamplingOutput(data_dir, nshifts, special_pts=pts, energies=energies, spacings=zspaces)
         do.output_all_analysis()
         if ff:
@@ -102,7 +103,7 @@ if __name__ == '__main__':
     else:
         # Combine into (b, z, e) points and pass to ConfigOutput
         bze = []
-        print("Combining data into bze-points data structure...")
+        update("Combining data into bze-points data structure...")
         for b, z, e in zip(bshifts, zspaces, energies):
             bze.append(np.array([b, z, e]))
         print("Successfully combined.")
