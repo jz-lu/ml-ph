@@ -21,9 +21,16 @@ def compute_displacements(ROOT, user_input_settings, ndisp):
     ROOT = checkPath(ROOT)
     print(f'Writing a job-array bash executable to {ROOT}')
     vdw = 'T' if user_input_settings.do_vdW else 'F'
+    subname = ''
+    if user_input_settings.get_type_flag() == TYPE_RELAX_CONFIG:
+        subname = '-'
+        if user_input_settings.sampling_is_diagonal():
+            subname += 'diag'
+        else:
+            subname += 'cfg'
     kpts = 'GAMMA' if user_input_settings.kpoints_is_gamma_centered else 'MP'
     exepath = build_bash_exe(calc_type=TYPE_NORELAX_BASIC, outdir=ROOT, wdir=ROOT+PHDISP_STATIC_NAME, 
-                   calc_list=[ENERGIES], compute_jobname=PHONON_JOBNAME, vdw=vdw, kpts=kpts, compute_time='12:00:00', 
+                   calc_list=[ENERGIES], compute_jobname=PHONON_JOBNAME+subname, vdw=vdw, kpts=kpts, compute_time='12:00:00', 
                    as_arr=True, compute_ncpu='16')
     print('Executable built.')
     runcmd = 'sbatch --array=1-%d'%(ndisp) + ' ' + exepath

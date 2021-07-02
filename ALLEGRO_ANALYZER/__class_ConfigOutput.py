@@ -93,8 +93,7 @@ class DSamplingOutput:
     
     def plot_forces(self, atomic_idx_pairs, layer_idx_pairs, cart_idxs, poscar : Poscar):
         cols = list(mcolors.TABLEAU_COLORS.keys()); ncol = len(cols)
-        assert (len(atomic_idx_pairs) == len(layer_idx_pairs) == len(cart_idxs), 
-            f"[Set 1] Number of atomic, layer, and Cartesian indices must be the same, but is {len(atomic_idx_pairs)}, {len(layer_idx_pairs)}, and {len(cart_idxs)}")
+        assert len(atomic_idx_pairs) == len(layer_idx_pairs) == len(cart_idxs), f"[Set 1] Number of atomic, layer, and Cartesian indices must be the same, but is {len(atomic_idx_pairs)}, {len(layer_idx_pairs)}, and {len(cart_idxs)}"
         atomic_sites = list(map(lambda x: x.species.elements[0].symbol, poscar.structure.sites)); n_at = len(atomic_sites)
         cart_letters = copy.deepcopy(cart_idxs)
         for i, idx in enumerate(cart_idxs):
