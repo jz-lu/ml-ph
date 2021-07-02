@@ -274,7 +274,7 @@ class FourierGSFE:
         outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
         self.__ensure_fitted()
         np.save(outdir + FGSFE_COEFF_NAME, self.coeffs)
-        np.save(outdir + FGSFE_COEFF_TXT, self.coeffs)
+        np.savetxt(outdir + FGSFE_COEFF_TXT, self.coeffs)
         np.save(outdir + FGSFE_SCORE_NAME, self.get_score())
     def get_coeffs(self):
         self.__ensure_fitted(); return self.coeffs
