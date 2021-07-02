@@ -11,8 +11,10 @@ from ___constants_output import DEFAULT_CONTOUR_LEVELS, HIGH_SYMMETRY_LABELS
 from __directory_searchers import checkPath
 from scipy.interpolate import make_interp_spline as interpolate_scatter
 from pymatgen.io.vasp.inputs import Poscar
+from sklearn.linear_model import LinearRegression
+from math import pi, sqrt
 from ___helpers_parsing import warn
-import phonopy, copy
+import phonopy, copy, os
 
 class DSamplingOutput:
     def __init__(self, out_dir, npts, special_pts=None, energies=None, spacings=None, ph_list=None, ltype='hexagonal'):
@@ -225,3 +227,49 @@ class ConfigOutput:
         self.plot_e_vs_b(levels=levels)
         self.plot_z_vs_b(levels=levels)
         self.plot_e_vs_z()
+    
+# Use basis linear regression to fit GSFE to leading 6 fourier terms
+# See Eq(4), Carr 2018
+class FourierGSFE:
+    def __init__(self, energies, b_matrix, ltype='hexagonal'):
+        assert ltype == 'hexagonal', "Non-hexagonal lattices not supported"
+        assert len(energies) == len(b_matrix), f"Must have same number of configurations as energies, but got {len(b_matrix)} vs. {len(energies)}"
+        self.GSFE = energies; self.nb = len(b_matrix); self.b_matrix = b_matrix
+        self.M = 2 * pi * np.array([[1, -1/sqrt(3)], [0, 2/sqrt(3)]]) # for hexagonal lattices
+        self.fitted = False; self.coeffs = None
+        self.__vw = self.__cfg_to_uc_vectors(b_matrix); self.X = self.__fourier_basis_transform()
+        self.reg = None
+    def __cfg_to_uc_vectors(self, b_mat):
+        return (self.M @ b_mat.T).T
+    def __fourier_basis_transform(self):
+        X = np.ones((self.nb, 6)); v = self.__vw[:,0]; w = self.__vw[:,1] # col 0 is bias
+        X[:,1] = np.cos(v) + np.cos(w) + np.cos(v + w)
+        X[:,2] = np.cos(v + 2*w) + np.cos(v - w) + np.cos(2*v + w) 
+        X[:,3] = np.cos(2*v) + np.cos(2*w) + np.cos(2*v + 2*w) 
+        X[:,4] = np.sin(v) + np.sin(w) - np.sin(v + w)
+        X[:,5] = np.sin(2*v + 2*w) - np.sin(2*v) - np.sin(2*w)
+        return X
+    def __fit_coeff(self):
+        assert not self.fitted, f"Fitting already done"
+        self.reg = LinearRegression().fit(self.X, self.GSFE)
+        self.coeffs = np.append(self.reg.intercept_, self.reg.coef_)
+        return self.coeffs
+    def __ensure_fitted(self):
+        if not self.fitted:
+            self.__fit_coeff()
+        assert self.coeffs is not None and self.reg is not None, f"Fitting failed"
+    def get_coeffs(self):
+        self.__ensure_fitted(); return self.coeffs
+    def get_score(self):
+        self.__ensure_fitted(); return self.reg.score(self.X, self.GSFE)
+    def predict(self, b_matrix):
+        self.__ensure_fitted(); return self.reg.predict(self.__cfg_to_uc_vectors(b_matrix))
+    def plot_pred_vs_actual(self, outdir, outname='predvsactual.png'):
+        assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
+        self.__ensure_fitted(); plt.clf(); fig, ax = plt.subplots()
+        x = self.predict(self.b_matrix); y = self.GSFE; maxmax = max(max(x), max(y))
+        ax.scatter(x, y, c='k')
+        ax.plot([0, maxmax], [0, maxmax], c='royalblue') # y=x line
+        ax.set_xlabel("Fourier prediction"); ax.set_ylabel("Actual")
+        ax.set_title("GSFE fit to 6-term Fourier series")
+        fig.savefig(checkPath(outdir) + outname)
