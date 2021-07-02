@@ -245,7 +245,7 @@ class FourierGSFE:
         self.__fitted = False; self.coeffs = None; self.reg = None
         self.X = self.__b_to_fourier_basis(b_matrix)
     def __b_to_vw(self, b_mat):
-        M = 2 * pi * np.array([[1, -1/sqrt(3)], [0, 2/sqrt(3)]]) # for hexagonal lattices of 120 lattice angle only
+        M = 2 * pi * np.array([[1, -1/sqrt(3)], [0, 2/sqrt(3)]]) / 3.1 # for hexagonal lattices of 120 lattice angle only
         return (M @ b_mat.T).T
     def __vw_to_fourier_basis(self, vw):
         X = np.ones((self.nb, 5)); v = vw[:,0]; w = vw[:,1] # col 0 is bias
