@@ -231,6 +231,7 @@ class ConfigOutput:
     
 # Use basis linear regression to fit GSFE to leading 6 fourier terms
 # See Eq(4), Carr 2018
+# Bugs: may not work if unit cell vectors is 60 deg instead of 120
 class FourierGSFE:
     def __init__(self, energies, b_matrix, ltype='hexagonal'):
         print("Initilaizing FourierGSFE object")
@@ -239,20 +240,21 @@ class FourierGSFE:
         b_matrix = b_matrix[:,:2]
         print(f"Configurations:\n {b_matrix}")
         self.GSFE = energies; self.nb = len(b_matrix); self.b_matrix = b_matrix
-        self.M = 2 * pi * np.array([[1, -1/sqrt(3)], [0, 2/sqrt(3)]]) # for hexagonal lattices
-        self.__fitted = False; self.coeffs = None
-        self.__vw = self.__cfg_to_uc_vectors(b_matrix); self.X = self.__fourier_basis_transform()
-        self.reg = None
-    def __cfg_to_uc_vectors(self, b_mat):
-        return (self.M @ b_mat.T).T
-    def __fourier_basis_transform(self):
-        X = np.ones((self.nb, 6)); v = self.__vw[:,0]; w = self.__vw[:,1] # col 0 is bias
+        self.__fitted = False; self.coeffs = None; self.reg = None
+        self.X = self.__b_to_fourier_basis(b_matrix)
+    def __b_to_vw(self, b_mat):
+        M = 2 * pi * np.array([[1, -1/sqrt(3)], [0, 2/sqrt(3)]]) # for hexagonal lattices of 120 lattice angle only
+        return (M @ b_mat.T).T
+    def __vw_to_fourier_basis(self, vw):
+        X = np.ones((self.nb, 6)); v = vw[:,0]; w = vw[:,1] # col 0 is bias
         X[:,1] = np.cos(v) + np.cos(w) + np.cos(v + w)
         X[:,2] = np.cos(v + 2*w) + np.cos(v - w) + np.cos(2*v + w) 
         X[:,3] = np.cos(2*v) + np.cos(2*w) + np.cos(2*v + 2*w) 
         X[:,4] = np.sin(v) + np.sin(w) - np.sin(v + w)
         X[:,5] = np.sin(2*v + 2*w) - np.sin(2*v) - np.sin(2*w)
         return X
+    def __b_to_fourier_basis(self, b_mat):
+        return self.__vw_to_fourier_basis(self.__b_to_vw(b_mat))
     def __fit_coeff(self):
         assert not self.__fitted, f"Fitting already done"
         print("Fitting energies to Fourier series...")
@@ -275,8 +277,7 @@ class FourierGSFE:
     def get_score(self):
         self.__ensure_fitted(); return self.reg.score(self.X, self.GSFE)
     def predict(self, b_matrix):
-        breakpoint()
-        self.__ensure_fitted(); return self.reg.predict(self.__cfg_to_uc_vectors(b_matrix))
+        self.__ensure_fitted(); return self.reg.predict(self.__b_to_fourier_basis(b_matrix))
     def plot_pred_vs_actual(self, outdir, outname=FGSFE_PLOT_NAME):
         print("Plotting predicted vs. actual...")
         assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
