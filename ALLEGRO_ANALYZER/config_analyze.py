@@ -113,7 +113,7 @@ if __name__ == '__main__':
         do = ConfigOutput(data_dir, bze, cob, abs_min_energy=abs_min_energy)
         do.output_all_analysis(levels=nlevel)
     if ff:
-        stype = '%d-%s'%(nshifts if diag else int(sqrt(nshifts)), 'diagonal' if diag else 'grid')
+        stype = f'{nshifts if diag else tuple(int(sqrt(nshifts)), int(sqrt(nshifts)))}-{'diagonal' if diag else 'grid'}'
         ff_gsfe = FourierGSFE(energies, bshifts, cob, sampling_type=stype)
         ff_gsfe.output_all_analysis(data_dir)
             
