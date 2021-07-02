@@ -6,7 +6,7 @@ from ___constants_names import (
     DSAMPLE_ENERGIES_NAME, DSAMPLE_SPACINGS_NAME, 
     DSAMPLE_ENERGIES_TXT, DSAMPLE_SPACINGS_TXT, 
     DSAMPLE_FORCES_NAME, 
-    FGSFE_COEFF_NAME, FGSFE_SCORE_NAME, FGSFE_PLOT_NAME
+    FGSFE_COEFF_NAME, FGSFE_SCORE_NAME, FGSFE_PLOT_NAME, FGSFE_SCATTER_NAME
 )
 from ___constants_output import DEFAULT_CONTOUR_LEVELS, HIGH_SYMMETRY_LABELS
 from __directory_searchers import checkPath
@@ -278,16 +278,18 @@ class FourierGSFE:
         self.__ensure_fitted(); return self.reg.score(self.X, self.GSFE)
     def predict(self, b_matrix):
         self.__ensure_fitted(); return self.reg.predict(self.__b_to_fourier_basis(b_matrix))
-    def plot_pred_vs_actual(self, outdir, outname=FGSFE_PLOT_NAME):
+    def plot_pred_vs_actual(self, outdir, outname=FGSFE_PLOT_NAME, scatname=FGSFE_SCATTER_NAME):
         print("Plotting predicted vs. actual...")
         assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
-        plt.clf(); fig, ax = plt.subplots()
+        outdir = checkPath(outdir); plt.clf(); fig, ax = plt.subplots()
         x = self.predict(self.b_matrix); y = self.GSFE; maxmax = max(max(x), max(y))
-        ax.scatter(x, y, c='k')
-        ax.plot([0, maxmax], [0, maxmax], c='royalblue') # y=x line
         ax.set_xlabel("Fourier prediction"); ax.set_ylabel("Actual")
         ax.set_title("GSFE fit to 6-term Fourier series")
-        fig.savefig(checkPath(outdir) + outname)
+        ax.scatter(x, y, c='k')
+        fig.savefig(outdir + scatname)
+        ax.plot([0, maxmax], [0, maxmax], c='royalblue') # y=x line
+        print(f"Predicted:\n {x}\nActual: \n{y}")
+        fig.savefig(outdir + outname)
     def output_all_analysis(self, outdir):
         outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
         self.__ensure_fitted()
