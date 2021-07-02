@@ -73,6 +73,7 @@ if __name__ == '__main__':
         with open(BASE_ROOT + checkPath(CONFIG_SUBDIR_NAME + str(i)) + SHIFT_NAME, 'r') as f:
             bshifts[i] = list(map(float, f.read().splitlines()))
     bshifts = np.array(bshifts)
+    np.save(data_dir + 'b.npy', bshifts)
     print("Shift coordinates retrieved.")
 
     # Collect z-spacings
