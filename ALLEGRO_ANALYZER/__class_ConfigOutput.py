@@ -5,7 +5,8 @@ from ___constants_config import DEFAULT_ABS_MIN_ENERGY
 from ___constants_names import (
     DSAMPLE_ENERGIES_NAME, DSAMPLE_SPACINGS_NAME, 
     DSAMPLE_ENERGIES_TXT, DSAMPLE_SPACINGS_TXT, 
-    DSAMPLE_FORCES_NAME
+    DSAMPLE_FORCES_NAME, 
+    FGSFE_COEFF_NAME, FGSFE_SCORE_NAME, FGSFE_PLOT_NAME
 )
 from ___constants_output import DEFAULT_CONTOUR_LEVELS, HIGH_SYMMETRY_LABELS
 from __directory_searchers import checkPath
@@ -148,13 +149,13 @@ class ConfigOutput:
         print("Output to be stored in %s"%(out_dir))
 
         # Get the shifts in Cartesian coordinates via COB
-        self.__direct_shifts = [np.array(i[0][:-1]) for i in plot_list]
+        self.__direct_shifts = [np.array(i[0][:2]) for i in plot_list]
         self.b1shifts = np.array([i[0] for i in self.__direct_shifts]) # direct coordinates
         self.b2shifts = np.array([i[1] for i in self.__direct_shifts])
         self.__shifts = [np.dot(cob_matrix, i) for i in self.__direct_shifts] # Cartesian coordinates
         self.xshifts = np.array([i[0] for i in self.__shifts])
         self.yshifts = np.array([i[1] for i in self.__shifts])
-        print("DIRECT SHIFTS:", [np.array(i[0][:-1]) for i in plot_list])
+        print("DIRECT SHIFTS:", self.__direct_shifts)
         print("CARTESIAN SHIFTS:", self.__shifts)
         print("xshifts:", self.xshifts)
         print("yshifts:", self.yshifts)
@@ -232,8 +233,11 @@ class ConfigOutput:
 # See Eq(4), Carr 2018
 class FourierGSFE:
     def __init__(self, energies, b_matrix, ltype='hexagonal'):
+        print("Initilaizing FourierGSFE object")
         assert ltype == 'hexagonal', "Non-hexagonal lattices not supported"
         assert len(energies) == len(b_matrix), f"Must have same number of configurations as energies, but got {len(b_matrix)} vs. {len(energies)}"
+        b_matrix = b_matrix[:,:2]
+        print(f"Configurations: {b_matrix}")
         self.GSFE = energies; self.nb = len(b_matrix); self.b_matrix = b_matrix
         self.M = 2 * pi * np.array([[1, -1/sqrt(3)], [0, 2/sqrt(3)]]) # for hexagonal lattices
         self.fitted = False; self.coeffs = None
@@ -251,6 +255,7 @@ class FourierGSFE:
         return X
     def __fit_coeff(self):
         assert not self.fitted, f"Fitting already done"
+        print("Fitting energies to Fourier series...")
         self.reg = LinearRegression().fit(self.X, self.GSFE)
         self.coeffs = np.append(self.reg.intercept_, self.reg.coef_)
         return self.coeffs
@@ -258,13 +263,20 @@ class FourierGSFE:
         if not self.fitted:
             self.__fit_coeff()
         assert self.coeffs is not None and self.reg is not None, f"Fitting failed"
+    def save_raw_data(self, outdir):
+        print("Saving coefficents and score to file...")
+        outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
+        self.__ensure_fitted()
+        np.save(outdir + FGSFE_COEFF_NAME, self.coeffs)
+        np.save(outdir + FGSFE_SCORE_NAME, self.get_score())
     def get_coeffs(self):
         self.__ensure_fitted(); return self.coeffs
     def get_score(self):
         self.__ensure_fitted(); return self.reg.score(self.X, self.GSFE)
     def predict(self, b_matrix):
         self.__ensure_fitted(); return self.reg.predict(self.__cfg_to_uc_vectors(b_matrix))
-    def plot_pred_vs_actual(self, outdir, outname='predvsactual.png'):
+    def plot_pred_vs_actual(self, outdir, outname=FGSFE_PLOT_NAME):
+        print("Plotting predicted vs. actual...")
         assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
         self.__ensure_fitted(); plt.clf(); fig, ax = plt.subplots()
         x = self.predict(self.b_matrix); y = self.GSFE; maxmax = max(max(x), max(y))
@@ -273,3 +285,10 @@ class FourierGSFE:
         ax.set_xlabel("Fourier prediction"); ax.set_ylabel("Actual")
         ax.set_title("GSFE fit to 6-term Fourier series")
         fig.savefig(checkPath(outdir) + outname)
+    def output_all_analysis(self, outdir):
+        outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
+        self.__ensure_fitted()
+        self.save_raw_data(outdir)
+        self.plot_pred_vs_actual(outdir)
+        print("All Fourier GSFE analysis written to file")
+

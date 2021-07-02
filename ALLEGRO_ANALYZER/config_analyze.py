@@ -6,7 +6,7 @@ from ___constants_names import (
     RELAXATION_DIR_NAME, ANALYSIS_DIR_NAME, 
     TOTAL_ENER_DIR_NAME, TOT_ENERGIES_NAME
 )
-from __class_ConfigOutput import ConfigOutput, DSamplingOutput
+from __class_ConfigOutput import ConfigOutput, DSamplingOutput, FourierGSFE
 from __directory_searchers import checkPath
 from __class_CarCollector import CarCollector
 import numpy as np
@@ -17,7 +17,7 @@ from time import time
 from ___helpers_parsing import succ, warn, err
 
 if __name__ == '__main__':
-    USAGE_ERR_MSG = 'Usage: python3 <DIR>/config_analyze.py -n <NUM SHIFTS> -d <I/O DIR FROM MAIN PROGRAM> -e <MIN ENERGY (eV)> --diag (if diagonal)'
+    USAGE_ERR_MSG = 'Usage: python3 <DIR>/config_analyze.py -n <NUM SHIFTS> -d <I/O DIR FROM MAIN PROGRAM> -e <MIN ENERGY (eV)> (optional: --diag --nff)'
 
     # The ConfigOutput class expects a COB matrix and 
     # a list of (config vector b, z-spacing, energy in eV), as well as a minimum energy in eV to shift by.
@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     # Parse cmdline args
     cmdargs = list(copy.deepcopy(sys.argv))[1:]; i = 0; n = len(cmdargs)
-    BASE_ROOT = '.'; abs_min_energy = None; nshifts = None; diag = False
+    BASE_ROOT = '.'; abs_min_energy = None; nshifts = None; diag = False; ff = True
     nlevel = 301
     while i < n:
         if cmdargs[i] == '-n':
@@ -39,6 +39,8 @@ if __name__ == '__main__':
             i += 1; nlevel = int(cmdargs[i]); i += 1
         elif cmdargs[i] == '--diag':
             diag = True; i += 1
+        elif cmdargs[i] == '--nff':
+            ff = False; i += 1
         elif cmdargs[i] == '--usage':
             print(USAGE_ERR_MSG)
             sys.exit(0)
@@ -94,6 +96,9 @@ if __name__ == '__main__':
         print(f"Parsing successful (special points: {pts}), passing to analyzer...")
         do = DSamplingOutput(data_dir, nshifts, special_pts=pts, energies=energies, spacings=zspaces)
         do.output_all_analysis()
+        if ff:
+            ff_gsfe = FourierGSFE(energies, bshifts)
+            ff_gsfe.output_all_analysis(data_dir)
     else:
         # Combine into (b, z, e) points and pass to ConfigOutput
         bze = []
