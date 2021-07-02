@@ -36,7 +36,7 @@ class DSamplingOutput:
         if special_pts is not None:
             self.special_pts = np.array(special_pts); self.special_pts = np.append(self.special_pts, npts)
             print("Initialized special points")
-        if ph_list is None:
+        if ph_list is not None:
             self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in ph_list]
             print("Initialized phonopy object list")
 
