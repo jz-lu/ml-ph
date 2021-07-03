@@ -24,6 +24,7 @@ class DSamplingOutput:
                  ph_list=None, ltype='hexagonal'):
         assert ltype == 'hexagonal', f"Only hexagonal lattices supported (for now), but got {ltype}"
         print("Initializing DSamplingOutput object")
+        assert npts % 3 == 0, 'Must choose a number of points as a multiple of 3 to respect symmetry'
         self.out_dir = checkPath(out_dir); self.npts = npts + 1 # add 1 for periodici boundary conditions
         self.spacings = None; self.energies = None; self.force_matrices = None
         if energies is not None:
@@ -62,7 +63,7 @@ class DSamplingOutput:
         title = 'Energies'; y_lab = r"$E_{tot} (meV)$"; y = self.energies
         if plt_type == 'z':
             title = 'Interlayer spacing'; y_lab = 'Interlayer spacing (unitless)'
-        title = title + f'({tsfx})'
+        title = title + (f'({tsfx})' if tsfx != '' else '')
         ax.set_title(f"{title} along diagonal")
         x = np.linspace(0, 1, self.npts); y = self.energies if plt_type == 'energy' else self.spacings
         print(f"Now plotting TYPE={plt_type}")
@@ -89,7 +90,7 @@ class DSamplingOutput:
     
     def plot_energies(self, pfx='', tsfx='', interp=True, scat=True, line=False):
         assert self.energies is not None, "Energy data was not provided to analyzer"
-        self.__diag_plot(self.energies, plt_type='energy', pfx=pfx, interp=interp, scat=scat, line=line)
+        self.__diag_plot(self.energies, plt_type='energy', pfx=pfx, tsfx=tsfx, interp=interp, scat=scat, line=line)
     
     def plot_spacings(self, pfx='', interp=True, scat=True, line=False):
         assert self.spacings is not None, "Interlayer spacings data was not provided to analyzer"
