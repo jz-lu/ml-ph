@@ -11,13 +11,18 @@ from __dirModifications import build_dir
 from __ph_processing import ph_generate_forcesets
 from __dirModifications import move
 
-def get_twisted_forces(indir):
+def get_many_forces(indir, twist=False):
     indir = checkPath(indir)
     assert os.path.isdir(indir), f"Directory {indir} does not exist"
-    layers = findDirsinDir(indir, MONOLAYER_DIR_NAME, searchType='start')
-    layers = [build_dir([indir, layer, ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME]) for layer in layers]
-    configs = findDirsinDir(indir + CONFIG_DIR_NAME, CONFIG_SUBDIR_NAME, searchType='start')
-    configs = [build_dir([indir, CONFIG_DIR_NAME, config, ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME]) for config in configs]
+    layers = []; configs = None
+    if twist:
+        layers = findDirsinDir(indir, MONOLAYER_DIR_NAME, searchType='start')
+        layers = [build_dir([indir, layer, ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME]) for layer in layers]
+        configs = findDirsinDir(indir + CONFIG_DIR_NAME, CONFIG_SUBDIR_NAME, searchType='start')
+        configs = [build_dir([indir, CONFIG_DIR_NAME, config, ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME]) for config in configs]
+    else:
+        configs = findDirsinDir(indir, CONFIG_SUBDIR_NAME, searchType='start')
+        configs = [build_dir([indir, config, ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME]) for config in configs]
     paths = layers + configs # concatenate all paths together
     for path in paths: # intralayer terms
         print(f"Generating {PH_FORCE_SETS_NAME} in {path}...")
@@ -30,8 +35,8 @@ def get_twisted_forces(indir):
 
 if __name__ == '__main__':
     args = copy.deepcopy(sys.argv)[1:]; i = 0; n = len(args)
-    indir = '.'; outdir = None; twisted = False
-    USAGE_ERR_MSG = f"Usage: python3 <DIR>/{sys.argv[0]} -dir <MAIN PHONON DIRECTORY> -o <PRINT DIR (optional)> -tw (if twisted)"
+    indir = '.'; outdir = None; ftype = 'basic'
+    USAGE_ERR_MSG = f"Usage: python3 {sys.argv[0]} -dir <MAIN PHONON DIRECTORY> -o <PRINT DIR (optional)> --tw (if twisted) --cfg (if config)"
     while i < n:
         if not is_flag(args[i]):
             warn(f'Warning: token "{args[i]}" is out of place and will be ignored')
@@ -41,7 +46,9 @@ if __name__ == '__main__':
         elif args[i] == '-o':
             i += 1; check_not_flag(args[i]); outdir = checkPath(args[i]); i += 1
         elif args[i] == '--tw':
-            twisted = True; i += 1
+            ftype = 'twist'; i += 1
+        elif args[i] == '--cfg':
+            ftype = 'config'; i += 1
         elif args[i] == '--usage':
             print(USAGE_ERR_MSG)
             sys.exit(0)
@@ -50,9 +57,12 @@ if __name__ == '__main__':
     outdir = indir if outdir is None else outdir
     indir = checkPath(os.path.abspath(indir)); outdir = checkPath(os.path.abspath(outdir))
 
-    if twisted:
-        get_twisted_forces(indir)
-        succ(f"Successfully generated intra- (and inter-)layer force constants files to {indir}")
+    if ftype == 'twist':
+        get_many_forces(indir, twist=True)
+        succ(f"Successfully generated intra- (and inter-)layer force constants files in {indir}")
+    elif ftype == 'config':
+        get_many_forces(indir, twist=False)
+        succ(f"Successfully generated per-configuration force constants files in {indir}")
     else:
         # Call FORCE_SETS generator
         disps = findDirsinDir(indir, PHDISP_STATIC_NAME, searchType='start')
