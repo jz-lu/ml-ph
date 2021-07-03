@@ -103,7 +103,7 @@ if __name__ == '__main__':
         stype = f'{nshifts if diag else (int(sqrt(nshifts)), int(sqrt(nshifts)))}-{"diagonal" if diag else "grid"}'
         ff_gsfe = FourierGSFE(energies, bshifts, cob, sampling_type=stype)
         ff_gsfe.output_all_analysis(data_dir)
-        ff_pred = ff_gsfe.predict(Configuration.sample_line(npts=NPREDPTS, basis=Configuration.diagonal_basis_from_cob(cob)))
+        ff_pred = ff_gsfe.predict(Configuration.sample_line(npts=NPREDPTS, basis=Configuration.diagonal_basis_from_cob(cob), dump=False))
     if diag:
         pts = [0, nshifts//3, 2*nshifts//3]
         update(f"Parsing successful (special points: {pts}), passing to analyzer...")

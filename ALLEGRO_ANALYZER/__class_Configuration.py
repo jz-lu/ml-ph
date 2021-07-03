@@ -310,12 +310,15 @@ class Configuration:
     
     @staticmethod
     # Sample along some line. If basis is None, then returns points in direct coordinates, otherwise in Cartesian
-    def sample_line(npts=DIAG_SAMPLE_LOW, basis=None):
+    def sample_line(npts=DIAG_SAMPLE_LOW, basis=None, dump=True, as_mat=False):
         assert isinstance(npts, int), f"Number of points should be (an odd) integer, but is {npts}"
         pts = np.linspace(0, 1, num=npts, endpoint=False)
         if basis is not None:
             basis = np.array(basis); n_star = 1/round(min(basis[basis > 0]), 4); m = np.ones(basis.shape)
             pts = [np.round((c * n_star * basis) % m, 5) for c in pts]
-            print(f"Sampled diagonal points (direct coords): {pts}")
+            if as_mat:
+                pts = np.concatenate(pts).reshape(npts, 2)
+            if dump:
+                print(f"Sampled diagonal points (direct coords): {pts}")
         return pts
 
