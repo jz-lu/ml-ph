@@ -246,10 +246,11 @@ class FourierGSFE:
         self.__fitted = False; self.coeffs = None; self.reg = None
         self.X = self.__b_to_fourier_basis(b_matrix)
     def __b_to_vw(self, b_mat):
-        M = 2 * pi * np.array([[1, -1/sqrt(3)], [0, 2/sqrt(3)]]) / LA.norm(self.__A[0]) # for hexagonal lattices of 120 lattice angle only
+        print(f"Scaling by lattice constant {LA.norm(self.__A[:,0])}")
+        M = 2 * pi * np.array([[1, -1/sqrt(3)], [0, 2/sqrt(3)]]) / LA.norm(self.__A[:,0]) # for hexagonal lattices
         return (M @ b_mat.T).T
     def __vw_to_fourier_basis(self, vw):
-        X = np.ones((self.nb, 5)); v = vw[:,0]; w = vw[:,1] # col 0 is bias
+        X = np.ones((self.nb, 5)); v = vw[:,0]; w = vw[:,1]
         X[:,0] = np.cos(v) + np.cos(w) + np.cos(v + w)
         X[:,1] = np.cos(v + 2*w) + np.cos(v - w) + np.cos(2*v + w) 
         X[:,2] = np.cos(2*v) + np.cos(2*w) + np.cos(2*v + 2*w) 

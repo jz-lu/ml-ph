@@ -56,7 +56,7 @@ def build_bash_exe(calc_type=TYPE_RELAX_BASIC, outdir='.', wdir=None, calc_list=
             f.write('WDIR="%s"\n'%(outdir))
         f.write('echo "WD: ${WDIR}"\n')
         f.write('ALLEGRO_DIR="%s"\n'%CODE_DIR)
-        f.write('module list\nsource activate $HOME/%s\n'%(COMPUTE_ANACONDA_ENV))
+        f.write('module load julia\nmodule list\nsource activate $HOME/%s\n'%(COMPUTE_ANACONDA_ENV))
         f.write('echo "Starting calculations..."\n')
         f.write('python3 $ALLEGRO_DIR/start.py %d $WDIR %s %s %s\n'%(calc_type, vdw, kpts, calc_list))
         f.write('echo "Calculations complete!"\n')
