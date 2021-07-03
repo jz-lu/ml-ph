@@ -118,7 +118,7 @@ class DSamplingOutput:
                     assert False, f"Invalid Cartesian element {idx} at position {i}"
         print(f"Transformed Cartesian pairs to letter form: \n{cart_letter_pairs}")
         rows = int(sqrt(nplt))
-        plt.clf(); fig, ax = plt.figure(); fig.subplots(nrows=rows, ncols=rows) 
+        plt.clf(); fig = plt.figure(); fig.subplots(nrows=rows, ncols=rows) 
         x = np.linspace(0, 1, self.npts)
         plt.title(f"Forces along diagonal")
         if self.special_pts is not None:
