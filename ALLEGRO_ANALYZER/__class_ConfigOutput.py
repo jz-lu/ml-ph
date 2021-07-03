@@ -20,13 +20,14 @@ from ___helpers_parsing import warn
 import phonopy, copy, os
 
 class DSamplingOutput:
-    def __init__(self, out_dir, npts, special_pts=None, energies=None, spacings=None, ph_list=None, ltype='hexagonal'):
+    def __init__(self, out_dir, npts, special_pts=None, energies=None, spacings=None, scaled=False, 
+                 ph_list=None, ltype='hexagonal'):
         assert ltype == 'hexagonal', f"Only hexagonal lattices supported (for now), but got {ltype}"
         print("Initializing DSamplingOutput object")
         self.out_dir = checkPath(out_dir); self.npts = npts + 1 # add 1 for periodici boundary conditions
         self.spacings = None; self.energies = None; self.force_matrices = None
         if energies is not None:
-            minenergy = min(energies); self.energies = 1000*(np.array(energies)-minenergy)
+            minenergy = min(energies); self.energies = (1 if scaled else 1000)*(np.array(energies)-minenergy)
             print(f"Adjusted energies (meV): {self.energies}")
             self.energies = np.append(self.energies, self.energies[0])
             print("Initialized energies")
@@ -53,15 +54,14 @@ class DSamplingOutput:
             np.savez(self.out_dir + DSAMPLE_FORCES_NAME, *self.force_matrices)
         print(f"Saved raw data over {self.npts-1} diagonally sampled points to {self.out_dir}")
 
-    def __diag_plot(self, arr, plt_type='energy', pfx='', interp=True, scat=True, line=False):
+    def __diag_plot(self, arr, plt_type='energy', pfx='', tsfx='', interp=True, scat=True, line=False):
         assert interp or scat or line, "Must specify at least 1 type of plot"
         assert not (interp and line), "Must choose at most one of interpolation and line plotting"
         assert plt_type in ['energy', 'z', 'forces']; plt.clf(); fig, ax = plt.subplots()
         title = 'Energies'; y_lab = r"$E_{tot} (meV)$"; y = self.energies
         if plt_type == 'z':
             title = 'Interlayer spacing'; y_lab = 'Interlayer spacing (unitless)'
-        elif plt_type == 'forces':
-            pass
+        title = title + f'({tsfx})'
         ax.set_title(f"{title} along diagonal")
         x = np.linspace(0, 1, self.npts); y = self.energies if plt_type == 'energy' else self.spacings
         print(f"Now plotting TYPE={plt_type}")
@@ -86,13 +86,13 @@ class DSamplingOutput:
             ax.plot(x, y, c='k')
         fig.savefig(self.out_dir + pfx + f"diag_{plt_type}.png")
     
-    def plot_energies(self, pfx='', interp=True, scat=True, line=False):
+    def plot_energies(self, pfx='', tsfx='', interp=True, scat=True, line=False):
         assert self.energies is not None, "Energy data was not provided to analyzer"
-        self.__diag_plot(self.energies, plt_type='energy', pfx=pfx)
+        self.__diag_plot(self.energies, plt_type='energy', pfx=pfx, interp=interp, scat=scat, line=line)
     
     def plot_spacings(self, pfx='', interp=True, scat=True, line=False):
         assert self.spacings is not None, "Interlayer spacings data was not provided to analyzer"
-        self.__diag_plot(self.spacings, plt_type='z', pfx=pfx)
+        self.__diag_plot(self.spacings, plt_type='z', pfx=pfx, interp=interp, scat=scat, line=line)
     
     def output_all_analysis(self):
         self.save_raw_data(); self.plot_energies(); self.plot_spacings()
@@ -141,7 +141,7 @@ class DSamplingOutput:
 class ConfigOutput:
     # plot list is a list of tuples (b, z, e) = (shift, z-spacing, energy).
     # cob is the change-of-basis matrix to get fom lattice basis (which b is in) to Cartesian to plot.
-    def __init__(self, out_dir, plot_list, cob_matrix, abs_min_energy=None):
+    def __init__(self, out_dir, plot_list, cob_matrix, abs_min_energy=None, scaled=False):
         print("Initalizing ConfigOutput object.")
         # plot_list: list of (b, z, e) points
         self.__plot_list = plot_list
@@ -149,7 +149,7 @@ class ConfigOutput:
         if not abs_min_energy:
             abs_min_energy = min([i[2] for i in plot_list])
         print(f"Shifting by minimum energy {abs_min_energy} eV")
-        self.__energies = np.array([(i[2]-abs_min_energy)*1000 for i in plot_list])
+        self.__energies = np.array([(i[2]-abs_min_energy)*(1 if scaled else 1000) for i in plot_list])
         self.__out_dir = checkPath(out_dir)
         print("Output to be stored in %s"%(out_dir))
 
