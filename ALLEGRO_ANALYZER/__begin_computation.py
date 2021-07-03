@@ -42,13 +42,9 @@ def begin_computation(user_input_settings):
         sampling_set = None
         if user_input_settings.sampling_is_diagonal():
             print("Sampling line points uniformly along diagonal...")
-            angle = config.get_lattice_angle()
-            if not (np.isclose(angle, 60) or np.isclose(angle, 120)):
-                exit_with_error('Error: lattice angle must be 60 or 120')
-            diag = np.array([0.333333, 0.333333, 0]) if np.isclose(angle, 60) else np.array([0.333333, 0.666667, 0])
             assert grid_size % 3 == 0, f"Number of points must be a multiple of 3 to properly assess high-symmetry points"
-            sampling_set = Configuration.sample_line(npts=grid_size, basis=diag)
-            print(f"Sampled {grid_size} points along line {diag}")
+            sampling_set = Configuration.sample_line(npts=grid_size, basis=config.get_diagonal_basis())
+            print(f"Sampled {grid_size} points along line {config.get_diagonal_basis()}")
         else:
             print("Sampling grid points uniformly along unit cell...")
             sampling_set = Configuration.sample_grid(grid=grid_size)

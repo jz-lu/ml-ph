@@ -243,6 +243,24 @@ class Configuration:
     def get_lattice_angle(self):
         return self.lattice_basis_angle
     
+    def get_diagonal_basis(self):
+        angle = self.get_lattice_angle()
+        if not (np.isclose(angle, 60) or np.isclose(angle, 120)):
+            exit_with_error('Error: lattice angle must be 60 or 120')
+        return np.array([0.333333, 0.333333, 0]) if np.isclose(angle, 60) else np.array([0.333333, 0.666667, 0])
+    
+    @staticmethod
+    def lattice_angle_from_cob(cob):
+        assert cob.shape == (2,2); M = cob.T; M / np.linalg.norm(M[0])
+        return round(np.rad2deg(np.arccos(np.dot(M[0],M[1]))), 4)
+
+    @staticmethod
+    def diagonal_basis_from_cob(cob):
+        angle = Configuration.lattice_angle_from_cob(cob)
+        if not (np.isclose(angle, 60) or np.isclose(angle, 120)):
+            exit_with_error('Error: lattice angle must be 60 or 120')
+        return np.array([0.333333, 0.333333, 0]) if np.isclose(angle, 60) else np.array([0.333333, 0.666667, 0])
+
     @staticmethod
     # Converts a set indexing which layer each atom in POSCAR belongs to into a set of sets, one for each layer, 
     # that give the index (in POSCAR order) of atoms in that layer. Optionally expands 3-fold to include Cartesian DOF.

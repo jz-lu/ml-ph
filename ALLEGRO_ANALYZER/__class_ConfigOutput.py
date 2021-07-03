@@ -53,7 +53,9 @@ class DSamplingOutput:
             np.savez(self.out_dir + DSAMPLE_FORCES_NAME, *self.force_matrices)
         print(f"Saved raw data over {self.npts-1} diagonally sampled points to {self.out_dir}")
 
-    def __diag_plot(self, arr, plt_type='energy', pfx=''):
+    def __diag_plot(self, arr, plt_type='energy', pfx='', interp=True, scat=True, line=False):
+        assert interp or scat or line, "Must specify at least 1 type of plot"
+        assert not (interp and line), "Must choose at most one of interpolation and line plotting"
         assert plt_type in ['energy', 'z', 'forces']; plt.clf(); fig, ax = plt.subplots()
         title = 'Energies'; y_lab = r"$E_{tot} (meV)$"; y = self.energies
         if plt_type == 'z':
@@ -74,17 +76,21 @@ class DSamplingOutput:
                 top=False,         # ticks along the top edge are off
                 labelbottom=False) # labels along the bottom edge are off
         ax.set_ylabel(y_lab)
-        ax.scatter(x, y); fig.savefig(self.out_dir + f"diag_{plt_type}_scatter.png")
-        interpol = interpolate_scatter(x, y)
-        xp = np.linspace(0, 1, 301); yp = interpol(xp)
-        ax.plot(xp, yp, c='k')
-        fig.savefig(self.out_dir + pfx + f"diag_{plt_type}_smooth.png")
+        if scat:
+            ax.scatter(x, y, c='royalblue')
+        if interp:
+            interpol = interpolate_scatter(x, y)
+            xp = np.linspace(0, 1, 301); yp = interpol(xp)
+            ax.plot(xp, yp, c='k')
+        if line:
+            ax.plot(x, y, c='k')
+        fig.savefig(self.out_dir + pfx + f"diag_{plt_type}.png")
     
-    def plot_energies(self, pfx=''):
+    def plot_energies(self, pfx='', interp=True, scat=True, line=False):
         assert self.energies is not None, "Energy data was not provided to analyzer"
         self.__diag_plot(self.energies, plt_type='energy', pfx=pfx)
     
-    def plot_spacings(self, pfx=''):
+    def plot_spacings(self, pfx='', interp=True, scat=True, line=False):
         assert self.spacings is not None, "Interlayer spacings data was not provided to analyzer"
         self.__diag_plot(self.spacings, plt_type='z', pfx=pfx)
     
@@ -296,7 +302,7 @@ class FourierGSFE:
         ax.scatter(x, y, c='k')
         ax.set_title(f"GSFE Fourier fitting on {self.stype} sampling")
         ax.plot([minmin, maxmax], [minmin, maxmax], c='royalblue') # y=x line
-        print(f"Predicted:\n {x}\nActual: \n{y}")
+        print(f"Predicted GSFE:\n {x}\nActual GSFE: \n{y}")
         fig.savefig(outdir + outname)
     def output_all_analysis(self, outdir):
         outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Directory {outdir} does not exist"

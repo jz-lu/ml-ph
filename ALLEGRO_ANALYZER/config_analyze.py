@@ -6,9 +6,11 @@ from ___constants_names import (
     RELAXATION_DIR_NAME, ANALYSIS_DIR_NAME, 
     TOTAL_ENER_DIR_NAME, TOT_ENERGIES_NAME
 )
+from ___constants_output import NPREDPTS
 from __class_ConfigOutput import ConfigOutput, DSamplingOutput, FourierGSFE
 from __directory_searchers import checkPath
 from __class_CarCollector import CarCollector
+from __class_Configuration import Configuration
 import numpy as np
 import sys, copy
 from os.path import isdir
@@ -101,15 +103,15 @@ if __name__ == '__main__':
         stype = f'{nshifts if diag else (int(sqrt(nshifts)), int(sqrt(nshifts)))}-{"diagonal" if diag else "grid"}'
         ff_gsfe = FourierGSFE(energies, bshifts, cob, sampling_type=stype)
         ff_gsfe.output_all_analysis(data_dir)
-        ff_pred = ff_gsfe.predict(bshifts)
+        ff_pred = ff_gsfe.predict(Configuration.sample_line(npts=NPREDPTS, basis=Configuration.diagonal_basis_from_cob(cob)))
     if diag:
         pts = [0, nshifts//3, 2*nshifts//3]
         update(f"Parsing successful (special points: {pts}), passing to analyzer...")
         do = DSamplingOutput(data_dir, nshifts, special_pts=pts, energies=energies, spacings=zspaces)
         do.output_all_analysis()
         if ff_pred is not None:
-            do_pred = DSamplingOutput(data_dir, nshifts, special_pts=pts, energies=ff_pred)
-            do_pred.plot_energies(pfx='pred')
+            do_pred = DSamplingOutput(data_dir, NPREDPTS, special_pts=pts, energies=ff_pred)
+            do_pred.plot_energies(pfx='pred', interp=False, scat=False, line=True)
     else:
         # Combine into (b, z, e) points and pass to ConfigOutput
         bze = []
