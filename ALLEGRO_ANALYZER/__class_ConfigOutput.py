@@ -104,7 +104,7 @@ class DSamplingOutput:
         assert self.force_matrices is not None, f"Must give valid list of phonopy objects to plot forces"
         assert len(atomic_idx_pairs) == len(layer_idx_pairs) == len(cart_idx_pairs), f"Number of atomic, layer, and Cartesian indices must be the same, but is {len(atomic_idx_pairs)}, {len(layer_idx_pairs)}, and {len(cart_idx_pairs)}"
         atomic_sites = list(map(lambda x: x.species.elements[0].symbol, poscar.structure.sites)); n_at = len(atomic_sites)
-        cart_letter_pairs = copy.deepcopy(cart_idx_pairs)
+        cart_letter_pairs = [['']*cart_idx_pairs.shape[1] for _ in range(cart_idx_pairs.shape[0])]
         for i, pair in enumerate(cart_idx_pairs):
             for j, idx in enumerate(pair):
                 if idx == 0:
