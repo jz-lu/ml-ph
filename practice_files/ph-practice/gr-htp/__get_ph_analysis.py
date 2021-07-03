@@ -5,7 +5,7 @@ import numpy as np
 from ____exit_with_error import exit_with_error
 
 from ___constants_names import PH_MESH_CONF_NAME, PH_BAND_CONF_NAME
-from ___constants_phonopy import SUPER_DIM, POSCAR_UNIT_NAME
+from ___constants_phonopy import SUPER_DIM_STR, POSCAR_UNIT_NAME
 from ___constants_misc import ERR_PH_CANNOT_GEN_MESHCONF
 from ___constants_phonopy import PHONOPY_NUM_LINE_INTS
 
@@ -31,7 +31,7 @@ def ph_create_mesh_conf(kpoints_mesh_obj, poscar_obj, outDir):
 
     f = open(outDir + PH_MESH_CONF_NAME, 'w')
     f.write('ATOM_NAME = ' + site_symbols_str + '\n')
-    f.write('DIM = ' + SUPER_DIM + '\n')
+    f.write('DIM = ' + SUPER_DIM_STR + '\n')
     f.write('MESH = ' + kpts_mesh_str + '\n')
 
     # If the kpoints is Gamma-centered, then we set gamma centered to TRUE
@@ -104,7 +104,7 @@ def ph_create_band_conf(kpoints_line_obj, poscar_obj, outDir):
     # Write it out
     f = open(outDir + PH_BAND_CONF_NAME, 'w')
     f.write('ATOM_NAME = ' + site_symbols_str + '\n')
-    f.write('DIM = ' + SUPER_DIM + '\n')
+    f.write('DIM = ' + SUPER_DIM_STR + '\n')
     f.write('BAND = ' + ph_get_band_path(kpoints_line_obj) + '\n')
     # TODO: uncomment this when you figure it out
     # f.write('BAND_LABELS = ' + ph_get_band_path_labels(kpoints_line_obj) + '\n')

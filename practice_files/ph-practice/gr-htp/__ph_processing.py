@@ -17,7 +17,7 @@ import os
 from pymatgen.io.vasp.inputs import Poscar, VaspInput
 
 # Function to handle all preprocessing of phonopy before the force calulation.
-def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM, Poscar_unitcell_name=POSCAR_UNIT_NAME):
+def ph_preprocess(dirName, vaspObj, supercellDim=SUPER_DIM_STR, Poscar_unitcell_name=POSCAR_UNIT_NAME):
     print(PHONOPY_DISP_MSG)
     dirName = checkPath(dirName)
 
