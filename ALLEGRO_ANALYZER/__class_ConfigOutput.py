@@ -134,6 +134,7 @@ class DSamplingOutput:
             assert len(ats) == len(ls) == len(cs) == 2
             assert ls[0] in [1, 2] and ls[1] in [1,2]; assert 0 <= ats[0] < n_at and 0 <= ats[1] < n_at
             idxs = 3*ats + cs; y = np.array([f[idxs[0], idxs[1]] for f in self.force_matrices])
+            y = np.append(y, y[0]) # impose periodic boundary conditions
             interpol = interpolate_scatter(x, y); xp = np.linspace(0, 1, 301); yp = interpol(xp)
             lab = '%s%d(%s)-%s%d(%s)'%(atomic_sites[ats[0]], ls[0], cl[0], atomic_sites[ats[1]], ls[1], cl[1])
             ax.scatter(x, y, cs=cols[i%ncol]); ax.plot(xp, yp, cs=cols[i%ncol], label=lab)
