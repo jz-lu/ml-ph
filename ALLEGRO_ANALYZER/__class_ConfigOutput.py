@@ -137,7 +137,7 @@ class DSamplingOutput:
             y = np.append(y, y[0]) # impose periodic boundary conditions
             interpol = interpolate_scatter(x, y); xp = np.linspace(0, 1, 301); yp = interpol(xp)
             lab = '%s%d(%s)-%s%d(%s)'%(atomic_sites[ats[0]], ls[0], cl[0], atomic_sites[ats[1]], ls[1], cl[1])
-            ax.scatter(x, y, cs=cols[i%ncol]); ax.plot(xp, yp, c=cols[i%ncol], label=lab)
+            ax.scatter(x, y, c=cols[i%ncol]); ax.plot(xp, yp, c=cols[i%ncol], label=lab)
         if len(cart_letter_pairs) > ncol:
             warn("Warning: there are more force lines than colors available. Some lines will be ambiguous.")
         ax.legend()
