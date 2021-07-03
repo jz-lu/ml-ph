@@ -53,7 +53,7 @@ class DSamplingOutput:
             np.savez(self.out_dir + DSAMPLE_FORCES_NAME, *self.force_matrices)
         print(f"Saved raw data over {self.npts-1} diagonally sampled points to {self.out_dir}")
 
-    def __diag_plot(self, arr, plt_type='energy'):
+    def __diag_plot(self, arr, plt_type='energy', pfx=''):
         assert plt_type in ['energy', 'z', 'forces']; plt.clf(); fig, ax = plt.subplots()
         title = 'Energies'; y_lab = r"$E_{tot} (meV)$"; y = self.energies
         if plt_type == 'z':
@@ -78,15 +78,15 @@ class DSamplingOutput:
         interpol = interpolate_scatter(x, y)
         xp = np.linspace(0, 1, 301); yp = interpol(xp)
         ax.plot(xp, yp, c='k')
-        fig.savefig(self.out_dir + f"diag_{plt_type}_smooth.png")
+        fig.savefig(self.out_dir + pfx + f"diag_{plt_type}_smooth.png")
     
-    def plot_energies(self):
+    def plot_energies(self, pfx=''):
         assert self.energies is not None, "Energy data was not provided to analyzer"
-        self.__diag_plot(self.energies, plt_type='energy')
+        self.__diag_plot(self.energies, plt_type='energy', pfx=pfx)
     
-    def plot_spacings(self):
+    def plot_spacings(self, pfx=''):
         assert self.spacings is not None, "Interlayer spacings data was not provided to analyzer"
-        self.__diag_plot(self.spacings, plt_type='z')
+        self.__diag_plot(self.spacings, plt_type='z', pfx=pfx)
     
     def output_all_analysis(self):
         self.save_raw_data(); self.plot_energies(); self.plot_spacings()
@@ -280,7 +280,9 @@ class FourierGSFE:
     def get_coeffs(self):
         self.__ensure_fitted(); return self.coeffs
     def get_score(self):
-        self.__ensure_fitted(); return self.reg.score(self.X, self.GSFE)
+        self.__ensure_fitted()
+        print(f"Fit score = {self.reg.score(self.X, self.GSFE)}")
+        return self.reg.score(self.X, self.GSFE)
     def predict(self, b_matrix):
         self.__ensure_fitted(); return self.reg.predict(self.__b_to_fourier_basis(b_matrix))
     def plot_pred_vs_actual(self, outdir, outname=FGSFE_PLOT_NAME):

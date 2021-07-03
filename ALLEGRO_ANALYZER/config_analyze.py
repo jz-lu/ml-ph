@@ -94,11 +94,21 @@ if __name__ == '__main__':
             energies[i] = float(f.readline().split(' ')[-1])
     print(f"Energies retrieved: {energies}")
 
+    ff_pred = None
+    if ff:
+        print("Running 6-term Fourier fitting on GSFE")
+        stype = f'{nshifts if diag else (int(sqrt(nshifts)), int(sqrt(nshifts)))}-{"diagonal" if diag else "grid"}'
+        ff_gsfe = FourierGSFE(energies, bshifts, cob, sampling_type=stype)
+        ff_gsfe.output_all_analysis(data_dir)
+        ff_pred = ff_gsfe.predict(bshifts)
     if diag:
         pts = [0, nshifts//3, 2*nshifts//3]
         update(f"Parsing successful (special points: {pts}), passing to analyzer...")
         do = DSamplingOutput(data_dir, nshifts, special_pts=pts, energies=energies, spacings=zspaces)
         do.output_all_analysis()
+        if ff_pred is not None:
+            do_pred = DSamplingOutput(data_dir, nshifts, special_pts=pts, energies=ff_pred)
+            do_pred.plot_energies(pfx='pred')
     else:
         # Combine into (b, z, e) points and pass to ConfigOutput
         bze = []
@@ -112,10 +122,6 @@ if __name__ == '__main__':
         print("Parsing successful, passing to analyzer...")
         do = ConfigOutput(data_dir, bze, cob, abs_min_energy=abs_min_energy)
         do.output_all_analysis(levels=nlevel)
-    if ff:
-        stype = f'{nshifts if diag else (int(sqrt(nshifts)), int(sqrt(nshifts)))}-{"diagonal" if diag else "grid"}'
-        ff_gsfe = FourierGSFE(energies, bshifts, cob, sampling_type=stype)
-        ff_gsfe.output_all_analysis(data_dir)
             
 
     print("Analyzer has finished running.")
