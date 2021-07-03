@@ -251,7 +251,9 @@ class Configuration:
     
     @staticmethod
     def lattice_angle_from_cob(cob):
+        print("COB:", cob)
         assert cob.shape == (2,2); M = cob.T; M / np.linalg.norm(M[0])
+        print("M:", M)
         return round(np.rad2deg(np.arccos(np.dot(M[0],M[1]))), 4)
 
     @staticmethod
