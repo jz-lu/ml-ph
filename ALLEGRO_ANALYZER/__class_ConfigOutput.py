@@ -265,6 +265,7 @@ class FourierGSFE:
         self.reg = LinearRegression().fit(self.X, self.GSFE)
         self.coeffs = np.append(self.reg.intercept_, self.reg.coef_)
         self.__fitted = True
+        print(f"Final coefficients:\n{self.coeffs}")
         return self.coeffs
     def __ensure_fitted(self):
         if not self.__fitted:
