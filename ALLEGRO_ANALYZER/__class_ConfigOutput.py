@@ -20,7 +20,7 @@ from ___helpers_parsing import warn
 import phonopy, copy, os
 
 class DSamplingOutput:
-    def __init__(self, out_dir, npts, special_pts=None, energies=None, spacings=None, scaled=False, 
+    def __init__(self, out_dir, npts, special_pts=None, energies=None, spacings=None, scaled=False, dump=True, 
                  ph_list=None, ltype='hexagonal'):
         assert ltype == 'hexagonal', f"Only hexagonal lattices supported (for now), but got {ltype}"
         print("Initializing DSamplingOutput object")
@@ -28,7 +28,8 @@ class DSamplingOutput:
         self.spacings = None; self.energies = None; self.force_matrices = None
         if energies is not None:
             minenergy = min(energies); self.energies = (1 if scaled else 1000)*(np.array(energies)-minenergy)
-            print(f"Adjusted energies (meV): {self.energies}")
+            if dump:
+                print(f"Adjusted energies (meV): {self.energies}")
             self.energies = np.append(self.energies, self.energies[0])
             print("Initialized energies")
         if spacings is not None:
@@ -141,7 +142,7 @@ class DSamplingOutput:
 class ConfigOutput:
     # plot list is a list of tuples (b, z, e) = (shift, z-spacing, energy).
     # cob is the change-of-basis matrix to get fom lattice basis (which b is in) to Cartesian to plot.
-    def __init__(self, out_dir, plot_list, cob_matrix, abs_min_energy=None, scaled=False):
+    def __init__(self, out_dir, plot_list, cob_matrix, abs_min_energy=None, scaled=False, dump=True):
         print("Initalizing ConfigOutput object.")
         # plot_list: list of (b, z, e) points
         self.__plot_list = plot_list
@@ -160,12 +161,13 @@ class ConfigOutput:
         self.__shifts = [np.dot(cob_matrix, i) for i in self.__direct_shifts] # Cartesian coordinates
         self.xshifts = np.array([i[0] for i in self.__shifts])
         self.yshifts = np.array([i[1] for i in self.__shifts])
-        print("DIRECT SHIFTS:", self.__direct_shifts)
-        print("CARTESIAN SHIFTS:", self.__shifts)
-        print("xshifts:", self.xshifts)
-        print("yshifts:", self.yshifts)
-        print("Energies (meV):", self.__energies)
-        print("Interlayer spacings:", self.__zspacings)
+        if dump:
+            print("DIRECT SHIFTS:", self.__direct_shifts)
+            print("CARTESIAN SHIFTS:", self.__shifts)
+            print("xshifts:", self.xshifts)
+            print("yshifts:", self.yshifts)
+            print("Energies (meV):", self.__energies)
+            print("Interlayer spacings:", self.__zspacings)
         np.save(self.__out_dir + 'bze', self.__plot_list)
 
         print(f'Saving raw data to {self.__out_dir}')
@@ -238,16 +240,18 @@ class ConfigOutput:
 # See Eq(4), Carr 2018
 # Bugs: may not work if unit cell vectors is 60 deg instead of 120
 class FourierGSFE:
-    def __init__(self, energies, b_matrix, lattice_matrix, ltype='hexagonal', sampling_type='grid'):
+    def __init__(self, energies, b_matrix, lattice_matrix, ltype='hexagonal', sampling_type='grid', dump=True):
         self.stype = sampling_type; assert isinstance(self.stype, str)
         self.__A = lattice_matrix
         print("Initializing FourierGSFE object")
         assert ltype == 'hexagonal', "Non-hexagonal lattices not supported"
         assert len(energies) == len(b_matrix), f"Must have same number of configurations as energies, but got {len(b_matrix)} vs. {len(energies)}"
         b_matrix = b_matrix[:,:2]
-        print(f"Configurations (direct basis):\n {b_matrix}\nConfigurations (Cartesian):\n {(self.__A @ b_matrix.T).T}")
+        if dump:
+            print(f"Configurations (direct basis):\n {b_matrix}\nConfigurations (Cartesian):\n {(self.__A @ b_matrix.T).T}")
         minenergy = min(energies); self.GSFE = 1000*(np.array(energies)-minenergy)
-        print(f"Adjusted energies (meV): {self.GSFE}")
+        if dump:
+            print(f"Adjusted energies (meV): {self.GSFE}")
         self.nb = len(b_matrix); self.b_matrix = b_matrix
         self.__fitted = False; self.coeffs = None; self.reg = None
         self.X = self.__b_to_fourier_basis(b_matrix)

@@ -111,7 +111,7 @@ if __name__ == '__main__':
         do = DSamplingOutput(data_dir, nshifts, special_pts=pts, energies=energies, spacings=zspaces)
         do.output_all_analysis()
         if ff_pred is not None:
-            do_pred = DSamplingOutput(data_dir, NPREDPTS, special_pts=pts, energies=ff_pred, scaled=True)
+            do_pred = DSamplingOutput(data_dir, NPREDPTS, special_pts=pts, energies=ff_pred, scaled=True, dump=False)
             do_pred.plot_energies(pfx='pred', tsfx='fitted', interp=False, scat=False, line=True)
     else:
         # Combine into (b, z, e) points and pass to ConfigOutput
