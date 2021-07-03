@@ -1,6 +1,6 @@
 # Extract FORCE_SETS from VASP calculations using phonopy
 import os, sys, copy
-from ___helpers_parsing import succ, warn, err, is_flag, check_not_flag
+from ___helpers_parsing import update, succ, warn, err, is_flag, check_not_flag
 from ___constants_names import (
     PHDISP_STATIC_NAME, PH_FORCE_SETS_NAME, 
     MONOLAYER_DIR_NAME, CONFIG_DIR_NAME, 
@@ -58,13 +58,16 @@ if __name__ == '__main__':
     indir = checkPath(os.path.abspath(indir)); outdir = checkPath(os.path.abspath(outdir))
 
     if ftype == 'twist':
+        update("Mode: twisted")
         get_many_forces(indir, twist=True)
         succ(f"Successfully generated intra- (and inter-)layer force constants files in {indir}")
     elif ftype == 'config':
+        update("Mode: configuration")
         get_many_forces(indir, twist=False)
         succ(f"Successfully generated per-configuration force constants files in {indir}")
     else:
         # Call FORCE_SETS generator
+        update("Mode: basic")
         disps = findDirsinDir(indir, PHDISP_STATIC_NAME, searchType='start')
         ph_generate_forcesets(indir, len(disps), path_pad=ANALYSIS_DIR_NAME)
         if not os.path.isfile(indir + PH_FORCE_SETS_NAME):
