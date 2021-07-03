@@ -252,7 +252,7 @@ class CarCollector:
 
     # Get the layer distance
     @staticmethod
-    def get_interlayer_spacing(layer_idxs, DIR_RELAXATION=None, dump=True, poscar=None):
+    def get_interlayer_spacing(layer_idxs, DIR_RELAXATION=None, dump=False, poscar=None):
         p = None; assert DIR_RELAXATION is not None or poscar is not None, f"Must either provide Poscar object or directory with CONTCAR"
         if poscar is not None:
             p = poscar
@@ -262,8 +262,8 @@ class CarCollector:
         z_per_layer = np.split(np.array([i for _,i in sorted(zip(layer_idxs, zs))]), nlayer)
         assert nlayer == 2, f"Found {nlayer} layers, but only 2 supported (for now)"
         spacings = z_per_layer[1] - z_per_layer[0]
-        print(f"Interlayer spacings: {spacings}")
         if dump:
+            print(f"Interlayer spacings: {spacings}")
             print(f"Layer indices: {layer_idxs}")
         assert (spacings > 0).all(), f"Spacing must be positive, check that layer indexing is correct"
         return np.mean(spacings)

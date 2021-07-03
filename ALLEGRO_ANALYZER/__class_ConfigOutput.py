@@ -248,7 +248,7 @@ class FourierGSFE:
     def __b_to_vw(self, b_mat):
         print(f"Scaling by lattice constant {LA.norm(self.__A[:,0])}")
         M = 2 * pi * np.array([[1, -1/sqrt(3)], [0, 2/sqrt(3)]]) / LA.norm(self.__A[:,0]) # for hexagonal lattices
-        return (M @ b_mat.T).T
+        return (M @ self.__A @ b_mat.T).T
     def __vw_to_fourier_basis(self, vw):
         X = np.ones((self.nb, 5)); v = vw[:,0]; w = vw[:,1]
         X[:,0] = np.cos(v) + np.cos(w) + np.cos(v + w)
