@@ -133,8 +133,9 @@ if __name__ == '__main__':
             print("Getting POSCAR...")
             p = Poscar.from_file(BASE_ROOT + checkPath(CONFIG_SUBDIR_NAME + str(0)) + POSCAR_NAME)
             n_at = len(p.structure.species); npairs = n_at * (n_at-1) // 2; at_idxs = np.arange(n_at)
-            atomic_pairs = np.array(list(itertools.combinations(at_idxs)))
-            lidx_pairs = np.array(list(itertools.combinations(lidxs)))
+            assert n_at == len(lidxs), f"Inconsistent number of atoms {n_at} with associated layer indices {l_idxs}"
+            atomic_pairs = np.array(list(itertools.combinations(at_idxs, 2)))
+            lidx_pairs = np.array(list(itertools.combinations(lidxs, 2)))
             assert nplt <= npairs, f"Number of force constants to plot {nplt} is too large"
             print("Sampling pairs...")
             choice_idxs = np.random.choice(np.arange(len(atomic_pairs)), size=nplt, replace=False)
