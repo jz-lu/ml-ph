@@ -117,7 +117,8 @@ if __name__ == '__main__':
         ph_list = None
         if fc:
             print("Building list of phonopy objects...")
-            ncfg, ph_list = PhonopyAPI(BASE_ROOT, ctype='config').inter_ph_list()
+            ph_api = PhonopyAPI(BASE_ROOT, ctype='config')
+            ncfg, ph_list = ph_api.nconfigs(), ph_api.inter_ph_list()
             assert ncfg == nshifts, f"Number of configurations found {ncfg} inconsistent with number entered {nshifts}"
         do = DSamplingOutput(data_dir, nshifts, special_pts=pts, energies=energies, spacings=zspaces, ph_list=ph_list)
         do.output_all_analysis()
