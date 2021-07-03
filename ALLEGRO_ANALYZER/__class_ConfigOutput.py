@@ -135,7 +135,7 @@ class DSamplingOutput:
             fig.axes[i].text(0.1, 0.9, lab, transform=fig.axes[i].transAxes, size=10, weight='ultralight')
             fig.axes[i].ticklabel_format(axis='y', style='sci')
             if self.special_pts is not None:
-                fig.axes[i].xticks(ticks=x[self.special_pts], labels=HIGH_SYMMETRY_LABELS)
+                plt.setp(fig.axes, xticks=x[self.special_pts], xticklabels=HIGH_SYMMETRY_LABELS)
             else:
                 fig.axes[i].tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
         plt.tight_layout()
