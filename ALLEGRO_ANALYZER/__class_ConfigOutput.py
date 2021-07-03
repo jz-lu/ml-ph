@@ -121,16 +121,6 @@ class DSamplingOutput:
         plt.clf(); fig = plt.figure(); fig.subplots(nrows=rows, ncols=rows) 
         x = np.linspace(0, 1, self.npts)
         plt.title(f"Forces along diagonal")
-        if self.special_pts is not None:
-            print(f"Adding high-symmetry tick labels {HIGH_SYMMETRY_LABELS} at {x[self.special_pts]}")
-            plt.xticks(ticks=x[self.special_pts], labels=HIGH_SYMMETRY_LABELS)
-        else:
-            plt.tick_params(
-                axis='x',          # changes apply to the x-axis
-                which='both',      # both major and minor ticks are affected
-                bottom=False,      # ticks along the bottom edge are off
-                top=False,         # ticks along the top edge are off
-                labelbottom=False) # labels along the bottom edge are off
         plt.ylabel(r"Force constants (eV/$\AA^2$)")
         for i, (ats, ls, cs, cl) in enumerate(zip(atomic_idx_pairs, layer_idx_pairs, cart_idx_pairs, cart_letter_pairs)):
             ats = np.array(ats); ls = np.array(ls); cs = np.array(cs)
@@ -139,9 +129,16 @@ class DSamplingOutput:
             idxs = 3*ats + cs; y = np.array([f[idxs[0], idxs[1]] for f in self.force_matrices])
             y = np.append(y, y[0]) # impose periodic boundary conditions
             interpol = interpolate_scatter(x, y); xp = np.linspace(0, 1, 301); yp = interpol(xp)
-            lab = '%s%d(%s)-%s%d(%s)'%(atomic_sites[ats[0]], ls[0], cl[0], atomic_sites[ats[1]], ls[1], cl[1])
-            fig.axes[i].scatter(x, y, c=cols[i%ncol]); fig.axes[i].plot(xp, yp, c=cols[i%ncol], label=lab)
-            fig.axes[i].text(0.825, 0.25, lab, transform=fig.axes[i].transAxes, size=10, weight='ultralight')
+            lab = r'$%s^{(%d)}_%s-%s^{(%d)}_%s$'%(atomic_sites[ats[0]], ls[0], cl[0], atomic_sites[ats[1]], ls[1], cl[1])
+            fig.axes[i].scatter(x, y, c=cols[i%ncol])
+            # fig.axes[i].plot(xp, yp, c=cols[i%ncol], label=lab)
+            fig.axes[i].text(0.1, 0.9, lab, transform=fig.axes[i].transAxes, size=10, weight='ultralight')
+            fig.axes[i].ticklabel_format(axis='y', style='sci')
+            if self.special_pts is not None:
+                fig.axes[i].xticks(ticks=x[self.special_pts], labels=HIGH_SYMMETRY_LABELS)
+            else:
+                fig.axes[i].tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
+        plt.tight_layout()
         fig.savefig(self.out_dir + f"diag_forces.png")
 
 class ConfigOutput:
