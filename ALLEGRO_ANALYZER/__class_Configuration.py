@@ -317,7 +317,7 @@ class Configuration:
             basis = np.array(basis); n_star = 1/round(min(basis[basis > 0]), 4); m = np.ones(basis.shape)
             pts = [np.round((c * n_star * basis) % m, 5) for c in pts]
             if as_mat:
-                pts = np.concatenate(pts).reshape(npts, 2)
+                pts = np.concatenate(pts).reshape(npts, 3)
             if dump:
                 print(f"Sampled diagonal points (direct coords): {pts}")
         return pts
