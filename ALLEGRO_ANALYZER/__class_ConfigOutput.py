@@ -121,7 +121,7 @@ class DSamplingOutput:
         plt.clf(); fig = plt.figure(); fig.subplots(nrows=rows, ncols=rows) 
         x = np.linspace(0, 1, self.npts)
         plt.suptitle(f"Forces along diagonal")
-        fig.text(-0.05, 0.5, r"Force constants (eV/$\AA^2$)", va='center', rotation='vertical')
+        fig.text(0, 0.5, r"Force constants (eV/$\AA^2$)", va='center', rotation='vertical')
         for i, (ats, ls, cs, cl) in enumerate(zip(atomic_idx_pairs, layer_idx_pairs, cart_idx_pairs, cart_letter_pairs)):
             ats = np.array(ats); ls = np.array(ls); cs = np.array(cs)
             assert len(ats) == len(ls) == len(cs) == 2
@@ -132,7 +132,7 @@ class DSamplingOutput:
             lab = r'$%s^{(%d)}_%s-%s^{(%d)}_%s$'%(atomic_sites[ats[0]], ls[0], cl[0], atomic_sites[ats[1]], ls[1], cl[1])
             fig.axes[i].scatter(x, y, c=cols[i%ncol])
             # fig.axes[i].plot(xp, yp, c=cols[i%ncol], label=lab)
-            fig.axes[i].text(0.1, 0.9, lab, transform=fig.axes[i].transAxes, size=10, weight='ultralight')
+            fig.axes[i].text(0.9, 1.1, lab, transform=fig.axes[i].transAxes, size=10, weight='ultralight')
             fig.axes[i].ticklabel_format(axis='y', style='sci', scilimits=(0,0))
             if self.special_pts is not None:
                 plt.setp(fig.axes, xticks=x[self.special_pts], xticklabels=HIGH_SYMMETRY_LABELS)
