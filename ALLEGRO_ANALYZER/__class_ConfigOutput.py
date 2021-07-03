@@ -60,7 +60,7 @@ class DSamplingOutput:
         assert interp or scat or line, "Must specify at least 1 type of plot"
         assert not (interp and line), "Must choose at most one of interpolation and line plotting"
         assert plt_type in ['energy', 'z', 'forces']; plt.clf(); fig, ax = plt.subplots()
-        title = 'Energies'; y_lab = r"$E_{tot} (meV)$"; y = self.energies
+        title = 'GSFE'; y_lab = r"$E_{tot} (meV)$"; y = self.energies
         if plt_type == 'z':
             title = 'Interlayer spacing'; y_lab = 'Interlayer spacing (unitless)'
         title = title + (f' ({tsfx})' if tsfx != '' else '')
@@ -99,21 +99,23 @@ class DSamplingOutput:
     def output_all_analysis(self):
         self.save_raw_data(); self.plot_energies(); self.plot_spacings()
     
-    def plot_forces(self, atomic_idx_pairs, layer_idx_pairs, cart_idxs, poscar : Poscar):
+    def plot_forces(self, atomic_idx_pairs, layer_idx_pairs, cart_idx_pairs, poscar : Poscar):
         cols = list(mcolors.TABLEAU_COLORS.keys()); ncol = len(cols)
-        assert len(atomic_idx_pairs) == len(layer_idx_pairs) == len(cart_idxs), f"[Set 1] Number of atomic, layer, and Cartesian indices must be the same, but is {len(atomic_idx_pairs)}, {len(layer_idx_pairs)}, and {len(cart_idxs)}"
+        assert self.force_matrices is not None, f"Must give valid list of phonopy objects to plot forces"
+        assert len(atomic_idx_pairs) == len(layer_idx_pairs) == len(cart_idx_pairs), f"Number of atomic, layer, and Cartesian indices must be the same, but is {len(atomic_idx_pairs)}, {len(layer_idx_pairs)}, and {len(cart_idx_pairs)}"
         atomic_sites = list(map(lambda x: x.species.elements[0].symbol, poscar.structure.sites)); n_at = len(atomic_sites)
-        cart_letters = copy.deepcopy(cart_idxs)
-        for i, idx in enumerate(cart_idxs):
-                if idx == 'x':
-                    cart_idxs[i] = 0
-                elif idx == 'y':
-                    cart_idxs[i] = 1
-                elif idx == 'z':
-                    cart_idxs[i] = 2
+        cart_letter_pairs = copy.deepcopy(cart_idx_pairs)
+        for i, pair in enumerate(cart_idx_pairs):
+            for j, idx in enumerate(pair):
+                if idx == 0:
+                    cart_letter_pairs[i][j] = 'x'
+                elif idx == 1:
+                    cart_letter_pairs[i][j] = 'y'
+                elif idx == 2:
+                    cart_letter_pairs[i][j] = 'z'
                 else:
                     assert False, f"Invalid Cartesian element {idx} at position {i}"
-        print(f"Transformed Cartesian pairs to {cart_idxs}")
+        print(f"Transformed Cartesian pairs to letter form: \n{cart_letter_pairs}")
         plt.clf(); fig, ax = plt.subplots(); x = np.linspace(0, 1, self.npts)
         ax.set_title(f"Forces along diagonal")
         if self.special_pts is not None:
@@ -126,16 +128,16 @@ class DSamplingOutput:
                 bottom=False,      # ticks along the bottom edge are off
                 top=False,         # ticks along the top edge are off
                 labelbottom=False) # labels along the bottom edge are off
-        ax.set_ylabel(r"Force (ev/$\AA$)")
-        for i, (ats, ls, c, cl) in enumerate(zip(atomic_idx_pairs, layer_idx_pairs, cart_idxs, cart_letters)):
-            ats = np.array(ats); ls = np.array(ls); c = np.array(c)
-            assert len(ats) == len(ls) == len(c) == 2
+        ax.set_ylabel(r"Force constants (eV/$\AA^2$)")
+        for i, (ats, ls, cs, cl) in enumerate(zip(atomic_idx_pairs, layer_idx_pairs, cart_idx_pairs, cart_letter_pairs)):
+            ats = np.array(ats); ls = np.array(ls); cs = np.array(cs)
+            assert len(ats) == len(ls) == len(cs) == 2
             assert ls[0] in [1, 2] and ls[1] in [1,2]; assert 0 <= ats[0] < n_at and 0 <= ats[1] < n_at
-            idxs = 3*ats + c; y = np.array([f[idxs[0], idxs[1]] for f in self.force_matrices])
+            idxs = 3*ats + cs; y = np.array([f[idxs[0], idxs[1]] for f in self.force_matrices])
             interpol = interpolate_scatter(x, y); xp = np.linspace(0, 1, 301); yp = interpol(xp)
-            lab = '%s%d-%s%d(%x)'%(atomic_sites[ats[0]], ls[0], atomic_sites[ats[1]], ls[1], cl)
-            ax.scatter(x, y, c=cols[i%ncol]); ax.plot(xp, yp, c=cols[i%ncol], label=lab)
-        if len(cart_letters) > ncol:
+            lab = '%s%d(%s)-%s%d(%s)'%(atomic_sites[ats[0]], ls[0], cl[0], atomic_sites[ats[1]], ls[1], cl[1])
+            ax.scatter(x, y, cs=cols[i%ncol]); ax.plot(xp, yp, cs=cols[i%ncol], label=lab)
+        if len(cart_letter_pairs) > ncol:
             warn("Warning: there are more force lines than colors available. Some lines will be ambiguous.")
         ax.legend()
         fig.savefig(self.out_dir + f"diag_forces.png")

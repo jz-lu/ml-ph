@@ -35,7 +35,8 @@ ERR_BAD_KPOINTS_MODIFY_INPUT = 'Error: to modify KPOINTS file or Kpoints object 
 ERR_ENER_WRITE_FAIL = 'Failed to write out the energies to the specified root directory.'
 
 ERR_PH_FORCE_SETS = 'An error occurred while generating FORCE_SETS with phonopy.'
-ERR_PH_FORCE_SETS_NOT_FOUND = 'FORCE_SETS not found in the directory. Check logs for the creation of FORCE_SETS by phonopy. The function in this script is a good place to start.'
+ERR_PH_FORCE_SETS_NOT_FOUND = 'FORCE_SETS not found in the directory. Check logs for the creation of FORCE_SETS by phonopy.'
+ERR_PH_FORCE_SETS_NOT_MADE = 'FORCE_SETS not found, did you create them yet?'
 
 ERR_PH_CANNOT_GEN_MESHCONF = 'Error in creating mesh.conf. Invalid KPOINTS object used. Did you use a line KPOINTS instead of mesh?'
 

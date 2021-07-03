@@ -6,21 +6,24 @@ from ___constants_names import (
     RELAXATION_DIR_NAME, ANALYSIS_DIR_NAME, 
     TOTAL_ENER_DIR_NAME, TOT_ENERGIES_NAME
 )
-from ___constants_output import NPREDPTS
+from ___constants_output import NPREDPTS, DEFAULT_CONTOUR_LEVELS
 from __class_ConfigOutput import ConfigOutput, DSamplingOutput, FourierGSFE
 from __directory_searchers import checkPath
 from __class_CarCollector import CarCollector
 from __class_Configuration import Configuration
+from __class_PhonopyAPI import PhonopyAPI
 import numpy as np
 import sys, copy
 from os.path import isdir
 import os
 from time import time
 from math import sqrt
+import itertools
+from pymatgen.io.vasp.inputs import Poscar
 from ___helpers_parsing import succ, warn, err, update, greet
 
 if __name__ == '__main__':
-    USAGE_ERR_MSG = 'Usage: python3 <DIR>/config_analyze.py -n <NUM SHIFTS> -d <I/O DIR FROM MAIN PROGRAM> -e <MIN ENERGY (eV)> (optional: --diag --nff)'
+    USAGE_ERR_MSG = 'Usage: python3 <DIR>/config_analyze.py -n <NUM SHIFTS> -d <I/O DIR FROM MAIN PROGRAM> -e <MIN ENERGY (eV)> (optional: --diag --nff --fc)'
 
     # The ConfigOutput class expects a COB matrix and 
     # a list of (config vector b, z-spacing, energy in eV), as well as a minimum energy in eV to shift by.
@@ -28,8 +31,8 @@ if __name__ == '__main__':
 
     # Parse cmdline args
     cmdargs = list(copy.deepcopy(sys.argv))[1:]; i = 0; n = len(cmdargs)
-    BASE_ROOT = '.'; abs_min_energy = None; nshifts = None; diag = False; ff = True
-    nlevel = 301
+    BASE_ROOT = '.'; abs_min_energy = None; nshifts = None; diag = False; ff = True; fc = False; nplt = 4
+    nlevel = DEFAULT_CONTOUR_LEVELS
     while i < n:
         if cmdargs[i] == '-n':
             i += 1; nshifts = int(cmdargs[i]); i += 1
@@ -44,13 +47,16 @@ if __name__ == '__main__':
             diag = True; i += 1
         elif cmdargs[i] == '--nff':
             ff = False; i += 1
+        elif cmdargs[i] == '--fc':
+            i += 1; nplt = int(cmdargs[i]); i += 1; fc = True
         elif cmdargs[i] == '--usage':
             print(USAGE_ERR_MSG)
             sys.exit(0)
         else:
             warn(f"Unrecognized token '{cmdargs[i]}'")
             err(USAGE_ERR_MSG)
-    assert BASE_ROOT and nlevel > 0
+    assert BASE_ROOT and nlevel > 0 and nplt > 0
+    assert not fc or diag, "If --fc flag is on, then sampling must be diagonal"
     BASE_ROOT = checkPath(os.path.abspath(BASE_ROOT))
 
     greet("== Configuration Analyzer Starting =="); start_time = time()
@@ -108,12 +114,33 @@ if __name__ == '__main__':
     if diag:
         pts = [0, nshifts//3, 2*nshifts//3]
         update(f"Parsing successful (special points: {pts}), passing to analyzer...")
-        do = DSamplingOutput(data_dir, nshifts, special_pts=pts, energies=energies, spacings=zspaces)
+        ph_list = None
+        if fc:
+            print("Building list of phonopy objects...")
+            ncfg, ph_list = PhonopyAPI(BASE_ROOT, ctype='config').inter_ph_list()
+            assert ncfg == nshifts, f"Number of configurations found {ncfg} inconsistent with number entered {nshifts}"
+        do = DSamplingOutput(data_dir, nshifts, special_pts=pts, energies=energies, spacings=zspaces, ph_list=ph_list)
         do.output_all_analysis()
         if ff_pred is not None:
             pts = [0, NPREDPTS//3, 2*NPREDPTS//3]
             do_pred = DSamplingOutput(data_dir, NPREDPTS, special_pts=pts, energies=ff_pred, scaled=True, dump=False)
             do_pred.plot_energies(pfx='pred', tsfx='fitted', interp=False, scat=False, line=True)
+        if fc: # plot force constants
+            assert nplt > 0, f"Invalid number of force constants to plot {nplt}"
+            update("Calculating force constants...")
+            print("Getting POSCAR...")
+            p = Poscar.from_file(BASE_ROOT + CONFIG_SUBDIR_NAME + str(0))
+            n_at = len(p.structure.species); npairs = n_at * (n_at-1) // 2; at_idxs = np.arange(n_at)
+            atomic_pairs = np.array(list(itertools.combinations(at_idxs)))
+            lidx_pairs = np.array(list(itertools.combinations(lidxs)))
+            assert nplt <= npairs, f"Number of force constants to plot {nplt} is too large"
+            print("Sampling pairs...")
+            choice_idxs = np.random.choice(np.arange(len(atomic_pairs)), size=nplt, replace=False)
+            print(f"Using pairs with indices: {choice_idxs}")
+            atomic_pairs = atomic_pairs[choice_idxs]; lidx_pairs = lidx_pairs[choice_idxs]
+            cart_pairs = np.stack((np.random.choice([0,1,2], nplt), np.random.choice([0,1,2], nplt)), axis=1)
+            print("Plotting forces...")
+            do.plot_forces(atomic_pairs, lidx_pairs, cart_pairs, p)
     else:
         # Combine into (b, z, e) points and pass to ConfigOutput
         bze = []
