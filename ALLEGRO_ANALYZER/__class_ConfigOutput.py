@@ -63,7 +63,7 @@ class DSamplingOutput:
         title = 'Energies'; y_lab = r"$E_{tot} (meV)$"; y = self.energies
         if plt_type == 'z':
             title = 'Interlayer spacing'; y_lab = 'Interlayer spacing (unitless)'
-        title = title + (f'({tsfx})' if tsfx != '' else '')
+        title = title + (f' ({tsfx})' if tsfx != '' else '')
         ax.set_title(f"{title} along diagonal")
         x = np.linspace(0, 1, self.npts); y = self.energies if plt_type == 'energy' else self.spacings
         print(f"Now plotting TYPE={plt_type}")
@@ -79,13 +79,13 @@ class DSamplingOutput:
                 labelbottom=False) # labels along the bottom edge are off
         ax.set_ylabel(y_lab)
         if scat:
-            ax.scatter(x, y, c='royalblue')
+            ax.scatter(x, y, c='darkslategrey')
         if interp:
             interpol = interpolate_scatter(x, y)
             xp = np.linspace(0, 1, 301); yp = interpol(xp)
-            ax.plot(xp, yp, c='k')
+            ax.plot(xp, yp, c='royalblue')
         if line:
-            ax.plot(x, y, c='k')
+            ax.plot(x, y, c='royalblue')
         fig.savefig(self.out_dir + pfx + f"diag_{plt_type}.png")
     
     def plot_energies(self, pfx='', tsfx='', interp=True, scat=True, line=False):
