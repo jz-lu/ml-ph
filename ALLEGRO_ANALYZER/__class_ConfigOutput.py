@@ -104,6 +104,7 @@ class DSamplingOutput:
         assert self.force_matrices is not None, f"Must give valid list of phonopy objects to plot forces"
         assert len(atomic_idx_pairs) == len(layer_idx_pairs) == len(cart_idx_pairs), f"Number of atomic, layer, and Cartesian indices must be the same, but is {len(atomic_idx_pairs)}, {len(layer_idx_pairs)}, and {len(cart_idx_pairs)}"
         atomic_sites = list(map(lambda x: x.species.elements[0].symbol, poscar.structure.sites)); n_at = len(atomic_sites)
+        nplt = len(atomic_idx_pairs); assert int(sqrt(nplt))**2 == nplt, f"Number to plot {nplt} must be a perfect square to plot properly"
         cart_letter_pairs = [['']*cart_idx_pairs.shape[1] for _ in range(cart_idx_pairs.shape[0])]
         for i, pair in enumerate(cart_idx_pairs):
             for j, idx in enumerate(pair):
@@ -116,8 +117,10 @@ class DSamplingOutput:
                 else:
                     assert False, f"Invalid Cartesian element {idx} at position {i}"
         print(f"Transformed Cartesian pairs to letter form: \n{cart_letter_pairs}")
-        plt.clf(); fig, ax = plt.subplots(); x = np.linspace(0, 1, self.npts)
-        ax.set_title(f"Forces along diagonal")
+        rows = int(sqrt(nplt))
+        plt.clf(); fig, ax = plt.figure(); fig.subplots(nrows=rows, ncols=rows) 
+        x = np.linspace(0, 1, self.npts)
+        plt.title(f"Forces along diagonal")
         if self.special_pts is not None:
             print(f"Adding high-symmetry tick labels {HIGH_SYMMETRY_LABELS} at {x[self.special_pts]}")
             plt.xticks(ticks=x[self.special_pts], labels=HIGH_SYMMETRY_LABELS)
@@ -128,7 +131,7 @@ class DSamplingOutput:
                 bottom=False,      # ticks along the bottom edge are off
                 top=False,         # ticks along the top edge are off
                 labelbottom=False) # labels along the bottom edge are off
-        ax.set_ylabel(r"Force constants (eV/$\AA^2$)")
+        plt.ylabel(r"Force constants (eV/$\AA^2$)")
         for i, (ats, ls, cs, cl) in enumerate(zip(atomic_idx_pairs, layer_idx_pairs, cart_idx_pairs, cart_letter_pairs)):
             ats = np.array(ats); ls = np.array(ls); cs = np.array(cs)
             assert len(ats) == len(ls) == len(cs) == 2
@@ -137,10 +140,8 @@ class DSamplingOutput:
             y = np.append(y, y[0]) # impose periodic boundary conditions
             interpol = interpolate_scatter(x, y); xp = np.linspace(0, 1, 301); yp = interpol(xp)
             lab = '%s%d(%s)-%s%d(%s)'%(atomic_sites[ats[0]], ls[0], cl[0], atomic_sites[ats[1]], ls[1], cl[1])
-            ax.scatter(x, y, c=cols[i%ncol]); ax.plot(xp, yp, c=cols[i%ncol], label=lab)
-        if len(cart_letter_pairs) > ncol:
-            warn("Warning: there are more force lines than colors available. Some lines will be ambiguous.")
-        ax.legend()
+            fig.axes[i].scatter(x, y, c=cols[i%ncol]); fig.axes[i].plot(xp, yp, c=cols[i%ncol], label=lab)
+            fig.axes[i].text(0.825, 0.25, lab, transform=fig.axes[i].transAxes, size=10, weight='ultralight')
         fig.savefig(self.out_dir + f"diag_forces.png")
 
 class ConfigOutput:

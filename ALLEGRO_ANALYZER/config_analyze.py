@@ -59,6 +59,9 @@ if __name__ == '__main__':
     assert BASE_ROOT and nlevel > 0 and nplt > 0
     assert not fc or diag, "If --fc flag is on, then sampling must be diagonal"
     BASE_ROOT = checkPath(os.path.abspath(BASE_ROOT))
+    if int(sqrt(nplt))**2 != nplt:
+        print(f"Rounded number of forces {nplt} down to nearest perfect square {int(sqrt(nplt))}")
+        nplt = int(sqrt(nplt))
 
     greet("== Configuration Analyzer Starting =="); start_time = time()
     update("WD: %s, number of shifts: %d."%(BASE_ROOT, nshifts))
@@ -158,9 +161,7 @@ if __name__ == '__main__':
         do = ConfigOutput(data_dir, bze, cob, abs_min_energy=abs_min_energy)
         do.output_all_analysis(levels=nlevel)
             
-
     print("Analyzer has finished running.")
-
     succ("== Configuration Analyzer Complete (Took %.3lfs) =="%(time()-start_time))
 
 else:
