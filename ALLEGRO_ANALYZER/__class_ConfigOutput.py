@@ -284,7 +284,7 @@ class FourierGSFE:
         print(f"Fit score = {self.reg.score(self.X, self.GSFE)}")
         return self.reg.score(self.X, self.GSFE)
     def predict(self, b_matrix):
-        self.__ensure_fitted(); return self.reg.predict(self.__b_to_fourier_basis(b_matrix))
+        self.__ensure_fitted(); return self.reg.predict(self.__b_to_fourier_basis(b_matrix[:,:2]))
     def plot_pred_vs_actual(self, outdir, outname=FGSFE_PLOT_NAME):
         print("Plotting predicted vs. actual...")
         assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
