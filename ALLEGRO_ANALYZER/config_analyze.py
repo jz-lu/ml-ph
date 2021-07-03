@@ -4,7 +4,8 @@ from ___constants_names import (
     SHIFT_NAME, 
     COB_NPY_NAME, LIDXS_NPY_NAME, 
     RELAXATION_DIR_NAME, ANALYSIS_DIR_NAME, 
-    TOTAL_ENER_DIR_NAME, TOT_ENERGIES_NAME
+    TOTAL_ENER_DIR_NAME, TOT_ENERGIES_NAME, 
+    POSCAR_NAME
 )
 from ___constants_output import NPREDPTS, DEFAULT_CONTOUR_LEVELS
 from __class_ConfigOutput import ConfigOutput, DSamplingOutput, FourierGSFE
@@ -130,7 +131,7 @@ if __name__ == '__main__':
             assert nplt > 0, f"Invalid number of force constants to plot {nplt}"
             update("Calculating force constants...")
             print("Getting POSCAR...")
-            p = Poscar.from_file(BASE_ROOT + CONFIG_SUBDIR_NAME + str(0))
+            p = Poscar.from_file(BASE_ROOT + checkPath(CONFIG_SUBDIR_NAME + str(0)) + POSCAR_NAME)
             n_at = len(p.structure.species); npairs = n_at * (n_at-1) // 2; at_idxs = np.arange(n_at)
             atomic_pairs = np.array(list(itertools.combinations(at_idxs)))
             lidx_pairs = np.array(list(itertools.combinations(lidxs)))
