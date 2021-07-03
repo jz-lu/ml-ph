@@ -239,7 +239,7 @@ class FourierGSFE:
         assert ltype == 'hexagonal', "Non-hexagonal lattices not supported"
         assert len(energies) == len(b_matrix), f"Must have same number of configurations as energies, but got {len(b_matrix)} vs. {len(energies)}"
         b_matrix = b_matrix[:,:2]
-        print(f"Configurations:\n {b_matrix}")
+        print(f"Configurations (direct basis):\n {b_matrix}\nConfigurations (Cartesian):\n {(self.__A @ b_matrix.T).T}")
         minenergy = min(energies); self.GSFE = 1000*(np.array(energies)-minenergy)
         print(f"Adjusted energies (meV): {self.GSFE}")
         self.nb = len(b_matrix); self.b_matrix = b_matrix
