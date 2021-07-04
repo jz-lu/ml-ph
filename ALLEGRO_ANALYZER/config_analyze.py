@@ -23,6 +23,7 @@ import itertools
 from pymatgen.io.vasp.inputs import Poscar
 from ___helpers_parsing import succ, warn, err, update, greet
 INTERLAYER_ONLY = True
+SAME_CART_ONLY = True
 
 if __name__ == '__main__':
     USAGE_ERR_MSG = 'Usage: python3 <DIR>/config_analyze.py -n <NUM SHIFTS> -d <I/O DIR FROM MAIN PROGRAM> -e <MIN ENERGY (eV)> (optional: --diag --nff --fc)'
@@ -157,6 +158,9 @@ if __name__ == '__main__':
                 print(f"Using pairs with indices: {choice_idxs}")
                 atomic_pairs = atomic_pairs[choice_idxs]; lidx_pairs = lidx_pairs[choice_idxs]
             cart_pairs = np.stack((np.random.choice([0,1,2], nplt), np.random.choice([0,1,2], nplt)), axis=1)
+            if SAME_CART_ONLY:
+                carts = np.random.choice([0,1,2], nplt)
+                cart_pairs = np.stack(carts, carts), axis=1)
             print("Plotting forces...")
             do.plot_forces(atomic_pairs, lidx_pairs, cart_pairs, p)
     else:
