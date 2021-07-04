@@ -147,8 +147,8 @@ if __name__ == '__main__':
                 atomic_pairs = np.array([[i, j] for i in at_idxs[lidxs==1] for j in at_idxs[lidxs==2]])
                 np.random.shuffle(atomic_pairs)
                 atomic_pairs = atomic_pairs[:nplt]
-                lidx_pairs = np.array([[1,2]*nplt])
-                print("Atomic pairs ({atomic_pairs.shape}):\n{atomic_pairs}\nlidx_pairs ({lidx_pairs.shape}): \n{lidx_pairs}")
+                lidx_pairs = np.array([[1,2]]*nplt)
+                print(f"Atomic pairs ({atomic_pairs.shape}):\n{atomic_pairs}\nlidx_pairs ({lidx_pairs.shape}): \n{lidx_pairs}")
             else:
                 assert nplt <= npairs, f"Number of force constants to plot {nplt} is too large, max={npairs}"
                 atomic_pairs = np.array(list(itertools.combinations(at_idxs, 2)))
