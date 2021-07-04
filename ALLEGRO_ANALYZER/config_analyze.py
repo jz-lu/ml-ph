@@ -160,7 +160,7 @@ if __name__ == '__main__':
             cart_pairs = np.stack((np.random.choice([0,1,2], nplt), np.random.choice([0,1,2], nplt)), axis=1)
             if SAME_CART_ONLY:
                 carts = np.random.choice([0,1,2], nplt)
-                cart_pairs = np.stack(carts, carts), axis=1)
+                cart_pairs = np.stack((carts, carts), axis=1)
             print("Plotting forces...")
             do.plot_forces(atomic_pairs, lidx_pairs, cart_pairs, p)
     else:
