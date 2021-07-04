@@ -26,9 +26,9 @@ import os, sys
 
 if __name__ == '__main__':
     start = time()
-    USAGE_MSG = f"Usage: python3 {sys.argv[0]} -deg <twist angle (deg)> -name <solid name> -dir <base I/O dir> -o <output dir>"
+    USAGE_MSG = f"Usage: python3 {sys.argv[0]} -deg <twist angle (deg)> -name <solid name> -cut <frequency cutoff> -dir <base I/O dir> -o <output dir>"
     args = sys.argv[1:]; i = 0; n = len(args)
-    indir = '.'; outdir = '.'; theta = None; name = None; outname = DEFAULT_PH_BAND_PLOT_NAME
+    indir = '.'; outdir = '.'; theta = None; name = None; outname = DEFAULT_PH_BAND_PLOT_NAME; cutoff = None
     while i < n:
         if not is_flag(args[i]):
             warn(f'Warning: token "{args[i]}" is out of place and will be ignored')
@@ -41,6 +41,8 @@ if __name__ == '__main__':
             i += 1; check_not_flag(args[i]); theta = np.deg2rad(float(args[i])); i += 1
         elif args[i] == '-name':
             i += 1; check_not_flag(args[i]); name = args[i]; i += 1
+        elif args[i] == '-cut':
+            i += 1; check_not_flag(args[i]); cutoff = float(args[i]); i += 1
         elif args[i] == '-fout':
             i += 1; check_not_flag(args[i]); outname = args[i]; i += 1
         elif args[i] in ['--usage', '--help']:
@@ -130,7 +132,7 @@ if __name__ == '__main__':
     print("Twisted dynamical matrix object constructed.")
 
     print(f"Diagonalizing and outputting modes with corners {corner_kmags}...")
-    TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, filename=outname)
+    TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, filename=outname, cutoff=cutoff)
     print("Modes outputted.")
 
     succ("Successfully completed phonon mode analysis (Took %.3lfs)."%(time()-start))

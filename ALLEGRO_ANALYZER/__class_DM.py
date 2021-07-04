@@ -213,7 +213,7 @@ class TwistedDM:
         return self.mode_set
     
     # Plot phonon modes as a function of k
-    def plot_band(self, corner_kmags, angle, outdir='./', filename=DEFAULT_PH_BAND_PLOT_NAME, name=None):
+    def plot_band(self, corner_kmags, angle, outdir='./', filename=DEFAULT_PH_BAND_PLOT_NAME, name=None, cutoff=None):
         outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Invalid directory {outdir}"
         if not self.modes_built:
             print("Modes not built yet, building...")
@@ -221,6 +221,8 @@ class TwistedDM:
             print("Modes built.")
         plt.clf()
         for k_mag, modes in self.mode_set:
+            if cutoff is not None:
+                modes = modes[modes <= cutoff]
             plt.scatter([k_mag] * len(modes), modes, c='royalblue', s=0.1)
         xlabs = (r'$\Gamma$', r'K', r'M', r'$\Gamma$')
         plt.xticks(corner_kmags, xlabs)
