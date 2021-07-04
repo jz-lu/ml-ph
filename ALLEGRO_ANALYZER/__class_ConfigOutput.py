@@ -198,7 +198,7 @@ class ConfigOutput:
             energies = self.__energies
         else:
             assert b is not None
-            need_direct = True
+            need_direct = False
         if b is None:
             b = self.__shifts
         else:
@@ -210,7 +210,7 @@ class ConfigOutput:
         fig.colorbar(cf, ax=ax)
         ax.set_xlabel(r"$b_x$")
         ax.set_ylabel(r"$b_y$")
-        ax.set_title(tpfx + ('' if tpfx=='' else ' ') + r"GSFE$(\mathbf{b})$(meV)")
+        ax.set_title(tpfx + ('' if tpfx=='' else ' ') + r"GSFE$(\mathbf{b})$ (meV)")
         out_file = self.__out_dir + pfx + f"energy_config_plot_{levels}.png"
         ax.set_aspect('equal') # prevent axis stretching
         fig.savefig(out_file)
@@ -219,7 +219,7 @@ class ConfigOutput:
             cf = ax.tricontourf(bx, by, energies, levels=levels, cmap="RdGy"); fig.colorbar(cf, ax=ax)
             ax.set_xlabel(r"$a_1$")
             ax.set_ylabel(r"$a_2$")
-            ax.set_title(r"$E_{tot}(\mathbf{b}=b_1 \mathbf{a}_1 + b_2 \mathbf{a}_2) (meV)$")
+            ax.set_title(r"$E_{tot}(\mathbf{b}=b_1 \mathbf{a}_1 + b_2 \mathbf{a}_2)$ (meV)")
             out_file = self.__out_dir + pfx + f"energy_config_plot_direct_{levels}.png"
             fig.savefig(out_file)
     

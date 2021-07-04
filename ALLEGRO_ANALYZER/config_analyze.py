@@ -117,10 +117,9 @@ if __name__ == '__main__':
         ff_gsfe.output_all_analysis(data_dir)
         if diag:
             large_cfg = Configuration.sample_line(npts=NPREDPTS, basis=Configuration.diagonal_basis_from_cob(cob), dump=False, as_mat=True)
-            ff_pred = ff_gsfe.predict(large_cfg)
         else:
             large_cfg = np.array(Configuration.sample_grid(grid=(101, 101, 1)))
-            ff_pred = ff_gsfe.predict(large_cfg)
+        ff_pred = ff_gsfe.predict(large_cfg)
     if diag:
         pts = [0, nshifts//3, 2*nshifts//3]
         update(f"Parsing successful (special points: {pts}), passing to analyzer...")
