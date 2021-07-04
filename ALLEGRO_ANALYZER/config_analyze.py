@@ -181,6 +181,7 @@ if __name__ == '__main__':
         do = ConfigOutput(data_dir, bze, cob, abs_min_energy=abs_min_energy)
         do.output_all_analysis(levels=nlevel)
         if ff_pred is not None:
+            print("Building fitted GSFE plot...")
             do.plot_e_vs_b(pfx='pred', tpfx='Fitted', energies=ff_pred, b=large_cfg)
             
     print("Analyzer has finished running.")

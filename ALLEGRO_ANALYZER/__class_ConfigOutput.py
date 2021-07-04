@@ -145,6 +145,7 @@ class ConfigOutput:
     # cob is the change-of-basis matrix to get fom lattice basis (which b is in) to Cartesian to plot.
     def __init__(self, out_dir, plot_list, cob_matrix, abs_min_energy=None, scaled=False, dump=True):
         print("Initalizing ConfigOutput object.")
+        self.cob = cob_matrix
         # plot_list: list of (b, z, e) points
         self.__plot_list = plot_list
         self.__zspacings = np.array([i[1] for i in plot_list])
@@ -192,14 +193,17 @@ class ConfigOutput:
    
     # Smoothly interpolate toal energy at various shifts.
     def plot_e_vs_b(self, levels=DEFAULT_CONTOUR_LEVELS, pfx='', tpfx='', energies=None, b=None):
+        need_direct = True
         if energies is None:
             energies = self.__energies
         else:
             assert b is not None
+            need_direct = True
         if b is None:
             b = self.__shifts
         else:
             assert energies is not None
+            b = [np.dot(self.cob, i) for i in np.array(b)[:,:2]]
         bx = [i[0] for i in b]; by = [i[1] for i in b]
         plt.clf(); fig, ax = plt.subplots()
         cf = ax.tricontourf(bx, by, energies, levels=levels, cmap="RdGy")
@@ -207,16 +211,17 @@ class ConfigOutput:
         ax.set_xlabel(r"$b_x$")
         ax.set_ylabel(r"$b_y$")
         ax.set_title(tpfx + ('' if tpfx=='' else ' ') + r"GSFE$(\mathbf{b})$(meV)")
-        out_file = self.__out_dir + pfx + f"energy_config_plot_cart_{levels}.png"
+        out_file = self.__out_dir + pfx + f"energy_config_plot_{levels}.png"
         ax.set_aspect('equal') # prevent axis stretching
         fig.savefig(out_file)
-        plt.clf(); fig, ax = plt.subplots()
-        cf = ax.tricontourf(bx, by, energies, levels=levels, cmap="RdGy"); fig.colorbar(cf, ax=ax)
-        ax.set_xlabel(r"$a_1$")
-        ax.set_ylabel(r"$a_2$")
-        ax.set_title(r"$E_{tot}(\mathbf{b}=b_1 \mathbf{a}_1 + b_2 \mathbf{a}_2) (meV)$")
-        out_file = self.__out_dir + pfx + f"energy_config_plot_direct_{levels}.png"
-        fig.savefig(out_file)
+        if need_direct:
+            plt.clf(); fig, ax = plt.subplots()
+            cf = ax.tricontourf(bx, by, energies, levels=levels, cmap="RdGy"); fig.colorbar(cf, ax=ax)
+            ax.set_xlabel(r"$a_1$")
+            ax.set_ylabel(r"$a_2$")
+            ax.set_title(r"$E_{tot}(\mathbf{b}=b_1 \mathbf{a}_1 + b_2 \mathbf{a}_2) (meV)$")
+            out_file = self.__out_dir + pfx + f"energy_config_plot_direct_{levels}.png"
+            fig.savefig(out_file)
     
     # Smoothly interpolate interlayer spacing at various shifts.
     def plot_z_vs_b(self, levels=DEFAULT_CONTOUR_LEVELS,):
