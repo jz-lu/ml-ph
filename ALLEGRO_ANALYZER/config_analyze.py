@@ -144,11 +144,9 @@ if __name__ == '__main__':
                 print("Using constraint: interlayer forces only")
                 n_at //= 2; npairs = (n_at * (n_at-1) // 2)**2
                 assert nplt <= npairs, f"Number of force constants to plot {nplt} is too large, max={npairs}"
-                lidxs
-                at_idxs
-                at_idxs[lidxs==1]
-                at_idxs[lidxs==2]
-                atomic_pairs = np.random.shuffle(np.stack((at_idxs[lidxs==1], at_idxs[lidxs==2]), axis=1))[:nplt]
+                atomic_pairs = np.stack((at_idxs[lidxs==1], at_idxs[lidxs==2]), axis=1)
+                np.random.shuffle(atomic_pairs)
+                atomic_pairs = atomic_pairs[:nplt]
                 lidx_pairs = np.array([[1,2]*nplt])
             else:
                 assert nplt <= npairs, f"Number of force constants to plot {nplt} is too large, max={npairs}"
