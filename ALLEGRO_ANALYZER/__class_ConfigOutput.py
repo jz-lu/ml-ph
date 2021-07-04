@@ -131,7 +131,6 @@ class DSamplingOutput:
             interpol = interpolate_scatter(x, y); xp = np.linspace(0, 1, 301); yp = interpol(xp)
             lab = r'$%s^{(%d)}_%s \sim %s^{(%d)}_%s$'%(atomic_sites[ats[0]], ls[0], cl[0], atomic_sites[ats[1]], ls[1], cl[1])
             fig.axes[i].scatter(x, y, c=cols[i%ncol])
-            # fig.axes[i].plot(xp, yp, c=cols[i%ncol], label=lab)
             fig.axes[i].text(0.7, 1.05, lab, transform=fig.axes[i].transAxes, size=10, weight='ultralight')
             fig.axes[i].ticklabel_format(axis='y', style='sci', scilimits=(0,0))
             if self.special_pts is not None:

@@ -22,6 +22,7 @@ from math import sqrt
 import itertools
 from pymatgen.io.vasp.inputs import Poscar
 from ___helpers_parsing import succ, warn, err, update, greet
+INTERLAYER_ONLY = True
 
 if __name__ == '__main__':
     USAGE_ERR_MSG = 'Usage: python3 <DIR>/config_analyze.py -n <NUM SHIFTS> -d <I/O DIR FROM MAIN PROGRAM> -e <MIN ENERGY (eV)> (optional: --diag --nff --fc)'
@@ -137,13 +138,21 @@ if __name__ == '__main__':
             p = Poscar.from_file(BASE_ROOT + checkPath(CONFIG_SUBDIR_NAME + str(0)) + POSCAR_NAME)
             n_at = len(p.structure.species); npairs = n_at * (n_at-1) // 2; at_idxs = np.arange(n_at)
             assert n_at == len(lidxs), f"Inconsistent number of atoms {n_at} with associated layer indices {lidxs}"
-            atomic_pairs = np.array(list(itertools.combinations(at_idxs, 2)))
-            lidx_pairs = np.array(list(itertools.combinations(lidxs, 2)))
-            assert nplt <= npairs, f"Number of force constants to plot {nplt} is too large"
             print("Sampling pairs...")
-            choice_idxs = np.random.choice(np.arange(len(atomic_pairs)), size=nplt, replace=False)
-            print(f"Using pairs with indices: {choice_idxs}")
-            atomic_pairs = atomic_pairs[choice_idxs]; lidx_pairs = lidx_pairs[choice_idxs]
+            atomic_pairs = None; lidx_pairs = None
+            if INTERLAYER_ONLY:
+                print("Using constraint: interlayer forces only")
+                n_at //= 2; npairs = n_at * (n_at-1) // 2
+                assert nplt <= npairs, f"Number of force constants to plot {nplt} is too large, max={npairs}"
+                atomic_pairs = np.random.shuffle(np.stack((at_idxs[lidxs==1], at_idxs[lidxs==1]), axis=1))[:nplt]
+                lidx_pairs = np.array([[1,2]*nplt])
+            else:
+                assert nplt <= npairs, f"Number of force constants to plot {nplt} is too large, max={npairs}"
+                atomic_pairs = np.array(list(itertools.combinations(at_idxs, 2)))
+                lidx_pairs = np.array(list(itertools.combinations(lidxs, 2)))
+                choice_idxs = np.random.choice(np.arange(len(atomic_pairs)), size=nplt, replace=False)
+                print(f"Using pairs with indices: {choice_idxs}")
+                atomic_pairs = atomic_pairs[choice_idxs]; lidx_pairs = lidx_pairs[choice_idxs]
             cart_pairs = np.stack((np.random.choice([0,1,2], nplt), np.random.choice([0,1,2], nplt)), axis=1)
             print("Plotting forces...")
             do.plot_forces(atomic_pairs, lidx_pairs, cart_pairs, p)
