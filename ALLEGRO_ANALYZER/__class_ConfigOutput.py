@@ -128,7 +128,7 @@ class DSamplingOutput:
             assert ls[0] in [1, 2] and ls[1] in [1,2]; assert 0 <= ats[0] < n_at and 0 <= ats[1] < n_at
             idxs = 3*ats + cs; y = np.array([f[idxs[0], idxs[1]] for f in self.force_matrices])
             y = np.append(y, y[0]) # impose periodic boundary conditions
-            interpol = interpolate_scatter(x, y); xp = np.linspace(0, 1, 301); yp = interpol(xp)
+            # interpol = interpolate_scatter(x, y); xp = np.linspace(0, 1, 301); yp = interpol(xp)
             lab = r'$%s^{(%d)}_%s \sim %s^{(%d)}_%s$'%(atomic_sites[ats[0]], ls[0], cl[0], atomic_sites[ats[1]], ls[1], cl[1])
             fig.axes[i].scatter(x, y, c=cols[i%ncol])
             fig.axes[i].text(0.7, 1.05, lab, transform=fig.axes[i].transAxes, size=10, weight='ultralight')
