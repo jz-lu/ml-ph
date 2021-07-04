@@ -191,25 +191,32 @@ class ConfigOutput:
             header="bx, by, relaxed z-spacing, energy\n")
    
     # Smoothly interpolate toal energy at various shifts.
-    def plot_e_vs_b(self, levels=DEFAULT_CONTOUR_LEVELS):
+    def plot_e_vs_b(self, levels=DEFAULT_CONTOUR_LEVELS, pfx='', tpfx='', energies=None, b=None):
+        if energies is None:
+            energies = self.__energies
+        else:
+            assert b is not None
+        if b is None:
+            b = self.__shifts
+        else:
+            assert energies is not None
+        bx = [i[0] for i in b]; by = [i[1] for i in b]
         plt.clf(); fig, ax = plt.subplots()
-        cf = ax.tricontourf(self.xshifts, self.yshifts, self.__energies, 
-                            levels=levels, cmap="RdGy")
+        cf = ax.tricontourf(bx, by, energies, levels=levels, cmap="RdGy")
         fig.colorbar(cf, ax=ax)
         ax.set_xlabel(r"$b_x$")
         ax.set_ylabel(r"$b_y$")
-        ax.set_title(r"$E_{tot}(\mathbf{b}) (meV)$")
-        out_file = self.__out_dir + f"energy_config_plot_cart_{levels}"
+        ax.set_title(tpfx + ('' if tpfx=='' else ' ') + r"GSFE$(\mathbf{b})$(meV)")
+        out_file = self.__out_dir + pfx + f"energy_config_plot_cart_{levels}.png"
         ax.set_aspect('equal') # prevent axis stretching
-        fig.savefig(out_file + "_eqasp.png")
+        fig.savefig(out_file)
         plt.clf(); fig, ax = plt.subplots()
-        cf = ax.tricontourf(self.b1shifts, self.b2shifts, self.__energies, 
-                            levels=levels, cmap="RdGy"); fig.colorbar(cf, ax=ax)
+        cf = ax.tricontourf(bx, by, energies, levels=levels, cmap="RdGy"); fig.colorbar(cf, ax=ax)
         ax.set_xlabel(r"$a_1$")
         ax.set_ylabel(r"$a_2$")
         ax.set_title(r"$E_{tot}(\mathbf{b}=b_1 \mathbf{a}_1 + b_2 \mathbf{a}_2) (meV)$")
-        out_file = self.__out_dir + f"energy_config_plot_direct_{levels}"
-        fig.savefig(out_file + "_eqasp.png")
+        out_file = self.__out_dir + pfx + f"energy_config_plot_direct_{levels}.png"
+        fig.savefig(out_file)
     
     # Smoothly interpolate interlayer spacing at various shifts.
     def plot_z_vs_b(self, levels=DEFAULT_CONTOUR_LEVELS,):
