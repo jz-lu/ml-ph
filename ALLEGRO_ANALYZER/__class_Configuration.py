@@ -284,9 +284,11 @@ class Configuration:
     
     @staticmethod
     # Returns a list of numpy row-vectors, each of which is a shift (expressed in arbitrary lattice basis).
-    def sample_grid(grid=GRID_SAMPLE_LOW):
+    def sample_grid(grid=GRID_SAMPLE_LOW, u=None):
         sample_coord_sets = [] # All the sampling coordinates that we will zip together
         sample_points = [] # All possible combinations of the points in sample_coord_sets, with size grid[0]*grid[1]*grid[2]
+        if u is not None:
+            assert u.shape == (grid[0]*grid[1]*grid[2], 2), f"Incompatible u (shape {u.shape}) and grid (size {grid})"
 
         # Grid format validation.
         if len(grid) != 3 or grid[2] != 1: # Only shift in dimensions 1 and 2 out of 3
@@ -300,12 +302,14 @@ class Configuration:
             sample_coord_sets.append(temp)
         
         # Construct a shift vector for every combination of the coordinate shifts.
+        ctr = 0
         for i in sample_coord_sets[0]:
             for j in sample_coord_sets[1]:
                 for k in sample_coord_sets[2]:
-                    sample_point = (i, j, k)
+                    sample_point = (i + (u[ctr][0] if u is not None else 0), j + (u[ctr][1] if u is not None else 0), k)
                     sample_point = np.array(sample_point)
                     sample_points.append(sample_point)
+                    ctr += 1
         return tuple(sample_points)
     
     @staticmethod
