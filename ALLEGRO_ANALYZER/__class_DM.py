@@ -224,7 +224,7 @@ class TwistedDM:
             if cutoff is not None:
                 modes = modes[modes <= cutoff]
             plt.scatter([k_mag] * len(modes), modes, c='royalblue', s=0.1)
-        xlabs = (r'$\Gamma$', r'K', r'M', r'$\Gamma$')
+        xlabs = (r'$\Gamma$', r'K', r'M')
         plt.xticks(corner_kmags, xlabs)
         plt.ylabel(r'$\omega\,(\mathrm{cm}^{-1})$')
         title = r"Phonon modes"
