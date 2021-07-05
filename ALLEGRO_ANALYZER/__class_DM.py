@@ -223,7 +223,7 @@ class TwistedDM:
         for k_mag, modes in self.mode_set:
             if cutoff is not None:
                 modes = modes[modes <= cutoff]
-            plt.scatter([k_mag] * len(modes), modes, c='royalblue', s=0.1)
+            plt.scatter([k_mag] * len(modes), modes, c='royalblue', s=0.07)
         xlabs = (r'$\Gamma$', r'K', r'M')
         plt.xticks(corner_kmags, xlabs)
         plt.ylabel(r'$\omega\,(\mathrm{cm}^{-1})$')
