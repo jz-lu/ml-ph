@@ -4,27 +4,58 @@ FFTW.set_num_threads(Sys.CPU_THREADS)
 include("Bilayers.jl")
 include("GrapheneParameters.jl")
 # using PyPlot
-using PyCall
-using Interpolations
+# using PyCall
+# using Interpolations
 using Optim
 using LinearAlgebra
+using NPZ
+using ArgParse
 
-## Parameters:
-θ = deg2rad(1)
+function parse_commandline()
+    s = ArgParseSettings()
 
-N = 50
-hN = div(N,2)
-blg = Bilayer(l, θ, K, G)
-hull = Hull(blg, N);
+    @add_arg_table s begin
+        "--deg", "-d"
+            help = "twist angle in degrees"
+            required = true
+            arg_type = Float64
+        "-N", "-n"
+            help = "grid size (N if grid is NxN)"
+            arg_type = Int
+            required = true
+        "--out", "-o"
+            help = "output path"
+            arg_type = String
+            default = "u.npz"
+    end
+
+    return parse_args(s)
+end
+
+function main()
+    ## Parameters:
+    parsed_args = parse_commandline()
+    theta = deg2rad(parsed_args["deg"])
+    println("Using twist angle $(theta) rad or $(rad2deg(theta)) deg")
+
+    N = parsed_args["N"]
+    println("Using grid size $(N)")
+    hN = div(N,2)
+    blg = Bilayer(l, theta, K, G)
+    hull = Hull(blg, N);
 
 
-## Here are rotated functionals with symmetry - try *_nosym versions for the simplified functional in the paper
-f(u) = Energy(u, hull)
-g!(storage, u) = Gradient!(storage, u, hull)
-@time results = optimize(f, g!, zeros(2, N^2), LBFGS())
-u = reshape(Optim.minimizer(results), (2, N^2))
-print(u)
-# open(string(".", round(rad2deg(θ), digits=3), "u.txt"), "w") do f
+    ## Here are rotated functionals with symmetry - try *_nosym versions for the simplified functional in the paper
+    f(u) = Energy(u, hull)
+    g!(storage, u) = Gradient!(storage, u, hull)
+    @time results = optimize(f, g!, zeros(2, N^2), LBFGS())
+    u = reshape(Optim.minimizer(results), (2, N^2))
+    npzwrite(parsed_args["out"], transpose(u))
+    println("Output written to $(parsed_args["out"])")
+end
+main()
+
+# open(string(".", round(rad2deg(theta), digits=3), "u.txt"), "w") do f
 #     write(f, "x,y,u1x,u1y,u2x,u2y \n")
 #     for i in 1:(N+1)^2
 #         xtemp = x[i]
