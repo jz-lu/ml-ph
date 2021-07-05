@@ -26,7 +26,7 @@ def build_bash_exe(calc_type=TYPE_RELAX_BASIC, outdir='.', wdir=None, calc_list=
                    compute_mem_per_cpu=COMPUTE_MEM_PER_CPU, compute_email_type=COMPUTE_EMAIL_TYPE, 
                    compute_email_to=COMPUTE_EMAIL_TO, vdw='F', kpts='GAMMA', fname=START_BATCH_NAME,
                    USE_NODE_INDICATOR=True, as_arr=False):
-    assert calc_type in TYPE_FLAGS, f"Unknown calculation type {calc_type}"
+    assert calc_type in TYPE_FLAGS or isinstance(calc_type, str), f"Unknown calculation type {calc_type}"
     assert isinstance(calc_list, list), "Calculation list must be of type list"
     assert vdw in ['T', 'F'], "vdw parameter must be either 'T' or 'F'"
     assert kpts in ['GAMMA', 'MP'], "k-points parameter must be either 'GAMMA' or 'MP'"

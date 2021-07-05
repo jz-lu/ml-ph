@@ -91,7 +91,7 @@ class BZSampler:
             corner_kmags.append(kmag_start)
             kmag_start = mags[-1] # update start point of magnitude to end of current line
             kmags[kidx : kidx+nk-1] = mags[:-1]
-        corner_kmags += [corner_kmags[0]]
+        # corner_kmags += [max(corner_kmags)]
         self.k_set = k_set; self.kmags = kmags
         self.k_sampled = True
         if log:

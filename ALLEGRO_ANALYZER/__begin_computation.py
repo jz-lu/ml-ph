@@ -13,6 +13,7 @@ from ___constants_names import (
 )
 from __class_input import InputData
 from __class_Configuration import Configuration
+from __class_RelaxerAPI import RelaxerAPI
 from __directory_searchers import checkPath, findFilesInDir
 from __dirModifications import mkdir, copy, move
 from __build_shscript import compute_configs
@@ -21,6 +22,7 @@ from pymatgen.io.vasp.inputs import Poscar
 from make_execscr import build_bash_exe
 import os
 import numpy as np
+RUN_RELAXER = False
 
 # Build configuration sampling from user input.
 def begin_computation(user_input_settings):
@@ -38,6 +40,9 @@ def begin_computation(user_input_settings):
         print(f"Configuration grid: {grid_size}")
         init_interlayer_spacing = Z_LAYER_SEP
         config = Configuration(BASE_ROOT)
+        data_dir = user_input_settings.get_base_root_dir() + checkPath(CONFIG_DATA_DIR)
+        if not os.path.isdir(data_dir):
+            os.mkdir(data_dir)
 
         sampling_set = None
         if user_input_settings.sampling_is_diagonal():
@@ -46,8 +51,16 @@ def begin_computation(user_input_settings):
             sampling_set = Configuration.sample_line(npts=grid_size, basis=config.get_diagonal_basis())
             print(f"Sampled {grid_size} points along line {config.get_diagonal_basis()}")
         else:
-            print("Sampling grid points uniformly along unit cell...")
-            sampling_set = Configuration.sample_grid(grid=grid_size)
+            print("Sampling grid points along unit cell...")
+            print("But first...computing relaxation in Julia...")
+            sampling_set = np.array(Configuration.sample_grid(grid=grid_size))
+            if RUN_RELAXER and user_input_settings.get_tw_angle() is not None:
+                print("Running relaxer program to de-uniformize sampling grid...")
+                # TODO cartesian or direct? Must convert if Cartesian using inverse COB
+                u = RelaxerAPI(user_input_settings.get_tw_angle(), grid_size, data_dir).get_u()
+                sampling_set = np.stack((sampling_set[:,:2] + u, sampling_set[:,2]), axis=1)
+                print("Final b set:\n", sampling_set)
+
 
         # Get a set of tuples (shift vector, poscar object) for each shift vector.
         configposcar_shift_tuple = config.build_config_poscar_set(sampling_set, init_interlayer_spacing)
@@ -57,9 +70,6 @@ def begin_computation(user_input_settings):
 
         # Parse the output of the configuration analysis.
         # Move home directory to the selected one.
-        data_dir = user_input_settings.get_base_root_dir() + checkPath(CONFIG_DATA_DIR)
-        if not os.path.isdir(data_dir):
-            os.mkdir(data_dir)
         os.chdir(data_dir)
         print("Moved CWD to " + data_dir)
 
@@ -101,7 +111,7 @@ def begin_computation(user_input_settings):
                 print(stream.read())
             else:
                 print(DEBUG_NOTICE_MSG)
-        exepath = build_bash_exe(calc_type=TYPE_RELAX_CONFIG, calc_list=clist, outdir=inter_path,
+        exepath = build_bash_exe(calc_type=f'L{user_input_settings.get_tw_angle()}', calc_list=clist, outdir=inter_path,
                    compute_jobname=CONFIG_JOBNAME, vdw=vdw, kpts=kpts, wdir=inter_path+CONFIG_SUBDIR_NAME,
                    compute_time='01:00:00', compute_ncpu='1') # this just kicks off a bunch of jobs, so it doesn't need any time
         if not DEBUGGING:

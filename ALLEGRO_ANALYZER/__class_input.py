@@ -19,7 +19,7 @@ class InputData:
         cmdline_arg_tuple = list(cmdline_arg_tuple)
         if (len(cmdline_arg_tuple) < 5) or (len(cmdline_arg_tuple) > 10):
             exit_with_error(GENERAL_ERR_USAGE_MSG) # Need at least one calculation in addition to settings
-        self.cmdargs = cmdline_arg_tuple; self.sampling_diagonal = False
+        self.cmdargs = cmdline_arg_tuple; self.sampling_diagonal = False; self.theta = None
         print('Command line arguments initiated in InputData class constructor. Arguments: ', self.cmdargs)
         try:
             self.cfg_grid_sz = None
@@ -29,6 +29,13 @@ class InputData:
             elif cmdline_arg_tuple[0] in ['DLOW', 'DHIGH', 'DL', 'DH']:
                 self.cfg_grid_sz = DIAG_SAMPLE_LOW if cmdline_arg_tuple[0] in ['DLOW', 'DL'] else DIAG_SAMPLE_HIGH
                 cmdline_arg_tuple[0] = TYPE_RELAX_CONFIG; self.sampling_diagonal = True
+            elif cmdline_arg_tuple[0][0] in ['L', 'H']:
+                self.theta = float(cmdline_arg_tuple[0][1:])
+                self.cfg_grid_sz = GRID_SAMPLE_LOW if cmdline_arg_tuple[0][0] == 'L' else GRID_SAMPLE_HIGH
+                cmdline_arg_tuple[0] = TYPE_RELAX_CONFIG
+            elif cmdline_arg_tuple[0][:2] == 'TW':
+                self.theta = float(cmdline_arg_tuple[0][2:])
+                cmdline_arg_tuple[0] = TYPE_TWISTED_CONFIG
             if self.cfg_grid_sz is None:
                 self.cfg_grid_sz = GRID_SAMPLE_LOW
             self.type_flag = int(cmdline_arg_tuple[0])
@@ -161,4 +168,7 @@ class InputData:
     
     def sampling_is_diagonal(self):
         return self.sampling_diagonal
+    
+    def get_tw_angle(self):
+        return self.theta
 

@@ -226,7 +226,7 @@ class Configuration:
         configposcar_shift_tuple = []
         for i in shift_set:
             p = self.build_config_poscar(i, init_interlayer_spacing)
-            configposcar_shift_tuple.append((i, p))
+            configposcar_shift_tuple.append((tuple(i), p))
 
         self.config_space_poscar_set = configposcar_shift_tuple
         print('All shift poscar objects built.')
