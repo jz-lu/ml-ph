@@ -29,7 +29,7 @@ def build_bash_exe(calc_type='basic', outdir='.', wdir=None, calc_list=[ENERGIES
                    USE_NODE_INDICATOR=True, as_arr=False, twist=None, sampling='low'):
     assert calc_type in TYPE_STRS, f"Unknown calculation type {calc_type}"
     assert isinstance(calc_list, list), "Calculation list must be of type list"
-    assert vdw in ['T', 'F'], "vdw parameter must be either 'T' or 'F'"
+    assert vdw in ['T', 'F', True, False], "vdw parameter must be either 'T' or 'F'"
     assert kpts in ['GAMMA', 'MP'], "k-points parameter must be either 'GAMMA' or 'MP'"
     assert sampling in ['low', 'high'], "sampling must be low or high"
     calc_list = ' '.join(calc_list)
