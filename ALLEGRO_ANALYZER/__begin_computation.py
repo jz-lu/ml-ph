@@ -96,7 +96,7 @@ def begin_computation(user_input_settings):
         print("Making new subdirectories, building I/O for monolayer and configuration calculations...")
         inter_path = checkPath(BASE_ROOT + CONFIG_DIR_NAME)
         mkdir(CONFIG_DIR_NAME, BASE_ROOT)
-        clist = user_input_settings.get_calculation_list()
+        clist = user_input_settings.get_raw_calculation_list()
         for i, p in enumerate(poscars):
             i = str(i+1)
             intra_path = checkPath(BASE_ROOT + MONOLAYER_DIR_NAME + i)
