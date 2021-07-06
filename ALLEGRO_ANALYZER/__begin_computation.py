@@ -52,10 +52,11 @@ def begin_computation(user_input_settings):
             print(f"Sampled {grid_size} points along line {config.get_diagonal_basis()}")
         else:
             print("Sampling grid points along unit cell...")
-            print("But first...computing relaxation in Julia...")
             sampling_set = np.array(Configuration.sample_grid(grid=grid_size))
+            if user_input_settings.get_tw_angle() is not None:
+                print(f"Supplied twist angle: {user_input_settings.get_tw_angle()}")
             if RUN_RELAXER and user_input_settings.get_tw_angle() is not None:
-                print("Running relaxer program to de-uniformize sampling grid...")
+                print("But first...computing relaxation in Julia...")
                 # TODO cartesian or direct? Must convert if Cartesian using inverse COB
                 u = RelaxerAPI(user_input_settings.get_tw_angle(), grid_size, data_dir).get_u()
                 sampling_set = np.stack((sampling_set[:,:2] + u, sampling_set[:,2]), axis=1)
