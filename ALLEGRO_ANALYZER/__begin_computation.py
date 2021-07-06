@@ -28,8 +28,8 @@ RUN_RELAXER = False
 def begin_computation(user_input_settings):
     flg = user_input_settings.get_type_flag()
     BASE_ROOT = user_input_settings.get_base_root_dir()
-    vdw = 'T' if user_input_settings.do_vdW else 'F'
-    kpts = 'GAMMA' if user_input_settings.kpoints_is_gamma_centered else 'MP'
+    vdw = user_input_settings.do_vdW
+    kpts = user_input_settings.kpoints_is_gamma_centered
     if flg == TYPE_RELAX_BASIC:
         print('Set to run standard single computation. Results to be stored to base root directory.')
         relax_solid(user_input_settings)
@@ -102,7 +102,7 @@ def begin_computation(user_input_settings):
             mkdir(MONOLAYER_DIR_NAME + i, BASE_ROOT)
             copy(p, BASE_ROOT, newPath=intra_path, newName=POSCAR_NAME)
             copy(p, BASE_ROOT, newPath=BASE_ROOT+CONFIG_DIR_NAME)
-            exepath = build_bash_exe(calc_type=TYPE_RELAX_BASIC, calc_list=clist, outdir=intra_path,
+            exepath = build_bash_exe(calc_type='basic', calc_list=clist, outdir=intra_path,
                    compute_jobname=MONOLAYER_JOBNAME+i, vdw=vdw, kpts=kpts)
             if not DEBUGGING:
                 os.chdir(intra_path)
@@ -111,9 +111,10 @@ def begin_computation(user_input_settings):
                 print(stream.read())
             else:
                 print(DEBUG_NOTICE_MSG)
-        exepath = build_bash_exe(calc_type=f'L{user_input_settings.get_tw_angle()}', calc_list=clist, outdir=inter_path,
+        exepath = build_bash_exe(calc_type='config', calc_list=clist, outdir=inter_path,
                    compute_jobname=CONFIG_JOBNAME, vdw=vdw, kpts=kpts, wdir=inter_path+CONFIG_SUBDIR_NAME,
-                   compute_time='01:00:00', compute_ncpu='1') # this just kicks off a bunch of jobs, so it doesn't need any time
+                   compute_time='01:00:00', compute_ncpu='1', twist=user_input_settings.get_tw_angle(), 
+                   sampling=user_input_settings.sampling) # this just kicks off a bunch of jobs, so it doesn't need any time
         if not DEBUGGING:
             os.chdir(inter_path)
             print(f"Submitting configuration job (wdir={inter_path+CONFIG_SUBDIR_NAME})...")

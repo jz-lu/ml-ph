@@ -42,11 +42,11 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
     else: # Make a new job for each configuration and submit bash scripts to the cluster
         rtfile = BASE_ROOT + START_BATCH_NAME
         print('Building configuration space job array executables...')
-        vdw = 'T' if user_input_settings.do_vdW else 'F'
+        vdw = user_input_settings.do_vdW
         kpts = 'GAMMA' if user_input_settings.kpoints_is_gamma_centered else 'MP'
         compute_time = '08:00:00' if vdw == 'T' else '08:00:00'
         compute_ncpu = '8' if vdw == 'T' else '8' # change as necessary
-        build_bash_exe(calc_type=TYPE_RELAX_BASIC, outdir=BASE_ROOT, 
+        build_bash_exe(calc_type='basic', outdir=BASE_ROOT,
                         compute_jobname=DIAG_JOBNAME if user_input_settings.sampling_is_diagonal() else COMPUTE_JOBNAME, 
                         compute_time=compute_time, vdw=vdw, kpts=kpts, fname=START_BATCH_NAME, as_arr=True, compute_ncpu=compute_ncpu, 
                         wdir=BASE_ROOT+CONFIG_SUBDIR_NAME, calc_list=user_input_settings.get_raw_calculation_list())

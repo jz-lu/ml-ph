@@ -13,27 +13,33 @@ from ___constants_compute import (
 )
 from ___constants_names import (
     START_BATCH_NAME, ENERGIES, CMD_LINE_ARG_LIST, CODE_DIR, 
-    TYPE_FLAGS, TYPE_RELAX_BASIC, TYPE_RELAX_CONFIG, TYPE_TWISTED_CONFIG, TYPE_NORELAX_BASIC
+    TYPE_STRS, CFG_STRS, 
+    TYPE_RELAX_BASIC, TYPE_RELAX_CONFIG, TYPE_TWISTED_CONFIG, TYPE_NORELAX_BASIC
 )
 from __directory_searchers import checkPath
 import sys, copy
 from ___helpers_parsing import greet, succ, warn, err, is_flag, check_not_flag
 
 
-def build_bash_exe(calc_type=TYPE_RELAX_BASIC, outdir='.', wdir=None, calc_list=[ENERGIES], 
+def build_bash_exe(calc_type='basic', outdir='.', wdir=None, calc_list=[ENERGIES], 
                    compute_jobname='NoName', compute_nnode=COMPUTE_NNODE, compute_ncpu=COMPUTE_NCPU, 
                    compute_time=COMPUTE_TIME, compute_partitions=COMPUTE_PARTITIONS, 
                    compute_mem_per_cpu=COMPUTE_MEM_PER_CPU, compute_email_type=COMPUTE_EMAIL_TYPE, 
-                   compute_email_to=COMPUTE_EMAIL_TO, vdw='F', kpts='GAMMA', fname=START_BATCH_NAME,
-                   USE_NODE_INDICATOR=True, as_arr=False):
-    assert calc_type in TYPE_FLAGS or isinstance(calc_type, str), f"Unknown calculation type {calc_type}"
+                   compute_email_to=COMPUTE_EMAIL_TO, vdw=False, kpts='GAMMA', fname=START_BATCH_NAME,
+                   USE_NODE_INDICATOR=True, as_arr=False, twist=None, sampling='low'):
+    assert calc_type in TYPE_STRS, f"Unknown calculation type {calc_type}"
     assert isinstance(calc_list, list), "Calculation list must be of type list"
     assert vdw in ['T', 'F'], "vdw parameter must be either 'T' or 'F'"
     assert kpts in ['GAMMA', 'MP'], "k-points parameter must be either 'GAMMA' or 'MP'"
+    assert sampling in ['low', 'high'], "sampling must be low or high"
     calc_list = ' '.join(calc_list)
     greet(f"Building new bash exe file of type {calc_type} (calc list={calc_list})...")
     outdir = checkPath(outdir); exepath = outdir + fname
     wdir = outdir if wdir is None else wdir
+    kpts = '' if kpts in ['GAMMA', 'G', 'Gamma', 'Gam', 'g', True] else '--mp'
+    vdw = '--vdw' if vdw in ['T', True, 'True'] else ''
+    twist = '' if twist is None else f'--twist {twist}'
+    sampling = f'-s {sampling}' if calc_type in CFG_STRS else ''
 
     with open(exepath, 'w') as f:
         f.write('#!/bin/bash\n')
@@ -58,7 +64,7 @@ def build_bash_exe(calc_type=TYPE_RELAX_BASIC, outdir='.', wdir=None, calc_list=
         f.write('ALLEGRO_DIR="%s"\n'%CODE_DIR)
         f.write('module load julia\nmodule list\nsource activate $HOME/%s\n'%(COMPUTE_ANACONDA_ENV))
         f.write('echo "Starting calculations..."\n')
-        f.write('python3 $ALLEGRO_DIR/start.py %d $WDIR %s %s %s\n'%(calc_type, vdw, kpts, calc_list))
+        f.write(f'python3 $ALLEGRO_DIR/start.py -t {calc_type} {twist} {sampling} -d $WDIR {vdw} {kpts} {calc_list}\n')
         f.write('echo "Calculations complete!"\n')
     succ('Executable bash file successfully written to %s'%(exepath))
     return exepath
@@ -74,12 +80,14 @@ if __name__ == '__main__':
     compute_email_type = COMPUTE_EMAIL_TYPE
     compute_email_to = COMPUTE_EMAIL_TO
     outdir = '.' # default to current WD
-    vdw = 'F'
-    kpts = 'GAMMA'
+    vdw = ''
+    sampling = 'low'
+    kpts = ''
     fname = START_BATCH_NAME
     USE_NODE_INDICATOR = True
     calc_list = [ENERGIES]
-    calc_type = TYPE_RELAX_BASIC
+    calc_type = 'basic'
+    twist = None
 
     while i < n:
         if not is_flag(args[i]):
@@ -88,7 +96,7 @@ if __name__ == '__main__':
         if args[i] == '-filename':
             i += 1; check_not_flag(args[i]); fname = args[i]; i += 1
         elif args[i] == '-type':
-            i += 1; check_not_flag(args[i]); calc_type = int(args[i]); i += 1
+            i += 1; check_not_flag(args[i]); assert args[i] in TYPE_STRS; calc_type = args[i]; i += 1
         elif args[i] == '-jobname':
             i += 1; check_not_flag(args[i]); compute_jobname = args[i]; i += 1
         elif args[i] == '-n':
@@ -113,18 +121,25 @@ if __name__ == '__main__':
             if args[i] in ['.', './', '..', '../'] or args[i][0] == '.':
                 warn(f'Warning: specified directory "{args[i]}" may not work when running executable')
             i += 1
+        elif args[i] == '-s':
+            i += 1; check_not_flag(args[i]); assert args[i] in ['low', 'high']
+            sampling = args[i]; i += 1
         elif args[i] == '-kpts':
             i += 1; check_not_flag(args[i])
             if args[i] == 'MP':
-                kpts = 'MP'
+                kpts = '--mp'
             elif args[i] not in ['GAMMA', 'G', 'gamma', 'Gamma', 'Gam', 'gam', 'g']:
                 warn(f'Warning: kpoints type "{args[i]}" not recognized, using Gamma-centered')
             i += 1
         elif args[i] == '-vdw':
             i += 1; check_not_flag(args[i])
+            vdw = '--vdw' if args[i] == 'T' else ''
             if args[i] not in ['T', 'F']:
-                warn(f'Warning: expected vdW flag to be "T" or "F", got "{args[i]}", using "T"')
+                warn(f'Warning: expected vdW flag to be "T" or "F", got "{args[i]}", using "F"')
             i += 1
+        elif args[i] == '-tw':
+            i += 1; check_not_flag(args[i]); assert 0 < args[i] < 180
+            twist = float(args[i]); i += 1
         elif args[i] == '-c':
             i += 1; check_not_flag(args[i])
             calc_list = []
@@ -141,5 +156,5 @@ if __name__ == '__main__':
                     compute_time=compute_time, compute_partitions=compute_partitions, 
                     compute_mem_per_cpu=compute_mem_per_cpu, compute_email_type=compute_email_type, 
                     compute_email_to=compute_email_to, kpts=kpts, vdw=vdw, fname=fname,
-                    USE_NODE_INDICATOR=USE_NODE_INDICATOR)
+                    USE_NODE_INDICATOR=USE_NODE_INDICATOR, twist=twist, sampling=sampling)
 

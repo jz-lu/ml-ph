@@ -29,7 +29,7 @@ def compute_displacements(ROOT, user_input_settings, ndisp):
         else:
             subname += 'cfg'
     kpts = 'GAMMA' if user_input_settings.kpoints_is_gamma_centered else 'MP'
-    exepath = build_bash_exe(calc_type=TYPE_NORELAX_BASIC, outdir=ROOT, wdir=ROOT+PHDISP_STATIC_NAME, 
+    exepath = build_bash_exe(calc_type='norelax', outdir=ROOT, wdir=ROOT+PHDISP_STATIC_NAME, 
                    calc_list=[ENERGIES], compute_jobname=PHONON_JOBNAME+subname, vdw=vdw, kpts=kpts, compute_time='12:00:00', 
                    as_arr=True, compute_ncpu='16')
     print('Executable built.')
@@ -42,9 +42,6 @@ def compute_displacements(ROOT, user_input_settings, ndisp):
 # Compute all of the forces for a given displacement-generated phononic supercell via VASP.
 def compute_vasp_ph_forces(index, dispNum, dirName, subdirName, disp_poscar_name, vaspObj):
     try:
-        # TODO: change back if it works to see if this was the problem
-        # potcar = Potcar((vaspObj['POSCAR']).site_symbols)
-
         # Perform the VASP calculation on this 
         # NOTE: no chgcar, the charge densities would be inaccurate now that we have displacements
         displaced_poscar = Poscar.from_file(dirName + disp_poscar_name)

@@ -9,48 +9,35 @@ from ___constants_names import (
     TYPE_RELAX_BASIC, TYPE_RELAX_CONFIG, TYPE_TWISTED_CONFIG, TYPE_NORELAX_BASIC
 )
 from __directory_searchers import checkPath
-import os
+import os, argparse
 
 # Since this is a simple parsing class, we'll dispense with the usually reasonable move of mangling member variables to simulate privacy.
 class InputData:
     input_imported = False
 
-    def __init__(self, cmdline_arg_tuple):
-        cmdline_arg_tuple = list(cmdline_arg_tuple)
-        if (len(cmdline_arg_tuple) < 5) or (len(cmdline_arg_tuple) > 10):
-            exit_with_error(GENERAL_ERR_USAGE_MSG) # Need at least one calculation in addition to settings
-        self.cmdargs = cmdline_arg_tuple; self.sampling_diagonal = False; self.theta = None
+    def __init__(self, args):
+        self.cmdargs = args; self.sampling_diagonal = (args.type == 'diag'); self.theta = args.twist
+        self.cfg_grid_sz = None; self.calc_str = args.type; self.sampling = args.sampling
+        if self.sampling_diagonal:
+            self.cfg_grid_sz = DIAG_SAMPLE_LOW if args.sampling == 'low' else DIAG_SAMPLE_HIGH
+        else:
+            self.cfg_grid_sz = GRID_SAMPLE_LOW if args.sampling == 'low' else GRID_SAMPLE_HIGH
+        self.type_flag = TYPE_RELAX_BASIC
+        if args.type in ['config', 'diag']:
+            self.type_flag = TYPE_RELAX_CONFIG
+        elif args.type == 'twist':
+            self.type_flag = TYPE_TWISTED_CONFIG
+        elif args.type == 'norelax':
+            self.type_flag = TYPE_NORELAX_BASIC
+        
         print('Command line arguments initiated in InputData class constructor. Arguments: ', self.cmdargs)
-        try:
-            self.cfg_grid_sz = None
-            if cmdline_arg_tuple[0] in ['LOW', 'HIGH', 'L', 'H']:
-                self.cfg_grid_sz = GRID_SAMPLE_LOW if cmdline_arg_tuple[0] in ['LOW', 'L'] else GRID_SAMPLE_HIGH
-                cmdline_arg_tuple[0] = TYPE_RELAX_CONFIG
-            elif cmdline_arg_tuple[0] in ['DLOW', 'DHIGH', 'DL', 'DH']:
-                self.cfg_grid_sz = DIAG_SAMPLE_LOW if cmdline_arg_tuple[0] in ['DLOW', 'DL'] else DIAG_SAMPLE_HIGH
-                cmdline_arg_tuple[0] = TYPE_RELAX_CONFIG; self.sampling_diagonal = True
-            elif cmdline_arg_tuple[0][0] in ['L', 'H']:
-                self.theta = float(cmdline_arg_tuple[0][1:])
-                self.cfg_grid_sz = GRID_SAMPLE_LOW if cmdline_arg_tuple[0][0] == 'L' else GRID_SAMPLE_HIGH
-                cmdline_arg_tuple[0] = TYPE_RELAX_CONFIG
-            elif cmdline_arg_tuple[0][:2] == 'TW':
-                self.theta = float(cmdline_arg_tuple[0][2:])
-                cmdline_arg_tuple[0] = TYPE_TWISTED_CONFIG
-            if self.cfg_grid_sz is None:
-                self.cfg_grid_sz = GRID_SAMPLE_LOW
-            self.type_flag = int(cmdline_arg_tuple[0])
-        except ValueError as err:
-            print('Error:', err)
-            exit_with_error(ERR_BAD_TYPE_FLAG)
 
-        self.ROOT = cmdline_arg_tuple[1]
-        self.do_vdW = cmdline_arg_tuple[2]
-        self.kpoints_is_gamma_centered = cmdline_arg_tuple[3]
-        self.calculation_list = tuple(dict.fromkeys(cmdline_arg_tuple[4:])) # Filter duplicates in calculation flag list
+        self.ROOT = args.dir
+        self.do_vdW = args.vdw
+        self.kpoints_is_gamma_centered = not args.mp
+        self.calculation_list = tuple(dict.fromkeys(args.calc)) # Filter duplicates in calculation flag list
         self.input_imported = True
         self.__check_input_style()
-        if len(self.calculation_list) == 0:
-            self.calculation_list = [ENERGIES]
         self.__parse_calculation_input()
 
         print('Final calculation list (except energies if specified):', self.calculation_list)
@@ -74,23 +61,16 @@ class InputData:
         print('Root directory input validated.')
         
     def __check_vdW_settings(self):
-        if self.do_vdW == 'T' or self.do_vdW == 'True':
-            self.do_vdW = True
-            print(f'Turning on van der Waals settings...')
-        elif self.do_vdW == 'F' or self.do_vdW == 'False':
-            print("Using LDA electronic algorithm...")
-            self.do_vdW = False
+        if self.do_vdW:
+            print('Turning on van der Waals settings...')
         else:
-            print(ERR_INVALID_VDW_FLAG)
-            exit_with_error(GENERAL_ERR_USAGE_MSG)
+            print("Using LDA electronic algorithm...")
         print('van der Waals flag validated.')
     
     def __check_kpoints_style(self):
-        if (self.kpoints_is_gamma_centered).lower()[0] == 'g': # i.e. if user entered Gamma-centered kpoints
-            self.kpoints_is_gamma_centered = True
+        if self.kpoints_is_gamma_centered: # i.e. if user entered Gamma-centered kpoints
             print('Adopting Gamma-centered sampling of the Brillouin zone.')
         else:
-            self.kpoints_is_gamma_centered = False
             print('Adopting Monkhorst-Pack scheme of sampling the Brillouin zone.')
         print('Kpoints flag validated.')
     
