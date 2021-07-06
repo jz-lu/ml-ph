@@ -30,7 +30,7 @@ def build_bash_exe(calc_type='basic', outdir='.', wdir=None, calc_list=[ENERGIES
     assert calc_type in TYPE_STRS, f"Unknown calculation type {calc_type}"
     assert isinstance(calc_list, list), "Calculation list must be of type list"
     assert vdw in ['T', 'F', True, False], "vdw parameter must be either 'T' or 'F'"
-    assert kpts in ['GAMMA', 'MP'], "k-points parameter must be either 'GAMMA' or 'MP'"
+    assert kpts in ['GAMMA', 'G', 'Gamma', 'Gam', 'g', 'M', 'MP', True, False], "k-points parameter must be either 'GAMMA' or 'MP'"
     assert sampling in ['low', 'high'], "sampling must be low or high"
     calc_list = ' '.join(calc_list)
     greet(f"Building new bash exe file of type {calc_type} (calc list={calc_list})...")

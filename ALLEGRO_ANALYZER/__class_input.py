@@ -27,6 +27,7 @@ class InputData:
             self.type_flag = TYPE_RELAX_CONFIG
         elif args.type == 'twist':
             self.type_flag = TYPE_TWISTED_CONFIG
+            assert self.theta is not None, "Must provide a twist angle for twist calculations"
         elif args.type == 'norelax':
             self.type_flag = TYPE_NORELAX_BASIC
         
