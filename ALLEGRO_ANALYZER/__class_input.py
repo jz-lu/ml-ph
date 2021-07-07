@@ -31,6 +31,8 @@ class InputData:
         elif args.type == 'norelax':
             self.type_flag = TYPE_NORELAX_BASIC
         self.run_relaxer = args.relax
+        print(f"Relaxer: {'ON' if args.relax else 'OFF'}")
+        assert (not args.relax) or (args.twist is not None), f"Must give a twist angle if running relaxer"
         
         print('Command line arguments initiated in InputData class constructor. Arguments: ', self.cmdargs)
 

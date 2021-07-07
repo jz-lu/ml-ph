@@ -126,15 +126,15 @@ class Configuration:
     def __check_lattice_consistency(self):
         print('Verifying consistency of lattices (lattices must be identical up to constant multiples)...')
         # Loop over each lattice vector and check that they are the same as the fixed lattice vectors.
-        for i in self.__lattices:
+        for idx, i in enumerate(self.__lattices):
             for j in range(2):
                 normed_vec = (i[j] / np.linalg.norm(i[j])) # Normalize
-                abs_diff = np.linalg.norm(normed_vec - self.__normed_fixed_lattice[j])
-                if abs_diff != 0:
-                    print('Norm difference between fixed lattice and lattice vector %d of layer %d: %f'%(j+1, i+1, abs_diff))
-                    print('Warning: precision of lattices in the nonfixed layers (wrt difference with fixed layer vectors) may not be sufficiently good for phonon calculations. Ensure all lattices and sublattices are of the same significant figures.')
+                abs_diff = abs(np.linalg.norm(normed_vec - self.__normed_fixed_lattice[j]))
                 if abs_diff > POSCAR_PREC_COMP_THRESHOLD:
                     exit_with_error(ERR_INCONSISTENT_LATTICES)
+                elif abs_diff != 0:
+                    print('Norm difference between fixed lattice and lattice vector %d of layer %d: %f'%(j+1, idx+1, abs_diff))
+                    print('Warning: precision of lattices in the nonfixed layers (wrt difference with fixed layer vectors) may not be sufficiently good for phonon calculations. Ensure all lattices and sublattices are of the same significant figures.')
             if i[2][2] != Z_LATTICE_SIZE: # Check that the Z-lattice initial spacing correct
                 exit_with_error(ERR_WRONG_ZVEC%(Z_LATTICE_SIZE, i[2][2]))
         print('Lattice consistency verified.')
