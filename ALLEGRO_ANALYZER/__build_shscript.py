@@ -46,10 +46,17 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
         kpts = 'GAMMA' if user_input_settings.kpoints_is_gamma_centered else 'MP'
         compute_time = '08:00:00' if vdw == 'T' else '08:00:00'
         compute_ncpu = '8' if vdw == 'T' else '8' # change as necessary
+        compute_jobname = DIAG_JOBNAME if user_input_settings.sampling_is_diagonal() else COMPUTE_JOBNAME
+        if user_input_settings.run_relaxer:
+            compute_jobname = 'r-' + compute_jobname
+        if user_input_settings.sampling == 'low':
+            compute_jobname = 'l-' + compute_jobname
+        else:
+            compute_jobname = 'h-' + compute_jobname
         build_bash_exe(calc_type='basic', outdir=BASE_ROOT,
-                        compute_jobname=DIAG_JOBNAME if user_input_settings.sampling_is_diagonal() else COMPUTE_JOBNAME, 
-                        compute_time=compute_time, vdw=vdw, kpts=kpts, fname=START_BATCH_NAME, as_arr=True, compute_ncpu=compute_ncpu, 
-                        wdir=BASE_ROOT+CONFIG_SUBDIR_NAME, calc_list=user_input_settings.get_raw_calculation_list())
+                        compute_jobname=compute_jobname, compute_time=compute_time, vdw=vdw, kpts=kpts, fname=START_BATCH_NAME, 
+                        as_arr=True, compute_ncpu=compute_ncpu, wdir=BASE_ROOT+CONFIG_SUBDIR_NAME, 
+                        calc_list=user_input_settings.get_raw_calculation_list())
 
         for i, shpath in enumerate(base_root_subpaths):
             bfile = shpath + SHIFT_NAME
