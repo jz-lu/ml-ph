@@ -22,7 +22,6 @@ from pymatgen.io.vasp.inputs import Poscar
 from make_execscr import build_bash_exe
 import os
 import numpy as np
-RUN_RELAXER = False
 
 # Build configuration sampling from user input.
 def begin_computation(user_input_settings):
@@ -54,14 +53,14 @@ def begin_computation(user_input_settings):
             print("Sampling grid points along unit cell...")
             if user_input_settings.get_tw_angle() is not None:
                 print(f"Supplied twist angle: {user_input_settings.get_tw_angle()} degrees")
-            if RUN_RELAXER and user_input_settings.get_tw_angle() is not None:
+            if user_input_settings.run_relaxer and user_input_settings.get_tw_angle() is not None:
                 assert np.isclose(config.get_lattice_angle(), 60), f"Relaxer requires 60-degree unit cell, not {config.get_lattice_angle()}"
                 print("But first...computing relaxation in Julia...")
-                sampling_set = RelaxerAPI(user_input_settings.get_tw_angle(), grid_size[0], data_dir).get_configs(config.get_cob())
-                print("Final b set:\n", sampling_set)
+                sampling_set = RelaxerAPI(user_input_settings.get_tw_angle(), grid_size[0], data_dir).get_configs(config.get_cob(), save=True)
             else:
-                print(f"Not running relaxer (run={RUN_RELAXER})...")
+                print(f"Not running relaxer (run={user_input_settings.run_relaxer})...")
                 sampling_set = np.array(Configuration.sample_grid(grid=grid_size))
+            print("Final b set:\n", sampling_set)
 
         # Get a set of tuples (shift vector, poscar object) for each shift vector.
         configposcar_shift_tuple = config.build_config_poscar_set(sampling_set, init_interlayer_spacing)

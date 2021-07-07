@@ -30,6 +30,7 @@ class InputData:
             assert self.theta is not None, "Must provide a twist angle for twist calculations"
         elif args.type == 'norelax':
             self.type_flag = TYPE_NORELAX_BASIC
+        self.run_relaxer = args.relax
         
         print('Command line arguments initiated in InputData class constructor. Arguments: ', self.cmdargs)
 

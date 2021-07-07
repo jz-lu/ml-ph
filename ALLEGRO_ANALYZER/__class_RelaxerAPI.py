@@ -1,6 +1,6 @@
 import numpy as np
 import os
-from ___constants_names import RELAX_CODE_PATH, RELAX_CODE_OUT
+from ___constants_names import RELAX_CODE_PATH, RELAX_CODE_OUT, RELAXED_CONFIGS_NPY
 from __directory_searchers import checkPath
 import numpy.linalg as LA
 
@@ -17,10 +17,12 @@ class RelaxerAPI:
         print(stream.read())
         assert os.path.isfile(self.outpath), f"Failed to find expected relaxer output file at {self.outpath}"
         print("Relaxer code finished.")
-    def get_configs(self, cob):
+    def get_configs(self, cob, save=True):
         bprime_cart = np.load(self.outpath)
         assert bprime_cart.shape == (self.gridsz**2, 2), f"Invalid relaxation matrix shape (expected {(self.gridsz**2, 2)}):\n {bprime_cart}"
-        bprime = np.round(((LA.inv(cob) @ bprime_cart.T).T + 1.000000001) % 1, 6)
+        bprime = np.round((LA.inv(cob) @ bprime_cart.T).T, 7)
         bprime = np.hstack((bprime, np.ones(self.gridsz**2).reshape(self.gridsz**2, 1)))
+        if save:
+            np.save(self.outdir + RELAXED_CONFIGS_NPY, bprime)
         return bprime
 
