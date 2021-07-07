@@ -143,9 +143,10 @@ class DSamplingOutput:
 class ConfigOutput:
     # plot list is a list of tuples (b, z, e) = (shift, z-spacing, energy).
     # cob is the change-of-basis matrix to get fom lattice basis (which b is in) to Cartesian to plot.
-    def __init__(self, out_dir, plot_list, cob_matrix, abs_min_energy=None, scaled=False, dump=True):
+    def __init__(self, out_dir, plot_list, cob_matrix, 
+                 ph_list=None, abs_min_energy=None, scaled=False, dump=True):
         print("Initalizing ConfigOutput object.")
-        self.cob = cob_matrix
+        self.cob = cob_matrix; self.ph_list = ph_list
         # plot_list: list of (b, z, e) points
         self.__plot_list = plot_list
         self.__zspacings = np.array([i[1] for i in plot_list])
@@ -242,9 +243,10 @@ class ConfigOutput:
         ax2.scatter(self.__zspacings, self.__energies)
         scat.savefig(self.__out_dir + "energy_vs_interlayer_spacing_scatter.png")
     
-    def plot_forces(self, ph_list, atomic_idx_pairs, layer_idx_pairs, 
+    def plot_forces(self, atomic_idx_pairs, layer_idx_pairs, 
                     cart_idx_pairs, poscar : Poscar, levels=DEFAULT_CONTOUR_LEVELS):
-        self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in ph_list]
+        assert self.ph_list is not None, f"Must give list of phonopy objects to plot forces"
+        self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in self.ph_list]
         # cols = list(mcolors.TABLEAU_COLORS.keys()); ncol = len(cols)
         assert len(atomic_idx_pairs) == len(layer_idx_pairs) == len(cart_idx_pairs), f"Number of atomic, layer, and Cartesian indices must be the same, but is {len(atomic_idx_pairs)}, {len(layer_idx_pairs)}, and {len(cart_idx_pairs)}"
         atomic_sites = list(map(lambda x: x.species.elements[0].symbol, poscar.structure.sites)); n_at = len(atomic_sites)
@@ -272,8 +274,9 @@ class ConfigOutput:
             assert ls[0] in [1, 2] and ls[1] in [1,2]; assert 0 <= ats[0] < n_at and 0 <= ats[1] < n_at
             idxs = 3*ats + cs; y = np.array([f[idxs[0], idxs[1]] for f in self.force_matrices])
             lab = r'$%s^{(%d)}_%s \sim %s^{(%d)}_%s$'%(atomic_sites[ats[0]], ls[0], cl[0], atomic_sites[ats[1]], ls[1], cl[1])
-            cf = fig.axes[i].tricontourf(bx, by, self.__energies, levels=levels, cmap="RdGy")
+            cf = fig.axes[i].tricontourf(bx, by, y, levels=levels, cmap="RdGy")
             fig.colorbar(cf, ax=fig.axes[i])
+            fig.axes[i].set_aspect('equal')
             fig.axes[i].set_xlabel(r"$b_x$"); fig.axes[i].set_ylabel(r"$b_y$")
             fig.axes[i].text(0.7, 1.05, lab, transform=fig.axes[i].transAxes, size=10, weight='ultralight')
         plt.tight_layout()
