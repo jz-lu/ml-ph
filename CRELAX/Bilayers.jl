@@ -24,7 +24,7 @@ mutable struct Bilayer
     tC::Array{Float64,4}
 
     function Bilayer(l, θ, K, G)
-        E = l * [3/2 3/2; -sqrt(3)/2 sqrt(3)/2]
+        E = l * sqrt(3) * [1 1/2; 0 sqrt(3)/2]
         P = l * [1; 0]
 
         ## Symmetries and rotations:
@@ -61,8 +61,6 @@ mutable struct Hull
         s = range(0,stop=1-1/N,length=N) .* ones(1,N)
         t = ones(N,1) .* range(0,stop=1-1/N,length=N)'
         G = bl.E*[s[:]'; t[:]']
-        npzwrite("e.npz", bl.E)
-        npzwrite("d.npz", transpose([s[:]'; t[:]']))
         Gref = 2*pi*[s[:]'; t[:]']
 
         hN = div(N, 2)
