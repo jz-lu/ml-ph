@@ -55,6 +55,7 @@ def begin_computation(user_input_settings):
             if user_input_settings.get_tw_angle() is not None:
                 print(f"Supplied twist angle: {user_input_settings.get_tw_angle()} degrees")
             if RUN_RELAXER and user_input_settings.get_tw_angle() is not None:
+                assert np.isclose(config.get_lattice_angle(), 60), f"Relaxer requires 60-degree unit cell, not {config.get_lattice_angle()}"
                 print("But first...computing relaxation in Julia...")
                 sampling_set = RelaxerAPI(user_input_settings.get_tw_angle(), grid_size[0], data_dir).get_configs(config.get_cob())
                 print("Final b set:\n", sampling_set)

@@ -242,6 +242,43 @@ class ConfigOutput:
         ax2.scatter(self.__zspacings, self.__energies)
         scat.savefig(self.__out_dir + "energy_vs_interlayer_spacing_scatter.png")
     
+    def plot_forces(self, ph_list, atomic_idx_pairs, layer_idx_pairs, 
+                    cart_idx_pairs, poscar : Poscar, levels=DEFAULT_CONTOUR_LEVELS):
+        self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in ph_list]
+        # cols = list(mcolors.TABLEAU_COLORS.keys()); ncol = len(cols)
+        assert len(atomic_idx_pairs) == len(layer_idx_pairs) == len(cart_idx_pairs), f"Number of atomic, layer, and Cartesian indices must be the same, but is {len(atomic_idx_pairs)}, {len(layer_idx_pairs)}, and {len(cart_idx_pairs)}"
+        atomic_sites = list(map(lambda x: x.species.elements[0].symbol, poscar.structure.sites)); n_at = len(atomic_sites)
+        nplt = len(atomic_idx_pairs); assert int(sqrt(nplt))**2 == nplt, f"Number to plot {nplt} must be a perfect square to plot properly"
+        cart_letter_pairs = [['']*cart_idx_pairs.shape[1] for _ in range(cart_idx_pairs.shape[0])]
+        for i, pair in enumerate(cart_idx_pairs):
+            for j, idx in enumerate(pair):
+                if idx == 0:
+                    cart_letter_pairs[i][j] = 'x'
+                elif idx == 1:
+                    cart_letter_pairs[i][j] = 'y'
+                elif idx == 2:
+                    cart_letter_pairs[i][j] = 'z'
+                else:
+                    assert False, f"Invalid Cartesian element {idx} at position {i}"
+        print(f"Transformed Cartesian pairs to letter form: \n{cart_letter_pairs}")
+        rows = int(sqrt(nplt))
+        b = self.__shifts; bx = [i[0] for i in b]; by = [i[1] for i in b]
+        plt.clf(); fig = plt.figure(); fig.subplots(nrows=rows, ncols=rows, sharex='col', sharey='row') 
+        plt.suptitle(f"Forces over configurations")
+        fig.text(0, 0.5, r"Force constants (eV/$\AA^2$)", va='center', rotation='vertical')
+        for i, (ats, ls, cs, cl) in enumerate(zip(atomic_idx_pairs, layer_idx_pairs, cart_idx_pairs, cart_letter_pairs)):
+            ats = np.array(ats); ls = np.array(ls); cs = np.array(cs)
+            assert len(ats) == len(ls) == len(cs) == 2
+            assert ls[0] in [1, 2] and ls[1] in [1,2]; assert 0 <= ats[0] < n_at and 0 <= ats[1] < n_at
+            idxs = 3*ats + cs; y = np.array([f[idxs[0], idxs[1]] for f in self.force_matrices])
+            lab = r'$%s^{(%d)}_%s \sim %s^{(%d)}_%s$'%(atomic_sites[ats[0]], ls[0], cl[0], atomic_sites[ats[1]], ls[1], cl[1])
+            cf = fig.axes[i].tricontourf(bx, by, self.__energies, levels=levels, cmap="RdGy")
+            fig.colorbar(cf, ax=fig.axes[i])
+            fig.axes[i].set_xlabel(r"$b_x$"); fig.axes[i].set_ylabel(r"$b_y$")
+            fig.axes[i].text(0.7, 1.05, lab, transform=fig.axes[i].transAxes, size=10, weight='ultralight')
+        plt.tight_layout()
+        fig.savefig(self.__out_dir + f"forces.png")
+    
     # Do all available functions.
     def output_all_analysis(self, levels=DEFAULT_ABS_MIN_ENERGY):
         self.save_raw_data()
