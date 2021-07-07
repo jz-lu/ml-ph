@@ -248,6 +248,10 @@ class Configuration:
         if not (np.isclose(angle, 60) or np.isclose(angle, 120)):
             exit_with_error('Error: lattice angle must be 60 or 120')
         return np.array([0.333333, 0.333333, 0]) if np.isclose(angle, 60) else np.array([0.333333, 0.666667, 0])
+
+    def get_cob(self):
+        print(f"COB (from configuration):\n{self.__lattices[0][:2,:2].T}")
+        return self.__lattices[0][:2,:2].T
     
     @staticmethod
     def lattice_angle_from_cob(cob):

@@ -23,8 +23,7 @@ parser.add_argument("-v", "--vdw", action="store_true", help="use van der Waals 
 parser.add_argument("-m", "--mp", action="store_true", help="use for MP k-points mesh, default: Gamma")
 parser.add_argument("calc", nargs="+", help="calculations list: energies, ph, eleband, eledos", default=[ENERGIES])
 cmdargs = parser.parse_args()
-print(f"Args: {sys.argv}")
-print(f"Interpreted as: {cmdargs}")
+print(f"Args: {sys.argv[1:]}")
 
 start_time = print_start_msg()
 

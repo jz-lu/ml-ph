@@ -248,6 +248,13 @@ class ConfigOutput:
         self.plot_e_vs_b(levels=levels)
         self.plot_z_vs_b(levels=levels)
         self.plot_e_vs_z()
+
+    @staticmethod
+    def plot_percent_error(pred, actual, title='', outpath='percent_err.png', bins=10):
+        plt.clf(); plt.title(f"Percent error {'' if title == '' else 'in ' + title}")
+        plt.xlabel('Percent error'); plt.ylabel('Frequency')
+        plt.hist(100*abs((pred-actual)/actual), bins=bins)
+        plt.savefig(outpath)
     
 # Use basis linear regression to fit GSFE to leading 6 fourier terms
 # See Eq(4), Carr 2018
@@ -270,7 +277,8 @@ class FourierGSFE:
         self.X = self.__b_to_fourier_basis(b_matrix)
     def __b_to_vw(self, b_mat):
         print(f"Scaling by lattice constant {LA.norm(self.__A[:,0])}")
-        M = 2 * pi * np.array([[1, -1/sqrt(3)], [0, 2/sqrt(3)]]) / LA.norm(self.__A[:,0]) # for hexagonal lattices
+        assert self.__A.shape == (2,2)
+        M = 2 * pi * LA.inv(self.__A)
         return (M @ self.__A @ b_mat.T).T
     def __vw_to_fourier_basis(self, vw):
         X = np.ones((len(vw), 5)); v = vw[:,0]; w = vw[:,1]

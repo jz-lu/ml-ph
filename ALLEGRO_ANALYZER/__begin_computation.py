@@ -52,16 +52,15 @@ def begin_computation(user_input_settings):
             print(f"Sampled {grid_size} points along line {config.get_diagonal_basis()}")
         else:
             print("Sampling grid points along unit cell...")
-            sampling_set = np.array(Configuration.sample_grid(grid=grid_size))
             if user_input_settings.get_tw_angle() is not None:
-                print(f"Supplied twist angle: {user_input_settings.get_tw_angle()}")
+                print(f"Supplied twist angle: {user_input_settings.get_tw_angle()} degrees")
             if RUN_RELAXER and user_input_settings.get_tw_angle() is not None:
                 print("But first...computing relaxation in Julia...")
-                # TODO cartesian or direct? Must convert if Cartesian using inverse COB
-                u = RelaxerAPI(user_input_settings.get_tw_angle(), grid_size, data_dir).get_u()
-                sampling_set = np.stack((sampling_set[:,:2] + u, sampling_set[:,2]), axis=1)
+                sampling_set = RelaxerAPI(user_input_settings.get_tw_angle(), grid_size[0], data_dir).get_configs(config.get_cob())
                 print("Final b set:\n", sampling_set)
-
+            else:
+                print(f"Not running relaxer (run={RUN_RELAXER})...")
+                sampling_set = np.array(Configuration.sample_grid(grid=grid_size))
 
         # Get a set of tuples (shift vector, poscar object) for each shift vector.
         configposcar_shift_tuple = config.build_config_poscar_set(sampling_set, init_interlayer_spacing)
