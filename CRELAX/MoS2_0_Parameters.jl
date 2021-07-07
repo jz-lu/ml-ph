@@ -1,8 +1,16 @@
 ### Implementation of GSFE for MoS2 0º homo-bilayers.
+l = 3.1
 
 # MoS2 elastic constants
 K = 2.0*24.933  # Bulk modulus
 G = 2.0*15.774  # Shear modulus
+
+c0 = 4.196885686406216109e+01
+c1 = 2.039932491125311032e+01
+c2 = -4.140769075137773036e+00
+c3 = -1.219368518792581790e+00
+c4 = 2.064702904333470975e-04
+c5 = -7.982801212198150633e-04
 
 function GSFE(X::Array{Float64,2}, bl::Bilayer)
     R = bl.invE*X

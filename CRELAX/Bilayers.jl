@@ -2,6 +2,7 @@
 ## Common setup to all rotated homo-bilayers.
 
 using LinearAlgebra
+using NPZ
 
 mutable struct Bilayer
     # Unrotated monolayer parameters
@@ -60,6 +61,8 @@ mutable struct Hull
         s = range(0,stop=1-1/N,length=N) .* ones(1,N)
         t = ones(N,1) .* range(0,stop=1-1/N,length=N)'
         G = bl.E*[s[:]'; t[:]']
+        npzwrite("e.npz", bl.E)
+        npzwrite("d.npz", transpose([s[:]'; t[:]']))
         Gref = 2*pi*[s[:]'; t[:]']
 
         hN = div(N, 2)
