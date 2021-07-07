@@ -106,7 +106,7 @@ class Configuration:
         lattice = copy.deepcopy(self.__lattices[0])
         # Check that the in-plane lattice vectors have the same norm, otherwise everything is scaled wrong.
         diff = np.linalg.norm(lattice[0]) - np.linalg.norm(lattice[1]) 
-        if diff != 0:
+        if not np.isclose(diff, 0):
             print(WARN_LOW_INPLANE_PREC%(diff))
         if diff > POSCAR_PREC_COMP_THRESHOLD:
             print('Error in finding the normed fixed lattice matrix. In-plane lattice vectors have inconsistent norms.')
@@ -132,7 +132,7 @@ class Configuration:
                 abs_diff = abs(np.linalg.norm(normed_vec - self.__normed_fixed_lattice[j]))
                 if abs_diff > POSCAR_PREC_COMP_THRESHOLD:
                     exit_with_error(ERR_INCONSISTENT_LATTICES)
-                elif abs_diff != 0:
+                elif not np.isclose(abs_diff, 0):
                     print('Norm difference between fixed lattice and lattice vector %d of layer %d: %f'%(j+1, idx+1, abs_diff))
                     print('Warning: precision of lattices in the nonfixed layers (wrt difference with fixed layer vectors) may not be sufficiently good for phonon calculations. Ensure all lattices and sublattices are of the same significant figures.')
             if i[2][2] != Z_LATTICE_SIZE: # Check that the Z-lattice initial spacing correct
