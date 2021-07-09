@@ -42,16 +42,15 @@ function main()
     hN = div(N,2)
     blg = Bilayer(l, theta, K, G)
     hull = Hull(blg, N);
-    npzwrite(dir*"b.npz", transpose(hull.G))
-
 
     ## Here are rotated functionals with symmetry - try *_nosym versions for the simplified functional in the paper
     f(u) = Energy(u, hull)
     g!(storage, u) = Gradient!(storage, u, hull)
     @time results = optimize(f, g!, zeros(2, N^2), LBFGS())
     u = reshape(Optim.minimizer(results), (2, N^2))
-    npzwrite(dir*"u.npz", transpose(u))
     bprime = transpose(u) + transpose(hull.G)
+    npzwrite(dir*"b_cart.npz", transpose(hull.G))
+    npzwrite(dir*"u_cart.npz", transpose(u))
     npzwrite(dir*"bprime_cart.npz", bprime)
     println("Output written to $(parsed_args["out"])")
 end
