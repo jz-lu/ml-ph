@@ -61,7 +61,7 @@ class RelaxerAPI:
         succ("Successfully wrote relax before-after plot out to " + outname)
     def plot_quiver(self, filename='quiver.png'):
         plt.clf(); _, ax = plt.subplots()
-        plt.quiver(self.b, self.u[:,0], self.u[:,1])
+        plt.quiver(self.b[:,0], self.b[:,1], self.u[:,0], self.u[:,1])
         ax.set_aspect('equal') # prevent stretching of space in plot
         pts = [[1/3, 1/3], [2/3, 2/3]]
         if np.isclose(self.langle, 120):
