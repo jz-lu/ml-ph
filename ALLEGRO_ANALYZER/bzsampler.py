@@ -26,7 +26,7 @@ def get_bz_sample(theta, poscar, outdir, super_dim=SUPER_DIM[:2],
     if isinstance(poscar, str):
         assert os.path.isfile(poscar), f"Invalid path {poscar}"
     assert os.path.isdir(outdir), f"Invalid directory {outdir}"
-    assert max_shell >= 1 and gridsz > 1 and nk > 1 and theta > 0, "Invalid sampling parameters"
+    assert max_shell >= 1 and gridsz > 1 and nk > 1 and (theta is None or theta > 0), "Invalid sampling parameters"
 
     # Build realspace A-basis and reciprocal space G-basis in the moire cell
     A0 = s.lattice.matrix[0:2, 0:2].T # makes realspace lattice A-basis matrix [a1 a2]
@@ -47,7 +47,7 @@ if __name__ == '__main__':
     start = time()
     USAGE_MSG = '\nUsage: python3 <DIR>/bzsampler.py -deg <twist degree> -dir <main dir> -o <output dir> -f <POSCAR name>\n\n\t(Optional flags: -gsz <G grid size> -nk <kpts per line> -sh <max shell>)\n'
     args = sys.argv[1:]; i = 0; n = len(args)
-    theta = None; indir = '.'; outdir = None; pname = 'POSCAR'; p_found = False
+    theta = None; indir = '.'; outdir = None; pname = 'POSCAR'; p_found = False; sample_G0 = True
     gridsz = DEFAULT_GRID_SIZE; max_shell = DEFAULT_MAX_SHELL; nk = DEFAULT_NK
     while i < n:
         if not is_flag(args[i]):
@@ -55,9 +55,10 @@ if __name__ == '__main__':
             i += 1; continue
         if args[i] == '-deg':
             i += 1; check_not_flag(args[i]); theta = np.deg2rad(float(args[i])); i += 1
+            sample_G0 = False
         elif args[i] == '-dir':
             i += 1; check_not_flag(args[i])
-            indir = checkPath(args[i])
+            indir = checkPath(os.path.abspath(args[i]))
             if args[i] in DIR_SHORTCUTS or args[i][0] == '.':
                 warn(f'Warning: specified directory "{args[i]}" may not work when running executable')
             i += 1
@@ -82,9 +83,9 @@ if __name__ == '__main__':
         else:
             err(f"Error: unknown token {args[i]}")
 
-    if not (theta and indir):
+    if not indir:
         err(USAGE_MSG)
-    elif 180 < theta < 0:
+    elif theta is not None and 180 < theta < 0:
         err(f"Error: invalid twist angle {theta} degrees")
     elif not outdir:
         outdir = indir
@@ -93,9 +94,12 @@ if __name__ == '__main__':
         warn("No POSCAR name given as input. Defaulting to name 'POSCAR'...")
     assert os.path.isdir(indir), f'Invalid input directory {indir}'
     assert os.path.isdir(outdir), f'Invalid output directory {indir}'
-    assert os.path.isfile(indir + pname), f'No POSCAR with name {pname} found in {indir}'
+    assert os.path.isfile(indir+pname), f'No POSCAR with name {pname} found in {indir}'
     greet("DM calculator starting...")
-    print(f"Twist angle: {np.rad2deg(theta)} deg/{'%.3lf'%theta} rad\nWD: {indir}\ngrid size = {gridsz}, max shell = {max_shell}, nk = {nk}")
+    print(f"Sampling {'pristine' if sample_G0 else 'moire'} reciprocal lattice vectors...")
+    if not sample_G0:
+        print("Twist angle: {np.rad2deg(theta)} deg/{'%.3lf'%theta} rad")
+    print(f"WD: {indir}\ngrid size = {gridsz}, max shell = {max_shell}, nk = {nk}")
 
     get_bz_sample(theta, indir + pname, outdir, 
                   max_shell=max_shell, gridsz=gridsz, nk=nk, 

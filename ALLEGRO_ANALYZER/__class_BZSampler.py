@@ -18,9 +18,10 @@ from __class_CarCollector import CarCollector
 from __directory_searchers import checkPath
 
 class BZSampler:
-    def __init__(self, A0, G0, theta, outdir='./', log=False, lattice_type='hexagonal', super_dim=SUPER_DIM[:2]):
+    def __init__(self, A0, G0, theta=None, outdir='./', log=False, lattice_type='hexagonal', super_dim=SUPER_DIM[:2]):
         G0 = np.array(G0) # ensure proper typing
-        assert 180 > theta > 0
+        theta = theta if theta is not None else 1
+        assert 180 > theta >= 0
         assert os.path.isdir(outdir)
         self.outdir = checkPath(outdir); self.theta = theta; self.G0 = G0; self.A0 = A0
         self.lattice_angle = CarCollector.lattice_basis_angle(self.A0, col=True)
@@ -44,6 +45,7 @@ class BZSampler:
 
     # Sample Gtilde vectors
     def sample_GM(self, mn_grid_sz=DEFAULT_GRID_SIZE, max_shell=DEFAULT_MAX_SHELL, tol=0.1):
+        assert self.theta is not None, f"Must provide twist angle to sample moire G vectors"
         grid = np.arange(-mn_grid_sz, mn_grid_sz + 1); self.nsh = max_shell
         G01 = self.G0[:,0]; G02 = self.G0[:,1] # untwisted monolayer reciprocal lattice vectors
         GM1 = self.GM[:,0]; GM2 = self.GM[:,1] # Moire reciprocal lattice vectors
@@ -62,6 +64,23 @@ class BZSampler:
         print(f"GM set: \n{self.GM_set}\nG0 set: \n{self.G0_set}\nG indices: \n{self.g_idxs}")
         self.GM_sampled = True
         return (g_idxs, GM_set)
+
+    # Sample Gtilde vectors
+    def sample_G0(self, mn_grid_sz=DEFAULT_GRID_SIZE, max_shell=DEFAULT_MAX_SHELL, tol=0.1):
+        grid = np.arange(-mn_grid_sz, mn_grid_sz + 1); self.nsh = max_shell
+        G01 = self.G0[:,0]; G02 = self.G0[:,1] # untwisted monolayer reciprocal lattice vectors
+        G0_set = np.array([m*G01 + n*G02 for m, n in prod(grid, grid)])
+        g_idxs = np.array(list(prod(grid, grid)))
+
+        # Filter out any G that does not satisfy the closeness condition |GM| < (shell+0.1) * |GM1|
+        g_cutoff = (floor(max_shell) + tol) * LA.norm(G01) # add 0.1 for numerical error
+        cut_makers = (np.sqrt(G0_set[:,0]**2 + G0_set[:,1]**2) <= g_cutoff) # indicators for which G made the cutoff
+        g_idxs = g_idxs[cut_makers,:]; G0_set = G0_set[cut_makers,:]
+        normsort = lambda x: LA.norm(x[0])
+        g_idxs = np.array([g for _,g in sorted(zip(G0_set, g_idxs), key=normsort)]) # sort by norm of GM
+        G0_set = np.array(sorted(self.GM_set, key=LA.norm))
+        print(f"G0 set: \n{self.G0_set}\nG indices: \n{self.g_idxs}")
+        return (g_idxs, G0_set)
 
     # Sample nk points along each IBZ boundary line
     def sample_k(self, nk=DEFAULT_NK, log=False):
