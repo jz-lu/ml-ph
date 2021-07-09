@@ -88,7 +88,7 @@ if __name__ == '__main__':
     parser.add_argument("gridsz", type=int, help="enter N for NxN sampling")
     parser.add_argument("-d", "--dir", type=str, help="output directory", default='.')
     parser.add_argument("-p", "--poscar", type=str, help="POSCAR file path", default="POSCAR")
-    parser.add_argument("-c", "--cfg", type=str, help="get relaxed configs", action="store_true")
+    parser.add_argument("-c", "--cfg", help="get relaxed configs", action="store_true")
     args = parser.parse_args()
     assert 0 < args.angle < 180, f"Invalid twist angle {args.angle}"
     assert args.gridsz > 0, f"Invalid grid size {args.gridsz}"
