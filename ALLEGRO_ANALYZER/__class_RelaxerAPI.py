@@ -20,7 +20,7 @@ class RelaxerAPI:
         assert theta > 0 and theta < 180, f"Invalid twist angle {theta}"
         assert os.path.isdir(outdir), f"Invalid directory {outdir}"
         self.outdir = checkPath(os.path.abspath(outdir))
-        self.gridsz = gridsz; self.cob = cob
+        self.gridsz = gridsz; self.cob = cob; self.theta = theta
         self.langle = Configuration.lattice_angle_from_cob(self.cob)
         assert np.isclose(self.langle, 60) or np.isclose(self.langle, 120), f"Lattice angle must be 60 or 120, but is {self.langle}"
         print("Starting relaxer program in Julia...")
@@ -33,7 +33,8 @@ class RelaxerAPI:
         self.b = np.load(self.outdir + UNRELAXED_CONFIGS_OUT)
         bprime_cart = np.load(self.outdir + RELAX_CODE_OUT)
         assert bprime_cart.shape == (self.gridsz**2, 2), f"Invalid relaxation matrix shape (expected {(self.gridsz**2, 2)}):\n {bprime_cart}"
-        bprime = np.round(((LA.inv(self.cob) @ bprime_cart.T).T + 1.0000001) % 1, 7) # mod unit cell torus
+        self.bprime_raw = (LA.inv(self.cob) @ bprime_cart.T).T
+        bprime = np.round((self.bprime_raw + 1.0000001) % 1, 7) # mod unit cell torus
         self.bprime = np.hstack((bprime, np.zeros(self.gridsz**2).reshape(self.gridsz**2, 1)))
     def get_configs(self, save=True):
         if save:
@@ -41,8 +42,8 @@ class RelaxerAPI:
         return self.bprime
     def plot_relaxation(self, filename='relax.png'):
         plt.clf(); _, ax = plt.subplots()
-        plt.scatter(self.b[:,0], self.b[:,1], c='black', alpha=0.25, label='before')
-        plt.scatter(self.bprime[:,0], self.bprime[:,1], c='royalblue', label='after')
+        plt.scatter(self.b[:,0], self.b[:,1], c='royalblue', alpha=0.15, label='before')
+        plt.scatter(self.bprime_raw[:,0], self.bprime_raw[:,1], c='royalblue', label='after')
         ax.set_aspect('equal') # prevent stretching of space in plot
         pts = [[1/3, 1/3], [2/3, 2/3]]
         if np.isclose(self.langle, 120):
@@ -54,7 +55,7 @@ class RelaxerAPI:
                  textcoords="offset points", # how to position the text
                  xytext=(-5,0), # distance from text to points (x,y)
                  ha='center') # horizontal alignment can be left, right or center
-        plt.legend(); plt.title("Relaxer before-after")
+        plt.legend(); plt.title("Relaxer before-after for " + str(self.theta) + r"$^\circ$")
         ax.set_xlabel(r'$x$'); ax.set_ylabel(r'$y$')
         outname = self.outdir + 'ba_' + filename
         plt.savefig(outname)
@@ -73,7 +74,7 @@ class RelaxerAPI:
                  textcoords="offset points", # how to position the text
                  xytext=(-5,0), # distance from text to points (x,y)
                  ha='center') # horizontal alignment can be left, right or center
-        plt.legend(); plt.title("Relaxer vector field")
+        plt.title("Relaxation field for " + str(self.theta) + r"$^\circ$")
         ax.set_xlabel(r'$x$'); ax.set_ylabel(r'$y$')
         outname = self.outdir + 'vecfld_' + filename
         plt.savefig(outname)

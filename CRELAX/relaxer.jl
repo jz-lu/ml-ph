@@ -11,7 +11,7 @@ using ArgParse
 function parse_commandline()
     s = ArgParseSettings()
 
-    @add_arg_table s begin
+    @add_arg_table! s begin
         "--deg", "-d"
             help = "twist angle in degrees"
             required = true
@@ -48,7 +48,7 @@ function main()
     g!(storage, u) = Gradient!(storage, u, hull)
     @time results = optimize(f, g!, zeros(2, N^2), LBFGS())
     u = reshape(Optim.minimizer(results), (2, N^2))
-    bprime = transpose(u) + transpose(hull.G)
+    bprime = transpose(u) + transpose(hull.G) # output
     npzwrite(dir*"b_cart.npz", transpose(hull.G))
     npzwrite(dir*"u_cart.npz", transpose(u))
     npzwrite(dir*"bprime_cart.npz", bprime)

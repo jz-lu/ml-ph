@@ -60,7 +60,7 @@ mutable struct Hull
     function Hull(bl::Bilayer, N)
         s = range(0,stop=1-1/N,length=N) .* ones(1,N)
         t = ones(N,1) .* range(0,stop=1-1/N,length=N)'
-        G = bl.E*[s[:]'; t[:]']
+        G = bl.E*[s[:]'; t[:]'] # uniform grid, Cartesian
         Gref = 2*pi*[s[:]'; t[:]']
 
         hN = div(N, 2)
