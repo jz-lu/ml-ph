@@ -246,7 +246,7 @@ class ConfigOutput:
     def plot_forces(self, atomic_idx_pairs, layer_idx_pairs, 
                     cart_idx_pairs, poscar : Poscar, levels=DEFAULT_CONTOUR_LEVELS):
         assert self.ph_list is not None, f"Must give list of phonopy objects to plot forces"
-        self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in self.ph_list]
+        self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in self.output_all_analysisph_list]
         # cols = list(mcolors.TABLEAU_COLORS.keys()); ncol = len(cols)
         assert len(atomic_idx_pairs) == len(layer_idx_pairs) == len(cart_idx_pairs), f"Number of atomic, layer, and Cartesian indices must be the same, but is {len(atomic_idx_pairs)}, {len(layer_idx_pairs)}, and {len(cart_idx_pairs)}"
         atomic_sites = list(map(lambda x: x.species.elements[0].symbol, poscar.structure.sites)); n_at = len(atomic_sites)
@@ -318,7 +318,7 @@ class FourierGSFE:
     def __b_to_vw(self, b_mat):
         print(f"Scaling by lattice constant {LA.norm(self.__A[:,0])}")
         assert self.__A.shape == (2,2)
-        M = 2 * pi * LA.inv(self.__A)
+        M = 2 * pi * np.array([[1,-1/sqrt(3)],[0,2/sqrt(3)]]) / LA.norm(self.__A.T[0])
         return (M @ self.__A @ b_mat.T).T
     def __vw_to_fourier_basis(self, vw):
         X = np.ones((len(vw), 5)); v = vw[:,0]; w = vw[:,1]

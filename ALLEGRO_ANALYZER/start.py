@@ -24,7 +24,6 @@ parser.add_argument("-m", "--mp", action="store_true", help="use for MP k-points
 parser.add_argument("-r", "--relax", action="store_true", help="use relaxed (non-uniform) configurations")
 parser.add_argument("calc", nargs="+", help="calculations list: energies, ph, eleband, eledos", default=[ENERGIES])
 cmdargs = parser.parse_args()
-print(f"Args: {sys.argv[1:]}")
 
 start_time = print_start_msg()
 
