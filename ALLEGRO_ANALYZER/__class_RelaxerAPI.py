@@ -31,19 +31,19 @@ class RelaxerAPI:
         print("Relaxer code finished.")
         self.u = np.load(self.outdir + RELAXED_DELTA_OUT)
         self.b = np.load(self.outdir + UNRELAXED_CONFIGS_OUT)
-        bprime_cart = np.load(self.outdir + RELAX_CODE_OUT)
+        bprime_cart = np.load(self.outdir + RELAX_CODE_OUT); self.bprime_cart = bprime_cart
         assert bprime_cart.shape == (self.gridsz**2, 2), f"Invalid relaxation matrix shape (expected {(self.gridsz**2, 2)}):\n {bprime_cart}"
-        self.bprime_raw = (LA.inv(self.cob) @ bprime_cart.T).T
-        bprime = np.round((self.bprime_raw + 1.0000001) % 1, 7) # mod unit cell torus
-        self.bprime = np.hstack((bprime, np.zeros(self.gridsz**2).reshape(self.gridsz**2, 1)))
+        self.bprime_dir_raw = (LA.inv(self.cob) @ bprime_cart.T).T
+        bprime = np.round((self.bprime_dir_raw + 1.0000001) % 1, 7) # mod unit cell torus
+        self.bprime_dir = np.hstack((bprime, np.zeros(self.gridsz**2).reshape(self.gridsz**2, 1)))
     def get_configs(self, save=True):
         if save:
-            np.save(self.outdir + RELAXED_CONFIGS_NPY, self.bprime)
-        return self.bprime
+            np.save(self.outdir + RELAXED_CONFIGS_NPY, self.bprime_dir)
+        return self.bprime_dir
     def plot_relaxation(self, filename='relax.png'):
         plt.clf(); _, ax = plt.subplots()
         plt.scatter(self.b[:,0], self.b[:,1], c='royalblue', alpha=0.15, label='before')
-        plt.scatter(self.bprime_raw[:,0], self.bprime_raw[:,1], c='royalblue', label='after')
+        plt.scatter(self.bprime_cart[:,0], self.bprime_cart[:,1], c='royalblue', label='after')
         ax.set_aspect('equal') # prevent stretching of space in plot
         pts = [[1/3, 1/3], [2/3, 2/3]]
         if np.isclose(self.langle, 120):
