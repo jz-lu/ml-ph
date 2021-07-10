@@ -1,22 +1,39 @@
-import os
+import os, shutil
 import argparse
 
-parser = argparse.ArgumentParser(description="DFT calculations on multilayered and twisted materials")
+parser = argparse.ArgumentParser(description="Requeue failed jobs on cluster")
 parser.add_argument("sampling", type=str, help="low or high", choices=['high', 'low'])
+parser.add_argument("-c", "--cfg", action="store_true", help="configuration requeue")
 args = parser.parse_args()
 
 d = os.getcwd()
-for i in range(81 if args.sampling == 'high' else 9):
-    pdir = f'shift_{i}/analyses/phonon'
-    ndisp = len(list(filter(lambda x: x.startswith('disp'), os.listdir(pdir))))
+N = 81 if args.sampling == 'high' else 9
+if args.cfg:
     fails = []
-    for j in range(1, ndisp+1):
-        if len(os.listdir(f'shift_{i}/analyses/phonon/disp{j}')) <= 1:
-            fails.append(j)
-    if len(fails) > 0:
-        os.chdir(pdir)
-        fails = ",".join(list(map(lambda x: str(x), fails)))
-        print(f"[{i}] Resubmitting failed ph jobs: {fails}")
-        stream = os.popen(f'sbatch --array={fails} EXECUTABLE_BAT_DNE')
-        print(stream.read())
-        os.chdir(d)
+    for i in range(N):
+        s1 = os.popen(f"grep 'not available' shift_{i}/relaxation/relax.err | wc -l").read()
+        s2 = os.popen(f"grep 'rror' shift_{i}/relaxation/relax.err | wc -l").read()
+        if int(s1) > 0 or int(s2) > 0:
+            shutil.rmtree(f'shift_{i}/relaxation/')
+            shutil.rmtree(f'shift_{i}/analyses/')
+            fails.append(i)
+    fails = ",".join(list(map(lambda x: str(x)), fails))
+    print(f"Requeueing fails: {fails}")
+    stream = os.popen(f"sbatch --array={fails} EXECUTABLE_BAT_DNE")
+    print(stream.read())
+    
+else:
+    for i in range(N):
+        pdir = f'shift_{i}/analyses/phonon'
+        ndisp = len(list(filter(lambda x: x.startswith('disp'), os.listdir(pdir))))
+        fails = []
+        for j in range(1, ndisp+1):
+            if len(os.listdir(f'shift_{i}/analyses/phonon/disp{j}')) <= 1:
+                fails.append(j)
+        if len(fails) > 0:
+            os.chdir(pdir)
+            fails = ",".join(list(map(lambda x: str(x), fails)))
+            print(f"[{i}] Resubmitting failed ph jobs: {fails}")
+            stream = os.popen(f'sbatch --array={fails} EXECUTABLE_BAT_DNE')
+            print(stream.read())
+            os.chdir(d)
