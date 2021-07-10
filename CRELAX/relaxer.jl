@@ -47,7 +47,9 @@ function main()
     f(u) = Energy(u, hull)
     g!(storage, u) = Gradient!(storage, u, hull)
     @time results = optimize(f, g!, zeros(2, N^2), LBFGS())
-    u = reshape(Optim.minimizer(results), (2, N^2))
+    # u is the relaxation of L1 wrt L2, so if adding on to a configuration in L2
+    # the sign flips and it becomes b <- b - u
+    u = -reshape(Optim.minimizer(results), (2, N^2))
     bprime = transpose(u) + transpose(hull.G) # output
     npzwrite(dir*"b_cart.npz", transpose(hull.G))
     npzwrite(dir*"u_cart.npz", transpose(u))
