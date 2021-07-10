@@ -5,6 +5,7 @@ parser = argparse.ArgumentParser(description="DFT calculations on multilayered a
 parser.add_argument("sampling", type=str, help="low or high", choices=['high', 'low'])
 args = parser.parse_args()
 
+d = os.getcwd()
 for i in range(81 if args.sampling == 'high' else 9):
     pdir = f'shift_{i}/analyses/phonon'
     ndisp = len(list(filter(lambda x: x.startswith('disp'), os.listdir(pdir))))
@@ -18,3 +19,4 @@ for i in range(81 if args.sampling == 'high' else 9):
         print(f"[{i}] Resubmitting failed ph jobs: {fails}")
         stream = os.popen(f'sbatch --array={fails} EXECUTABLE_BAT_DNE')
         print(stream.read())
+        os.chdir(d)
