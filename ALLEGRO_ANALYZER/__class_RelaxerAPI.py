@@ -78,9 +78,28 @@ class RelaxerAPI:
         ax.set_xlabel(r'$x$'); ax.set_ylabel(r'$y$')
         outname = self.outdir + 'vecfld_' + filename
         plt.savefig(outname)
-        succ("Successfully wrote relax before-after plot out to " + outname)
+        succ("Successfully wrote relax Cartesian vector field plot out to " + outname)
+    def plot_quiver_direct(self, filename='quiver_direct.png'):
+        b = (LA.inv(self.cob) @ self.b.T).T; u = (LA.inv(self.cob) @ self.u.T).T
+        plt.clf(); _, ax = plt.subplots()
+        plt.quiver(b[:,0], b[:,1], u[:,0], u[:,1])
+        ax.set_aspect('equal') # prevent stretching of space in plot
+        pts = [[1/3, 1/3], [2/3, 2/3]]
+        if np.isclose(self.langle, 120):
+            pts = [[1/3, 2/3], [2/3, 1/3]]
+        labels = ['AB', 'BA']
+        for (x, y), lab in zip(pts, labels):
+            plt.annotate(lab, (x, y), # this is the point to label
+                 textcoords="offset points", # how to position the text
+                 xytext=(-5,0), # distance from text to points (x,y)
+                 ha='center') # horizontal alignment can be left, right or center
+        plt.title("Relaxation field for " + str(self.theta) + r"$^\circ$")
+        ax.set_xlabel(r'$\mathbf{a}_1$'); ax.set_ylabel(r'$\mathbf{a}_2$')
+        outname = self.outdir + filename
+        plt.savefig(outname)
+        succ("Successfully wrote relax direct vector field plot out to " + outname)
     def plot_all(self):
-        self.plot_relaxation(); self.plot_quiver()
+        self.plot_relaxation(); self.plot_quiver(); self.plot_quiver_direct()
 
 
 if __name__ == '__main__':
