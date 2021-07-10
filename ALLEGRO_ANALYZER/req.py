@@ -14,7 +14,7 @@ for i in range(81 if args.sampling == 'high' else 9):
             fails.append(j)
     if len(fails) > 0:
         os.chdir(pdir)
-        fails = ",".join(fails)
+        fails = ",".join(list(map(lambda x: str(x), fails)))
         print(f"Resubmitting failed ph jobs: {fails}")
         stream = os.popen(f'sbatch --array={fails} EXECUTABLE_BAT_DNE')
         print(stream.read())
