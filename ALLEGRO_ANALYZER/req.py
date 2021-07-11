@@ -17,7 +17,7 @@ if args.cfg:
             shutil.rmtree(f'shift_{i}/relaxation/')
             shutil.rmtree(f'shift_{i}/analyses/')
             fails.append(i)
-    fails = ",".join(list(map(lambda x: str(x)), fails))
+    fails = ",".join(list(map(lambda x: str(x), fails)))
     print(f"Requeueing fails: {fails}")
     stream = os.popen(f"sbatch --array={fails} EXECUTABLE_BAT_DNE")
     print(stream.read())
