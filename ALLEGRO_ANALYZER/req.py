@@ -31,7 +31,7 @@ else:
         for j in range(1, ndisp+1):
             subdir = pdir + f'disp{j}/'
             never_started = len(os.listdir(subdir)) <= 1
-            bad_term = os.popen(f"grep 'BAD TERMINATION' {subdir}")
+            bad_term = os.popen(f"grep 'BAD TERMINATION' {subdir + 'no_relax.out'}")
             if bad_term:
                 shutil.rmtree(subdir + 'analyses/')
                 print(f"[{i}] Found bad termination at disp{j}")
