@@ -3,12 +3,13 @@ import argparse
 
 parser = argparse.ArgumentParser(description="Requeue failed jobs on cluster")
 parser.add_argument("sampling", type=str, help="low or high", choices=['high', 'low'])
-parser.add_argument("skip", nargs="+", help="numbers to skip", default=[])
+parser.add_argument("-s", "--skip", nargs="+", help="numbers to skip", default=[])
 parser.add_argument("-c", "--cfg", action="store_true", help="configuration requeue")
 args = parser.parse_args()
 
 d = os.getcwd()
 skip = list(map(lambda x: int(x), args.skip))
+print(f"Skipping: {skip}")
 N = 81 if args.sampling == 'high' else 9
 if args.cfg:
     fails = []
@@ -52,7 +53,8 @@ else:
             os.chdir(pdir)
             fails = ",".join(list(map(lambda x: str(x), fails)))
             print(f"[{i}] Resubmitting failed ph jobs: {fails}")
-            stream = os.popen(f'sbatch --array={fails} EXECUTABLE_BAT_DNE')
+            cmd = f'sbatch --array={fails} EXECUTABLE_BAT_DNE'
+            print(f"POPEN: {cmd}"); stream = os.popen(cmd)
             print(stream.read())
             os.chdir(d)
     if no_fails:
