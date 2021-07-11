@@ -31,13 +31,14 @@ else:
         for j in range(1, ndisp+1):
             subdir = pdir + f'disp{j}/'
             never_started = len(os.listdir(subdir)) <= 1
-            bad_term = os.popen(f"grep 'BAD TERMINATION' {subdir + 'no_relax.out'}")
+            if never_started:
+                print(f"[{i}] Found job never started at disp{j}")
+                fails.append(j)
+                continue
+            bad_term = len(os.popen(f"grep 'BAD TERMINATION' {subdir + 'no_relax.out'} | wc -l")) > 0
             if bad_term:
                 shutil.rmtree(subdir + 'analyses/')
                 print(f"[{i}] Found bad termination at disp{j}")
-            elif never_started:
-                print(f"[{i}] Found job never started at disp{j}")
-            if never_started or bad_term:
                 fails.append(j)
         if len(fails) > 0:
             no_fails = False
