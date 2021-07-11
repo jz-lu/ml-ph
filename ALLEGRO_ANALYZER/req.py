@@ -3,14 +3,18 @@ import argparse
 
 parser = argparse.ArgumentParser(description="Requeue failed jobs on cluster")
 parser.add_argument("sampling", type=str, help="low or high", choices=['high', 'low'])
+parser.add_argument("skip", nargs="+", help="numbers to skip", default=[])
 parser.add_argument("-c", "--cfg", action="store_true", help="configuration requeue")
 args = parser.parse_args()
 
 d = os.getcwd()
+skip = list(map(lambda x: int(x), args.skip))
 N = 81 if args.sampling == 'high' else 9
 if args.cfg:
     fails = []
     for i in range(N):
+        if i in skip:
+            continue
         s1 = os.popen(f"grep 'not available' shift_{i}/relaxation/relax.err | wc -l").read()
         s2 = os.popen(f"grep 'rror' shift_{i}/relaxation/relax.err | wc -l").read()
         if int(s1) > 0 or int(s2) > 0:
@@ -25,6 +29,8 @@ if args.cfg:
 else:
     no_fails = True
     for i in range(N):
+        if i in skip:
+            continue
         pdir = f'shift_{i}/analyses/phonon/'
         ndisp = len(list(filter(lambda x: x.startswith('disp'), os.listdir(pdir))))
         fails = []
