@@ -134,6 +134,7 @@ def ph_generate_forcesets(dirName, dispNum, path_pad=None, dump=False):
             print('Running command to shell: ' + cmd)
         phForce_output = subprocess.run(cmd, shell=True, capture_output=True, universal_newlines=True)
         print(phForce_output.stdout)
+        print(phForce_output.stderr)
     except Exception as err:
         print(ERR_PH_FORCE_SETS)
         print('Command log: {}'.format(phForce_output.stderr))

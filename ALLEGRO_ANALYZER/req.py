@@ -23,6 +23,7 @@ if args.cfg:
     print(stream.read())
     
 else:
+    no_fails = True
     for i in range(N):
         pdir = f'shift_{i}/analyses/phonon'
         ndisp = len(list(filter(lambda x: x.startswith('disp'), os.listdir(pdir))))
@@ -31,9 +32,12 @@ else:
             if len(os.listdir(f'shift_{i}/analyses/phonon/disp{j}')) <= 1:
                 fails.append(j)
         if len(fails) > 0:
+            no_fails = False
             os.chdir(pdir)
             fails = ",".join(list(map(lambda x: str(x), fails)))
             print(f"[{i}] Resubmitting failed ph jobs: {fails}")
             stream = os.popen(f'sbatch --array={fails} EXECUTABLE_BAT_DNE')
             print(stream.read())
             os.chdir(d)
+    if no_fails:
+        print("No failures in phonon force calculations.")
