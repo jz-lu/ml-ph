@@ -35,9 +35,10 @@ else:
                 print(f"[{i}] Found job never started at disp{j}")
                 fails.append(j)
                 continue
+            subdir += 'analyses/'
             bad_term = len(os.popen(f"grep 'BAD TERMINATION' {subdir + 'no_relax.out'} | wc -l")) > 0
             if bad_term:
-                shutil.rmtree(subdir + 'analyses/')
+                shutil.rmtree(subdir)
                 print(f"[{i}] Found bad termination at disp{j}")
                 fails.append(j)
         if len(fails) > 0:
