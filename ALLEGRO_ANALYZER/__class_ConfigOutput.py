@@ -246,7 +246,7 @@ class ConfigOutput:
     def plot_forces(self, atomic_idx_pairs, layer_idx_pairs, 
                     cart_idx_pairs, poscar : Poscar, levels=DEFAULT_CONTOUR_LEVELS):
         assert self.ph_list is not None, f"Must give list of phonopy objects to plot forces"
-        self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in self.ph_list]
+        self.force_matrices = [np.real(ph.get_dynamical_matrix_at_q([0,0,0])) for ph in self.ph_list]
         # cols = list(mcolors.TABLEAU_COLORS.keys()); ncol = len(cols)
         assert len(atomic_idx_pairs) == len(layer_idx_pairs) == len(cart_idx_pairs), f"Number of atomic, layer, and Cartesian indices must be the same, but is {len(atomic_idx_pairs)}, {len(layer_idx_pairs)}, and {len(cart_idx_pairs)}"
         atomic_sites = list(map(lambda x: x.species.elements[0].symbol, poscar.structure.sites)); n_at = len(atomic_sites)
