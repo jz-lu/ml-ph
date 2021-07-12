@@ -51,7 +51,7 @@ if __name__ == '__main__':
         elif cmdargs[i] == '--nff':
             ff = False; i += 1
         elif cmdargs[i] == '--fc':
-            i += 1; nplt = int(cmdargs[i]); i += 1; fc = True
+            i += 1; nplt = int(cmdargs[i]); fc = True
         elif cmdargs[i] == '--usage':
             print(USAGE_ERR_MSG)
             sys.exit(0)
