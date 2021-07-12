@@ -208,7 +208,7 @@ class ConfigOutput:
         bx = [i[0] for i in b]; by = [i[1] for i in b]
         plt.clf(); fig, ax = plt.subplots()
         cf = ax.tricontourf(bx, by, energies, levels=levels, cmap="RdGy")
-        fig.colorbar(cf, ax=ax)
+        fig.colorbar(cf, ax=ax, format='%.0e')
         ax.set_xlabel(r"$b_x$")
         ax.set_ylabel(r"$b_y$")
         ax.set_title(tpfx + ('' if tpfx=='' else ' ') + r"GSFE$(\mathbf{b})$ (meV)")
