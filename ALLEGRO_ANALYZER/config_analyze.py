@@ -179,6 +179,15 @@ if __name__ == '__main__':
         assert n_at == len(lidxs), f"Inconsistent number of atoms {n_at} with associated layer indices {lidxs}"
         print("Sampling pairs...")
         atomic_pairs = None; lidx_pairs = None; pfx = ''
+        assert nplt <= npairs, f"Number of force constants to plot {nplt} is too large, max={npairs}"
+        atomic_pairs = np.array(list(itertools.combinations(at_idxs, 2)))
+        lidx_pairs = np.array(list(itertools.combinations(lidxs, 2)))
+        choice_idxs = np.random.choice(np.arange(len(atomic_pairs)), size=nplt, replace=False)
+        print(f"Using pairs with indices: {choice_idxs}")
+        atomic_pairs = atomic_pairs[choice_idxs]; lidx_pairs = lidx_pairs[choice_idxs]
+        cart_pairs = np.stack((np.random.choice([0,1,2], nplt), np.random.choice([0,1,2], nplt)), axis=1)
+        print("Plotting forces (no constraints)...")
+        do.plot_forces(atomic_pairs, lidx_pairs, cart_pairs, p, pfx=pfx)
         if INTERLAYER_ONLY:
             print("Using constraint: interlayer forces only")
             n_at //= 2; npairs = (n_at * (n_at-1) // 2)**2
@@ -189,20 +198,18 @@ if __name__ == '__main__':
             lidx_pairs = np.array([[1,2]]*nplt)
             pfx += 'inter'
             print(f"Atomic pairs ({atomic_pairs.shape}):\n{atomic_pairs}\nlidx_pairs ({lidx_pairs.shape}): \n{lidx_pairs}")
-        else:
-            assert nplt <= npairs, f"Number of force constants to plot {nplt} is too large, max={npairs}"
-            atomic_pairs = np.array(list(itertools.combinations(at_idxs, 2)))
-            lidx_pairs = np.array(list(itertools.combinations(lidxs, 2)))
-            choice_idxs = np.random.choice(np.arange(len(atomic_pairs)), size=nplt, replace=False)
-            print(f"Using pairs with indices: {choice_idxs}")
-            atomic_pairs = atomic_pairs[choice_idxs]; lidx_pairs = lidx_pairs[choice_idxs]
-        cart_pairs = np.stack((np.random.choice([0,1,2], nplt), np.random.choice([0,1,2], nplt)), axis=1)
+            cart_pairs = np.stack((np.random.choice([0,1,2], nplt), np.random.choice([0,1,2], nplt)), axis=1)
+            print("Plotting forces (constraints: interlayer only)...")
+            do.plot_forces(atomic_pairs, lidx_pairs, cart_pairs, p, pfx=pfx)
         if SAME_CART_ONLY:
             pfx += ('_' if INTERLAYER_ONLY else '') + 'cfix'
+            atomic_pairs = np.array([[i, j] for i in at_idxs[lidxs==1] for j in at_idxs[lidxs==2]])
+            np.random.shuffle(atomic_pairs)
+            atomic_pairs = atomic_pairs[:nplt]
             carts = np.random.choice([0,1,2], nplt)
             cart_pairs = np.stack((carts, carts), axis=1)
-        print("Plotting forces...")
-        do.plot_forces(atomic_pairs, lidx_pairs, cart_pairs, p, pfx=pfx)
+            print("Plotting forces (constraints: interlayer only, same Cartesian coordinate)...")
+            do.plot_forces(atomic_pairs, lidx_pairs, cart_pairs, p, pfx=pfx)
             
     print("Analyzer has finished running.")
     succ("== Configuration Analyzer Complete (Took %.3lfs) =="%(time()-start_time))
