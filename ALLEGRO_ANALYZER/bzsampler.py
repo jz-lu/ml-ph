@@ -64,7 +64,7 @@ if __name__ == '__main__':
             i += 1
         elif args[i] == '-o':
             i += 1; check_not_flag(args[i])
-            outdir = checkPath(args[i])
+            outdir = checkPath(os.path.abspath(args[i]))
             if args[i] in DIR_SHORTCUTS or args[i][0] == '.':
                 warn(f'Warning: specified directory "{args[i]}" may not work when running executable')
             i += 1
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     if not p_found:
         warn("No POSCAR name given as input. Defaulting to name 'POSCAR'...")
     assert os.path.isdir(indir), f'Invalid input directory {indir}'
-    assert os.path.isdir(outdir), f'Invalid output directory {indir}'
+    assert os.path.isdir(outdir), f'Invalid output directory {outdir}'
     assert os.path.isfile(indir+pname), f'No POSCAR with name {pname} found in {indir}'
     greet("DM calculator starting...")
     print(f"Sampling {'pristine' if sample_G0 else 'moire'} reciprocal lattice vectors...")

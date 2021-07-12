@@ -90,7 +90,11 @@ class BZSampler:
         print("k-sampler using Gamma-K-M sequence defined by moire reciprocal lattice vectors GM")
         Gamma = np.zeros(d); K = 1/3 * (GM1 + GM2); M = 1/2 * GM1
         if np.isclose(self.lattice_angle, 60):
+            print("Using 60-degree unit cell for BZ...")
             M += 1/2 * GM2
+            K += 1/3 * GM1
+        else:
+            print("Using 120-degree unit cell for BZ...")
         
         assert np.isclose(self.lattice_angle, 60) or np.isclose(self.lattice_angle, 120), f"k-sampler expects lattice angle to be 120 or 60 deg, but is {self.lattice_angle}"
         ncorners = 4; corners = np.zeros([ncorners, d]) # k-points IBZ boundary corners
