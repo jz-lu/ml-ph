@@ -281,7 +281,7 @@ class ConfigOutput:
             fig.axes[i].set_aspect('equal')
             fig.axes[i].set_xlabel(r"$b_x$"); fig.axes[i].set_ylabel(r"$b_y$")
             fig.axes[i].text(0.7, 1.05, lab, transform=fig.axes[i].transAxes, size=10, weight='ultralight')
-            fig.axes[i].text(0.05, 1.05, "%.2e-%.2e"%(min(y), max(y)), transform=fig.axes[i].transAxes, size=10, weight='ultralight')
+            fig.axes[i].text(0.05, 1.05, "%.0e-%.0e"%(min(y), max(y)), transform=fig.axes[i].transAxes, size=10, weight='ultralight')
         plt.tight_layout()
         fig.savefig(self.__out_dir + f"forces{'_' if pfx != '' else ''}{pfx}.png")
     
