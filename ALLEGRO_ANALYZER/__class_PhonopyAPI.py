@@ -43,6 +43,7 @@ class PhonopyAPI:
         if self.ctype == 'twist':
             ROOT = build_dir([ROOT, CONFIG_DIR_NAME])
         configs = sorted(findDirsinDir(ROOT, CONFIG_SUBDIR_NAME, searchType='start'))
+        layers.sort(key=len)
         ph_list = []
         print(configs)
         for config in configs:
