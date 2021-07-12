@@ -26,7 +26,7 @@ INTERLAYER_ONLY = False
 SAME_CART_ONLY = False
 
 if __name__ == '__main__':
-    USAGE_ERR_MSG = 'Usage: python3 <DIR>/config_analyze.py -n <NUM SHIFTS> -d <I/O DIR FROM MAIN PROGRAM> -e <MIN ENERGY (eV)> (optional: --diag --nff --fc)'
+    USAGE_ERR_MSG = 'Usage: python3 <DIR>/config_analyze.py -n <NUM SHIFTS> -d <I/O DIR FROM MAIN PROGRAM> -e <MIN ENERGY (eV)> (optional: --diag --nff --fc --perr)'
 
     # The ConfigOutput class expects a COB matrix and 
     # a list of (config vector b, z-spacing, energy in eV), as well as a minimum energy in eV to shift by.
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     # Parse cmdline args
     cmdargs = list(copy.deepcopy(sys.argv))[1:]; i = 0; n = len(cmdargs)
     BASE_ROOT = '.'; abs_min_energy = None; nshifts = None; diag = False; ff = True; fc = False; nplt = 4
-    nlevel = DEFAULT_CONTOUR_LEVELS
+    nlevel = DEFAULT_CONTOUR_LEVELS; plot_perr = False
     while i < n:
         if cmdargs[i] == '-n':
             i += 1; nshifts = int(cmdargs[i]); i += 1
@@ -56,6 +56,8 @@ if __name__ == '__main__':
             SAME_CART_ONLY  = True; i += 1
         elif cmdargs[i] == '--fc':
             i += 1; nplt = int(cmdargs[i]); i +=1; fc = True
+        elif cmdargs[i] == '--perr':
+            i += 1; plot_perr = True
         elif cmdargs[i] == '--usage':
             print(USAGE_ERR_MSG)
             sys.exit(0)
@@ -157,6 +159,17 @@ if __name__ == '__main__':
         if ff_pred is not None:
             print("Building fitted GSFE plot...")
             do.plot_e_vs_b(pfx='pred', tpfx='Fitted', energies=ff_pred, b=large_cfg)
+            if plot_perr:
+                bmat = input("Enter path for b matrix .npy file: ")
+                while not os.path.isfile(bmat):
+                    bmat = input("Invalid path, try again: ")
+                bmat = np.load(bmat)
+                earr = input("Enter path for actual energies .npy file: ")
+                while not os.path.isfile(earr):
+                    earr = input("Invalid path, try again: ")
+                earr = np.load(earr)
+                ff_gsfe.plot_percent_error(bmat, earr)
+                print("Successfully plotted percent error")
     if fc: # plot force constants
         assert nplt > 0, f"Invalid number of force constants to plot {nplt}"
         update("Calculating force constants...")

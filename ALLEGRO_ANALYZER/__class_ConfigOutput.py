@@ -191,6 +191,7 @@ class ConfigOutput:
         out_file = self.__out_dir + "raw_data.csv"
         np.savetxt(out_file, table, delimiter=",", 
             header="bx, by, relaxed z-spacing, energy\n")
+        np.save(self.__out_dir + 'e.npy', self.__energies)
    
     # Smoothly interpolate toal energy at various shifts.
     def plot_e_vs_b(self, levels=DEFAULT_CONTOUR_LEVELS, pfx='', tpfx='', energies=None, b=None):
@@ -290,13 +291,7 @@ class ConfigOutput:
         self.plot_z_vs_b(levels=levels)
         self.plot_e_vs_z()
 
-    @staticmethod
-    def plot_percent_error(pred, actual, title='', outpath='percent_err.png', bins=10):
-        plt.clf(); plt.title(f"Percent error {'' if title == '' else 'in ' + title}")
-        plt.xlabel('Percent error'); plt.ylabel('Frequency')
-        plt.hist(100*abs((pred-actual)/actual), bins=bins)
-        plt.savefig(outpath)
-    
+
 # Use basis linear regression to fit GSFE to leading 6 fourier terms
 # See Eq(4), Carr 2018
 # Bugs: may not work if unit cell vectors is 60 deg instead of 120
@@ -370,6 +365,12 @@ class FourierGSFE:
         ax.plot([minmin, maxmax], [minmin, maxmax], c='royalblue') # y=x line
         print(f"Predicted GSFE:\n {x}\nActual GSFE: \n{y}")
         fig.savefig(outdir + outname)
+    def plot_percent_error(self, b_mat, actual, title='', outpath='percent_err.png', bins=10):
+        pred = self.predict(b_mat)
+        plt.clf(); plt.title(f"Percent error {'' if title == '' else 'in ' + title}")
+        plt.xlabel('Percent error'); plt.ylabel('Frequency')
+        plt.hist(100*abs((pred-actual)/actual), bins=bins)
+        plt.savefig(outpath)
     def output_all_analysis(self, outdir):
         outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
         self.__ensure_fitted()
