@@ -26,6 +26,7 @@ class PhonopyAPI:
     def __load_intra_ph_list(self, ROOT, spname=SPOSCAR_NAME):
         ROOT = checkPath(ROOT); ph_list = []
         layers = sorted(findDirsinDir(ROOT, MONOLAYER_DIR_NAME, searchType='start'))
+        layers.sort(key=len)
         assert len(layers) > 1, "Twist calculations require at least 2 layers"
         assert len(layers) <= 2, "Twist calculations for more than 2 layers not supported (yet)"
         for layer in layers:
