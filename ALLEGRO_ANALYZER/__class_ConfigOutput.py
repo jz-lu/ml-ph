@@ -369,7 +369,9 @@ class FourierGSFE:
         pred = self.predict(b_mat)
         plt.clf(); plt.title(f"Percent error {'' if title == '' else 'in ' + title}")
         plt.xlabel('Percent error'); plt.ylabel('Frequency')
-        plt.hist(100*abs((pred-actual)/actual), bins=bins)
+        print(f"Pred-actual pairs:\n{np.array(list(zip(pred, actual)))}")
+        pred = pred + 1e-8; actual = actual + 1e-8
+        plt.hist(100*abs((pred-actual)/(actual)), bins=bins)
         plt.savefig(outpath)
     def output_all_analysis(self, outdir):
         outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
