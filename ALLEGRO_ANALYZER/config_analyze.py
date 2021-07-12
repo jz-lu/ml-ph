@@ -22,8 +22,8 @@ from math import sqrt
 import itertools
 from pymatgen.io.vasp.inputs import Poscar
 from ___helpers_parsing import succ, warn, err, update, greet
-INTERLAYER_ONLY = True
-SAME_CART_ONLY = True
+INTERLAYER_ONLY = False
+SAME_CART_ONLY = False
 
 if __name__ == '__main__':
     USAGE_ERR_MSG = 'Usage: python3 <DIR>/config_analyze.py -n <NUM SHIFTS> -d <I/O DIR FROM MAIN PROGRAM> -e <MIN ENERGY (eV)> (optional: --diag --nff --fc)'
@@ -50,6 +50,10 @@ if __name__ == '__main__':
             diag = True; i += 1
         elif cmdargs[i] == '--nff':
             ff = False; i += 1
+        elif cmdargs[i] == '--int':
+            INTERLAYER_ONLY = True; i += 1
+        elif cmdargs[i] == '--cfx':
+            SAME_CART_ONLY  = True; i += 1
         elif cmdargs[i] == '--fc':
             i += 1; nplt = int(cmdargs[i]); i +=1; fc = True
         elif cmdargs[i] == '--usage':
@@ -161,7 +165,7 @@ if __name__ == '__main__':
         n_at = len(p.structure.species); npairs = n_at * (n_at-1) // 2; at_idxs = np.arange(n_at)
         assert n_at == len(lidxs), f"Inconsistent number of atoms {n_at} with associated layer indices {lidxs}"
         print("Sampling pairs...")
-        atomic_pairs = None; lidx_pairs = None
+        atomic_pairs = None; lidx_pairs = None; pfx = ''
         if INTERLAYER_ONLY:
             print("Using constraint: interlayer forces only")
             n_at //= 2; npairs = (n_at * (n_at-1) // 2)**2
@@ -170,6 +174,7 @@ if __name__ == '__main__':
             np.random.shuffle(atomic_pairs)
             atomic_pairs = atomic_pairs[:nplt]
             lidx_pairs = np.array([[1,2]]*nplt)
+            pfx += 'inter'
             print(f"Atomic pairs ({atomic_pairs.shape}):\n{atomic_pairs}\nlidx_pairs ({lidx_pairs.shape}): \n{lidx_pairs}")
         else:
             assert nplt <= npairs, f"Number of force constants to plot {nplt} is too large, max={npairs}"
@@ -180,10 +185,11 @@ if __name__ == '__main__':
             atomic_pairs = atomic_pairs[choice_idxs]; lidx_pairs = lidx_pairs[choice_idxs]
         cart_pairs = np.stack((np.random.choice([0,1,2], nplt), np.random.choice([0,1,2], nplt)), axis=1)
         if SAME_CART_ONLY:
+            pfx += ('_' if INTERLAYER_ONLY else '') + 'cfix'
             carts = np.random.choice([0,1,2], nplt)
             cart_pairs = np.stack((carts, carts), axis=1)
         print("Plotting forces...")
-        do.plot_forces(atomic_pairs, lidx_pairs, cart_pairs, p)
+        do.plot_forces(atomic_pairs, lidx_pairs, cart_pairs, p, pfx=pfx)
             
     print("Analyzer has finished running.")
     succ("== Configuration Analyzer Complete (Took %.3lfs) =="%(time()-start_time))

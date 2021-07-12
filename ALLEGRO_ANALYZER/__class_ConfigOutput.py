@@ -99,7 +99,7 @@ class DSamplingOutput:
     def output_all_analysis(self):
         self.save_raw_data(); self.plot_energies(); self.plot_spacings()
     
-    def plot_forces(self, atomic_idx_pairs, layer_idx_pairs, cart_idx_pairs, poscar : Poscar):
+    def plot_forces(self, atomic_idx_pairs, layer_idx_pairs, cart_idx_pairs, poscar : Poscar, pfx=''):
         cols = list(mcolors.TABLEAU_COLORS.keys()); ncol = len(cols)
         assert self.force_matrices is not None, f"Must give valid list of phonopy objects to plot forces"
         assert len(atomic_idx_pairs) == len(layer_idx_pairs) == len(cart_idx_pairs), f"Number of atomic, layer, and Cartesian indices must be the same, but is {len(atomic_idx_pairs)}, {len(layer_idx_pairs)}, and {len(cart_idx_pairs)}"
@@ -138,7 +138,7 @@ class DSamplingOutput:
             else:
                 fig.axes[i].tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
         plt.tight_layout()
-        fig.savefig(self.out_dir + f"diag_forces.png")
+        fig.savefig(self.out_dir + f"diag_forces{'' if pfx == '' else '_'}{pfx}.png")
 
 class ConfigOutput:
     # plot list is a list of tuples (b, z, e) = (shift, z-spacing, energy).
@@ -244,7 +244,8 @@ class ConfigOutput:
         scat.savefig(self.__out_dir + "energy_vs_interlayer_spacing_scatter.png")
     
     def plot_forces(self, atomic_idx_pairs, layer_idx_pairs, 
-                    cart_idx_pairs, poscar : Poscar, levels=DEFAULT_CONTOUR_LEVELS):
+                    cart_idx_pairs, poscar : Poscar, 
+                    levels=DEFAULT_CONTOUR_LEVELS, pfx=''):
         assert self.ph_list is not None, f"Must give list of phonopy objects to plot forces"
         self.force_matrices = [np.real(ph.get_dynamical_matrix_at_q([0,0,0])) for ph in self.ph_list]
         # cols = list(mcolors.TABLEAU_COLORS.keys()); ncol = len(cols)
@@ -280,7 +281,7 @@ class ConfigOutput:
             fig.axes[i].set_xlabel(r"$b_x$"); fig.axes[i].set_ylabel(r"$b_y$")
             fig.axes[i].text(0.7, 1.05, lab, transform=fig.axes[i].transAxes, size=10, weight='ultralight')
         plt.tight_layout()
-        fig.savefig(self.__out_dir + f"forces.png")
+        fig.savefig(self.__out_dir + f"forces{'_' if pfx != '' else ''}{pfx}.png")
     
     # Do all available functions.
     def output_all_analysis(self, levels=DEFAULT_ABS_MIN_ENERGY):
