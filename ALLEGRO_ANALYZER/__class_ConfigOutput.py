@@ -370,7 +370,7 @@ class FourierGSFE:
         plt.clf(); plt.title(f"Percent error {'' if title == '' else 'in ' + title}")
         plt.xlabel('Percent error'); plt.ylabel('Frequency')
         print(f"Pred-actual pairs:\n{np.array(list(zip(pred, actual)))}")
-        pred = pred[actual > 1e-6]; actual = actual[actual > 1e-6]
+        pred = pred[actual > 1e-2]; actual = actual[actual > 1e-2]
         plt.hist(100*abs((pred-actual)/(actual)), bins=bins)
         plt.savefig(outpath)
     def output_all_analysis(self, outdir):
