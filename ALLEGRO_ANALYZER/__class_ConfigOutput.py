@@ -276,11 +276,12 @@ class ConfigOutput:
             assert ls[0] in [1, 2] and ls[1] in [1,2]; assert 0 <= ats[0] < n_at and 0 <= ats[1] < n_at
             idxs = 3*ats + cs; y = np.array([f[idxs[0], idxs[1]] for f in self.force_matrices])
             lab = r'$%s^{(%d)}_%s \sim %s^{(%d)}_%s$'%(atomic_sites[ats[0]], ls[0], cl[0], atomic_sites[ats[1]], ls[1], cl[1])
-            cf = fig.axes[i].tricontourf(bx, by, y, levels=levels, cmap="RdGy")
+            _ = fig.axes[i].tricontourf(bx, by, y, levels=levels, cmap="RdGy")
             # fig.colorbar(cf, ax=fig.axes[i], format='%.0e')
             fig.axes[i].set_aspect('equal')
             fig.axes[i].set_xlabel(r"$b_x$"); fig.axes[i].set_ylabel(r"$b_y$")
             fig.axes[i].text(0.7, 1.05, lab, transform=fig.axes[i].transAxes, size=10, weight='ultralight')
+            fig.axes[i].text(0.05, 1.05, "%.2e-%.2e"%(min(y), max(y)), transform=fig.axes[i].transAxes, size=10, weight='ultralight')
         plt.tight_layout()
         fig.savefig(self.__out_dir + f"forces{'_' if pfx != '' else ''}{pfx}.png")
     
@@ -369,7 +370,8 @@ class FourierGSFE:
         pred = self.predict(b_mat)
         plt.clf(); plt.title(f"Percent error {'' if title == '' else 'in ' + title}")
         plt.xlabel('Percent error'); plt.ylabel('Frequency')
-        print(f"Pred-actual pairs:\n{np.array(list(zip(pred, actual)))}")
+        diffs = np.array(pred) - np.array(actual)
+        print(f"Pred-actual diffs:\n{diffs}")
         pred = pred[actual > 1e-2]; actual = actual[actual > 1e-2]
         plt.hist(100*abs((pred-actual)/(actual)), bins=bins)
         plt.savefig(outpath)
