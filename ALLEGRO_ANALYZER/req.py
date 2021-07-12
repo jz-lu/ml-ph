@@ -44,9 +44,13 @@ else:
                 continue
             subdir += 'analyses/'
             bad_term = int(os.popen(f"grep 'BAD TERMINATION' {subdir + 'no_relax.out'} | wc -l").read()) > 0
-            if bad_term:
+            other_err = int(os.popen(f"grep 'error' {subdir + 'no_relax.err'} | wc -l").read()) > 0
+            if bad_term or other_err:
                 shutil.rmtree(subdir)
-                print(f"[{i}] Found bad termination at disp{j}")
+                if bad_term:
+                    print(f"[{i}] Found bad termination at disp{j}")
+                if other_err:
+                    print(f"[{i}] Found unknown error at disp{j}")
                 fails.append(j)
         if len(fails) > 0:
             no_fails = False
