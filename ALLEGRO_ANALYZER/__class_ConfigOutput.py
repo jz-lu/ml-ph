@@ -275,7 +275,7 @@ class ConfigOutput:
             idxs = 3*ats + cs; y = np.array([f[idxs[0], idxs[1]] for f in self.force_matrices])
             lab = r'$%s^{(%d)}_%s \sim %s^{(%d)}_%s$'%(atomic_sites[ats[0]], ls[0], cl[0], atomic_sites[ats[1]], ls[1], cl[1])
             cf = fig.axes[i].tricontourf(bx, by, y, levels=levels, cmap="RdGy")
-            fig.colorbar(cf, ax=fig.axes[i], format='%.0e')
+            # fig.colorbar(cf, ax=fig.axes[i], format='%.0e')
             fig.axes[i].set_aspect('equal')
             fig.axes[i].set_xlabel(r"$b_x$"); fig.axes[i].set_ylabel(r"$b_y$")
             fig.axes[i].text(0.7, 1.05, lab, transform=fig.axes[i].transAxes, size=10, weight='ultralight')
