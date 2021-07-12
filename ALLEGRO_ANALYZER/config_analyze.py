@@ -187,7 +187,7 @@ if __name__ == '__main__':
         if fc_fixed:
             print("Using fixed pairs...")
             atomic_pairs = [fclist[:2]]; lidx_pairs = [fclist[2:4]]; cart_pairs = [fclist[4:]]
-            do.plot_forces(atomic_pairs, lidx_pairs, cart_pairs, p, pfx='fixed')
+            do.plot_forces(atomic_pairs, lidx_pairs, cart_pairs, p, pfx=f'fixed{"".join(fclist)}')
         else:
             print("Sampling pairs...")
             assert nplt <= npairs, f"Number of force constants to plot {nplt} is too large, max={npairs}"
