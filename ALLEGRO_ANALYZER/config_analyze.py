@@ -186,7 +186,9 @@ if __name__ == '__main__':
         atomic_pairs = None; lidx_pairs = None; pfx = ''
         if fc_fixed:
             print("Using fixed pairs...")
-            atomic_pairs = [fclist[:2]]; lidx_pairs = [fclist[2:4]]; cart_pairs = [fclist[4:]]
+            atomic_pairs = np.array([fclist[:2]])
+            lidx_pairs = np.array([fclist[2:4]])
+            cart_pairs = np.array([fclist[4:]])
             do.plot_forces(atomic_pairs, lidx_pairs, cart_pairs, p, pfx=f'fixed{"".join(list(map(str, fclist)))}')
         else:
             print("Sampling pairs...")
