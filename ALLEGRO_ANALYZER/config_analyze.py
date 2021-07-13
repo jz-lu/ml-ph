@@ -57,9 +57,10 @@ if __name__ == '__main__':
         elif cmdargs[i] == '--fcf':
             i += 1
             for j in range(6):
-                fclist[j] = int(i)
+                fclist[j] = int(cmdargs[i])
                 i += 1
             fc = True; fc_fixed = True; nplt = 1
+            print(f"Force constants index list: {fclist}")
         elif cmdargs[i] == '--fc':
             i += 1; fc = int(cmdargs[i]); i += 1; fc = True
         elif cmdargs[i] == '--perr':
