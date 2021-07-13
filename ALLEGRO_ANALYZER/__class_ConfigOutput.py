@@ -100,6 +100,7 @@ class DSamplingOutput:
         self.save_raw_data(); self.plot_energies(); self.plot_spacings()
     
     def plot_forces(self, atomic_idx_pairs, layer_idx_pairs, cart_idx_pairs, poscar : Poscar, pfx=''):
+        print(f"Atomic pairs: {atomic_idx_pairs}, layer pairs: {layer_idx_pairs}, cart pairs: {cart_idx_pairs}")
         cols = list(mcolors.TABLEAU_COLORS.keys()); ncol = len(cols)
         assert self.force_matrices is not None, f"Must give valid list of phonopy objects to plot forces"
         assert len(atomic_idx_pairs) == len(layer_idx_pairs) == len(cart_idx_pairs), f"Number of atomic, layer, and Cartesian indices must be the same, but is {len(atomic_idx_pairs)}, {len(layer_idx_pairs)}, and {len(cart_idx_pairs)}"
