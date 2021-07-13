@@ -54,14 +54,14 @@ if __name__ == '__main__':
             INTERLAYER_ONLY = True; i += 1
         elif cmdargs[i] == '--cfx':
             SAME_CART_ONLY  = True; i += 1
-        elif cmdargs[i] == '--fc':
+        elif cmdargs[i] == '--fcf':
             i += 1
             for j in range(6):
                 fclist[j] = int(i)
                 i += 1
             fc = True; fc_fixed = True; nplt = 1
-        elif cmdargs[i] == '--fcf':
-            i += 1; fc; i += 1; fc = True
+        elif cmdargs[i] == '--fc':
+            i += 1; fc = int(cmdargs[i]); i += 1; fc = True
         elif cmdargs[i] == '--perr':
             i += 1; plot_perr = True
         elif cmdargs[i] == '--usage':
