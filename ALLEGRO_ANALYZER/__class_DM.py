@@ -13,6 +13,7 @@ from ___constants_phonopy import SUPER_DIM
 from ___constants_names import DEFAULT_PH_BAND_PLOT_NAME
 from scipy.linalg import block_diag
 from scipy.sparse import bmat # block matrix
+from math import sqrt
 
 """
 These classes together compute the twisted dynamical matrix from a sample of moire G vectors and k points along IBZ boundary.
@@ -165,6 +166,7 @@ class InterlayerDM:
         assert len(b_set[0]) == 2, "Shift vectors must be 2-dimensional"
         self.b_set = b_set; self.ph_list = ph_list # list of phonopy objects for each config
         self.nshift = len(b_set)
+        assert int(sqrt(self.nshift))**2 == self.nshift, f"Number of shifts {self.nshift} must be a perfect square"
         self.GM_set = GM_set; self.G0_set = G0_set
         self.DM = None
         self.per_layer_at_idxs = per_layer_at_idxs; assert len(self.per_layer_at_idxs) == 2, f"Only 2 layers supported"
@@ -179,7 +181,7 @@ class InterlayerDM:
         D = sum([force_matrix * np.exp(1j * np.dot(G0, b)) for force_matrix, b in zip(self.force_matrices, self.b_set)])
         # Extract a submatrix with rows of atoms from layer 1 
         # and columns of atoms from layer 2, which is the interlayer 1-2 interactions.
-        D_inter = D[np.ix_(self.per_layer_at_idxs[0], self.per_layer_at_idxs[1])] / (self.nshift**2)
+        D_inter = D[np.ix_(self.per_layer_at_idxs[0], self.per_layer_at_idxs[1])] / self.nshift
         assert len(D.shape) == 2 and D.shape[0] == D.shape[1], f"D with shape {D.shape} not square matrix"
         assert len(D_inter.shape) == 2 and D_inter.shape[0] == D_inter.shape[1], f"D_inter with shape {D_inter.shape} not square matrix"
         assert 2*D_inter.shape[0] == D.shape[0] and 2*D_inter.shape[1] == D.shape[1], f"D_inter shape {D_inter.shape} should be half of D shape {D.shape}"
