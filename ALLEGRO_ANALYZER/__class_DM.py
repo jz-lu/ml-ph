@@ -40,7 +40,7 @@ class MonolayerDM:
         self.pos_sc_id = self.__sc_atomic_id() if using_flex else None
         self.A0 = self.uc.lattice.matrix[:2, :2] # remove z-axis
         self.DM_set = None; self.dbgprint = True
-        self.name = poscar_uc.comment
+        self.name = poscar_uc.comment; self.modes_built = False
         if self.pos_sc_id is not None:
             print(f"MonolayerDM intralayer atomic IDs for {self.name}:", self.pos_sc_id)
 
