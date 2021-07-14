@@ -15,12 +15,20 @@ class ForceInterp:
     def __init__(self, ph_list, b_matrix):
         self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in ph_list]
         fcs = self.force_matrices[0].shape
-        self.fc_tnsr = [[[ph[j][k] for ph in ph_list] for k in range(fcs[1])] for j in range(fcs[0])]
-        self.b_matrix = b_matrix[:,:2]
+        self.fc_tnsr = [[[fc[j][k] for fc in self.force_matrices] for k in range(fcs[1])] for j in range(fcs[0])]
+        print("Initializing spline force interpolator object")
+        print(f"Force tensor shape: {self.fc_tnsr.shape}")
+        self.b_matrix = b_matrix[:,:2]; self.f_mat = self.__functional_matrix()
+    def __b_to_xy(self, b_matrix):
+        x, y = b_matrix[:,0], b_matrix[:,1]
+        return x, y
     def __functional_matrix(self):
-        pass
-    def force_at(self, b_matrix):
-        pass
+        x, y = self.__b_to_xy(self.b_matrix)
+        return [[interp2d(x, y, fc) for fc in fcrow] for fcrow in self.fc_tnsr]
+    def fc_tnsr_at(self, b_matrix):
+        fc_tnsr = np.array([[f(*self.__b_to_xy(b_matrix)) for f in frow] for frow in self.f_mat])
+        print(f"Interpolated force tensor shape: {fc_tnsor.shape}")
+        return fc_tnsr
 
 
 # Fourier space interpolation with k-shell fitting
@@ -28,7 +36,7 @@ class FourierForceInterp:
     def __init__(self, ph_list, b_matrix, lattice_matrix, ltype='hexagonal', sampling_type='grid', dump=False):
         self.stype = sampling_type; assert isinstance(self.stype, str)
         self.__A = lattice_matrix
-        print("Initializing FourierGSFE object")
+        print("Initializing Fourier force interpolator object")
         assert ltype == 'hexagonal', "Non-hexagonal lattices not supported"
         assert len(ph_list) == len(b_matrix), f"Must have same number of configurations as energies, but got {len(b_matrix)} vs. {len(ph_list)}"
         b_matrix = b_matrix[:,:2]
@@ -36,7 +44,8 @@ class FourierForceInterp:
             print(f"Configurations (direct basis):\n {b_matrix}\nConfigurations (Cartesian):\n {(self.__A @ b_matrix.T).T}")
         self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in ph_list]
         fcs = self.force_matrices[0].shape
-        self.fc_tnsr = [[[ph[j][k] for ph in ph_list] for k in range(fcs[1])] for j in range(fcs[0])]
+        self.fc_tnsr = [[[fc[j][k] for fc in self.force_matrices] for k in range(fcs[1])] for j in range(fcs[0])]
+        print(f"Force tensor shape: {self.fc_tnsr.shape}")
         self.nb = len(b_matrix); self.b_matrix = b_matrix
         self.__fitted = False; self.coeffs = None; self.reg_mat = None; self.score_mat = None
         self.X = self.__b_to_fourier_basis(b_matrix)
@@ -63,8 +72,6 @@ class FourierForceInterp:
         return X
     def __b_to_fourier_basis(self, b_mat):
         return self.__vw_to_fourier_basis(self.__b_to_vw(b_mat))
-    def __matrix_LR(self, tensor):
-        return [[LinearRegression().fit(self.X, j) for j in i] for i in tensor]
     def __fit_coeff(self):
         assert not self.__fitted, f"Fitting already done"
         print("Fitting energies to Fourier series...")
