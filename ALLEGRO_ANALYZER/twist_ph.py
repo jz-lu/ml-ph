@@ -132,7 +132,10 @@ if __name__ == '__main__':
     print("Note: Using GM sampling set from intralayer calculations.")
     print("Constructing interlayer dynamical matrix objects...")
     ILDM = InterlayerDM(per_layer_at_idxs, b_set, config_ph_list, GM_set, G0_set)
-    print("Interlayer modes (k-independent):", LA.eigvals(ILDM.get_DM()))
+    evals = LA.eigvals(ILDM.get_DM())
+    signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
+    modes_k = signs * np.sqrt(np.abs(evals)) * (15.633302*33.356) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
+    print("Interlayer modes (k-independent):", modes_k[modes_k != 0])
     print("Interlayer DM objects constructed.")
 
     print("Combining into a single twisted dynamical matrix object...")
