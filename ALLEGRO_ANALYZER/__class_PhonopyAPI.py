@@ -32,7 +32,7 @@ class PhonopyAPI:
         for layer in layers:
             ph_dir = build_dir([ROOT, layer, ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME])
             assert os.path.isdir(ph_dir), f"Directory {ph_dir} not found"
-            print(f"Extracting {spname} and {PH_FORCE_SETS_NAME} from {ph_dir}...")
+            # print(f"Extracting {spname} and {PH_FORCE_SETS_NAME} from {ph_dir}...")
             os.chdir(ph_dir)
             assert os.path.isfile(spname), self.SPOSCAR_ERR_MSG
             assert os.path.isfile(PH_FORCE_SETS_NAME), ERR_PH_FORCE_SETS_NOT_MADE
