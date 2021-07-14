@@ -110,7 +110,7 @@ if __name__ == '__main__':
     assert len(MLDMs) == 2, f"Only 2-layer solids supported for twisted DM (for now), got {len(MLDMs)}"
     if plot_intra:
         print("Plotting one intralayer component...")
-        MLDMs[0].plot_band(k_mags, corner_kmags, name=name, outdir=outdir, filename=outname, cutoff=cutoff)
+        MLDMs[0].plot_band(k_mags, corner_kmags, name=name, outdir=outdir, filename='intra_'+outname, cutoff=cutoff)
     print("Intralayer DM objects constructed.")
 
     greet("Working on interlayer components...")
