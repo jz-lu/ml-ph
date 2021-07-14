@@ -61,6 +61,7 @@ if __name__ == '__main__':
     assert os.path.isdir(indir), f"Directory {indir} does not exist"
     assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
     print(f"WD: {indir}, Output to: {outdir}")
+    outname = 'd' + str(int(np.rad2deg(theta))) + "_" + outname
     print("Building twisted crystal phonon modes...")
     warn("Note: you must have already ran twisted calculation in given directory and retrieved forces from phonopy")
 
@@ -111,7 +112,7 @@ if __name__ == '__main__':
     assert len(MLDMs) == 2, f"Only 2-layer solids supported for twisted DM (for now), got {len(MLDMs)}"
     if plot_intra:
         print("Plotting one intralayer component...")
-        MLDMs[0].plot_band(k_mags, corner_kmags, name=name, outdir=outdir, filename='intra_'+outname+'_'+str(int(np.rad2deg(theta))), cutoff=cutoff)
+        MLDMs[0].plot_band(k_mags, corner_kmags, name=name, outdir=outdir, filename='intra_'+outname, cutoff=cutoff)
     print("Intralayer DM objects constructed.")
 
     greet("Working on interlayer components...")
@@ -143,7 +144,7 @@ if __name__ == '__main__':
     print("Twisted dynamical matrix object constructed.")
 
     print(f"Diagonalizing and outputting modes with corners {corner_kmags}...")
-    TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, filename=outname+'_'+str(int(np.rad2deg(theta))), cutoff=cutoff)
+    TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, filename=outname, cutoff=cutoff)
     print("Modes outputted.")
 
     succ("Successfully completed phonon mode analysis (Took %.3lfs)."%(time()-start))
