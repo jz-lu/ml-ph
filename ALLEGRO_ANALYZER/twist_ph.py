@@ -1,5 +1,6 @@
 # Compute the phonon modes for a twisted cell
 import numpy as np
+import numpy.linalg as LA
 from time import time
 from phonopy import Phonopy
 import phonopy
