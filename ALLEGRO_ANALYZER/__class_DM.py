@@ -186,7 +186,6 @@ class InterlayerDM:
         assert len(D_inter.shape) == 2 and D_inter.shape[0] == D_inter.shape[1], f"D_inter with shape {D_inter.shape} not square matrix"
         assert 2*D_inter.shape[0] == D.shape[0] and 2*D_inter.shape[1] == D.shape[1], f"D_inter shape {D_inter.shape} should be half of D shape {D.shape}"
         return D_inter
-        # return D[:-self.half_pt,-self.half_pt:] / (self.nshift**2) # keep top right corner only
 
     def __block_inter_l1(self):
         n_GM = len(self.GM_set); assert len(self.G0_set) == n_GM, f"|G0_set| {len(self.G0_set)} != |GM_set| = {n_GM}"
