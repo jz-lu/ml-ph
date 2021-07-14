@@ -131,7 +131,7 @@ if __name__ == '__main__':
     print("Note: Using GM sampling set from intralayer calculations.")
     print("Constructing interlayer dynamical matrix objects...")
     ILDM = InterlayerDM(per_layer_at_idxs, b_set, config_ph_list, GM_set, G0_set)
-    print("Interlayer modes (k-independent):", np.eigvals(ILDM.get_DM()))
+    print("Interlayer modes (k-independent):", LA.eigvals(ILDM.get_DM()))
     print("Interlayer DM objects constructed.")
 
     print("Combining into a single twisted dynamical matrix object...")
