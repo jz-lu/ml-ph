@@ -128,7 +128,7 @@ class MonolayerDM:
         return self.mode_set
     
     def plot_band(self, k_mags, corner_kmags, outdir='./', 
-                  filename='intra_'+DEFAULT_PH_BAND_PLOT_NAME, name=None, cutoff=None):
+                  filename='intra_' + DEFAULT_PH_BAND_PLOT_NAME, name=None, cutoff=None):
         outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Invalid directory {outdir}"
         if not self.modes_built:
             print("Intralayer modes not built yet, building...")
@@ -147,7 +147,7 @@ class MonolayerDM:
             title += f" of {name}"
         plt.title(title)
         plt.savefig(outdir + filename)
-        print(f"Plot written to {outdir+filename}")
+        print(f"Intralayer pplot written to {outdir+filename}")
         return
 
     def get_GM_set(self):
