@@ -145,8 +145,8 @@ class BZSampler:
         for idx, GM in zip(self.g_idxs, self.GM_set):
             plt.annotate(str(tuple(idx)), GM, # this is the point to label
                  textcoords="offset points", # how to position the text
-                 xytext=(-10,-10), # distance from text to points (x,y)
-                 ha='center') # horizontal alignment can be left, right or center
+                 xytext=(np.sign(GM[0])*10, -np.sign(GM[1])*10), # distance from text to points (x,y)
+                 ha='center', fontsize=9.5) # horizontal alignment can be left, right or center
         plt.plot(self.k_set[:,0], self.k_set[:,1], 
                  c='teal', 
                  label=r'$\mathbf{k}$-points (%d pts)'%len(self.k_set))

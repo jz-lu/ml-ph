@@ -297,7 +297,8 @@ class ConfigOutput:
 
 # Use basis linear regression to fit GSFE to leading 6 fourier terms
 # See Eq(4), Carr 2018
-# Bugs: may not work if unit cell vectors is 60 deg instead of 120
+# Performs a mapping to a BZ associated with 60-degree realspace lattice, which works regardless of 
+# lattice in original POSCAR
 class FourierGSFE:
     def __init__(self, energies, b_matrix, lattice_matrix, ltype='hexagonal', sampling_type='grid', dump=True):
         self.stype = sampling_type; assert isinstance(self.stype, str)
