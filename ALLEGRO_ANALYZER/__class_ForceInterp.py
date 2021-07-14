@@ -27,7 +27,7 @@ class ForceInterp:
         return [[interp2d(x, y, fc) for fc in fcrow] for fcrow in self.fc_tnsr]
     def fc_tnsr_at(self, b_matrix):
         fc_tnsr = np.array([[f(*self.__b_to_xy(b_matrix)) for f in frow] for frow in self.f_mat])
-        print(f"Interpolated force tensor shape: {fc_tnsor.shape}")
+        print(f"Interpolated force tensor shape: {fc_tnsr.shape}")
         return fc_tnsr
 
 
