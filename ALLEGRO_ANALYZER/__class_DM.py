@@ -165,7 +165,7 @@ class InterlayerDM:
     def __init__(self, per_layer_at_idxs, b_set, ph_list, GM_set, G0_set):
         assert len(b_set[0]) == 2, "Shift vectors must be 2-dimensional"
         self.b_set = b_set; self.ph_list = ph_list # list of phonopy objects for each config
-        self.nshift = len(b_set)
+        self.nshift = len(b_set); print(f"Number of configurations: {self.nshift}")
         assert int(sqrt(self.nshift))**2 == self.nshift, f"Number of shifts {self.nshift} must be a perfect square"
         self.GM_set = GM_set; self.G0_set = G0_set
         self.DM = None
