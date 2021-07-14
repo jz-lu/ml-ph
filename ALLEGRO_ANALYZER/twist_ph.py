@@ -29,6 +29,7 @@ if __name__ == '__main__':
     USAGE_MSG = f"Usage: python3 {sys.argv[0]} -deg <twist angle (deg)> -name <solid name> -cut <frequency cutoff> -dir <base I/O dir> -o <output dir>"
     args = sys.argv[1:]; i = 0; n = len(args)
     indir = '.'; outdir = '.'; theta = None; name = None; outname = DEFAULT_PH_BAND_PLOT_NAME; cutoff = None
+    plot_intra = False
     while i < n:
         if not is_flag(args[i]):
             warn(f'Warning: token "{args[i]}" is out of place and will be ignored')
@@ -45,6 +46,8 @@ if __name__ == '__main__':
             i += 1; check_not_flag(args[i]); cutoff = float(args[i]); i += 1
         elif args[i] == '-fout':
             i += 1; check_not_flag(args[i]); outname = args[i]; i += 1
+        elif args[i] == '--intra':
+            i += 1; plot_intra = True
         elif args[i] in ['--usage', '--help']:
             print(USAGE_MSG)
             sys.exit(0)
@@ -105,6 +108,9 @@ if __name__ == '__main__':
     update("Constructing intralayer dynamical matrix objects...")
     MLDMs = [MonolayerDM(uc, sc, ph, GM_set, k_set) for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
     assert len(MLDMs) == 2, f"Only 2-layer solids supported for twisted DM (for now), got {len(MLDMs)}"
+    if plot_intra:
+        print("Plotting one intralayer component...")
+        MLDMs[0].plot_band(k_mags, corner_kmags, name=name, outdir=outdir, filename=outname, cutoff=cutoff)
     print("Intralayer DM objects constructed.")
 
     greet("Working on interlayer components...")

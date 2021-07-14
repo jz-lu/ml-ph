@@ -102,6 +102,53 @@ class MonolayerDM:
             self.__block_intra_l1()
         print(f"Retrieved monolayer dynamical matrix of shape {self.DM_set[0].shape} for solid {self.name}")
         return self.DM_set
+    
+    # Diagonalize the set of DMs to get phonon modes
+    def build_modes(self, k_mags, dump=False, outdir=None):
+        self.k_mags = k_mags
+        if self.DM_set is None:
+            self.__block_intra_l1()
+        self.mode_set = [0]*len(self.k_mags)
+        for i, (k_mag, DM) in enumerate(zip(self.k_mags, self.DM_set)):
+            evals = LA.eigvals(DM)
+            signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
+            modes_k = signs * np.sqrt(np.abs(evals)) * (15.633302*33.356) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
+            self.mode_set[i] = (k_mag, modes_k[modes_k != 0])
+        if dump:
+            outdir = checkPath(os.path.abspath(outdir))
+            assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
+            k_dump = []; mode_dump = []
+            for k_mag, modes in self.mode_set:
+                    k_dump += [k_mag]*len(modes)
+                    mode_dump += list(modes)
+            with open(outdir + 'intra_modes.txt', 'w') as f:
+                for k_mag, mode in zip(k_dump, mode_dump):
+                    f.write(f"{k_mag}\t{mode}\n")
+        self.modes_built = True
+        return self.mode_set
+    
+    def plot_band(self, k_mags, corner_kmags, outdir='./', 
+                  filename='intra_'+DEFAULT_PH_BAND_PLOT_NAME, name=None, cutoff=None):
+        outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Invalid directory {outdir}"
+        if not self.modes_built:
+            print("Intralayer modes not built yet, building...")
+            self.build_modes(k_mags, dump=False, outdir=outdir)
+            print("Intralayer modes built.")
+        plt.clf()
+        for k_mag, modes in self.mode_set:
+            if cutoff is not None:
+                modes = modes[modes <= cutoff]
+            plt.scatter([k_mag] * len(modes), modes, c='royalblue', s=0.07)
+        xlabs = (r'$\Gamma$', r'K', r'M')
+        plt.xticks(corner_kmags, xlabs)
+        plt.ylabel(r'$\omega\,(\mathrm{cm}^{-1})$')
+        title = "First-layer phonon modes"
+        if name is not None:
+            title += f" of {name}"
+        plt.title(title)
+        plt.savefig(outdir + filename)
+        print(f"Plot written to {outdir+filename}")
+        return
 
     def get_GM_set(self):
         print(f"Retrieved GM sample set for solid {self.name}")

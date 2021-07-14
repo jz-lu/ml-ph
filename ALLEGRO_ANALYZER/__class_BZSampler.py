@@ -9,6 +9,7 @@ from math import pi, floor
 from itertools import product as prod
 from time import time
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 from ____exit_with_error import exit_with_error
 from ___constants_names import DIR_SHORTCUTS
 from ___constants_sampling import *
@@ -16,6 +17,7 @@ from ___constants_phonopy import SUPER_DIM
 from ___helpers_parsing import greet, succ, warn, err, is_flag, check_not_flag
 from __class_CarCollector import CarCollector
 from __directory_searchers import checkPath
+import random
 
 class BZSampler:
     def __init__(self, A0, G0, theta=None, outdir='./', log=False, lattice_type='hexagonal', super_dim=SUPER_DIM[:2]):
@@ -39,7 +41,7 @@ class BZSampler:
         self.g_idxs = None; self.GM_set = None; self.G0_set = None
         self.k_set = None; self.kmags = None; self.corners = None
         self.ltype = lattice_type
-        self.GM_sampled = False; self.k_sampled = False
+        self.GM_sampled = False; self.k_sampled = False; self.nsh = None
         if lattice_type != 'hexagonal':
             exit_with_error("Error: k-points sampler does not (yet) support non-hexagonal lattices")
 
@@ -52,6 +54,7 @@ class BZSampler:
         GM_set = np.array([m*GM1 + n*GM2 for m, n in prod(grid, grid)])
         G0_set = np.array([m*G01 + n*G02 for m, n in prod(grid, grid)])
         g_idxs = np.array(list(prod(grid, grid)))
+        self.nsh = max_shell; self.tol = tol
 
         # Filter out any G that does not satisfy the closeness condition |GM| < (shell+0.1) * |GM1|
         g_cutoff = (floor(max_shell) + tol) * LA.norm(GM1) # add 0.1 for numerical error
@@ -128,9 +131,22 @@ class BZSampler:
         labels = (r'$\Gamma$', r'K', r'M', r'$\Gamma$')
         plt.clf()
         _, ax = plt.subplots()
-        plt.scatter(self.GM_set[:,0], self.GM_set[:,1], 
-                    c='black', 
-                    label=r'$\widetilde{\mathbf{G}}_{mn}$ in shell %d'%self.nsh)
+        cols = list(mcolors.TABLEAU_COLORS.keys()); ncol = len(cols)
+        random.shuffle(cols)
+        GM1 = self.GM_set[:,0]; GM2 = self.GM_set[:,1]
+        last_cut = 0
+        for i in range(1, self.nsh+1):
+            g_cutoff = (i + self.tol) * LA.norm(self.GM[:,0])
+            cut_makers = np.logical_and(np.sqrt(GM1**2 + GM2**2) >= last_cut, np.sqrt(GM1**2 + GM2**2) <= g_cutoff)
+            last_cut = g_cutoff
+            plt.scatter(GM1[cut_makers], GM2[cut_makers], 
+                        c=cols[i%ncol], 
+                        label=r'$\widetilde{\mathbf{G}}_{mn}$ in shell %d'%i)
+        for idx, GM in zip(self.g_idxs, self.GM_set):
+            plt.annotate(str(tuple(idx)), GM, # this is the point to label
+                 textcoords="offset points", # how to position the text
+                 xytext=(-10,-10), # distance from text to points (x,y)
+                 ha='center') # horizontal alignment can be left, right or center
         plt.plot(self.k_set[:,0], self.k_set[:,1], 
                  c='teal', 
                  label=r'$\mathbf{k}$-points (%d pts)'%len(self.k_set))
@@ -140,7 +156,8 @@ class BZSampler:
                  textcoords="offset points", # how to position the text
                  xytext=(-10,0), # distance from text to points (x,y)
                  ha='center') # horizontal alignment can be left, right or center
-        plt.legend(); plt.title("Sampling Space")
+        # plt.legend()
+        plt.title("Sampling Space")
         ax.set_xlabel(r'$k_x$'); ax.set_ylabel(r'$k_y$')
         outname = self.outdir + filename
         plt.savefig(outname); succ("Successfully wrote sampling plot out to " + outname)
