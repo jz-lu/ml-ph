@@ -57,6 +57,7 @@ CONFIG_SUBDIR_NAME = 'shift_'
 SHIFT_NAME = 'shiftcoord.txt'
 COB_NPY_NAME = 'cob.npy' # must end in .npy
 LIDXS_NPY_NAME = 'lidxs.npy' # must end in .npy
+SHIFTS_NPY_NAME = 'b.npy'
 DSAMPLE_ENERGIES_PRE = 'd_energies'
 DSAMPLE_ENERGIES_NAME = DSAMPLE_ENERGIES_PRE + '.npy'
 DSAMPLE_ENERGIES_TXT = DSAMPLE_ENERGIES_PRE + '.txt'

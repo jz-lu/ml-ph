@@ -1,6 +1,7 @@
 # Compute the phonon modes for a twisted cell
 import numpy as np
 import numpy.linalg as LA
+from math import sqrt
 from time import time
 from phonopy import Phonopy
 import phonopy
@@ -14,23 +15,27 @@ from ___constants_names import (
     ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME, 
     MONOLAYER_DIR_NAME, CONFIG_DIR_NAME, CONFIG_SUBDIR_NAME, 
     POSCAR_CONFIG_NAMEPRE, 
-    SHIFT_NAME, 
+    SHIFT_NAME, SHIFTS_NPY_NAME, 
     DEFAULT_PH_BAND_PLOT_NAME
 )
 from ___constants_compute import DEFAULT_NUM_LAYERS
 from __directory_searchers import checkPath, findDirsinDir, findFilesInDir
 from __dirModifications import build_dir
 from __class_Configuration import Configuration
+from __class_RelaxerAPI import RelaxerAPI
+from __class_ForceInterp import ForceInterp, FourierForceInterp
 from ___helpers_parsing import greet, update, succ, warn, err, is_flag, check_not_flag
 import os, sys
 
+RELAX_FOURIER_INTERP = 1
+RELAX_SPLINE_INTERP = 2
 
 if __name__ == '__main__':
     start = time()
     USAGE_MSG = f"Usage: python3 {sys.argv[0]} -deg <twist angle (deg)> -name <solid name> -cut <frequency cutoff> -dir <base I/O dir> -o <output dir>"
     args = sys.argv[1:]; i = 0; n = len(args)
     indir = '.'; outdir = '.'; theta = None; name = None; outname = DEFAULT_PH_BAND_PLOT_NAME; cutoff = None
-    plot_intra = False
+    plot_intra = False; relax = False
     while i < n:
         if not is_flag(args[i]):
             warn(f'Warning: token "{args[i]}" is out of place and will be ignored')
@@ -49,6 +54,10 @@ if __name__ == '__main__':
             i += 1; check_not_flag(args[i]); outname = args[i]; i += 1
         elif args[i] == '--intra':
             i += 1; plot_intra = True
+        elif args[i] == '--relax' or args[i] == 'r':
+            i += 1
+            relax = RELAX_SPLINE_INTERP if args[i] in ['r', 'real', 'R', 'REAL'] else RELAX_FOURIER_INTERP
+            i += 1 
         elif args[i] in ['--usage', '--help']:
             print(USAGE_MSG)
             sys.exit(0)
@@ -118,6 +127,7 @@ if __name__ == '__main__':
     greet("Working on interlayer components...")
     print("Importing shift vectors...")
     nshift = len(findDirsinDir(build_dir([indir, CONFIG_DIR_NAME]), CONFIG_SUBDIR_NAME, searchType='start'))
+    gridsz = int(sqrt(nshift)); assert gridsz**2 == nshift, f"Number of shifts {nshift} must be a perfect square"
     b_set = ['']*nshift
     for i in range(nshift):
         shift_file_path = build_dir([indir, CONFIG_DIR_NAME, CONFIG_SUBDIR_NAME + str(i)]) + SHIFT_NAME
@@ -125,14 +135,35 @@ if __name__ == '__main__':
         with open(shift_file_path) as f:
             b_set[i] = np.array(list(map(float, f.read().splitlines()))[:2]) # shifts must be 2-dimensional
     print("Shift vectors imported:", b_set)
+        
 
     print("Getting interlayer phonopy objects from API...")
     config_ph_list = ph_api.inter_ph_list()
     print("Phonopy objects retrieved.")
 
+    relaxed_forces = None
+    if relax:
+        print("Non-uniformizing configurations via relaxation...")
+        relax_api = RelaxerAPI(np.rad2deg(theta), gridsz, outdir, s0.T)
+        b_relaxed = relax_api.get_configs()
+        if relax == RELAX_SPLINE_INTERP:
+            print("Using spline interpolation...")
+            interp = ForceInterp(config_ph_list, np.array(b_set))
+            relaxed_forces = interp.fc_tnsr_at(b_relaxed)
+        else:
+            print("Using Fourier interpolation...")
+            interp = FourierForceInterp(config_ph_list, np.array(b_set), s0.T)
+            relaxed_forces = interp.predict(b_relaxed)
+        print(f"Relaxed interpolation force tensor is of shape: {relaxed_forces.shape}")
+        # Relaxed forces tensor has index (f1, f2, b), but needs to be of form (b, f1, f2)
+        relaxed_forces = np.transpose(relaxed_forces, axes=(2, 0, 1))
+        print(f"Transposed to shape: {relaxed_forces.shape}")
+
     print("Note: Using GM sampling set from intralayer calculations.")
     print("Constructing interlayer dynamical matrix objects...")
-    ILDM = InterlayerDM(per_layer_at_idxs, b_set, config_ph_list, GM_set, G0_set)
+    ILDM = None
+    config_ph_list = None if relax else config_ph_list
+    ILDM =  InterlayerDM(per_layer_at_idxs, b_set, GM_set, G0_set, ph_list=config_ph_list, force_matrices=relaxed_forces)
     evals = LA.eigvals(ILDM.get_DM())
     signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
     modes_k = signs * np.sqrt(np.abs(evals)) * (15.633302*33.356) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356

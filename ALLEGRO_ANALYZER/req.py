@@ -22,10 +22,13 @@ if args.cfg:
             shutil.rmtree(f'shift_{i}/relaxation/')
             shutil.rmtree(f'shift_{i}/analyses/')
             fails.append(i)
-    fails = ",".join(list(map(lambda x: str(x), fails)))
-    print(f"Requeueing fails: {fails}")
-    stream = os.popen(f"sbatch --array={fails} EXECUTABLE_BAT_DNE")
-    print(stream.read())
+    if len(fails) > 0:
+        fails = ",".join(list(map(lambda x: str(x), fails)))
+        print(f"Requeueing fails: {fails}")
+        stream = os.popen(f"sbatch --array={fails} EXECUTABLE_BAT_DNE")
+        print(stream.read())
+    else:
+        print("No failures detected in configuration relaxations.")
     
 else:
     no_fails = True
@@ -63,4 +66,4 @@ else:
             print(stream.read())
             os.chdir(d)
     if no_fails:
-        print("No failures in phonon force calculations.")
+        print("No failures detected in phonon force calculations.")

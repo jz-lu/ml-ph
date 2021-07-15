@@ -5,7 +5,7 @@ from ___constants_misc import NUM_AVAILABLE_CORES
 from ___constants_vasp import Z_LAYER_SEP
 from ___constants_compute import DEFAULT_NUM_LAYERS, MONOLAYER_JOBNAME, CONFIG_JOBNAME
 from ___constants_names import (
-    CONFIG_DATA_DIR, COB_NPY_NAME, LIDXS_NPY_NAME, 
+    CONFIG_DATA_DIR, COB_NPY_NAME, LIDXS_NPY_NAME, SHIFTS_NPY_NAME, 
     TYPE_RELAX_BASIC, TYPE_RELAX_CONFIG, TYPE_TWISTED_CONFIG, TYPE_NORELAX_BASIC, 
     POSCAR_NAME, POSCAR_CONFIG_NAMEPRE,
     MONOLAYER_DIR_NAME, CONFIG_DIR_NAME, CONFIG_SUBDIR_NAME, 
@@ -81,7 +81,8 @@ def begin_computation(user_input_settings):
         print("Saved COB matrix for analysis at " + data_dir)
         layer_idxs = config.get_layer_idxs()
         np.save(data_dir + LIDXS_NPY_NAME, layer_idxs)
-        print(f"Saved layer indices {layer_idxs} for analysis at " + data_dir)
+        np.save(data_dir + SHIFTS_NPY_NAME, sampling_set)
+        print(f"Saved layer indices {layer_idxs} and shifts for analysis at " + data_dir)
 
         print("Configuration analysis complete. Returning data to `start.py`...")
         print("**IMPORTANT**: when computation on all shifts complete, run `config_analyze.py` to get data analysis")

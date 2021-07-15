@@ -162,20 +162,20 @@ class MonolayerDM:
 
 # Build interlayer dynamical matrix block via summing over configurations
 class InterlayerDM:
-    def __init__(self, per_layer_at_idxs, b_set, ph_list, GM_set, G0_set):
+    def __init__(self, per_layer_at_idxs, b_set, GM_set, G0_set, ph_list=None, force_matrices=None):
+        assert ph_list is not None ^ force_matrices is not None, "Must give exactly one of: phonopy obj list, force matrix list"
         assert len(b_set[0]) == 2, "Shift vectors must be 2-dimensional"
         self.b_set = b_set; self.ph_list = ph_list # list of phonopy objects for each config
         self.nshift = len(b_set); print(f"Number of configurations: {self.nshift}")
         assert int(sqrt(self.nshift))**2 == self.nshift, f"Number of shifts {self.nshift} must be a perfect square"
-        self.GM_set = GM_set; self.G0_set = G0_set
-        self.DM = None
+        self.GM_set = GM_set; self.G0_set = G0_set; self.DM = None
         self.per_layer_at_idxs = per_layer_at_idxs; assert len(self.per_layer_at_idxs) == 2, f"Only 2 layers supported"
-        # The force constants matrix for each configuration is equivalent to the dynamical matrix
-        # at the Gamma point, since the Fourier transform cancels for G = Gamma.
-        self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in ph_list]
+        if ph_list is not None:
+            self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in ph_list] # DM(Gamma) = FC
+        else:
+            self.force_matrices = force_matrices
         assert self.force_matrices[0].shape[0] == self.force_matrices[0].shape[1], f"Force matrix is not square: shape {self.force_matrices[0].shape}"
         assert self.force_matrices[0].shape[0] % 2 == 0, f"Force matrix size is odd: shape {self.force_matrices[0].shape}"
-        # self.half_pt = self.force_matrices[0].shape[0] // 2
 
     def __block_inter_l0(self, G0):
         D = sum([force_matrix * np.exp(1j * np.dot(G0, b)) for force_matrix, b in zip(self.force_matrices, self.b_set)])
