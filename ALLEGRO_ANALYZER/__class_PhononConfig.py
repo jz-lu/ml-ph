@@ -53,7 +53,7 @@ class PhononConfig:
             colors = self.modes[:,modeidx]
             cf = ax.scatter(self.b_matrix[:,0], self.b_matrix[:,1], s=300, c=colors, cmap='RdYlBu')
             ax.set_aspect('equal')
-            ax.set_title(f"Phonons of mode {modeidx}" + r'at $\Gamma$')
+            ax.set_title(f"Phonons of mode {modeidx} " + r'at $\Gamma$')
             this_outname = outname[:outname.index('.')] + f'_{modeidx}' + outname[outname.index('.'):]
             fig.colorbar(cf, shrink=0.43, pad=0.05)
             cf.set_clim(min(colors), max(colors))

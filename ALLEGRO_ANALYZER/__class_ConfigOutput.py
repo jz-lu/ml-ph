@@ -145,7 +145,7 @@ class ConfigOutput:
     # plot list is a list of tuples (b, z, e) = (shift, z-spacing, energy).
     # cob is the change-of-basis matrix to get fom lattice basis (which b is in) to Cartesian to plot.
     def __init__(self, out_dir, plot_list, cob_matrix, 
-                 ph_list=None, abs_min_energy=None, scaled=False, dump=True):
+                 ph_list=None, abs_min_energy=None, scaled=False, dump=False):
         print("Initalizing ConfigOutput object.")
         self.cob = cob_matrix; self.ph_list = ph_list
         # plot_list: list of (b, z, e) points
