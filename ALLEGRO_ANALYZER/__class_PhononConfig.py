@@ -36,6 +36,7 @@ class PhononConfig:
         assert len(modeidxs) == len(labels), f"Labels and mode indices must be in 1-1 correspondence, but is {labels} and {modeidxs}"
         for modeidx, lab in zip(modeidxs, labels):
             plt.clf(); fig, ax = plt.subplots()
+            ax = fig.gca(projection='3d')
             outname = outname[:outname.index('.')] + f'_{shift}_{modeidx}' + outname[outname.index('.'):]
             wf = np.real(self.evecs[shift, :, modeidx])
             ax.scatter(coords[:,0], coords[:,1], coords[:,2])
