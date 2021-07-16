@@ -24,8 +24,7 @@ class PhononConfig:
 
     def __diagonalize_DMs(self):
         eigsys = [LA.eig(DM) for DM in self.DM_at_Gamma]
-        evals = [v[0] for v,_ in eigsys]; evecs = [v[1].T for _,v in eigsys]
-        breakpoint()
+        evals = [v for v,_ in eigsys]; evecs = [v.T for _,v in eigsys]
         eigsys = [sorted((val,vec), key=lambda x: x[0]) for val, vec in zip(evals, evecs)]
         evals = [[ev for ev,_ in eig_at_shift] for eig_at_shift in eigsys]
         evecs = [np.transpose([ev for _,ev in eig_at_shift]) for eig_at_shift in eigsys]
