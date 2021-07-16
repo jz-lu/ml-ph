@@ -135,6 +135,7 @@ if __name__ == '__main__':
         phonon_config = PhononConfig(bshifts, ph_list, data_dir)
         phcfg_poscar = Poscar.from_file(BASE_ROOT + checkPath(CONFIG_SUBDIR_NAME + str(i)) + POSCAR_NAME)
         phonon_config.plot_mode_quiver(phcfg_poscar, shift=phcfg)
+        phonon_config.plot_mode_config()
         print("Phonons in configuration space analysis completed.")
     if ff:
         print("Running 6-term Fourier fitting on GSFE")
