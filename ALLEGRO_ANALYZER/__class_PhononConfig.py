@@ -23,13 +23,13 @@ class PhononConfig:
         print("Initialized PhononConfig object to analyze modes at Gamma point")
 
     def __diagonalize_DMs(self):
-        self.eigensys = [LA.eig(DM) for DM in self.DM_at_Gamma]
-        self.evals_real = np.real(np.array([v[0] for v in self.eigensys]))
-        self.evecs = np.array([v[1] for v in self.eigensys])
+        self.evecs = np.array([LA.eig(DM)[1] for DM in self.DM_at_Gamma])
+        self.evals_real = np.real(np.array([LA.eigvals(DM) for DM in self.DM_at_Gamma]))
 
     def __build_modes(self):
         self.__diagonalize_DMs()
         self.modes = np.sign(self.evals_real) * np.sqrt(np.abs(self.evals_real)) * VASP_FREQ_TO_INVCM_UNITS
+        print("MODES\n", self.modes)
 
     def plot_mode_quiver(self, poscar : Poscar, shift=0, modeidxs=np.arange(6), labels=DEFAULT_MODE_LABELS, outname='cfgquiver.png'):
         coords = poscar.structure.cart_coords
