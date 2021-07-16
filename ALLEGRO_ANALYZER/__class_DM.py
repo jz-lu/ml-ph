@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from __directory_searchers import checkPath
 from ___constants_phonopy import SUPER_DIM
 from ___constants_names import DEFAULT_PH_BAND_PLOT_NAME
+from ___constants_vasp import VASP_FREQ_TO_INVCM_UNITS
 from scipy.linalg import block_diag
 from scipy.sparse import bmat # block matrix
 from math import sqrt
@@ -113,7 +114,7 @@ class MonolayerDM:
         for i, (k_mag, DM) in enumerate(zip(self.k_mags, self.DM_set)):
             evals = LA.eigvals(DM)
             signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
-            modes_k = signs * np.sqrt(np.abs(evals)) * (15.633302*33.356) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
+            modes_k = signs * np.sqrt(np.abs(evals)) * (VASP_FREQ_TO_INVCM_UNITS) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
             self.mode_set[i] = (k_mag, modes_k[modes_k != 0])
         if dump:
             outdir = checkPath(os.path.abspath(outdir))
@@ -245,7 +246,7 @@ class TwistedDM:
         for i, (k_mag, DM) in enumerate(zip(self.k_mags, self.DMs)):
             evals = LA.eigvals(DM)
             signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
-            modes_k = signs * np.sqrt(np.abs(evals)) * (15.633302*33.356) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
+            modes_k = signs * np.sqrt(np.abs(evals)) * (VASP_FREQ_TO_INVCM_UNITS) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
             self.mode_set[i] = (k_mag, modes_k[modes_k != 0])
         if dump:
             outdir = checkPath(os.path.abspath(outdir))

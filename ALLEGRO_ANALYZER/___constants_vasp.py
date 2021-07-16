@@ -3,6 +3,9 @@
 from ___constants_phonopy import SUPER_DIM
 from math import ceil
 
+# Unit conversion
+VASP_FREQ_TO_INVCM_UNITS = 15.633302*33.356
+
 # POSCAR z-basis vector magnitude, increase if we add a lot more (>3) layers
 Z_LATTICE_SIZE = 26.0
 Z_LAYER_SEP = 0.286 # Layer separation in terms of the z-basis vector

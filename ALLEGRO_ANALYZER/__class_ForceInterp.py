@@ -61,7 +61,7 @@ class FourierForceInterp:
         X[:,0] = np.cos(v) + np.cos(w) + np.cos(v + w)
         X[:,1] = np.sin(v) + np.sin(w) - np.sin(v + w)
         if nsh >= 2:
-            X[:,2] = np.cos(v + 2*w) + np.cos(v - w) + np.cos(2*v + w) 
+            X[:,2] = np.cos(v + 2*w) + np.cos(v - w) + np.cos(2*v + w)
             X[:,3] = np.cos(2*v + 2*w) + np.cos(2*v) + np.cos(2*w)
             X[:,4] = np.sin(2*v + 2*w) - np.sin(2*v) - np.sin(2*w)
         if nsh >= 3:

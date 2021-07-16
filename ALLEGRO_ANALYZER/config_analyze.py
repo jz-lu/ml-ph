@@ -13,6 +13,7 @@ from __directory_searchers import checkPath
 from __class_CarCollector import CarCollector
 from __class_Configuration import Configuration
 from __class_PhonopyAPI import PhonopyAPI
+from __class_PhononConfig import PhononConfig
 import numpy as np
 import sys, copy
 from os.path import isdir
@@ -35,7 +36,7 @@ if __name__ == '__main__':
     # Parse cmdline args
     cmdargs = list(copy.deepcopy(sys.argv))[1:]; i = 0; n = len(cmdargs)
     BASE_ROOT = '.'; abs_min_energy = None; nshifts = None; diag = False; ff = True; fc = False; nplt = 4
-    nlevel = DEFAULT_CONTOUR_LEVELS; plot_perr = False; fc_fixed = False; fclist = [0]*6
+    nlevel = DEFAULT_CONTOUR_LEVELS; plot_perr = False; fc_fixed = False; fclist = [0]*6; phcfg = -1
     while i < n:
         if cmdargs[i] == '-n':
             i += 1; nshifts = int(cmdargs[i]); i += 1
@@ -63,6 +64,8 @@ if __name__ == '__main__':
             print(f"Force constants index list: {fclist}")
         elif cmdargs[i] == '--fc':
             i += 1; fc = int(cmdargs[i]); i += 1; fc = True
+        elif cmdargs[i] == '--phcfg':
+            i += 1; phcfg = int(cmdargs[i]); i += 1
         elif cmdargs[i] == '--perr':
             i += 1; plot_perr = True
         elif cmdargs[i] == '--usage':
@@ -119,14 +122,20 @@ if __name__ == '__main__':
         with open(BASE_ROOT + checkPath(CONFIG_SUBDIR_NAME + str(i)) 
                     + checkPath(ANALYSIS_DIR_NAME) + checkPath(TOTAL_ENER_DIR_NAME) + TOT_ENERGIES_NAME) as f:
             energies[i] = float(f.readline().split(' ')[-1])
-    print(f"Energies retrieved: {energies}")
+    print(f"Energies retrieved.")
 
     ff_pred = None; large_cfg = None; do = None; ph_list = None
-    if fc:
+    if fc or phcfg >= 0:
         print("Building list of phonopy objects...")
         ph_api = PhonopyAPI(BASE_ROOT, ctype='config')
         ncfg, ph_list = ph_api.nconfigs(), ph_api.inter_ph_list()
         assert ncfg == nshifts, f"Number of configurations found {ncfg} inconsistent with number entered {nshifts}"
+    if phcfg >= 0:
+        print("Analyzing phonons in configuration space...")
+        phonon_config = PhononConfig(bshifts, ph_list, data_dir)
+        phcfg_poscar = Poscar.from_file(BASE_ROOT + checkPath(CONFIG_SUBDIR_NAME + str(i)) + POSCAR_NAME)
+        phonon_config.plot_mode_quiver(phcfg_poscar, shift=phcfg)
+        print("Phonons in configuration space analysis completed.")
     if ff:
         print("Running 6-term Fourier fitting on GSFE")
         stype = f'{nshifts if diag else (int(sqrt(nshifts)), int(sqrt(nshifts)))}-{"diagonal" if diag else "grid"}'
