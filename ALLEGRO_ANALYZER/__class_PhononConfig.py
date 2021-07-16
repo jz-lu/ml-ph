@@ -22,7 +22,7 @@ class PhononConfig:
         print("Initialized PhononConfig object to analyze modes at Gamma point")
 
     def __diagonalize_DMs(self):
-        self.eigensys = [np.eig(DM) for DM in self.DM_at_Gamma]
+        self.eigensys = [LA.eig(DM) for DM in self.DM_at_Gamma]
         self.evals_real = np.real(np.array([v[0] for v in self.eigensys]))
         self.evecs = np.array([v[1] for v in self.eigensys])
 
