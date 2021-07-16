@@ -35,7 +35,7 @@ class PhononConfig:
         assert 0 <= shift < self.dms[0], f"Invalid shift index {shift}, max={self.dms[0]}"
         assert len(modeidxs) == len(labels), f"Labels and mode indices must be in 1-1 correspondence, but is {labels} and {modeidxs}"
         for modeidx, lab in zip(modeidxs, labels):
-            plt.clf(); fig, ax = plt.subplots()
+            plt.clf(); fig = plt.figure()
             ax = fig.gca(projection='3d')
             outname = outname[:outname.index('.')] + f'_{shift}_{modeidx}' + outname[outname.index('.'):]
             wf = np.real(self.evecs[shift, :, modeidx])
