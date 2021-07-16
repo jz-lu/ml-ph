@@ -12,12 +12,13 @@ from random import randint
 
 
 class PhononConfig:
-    def __init__(self, b_matrix, ph_list, outdir='.'):
+    def __init__(self, b_matrix, cob, ph_list, outdir='.'):
         self.outdir = checkPath(os.path.abspath(outdir))
         self.DM_at_Gamma = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in ph_list]
         self.dms = dms = self.DM_at_Gamma[0].shape
         assert len(dms) == 2 and dms[0] == dms[1] and dms[0] % 3 == 0, f"Invalid force constants matrix shape {dms}"
-        self.b_matrix = b_matrix[:,:2]
+        print(f"Bilayer dynamical matrix in configuration space has shape {dms}")
+        self.b_matrix = (cob @ b_matrix[:,:2].T).T
         self.__build_modes()
         print("Initialized PhononConfig object to analyze modes at Gamma point")
 
@@ -42,7 +43,7 @@ class PhononConfig:
             ax.scatter(coords[:,0], coords[:,1], coords[:,2])
             plt.quiver(coords[:,0], coords[:,1], coords[:,2], 
                        wf[0::3], wf[1::3], wf[2::3], length=1, normalize=True)
-            plt.title(f"{lab} phonons at shift {shift}")
+            plt.title(f"Phonons (mode {modeidx}) at shift {shift}")
             fig.savefig(self.outdir + this_outname)
         succ(f"Successfully plotted quivers of mode indices {modeidxs} at shift index {shift}")
             
@@ -52,7 +53,7 @@ class PhononConfig:
             colors = self.modes[:,modeidx]
             cf = ax.scatter(self.b_matrix[:,0], self.b_matrix[:,1], s=300, c=colors, cmap='RdYlBu')
             ax.set_aspect('equal')
-            ax.set_title(lab + r'at $\Gamma$')
+            ax.set_title(f"Phonons of mode {modeidx}" + r'at $\Gamma$')
             this_outname = outname[:outname.index('.')] + f'_{modeidx}' + outname[outname.index('.'):]
             fig.colorbar(cf, shrink=0.43, pad=0.05)
             cf.set_clim(min(colors), max(colors))

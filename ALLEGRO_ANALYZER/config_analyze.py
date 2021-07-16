@@ -132,7 +132,7 @@ if __name__ == '__main__':
         assert ncfg == nshifts, f"Number of configurations found {ncfg} inconsistent with number entered {nshifts}"
     if phcfg >= 0:
         print("Analyzing phonons in configuration space...")
-        phonon_config = PhononConfig(bshifts, ph_list, data_dir)
+        phonon_config = PhononConfig(bshifts, cob, ph_list, data_dir)
         phcfg_poscar = Poscar.from_file(BASE_ROOT + checkPath(CONFIG_SUBDIR_NAME + str(i)) + POSCAR_NAME)
         phonon_config.plot_mode_quiver(phcfg_poscar, shift=phcfg)
         phonon_config.plot_mode_config()
