@@ -23,8 +23,12 @@ class PhononConfig:
         print("Initialized PhononConfig object to analyze modes at Gamma point")
 
     def __diagonalize_DMs(self):
-        self.evecs = np.array([LA.eig(DM)[1] for DM in self.DM_at_Gamma])
-        self.evals_real = np.real(np.array([LA.eigvals(DM) for DM in self.DM_at_Gamma]))
+        eigsys = [LA.eig(DM) for DM in self.DM_at_Gamma]
+        eigsys = [sorted((vals, vecs.T)) for vals, vecs in eigsys]
+        evals = [[ev for ev,_ in eig_at_shift] for eig_at_shift in eigsys]
+        evecs = [np.transpose([ev for _,ev in eig_at_shift]) for eig_at_shift in eigsys]
+        self.evecs = np.array(evecs)
+        self.evals_real = np.real(np.array(evals))
 
     def __build_modes(self):
         self.__diagonalize_DMs()
