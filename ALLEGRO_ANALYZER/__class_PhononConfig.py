@@ -37,13 +37,13 @@ class PhononConfig:
         for modeidx, lab in zip(modeidxs, labels):
             plt.clf(); fig = plt.figure()
             ax = fig.gca(projection='3d')
-            outname = outname[:outname.index('.')] + f'_{shift}_{modeidx}' + outname[outname.index('.'):]
+            this_outname = outname[:outname.index('.')] + f'_{shift}_{modeidx}' + outname[outname.index('.'):]
             wf = np.real(self.evecs[shift, :, modeidx])
             ax.scatter(coords[:,0], coords[:,1], coords[:,2])
             plt.quiver(coords[:,0], coords[:,1], coords[:,2], 
                        wf[0::3], wf[1::3], wf[2::3], length=1, normalize=True)
             plt.title(f"{lab} phonons at shift {shift}")
-            fig.savefig(self.outdir + outname)
+            fig.savefig(self.outdir + this_outname)
         succ(f"Successfully plotted quivers of mode indices {modeidxs} at shift index {shift}")
             
     def plot_mode_config(self, modeidxs=np.arange(6), labels=DEFAULT_MODE_LABELS, outname='cfgph.png'):
@@ -53,10 +53,10 @@ class PhononConfig:
             cf = ax.scatter(self.b_matrix[:,0], self.b_matrix[:,1], s=300, c=colors, cmap='RdYlBu')
             ax.set_aspect('equal')
             ax.set_title(lab + r'at $\Gamma$')
-            outname = outname[:outname.index('.')] + f'_{modeidx}' + outname[outname.index('.'):]
+            this_outname = outname[:outname.index('.')] + f'_{modeidx}' + outname[outname.index('.'):]
             fig.colorbar(cf, shrink=0.43, pad=0.05)
             cf.set_clim(min(colors), max(colors))
-            fig.savefig(self.outdir + outname)
+            fig.savefig(self.outdir + this_outname)
         succ(f"Successfully plotted configuration maps of mode indices {modeidxs}")
 
 
