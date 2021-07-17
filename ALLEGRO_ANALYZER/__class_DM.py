@@ -230,11 +230,11 @@ class TwistedDM:
         DMs_layer1 = l1.get_DM_set(); DMs_layer2 = l2.get_DM_set(); DM_inter = inter.get_DM()
         print("Blocks built.")
         self.species = species_per_layer
-        self.DMs = [self.__block_l2([DMs_layer1[i], DMs_layer2[i]], DM_inter) for i in range(len(k_mags))]
         self.off_diag_blocks = DM_inter.get_off_diag_blocks()
         self.k_mags = k_mags
         self.modes_built = False
         self.Gamma_idx = 0 # TODO change when using K-G-M-K
+        self.DMs = [self.__block_l2([DMs_layer1[i], DMs_layer2[i]], DM_inter) for i in range(len(k_mags))]
 
     # Create level-2 (final level--full matrix) block matrix with intralayer and interlayer terms
     def __block_l2(self, DM_intras, DM_inter):
