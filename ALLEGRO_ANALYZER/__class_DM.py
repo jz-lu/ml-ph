@@ -164,7 +164,7 @@ class MonolayerDM:
 # Build interlayer dynamical matrix block via summing over configurations
 class InterlayerDM:
     def __init__(self, per_layer_at_idxs, b_set, GM_set, G0_set, ph_list=None, force_matrices=None):
-        assert ph_list is not None ^ force_matrices is not None, "Must give exactly one of: phonopy obj list, force matrix list"
+        assert (ph_list is not None) ^ (force_matrices is not None), "Must give exactly one of: phonopy obj list, force matrix list"
         assert len(b_set[0]) == 2, "Shift vectors must be 2-dimensional"
         self.b_set = b_set; self.ph_list = ph_list # list of phonopy objects for each config
         self.nshift = len(b_set); print(f"Number of configurations: {self.nshift}")
