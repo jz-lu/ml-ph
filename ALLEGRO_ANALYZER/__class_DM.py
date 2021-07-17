@@ -230,7 +230,7 @@ class TwistedDM:
         DMs_layer1 = l1.get_DM_set(); DMs_layer2 = l2.get_DM_set(); DM_inter = inter.get_DM()
         print("Blocks built.")
         self.species = species_per_layer
-        self.off_diag_blocks = DM_inter.get_off_diag_blocks()
+        self.off_diag_blocks = inter.get_off_diag_blocks()
         self.k_mags = k_mags
         self.modes_built = False
         self.Gamma_idx = 0 # TODO change when using K-G-M-K
