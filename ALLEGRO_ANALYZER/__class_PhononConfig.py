@@ -102,7 +102,7 @@ class TwistedRealspacePhonon:
 
     def __phonon_inverse_fourier(self):
         self.__build_modes()
-        # TODO should be -1 here right?
+        # TODO should be -1 here right? -------------|
         self.phonons = np.array([sum([mode * np.exp(-1j * np.dot(GM, r)) for mode, GM in zip(self.ph_at_GM, self.GM_set)]) for r in self.r_matrix])
         assert self.phonons.shape == (self.gridsz**2, 3), f"Invalid phonon matrix shape {self.phonons.shape} != {(self.gridsz**2, 3)}"
 

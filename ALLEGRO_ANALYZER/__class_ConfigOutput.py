@@ -121,7 +121,7 @@ class DSamplingOutput:
         rows = int(sqrt(nplt))
         plt.clf(); fig = plt.figure(); fig.subplots(nrows=rows, ncols=rows) 
         x = np.linspace(0, 1, self.npts)
-        plt.suptitle(f"Forces along diagonal")
+        plt.suptitle(f"Mass-scaled forces along diagonal")
         fig.text(0, 0.5, r"Force constants (eV/$\AA^2$)", va='center', rotation='vertical')
         for i, (ats, ls, cs, cl) in enumerate(zip(atomic_idx_pairs, layer_idx_pairs, cart_idx_pairs, cart_letter_pairs)):
             ats = np.array(ats); ls = np.array(ls); cs = np.array(cs)

@@ -193,15 +193,23 @@ class InterlayerDM:
         assert LA.norm(self.G0_set[0]) == 0, f"G0[0] should be 0, but is {LA.norm(self.GM_set[0])}"
         D0 = self.__block_inter_l0(self.G0_set[0]); block_l0_shape = D0.shape
         self.DM = [[None]*n_GM for _ in range(n_GM)] # NoneType interpreted by scipy as 0 matrix block
+        self.GMi_blocks = [0]*(n_GM-1)
         for i in range(n_GM): # fill diagonal
             self.DM[i][i] = D0
         for i in range(1, n_GM): # fill first row/col
             self.DM[0][i] = self.__block_inter_l0(self.G0_set[i])
+            self.GMi_blocks[i-1] = self.DM[0][i]
             self.DM[i][0] = self.__block_inter_l0(-self.G0_set[i])
             assert self.DM[0][i].shape == block_l0_shape and self.DM[i][0].shape == block_l0_shape, f"Shape GM0{i}={self.DM[0][i].shape}, GM{i}0={self.DM[i][0].shape}, expected {block_l0_shape}"
             assert np.isclose(LA.norm(self.DM[0][i]), LA.norm(self.DM[i][0]), rtol=1e-5), f"Level-0 interlayer DM blocks for G0{i} not inversion-symmetric:\n {LA.norm(self.DM[0][i])}\nvs. \n{LA.norm(self.DM[i][0])}"
         self.DM = bmat(self.DM).toarray() # convert NoneTypes to zero-matrix blocks to make sparse matrix
         return self.DM
+    
+    def get_off_diag_blocks(self):
+        if self.DM is None:
+            print("Building interlayer dynamical matrix...")
+            self.__block_inter_l1()
+        return self.GMi_blocks
 
     def get_DM(self):
         if self.DM is None:
@@ -217,20 +225,38 @@ class InterlayerDM:
 
 # Build full dynamical matrix from intralayer and interlayer terms via the above 2 classes
 class TwistedDM:
-    def __init__(self, l1 : MonolayerDM, l2 : MonolayerDM, inter : InterlayerDM, k_mags):
+    def __init__(self, l1 : MonolayerDM, l2 : MonolayerDM, inter : InterlayerDM, k_mags, species_per_layer):
         print("Building dynamical matrix intra(er) blocks...")
         DMs_layer1 = l1.get_DM_set(); DMs_layer2 = l2.get_DM_set(); DM_inter = inter.get_DM()
         print("Blocks built.")
         self.DMs = [self.__block_l2([DMs_layer1[i], DMs_layer2[i]], DM_inter) for i in range(len(k_mags))]
+        self.off_diag_blocks = DM_inter.get_off_diag_blocks()
         self.k_mags = k_mags
         self.modes_built = False
-        self.Gamma_idx = 0 # TODO
+        self.Gamma_idx = 0 # TODO change when using K-G-M-K
+        self.species = species_per_layer
 
     # Create level-2 (final level--full matrix) block matrix with intralayer and interlayer terms
     def __block_l2(self, DM_intras, DM_inter):
+        # On the first intralayer loop over the 3x3 block diagonal i and sum over all 3x3 blocks
+        # in the interlayer 1-2 matrix in row i. Repeat for second intralayer and interlayer 2-1.
+        def enforce_acoustic_sum_rule():
+            M = np.array([[species.atomic_mass for species in layer] for layer in self.species])
+            n_GM = 1 + len(self.off_diag_blocks)
+            l0sz = DM_intras[0].shape[0] // n_GM 
+            assert DM_intras[0].shape[0] % n_GM == 0
+            assert l0sz % 3 == 0
+            for i in range(0, l0sz, 3): # intralayer1 and interlayer12
+                DM_intras[0][i:i+3,i:i+3] -= 2 * sum([sum([sqrt(M[0,j]/M[0,i]) * blk[i:i+3,j:j+3] for j in range(0,len(blk[0]),3)]) for blk in self.off_diag_blocks])
+            for i in range(0, l0sz, 3): # intralayer2 and interlayer 21
+                # TODO conjugate?
+                DM_intras[1][i:i+3,i:i+3] -= 2 * sum([sum([sqrt(M[1,j]/M[1,i]) * blk.conjugate()[j:j+3,i:i+3] for j in range(0,len(blk),3)]) for blk in self.off_diag_blocks])
+
         assert len(DM_intras) == 2
         assert DM_intras[0].shape == DM_intras[1].shape == DM_inter.shape
-        return np.block([[DM_intras[0], DM_inter], [DM_inter.conjugate().T, DM_intras[1]]])
+        enforce_acoustic_sum_rule()
+        DM = np.block([[DM_intras[0], DM_inter], [DM_inter.conjugate().T, DM_intras[1]]])
+        return DM
     
     # Retreieve list dynamical matrices corresponding to the list of sampled k-vectors
     def get_DM_set(self):
