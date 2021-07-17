@@ -209,6 +209,7 @@ class InterlayerDM:
         if self.DM is None:
             print("Building interlayer dynamical matrix...")
             self.__block_inter_l1()
+        print(f"Off-diagonal block shapes: {self.GMi_blocks[0].shape}")
         return self.GMi_blocks
 
     def get_DM(self):
@@ -247,6 +248,7 @@ class TwistedDM:
             assert DM_intras[0].shape[0] % n_GM == 0
             assert l0sz % 3 == 0
             for i in range(0, l0sz, 3): # intralayer1 and interlayer12
+                breakpoint()
                 DM_intras[0][i:i+3,i:i+3] -= 2 * sum([sum([sqrt(M[0,j]/M[0,i]) * blk[i:i+3,j:j+3] for j in range(0,len(blk[0]),3)]) for blk in self.off_diag_blocks])
             for i in range(0, l0sz, 3): # intralayer2 and interlayer 21
                 # TODO conjugate?
