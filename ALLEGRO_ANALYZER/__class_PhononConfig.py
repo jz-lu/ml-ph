@@ -3,12 +3,13 @@ import numpy as np
 import numpy.linalg as LA
 import matplotlib.pyplot as plt
 import os
+from itertools import product as prod
+from random import randint
 from pymatgen.io.vasp.inputs import Poscar
 from ___constants_vasp import VASP_FREQ_TO_INVCM_UNITS
 from ___constants_output import DEFAULT_MODE_LABELS
 from __directory_searchers import checkPath
 from ___helpers_parsing import succ
-from random import randint
 
 
 class PhononConfig:
@@ -35,7 +36,6 @@ class PhononConfig:
     def __build_modes(self):
         self.__diagonalize_DMs()
         self.modes = np.sign(self.evals_real) * np.sqrt(np.abs(self.evals_real)) * VASP_FREQ_TO_INVCM_UNITS
-        print("MODES\n", self.modes)
 
     def plot_mode_quiver(self, poscar : Poscar, shift=0, modeidxs=np.arange(6), labels=DEFAULT_MODE_LABELS, outname='cfgquiver.png'):
         coords = poscar.structure.cart_coords
@@ -69,20 +69,52 @@ class PhononConfig:
 
 class TwistedRealspacePhonon:
     """
-    Plots twisted phonons at Gamma point in realspace. Modes are found as u(k=Gamma|G), 
-    Fourier transformed into u(k=Gamma|b), then plotted as pairs {(r=A_delta(b), u(k=Gamma|b))}
+    Plots twisted phonons at Gamma point in realspace. Modes are found as u(k=Gamma|GM), 
+    Fourier transformed into u(k=Gamma|r), then plotted as pairs {(r, u(k=Gamma|r))}
     in realspace.
     """
-    def __init__(self, b_matrix, ph_list, A_delta):
-        self.b_matrix = b_matrix[:,:2]
-        self.r_matrix = (LA.inv(A_delta) @ b_matrix.T).T
-        self.DM_at_Gamma = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in ph_list]
-        self.__diagonalize_DMs()
+    def __init__(self, theta, GM_set, DM_at_Gamma, poscar_sc : Poscar, gridsz=42, outdir='.'):
+        # R = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
+        # A_delta2 = np.eye(2) - R
+        self.GM_set = GM_set
+        self.DM_at_Gamma = DM_at_Gamma
+        self.sc_lattice = poscar_sc.structure.lattice.matrix[:2,:2]
+        self.__phonon_inverse_fourier()
+        x = np.linspace(0, 1, num=gridsz, endpoint=False)
+        self.gridsz = gridsz
+        self.r_matrix = np.array(list(prod(x, x))); assert self.r_matrix.shape == (gridsz**2, 2)
+        self.r_matrix = (self.sc_lattice @ self.r_matrix.T).T # make Cartesian
+        self.outdir = checkPath(os.path.abspath(outdir))
+
     def __diagonalize_DMs(self):
-        self.eigensys = [np.eig(DM) for DM in self.DM_at_Gamma]
-        self.evals = [v[0] for v in self.eigensys]
-        self.evecs = [v[1] for v in self.eigensys]
+        def sorted_eigsys(A):
+            vals, vecs = LA.eig(A); idxs = vals.argsort()   
+            vals = vals[idxs]; vecs = vecs[:,idxs]
+            return vals, vecs
+        evals, evecs = sorted_eigsys(self.DM_at_Gamma)
+        self.evecs = np.array(evecs)
+        self.evals_real = np.real(np.array(evals))
+
+    def __build_modes(self):
+        self.__diagonalize_DMs()
+        self.modes = np.sign(self.evals_real) * np.sqrt(np.abs(self.evals_real)) * VASP_FREQ_TO_INVCM_UNITS
+        self.ph_at_GM = None # TODO
+
     def __phonon_inverse_fourier(self):
-        pass
-    def plot_phonons(self):
-        pass
+        self.__build_modes()
+        # TODO should be -1 here right?
+        self.phonons = np.array([sum([mode * np.exp(-1j * np.dot(GM, r)) for mode, GM in zip(self.ph_at_GM, self.GM_set)]) for r in self.r_matrix])
+        assert self.phonons.shape == (self.gridsz**2, 3), f"Invalid phonon matrix shape {self.phonons.shape} != {(self.gridsz**2, 3)}"
+
+    def plot_phonons(self, outname='twistph.png'):
+        plt.clf(); fig = plt.figure()
+        ax = fig.gca(projection='3d')
+        this_outname = outname
+        # this_outname = outname[:outname.index('.')] + f'_{shift}_{modeidx}' + outname[outname.index('.'):]
+        wf = self.phonons; coords = self.r_matrix
+        ax.scatter(coords[:,0], coords[:,1], coords[:,2])
+        plt.quiver(coords[:,0], coords[:,1], coords[:,2], 
+                    wf[:,0], wf[:,1], wf[:,2], length=1, normalize=True)
+        plt.title(f"Phonons in supercell")
+        fig.savefig(self.outdir + this_outname)
+        succ(f"Successfully outputted twisted phonons in realspace to {self.outdir + this_outname}")

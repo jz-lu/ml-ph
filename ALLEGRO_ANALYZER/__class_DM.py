@@ -224,6 +224,7 @@ class TwistedDM:
         self.DMs = [self.__block_l2([DMs_layer1[i], DMs_layer2[i]], DM_inter) for i in range(len(k_mags))]
         self.k_mags = k_mags
         self.modes_built = False
+        self.Gamma_idx = 0 # TODO
 
     # Create level-2 (final level--full matrix) block matrix with intralayer and interlayer terms
     def __block_l2(self, DM_intras, DM_inter):
@@ -235,6 +236,9 @@ class TwistedDM:
     def get_DM_set(self):
         print(f"Retrieved DM set of shape {self.DMs[0].shape} from twisted DM object")
         return self.DMs
+    
+    def get_DM_at_Gamma(self):
+        return self.DMs[self.Gamma_idx]
     
     def get_k_set(self):
         print("Retrieved k set sample from twisted DM object")
