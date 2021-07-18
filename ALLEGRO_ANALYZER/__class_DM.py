@@ -272,7 +272,7 @@ class TwistedDM:
         return self.k_mags
 
     # Diagonalize the set of DMs to get phonon modes
-    def build_modes(self, dump=False, outdir=None):
+    def build_modes(self, dump=False, outdir='.'):
         self.mode_set = [0]*len(self.k_mags)
         for i, (k_mag, DM) in enumerate(zip(self.k_mags, self.DMs)):
             evals = LA.eigvals(DM)
@@ -300,10 +300,14 @@ class TwistedDM:
             self.build_modes(dump=True, outdir=outdir)
             print("Modes built.")
         plt.clf()
+        minmax = [0,0]
         for k_mag, modes in self.mode_set:
             if cutoff is not None:
                 modes = modes[modes <= cutoff]
+            minmax[0] = min(0, minmax[0], min(modes))
+            minmax[1] = max(minmax[1], max(modes))
             plt.scatter([k_mag] * len(modes), modes, c='royalblue', s=0.07)
+        plt.ylim(minmax)
         xlabs = (r'$\Gamma$', r'K', r'M')
         plt.xticks(corner_kmags, xlabs)
         plt.ylabel(r'$\omega\,(\mathrm{cm}^{-1})$')
