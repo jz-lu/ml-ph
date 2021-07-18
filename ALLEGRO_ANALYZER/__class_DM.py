@@ -251,7 +251,7 @@ class TwistedDM:
                 DM_intras[0][i:i+3,i:i+3] -= 2 * sum([sum([sqrt(M[0,j//3]/M[0,i//3]) * blk[i:i+3,j:j+3] for j in range(0,len(blk[0]),3)]) for blk in self.off_diag_blocks])
             for i in range(0, l0sz, 3): # intralayer2 and interlayer 21
                 # TODO conjugate?
-                DM_intras[1][i:i+3,i:i+3] -= 2 * sum([sum([sqrt(M[1,j//3]/M[1,i//3]) * blk.conjugate()[j:j+3,i:i+3] for j in range(0,len(blk),3)]) for blk in self.off_diag_blocks])
+                DM_intras[1][i:i+3,i:i+3] -= 2 * sum([sum([sqrt(M[1,j//3]/M[1,i//3]) * blk[j:j+3,i:i+3] for j in range(0,len(blk),3)]) for blk in self.off_diag_blocks])
 
         assert len(DM_intras) == 2
         assert DM_intras[0].shape == DM_intras[1].shape == DM_inter.shape
@@ -307,7 +307,7 @@ class TwistedDM:
             minmax[0] = min(0, minmax[0], min(modes))
             minmax[1] = max(minmax[1], max(modes))
             plt.scatter([k_mag] * len(modes), modes, c='royalblue', s=0.07)
-        plt.ylim(minmax)
+        minmax[1] += 30; plt.ylim(minmax)
         xlabs = (r'$\Gamma$', r'K', r'M')
         plt.xticks(corner_kmags, xlabs)
         plt.ylabel(r'$\omega\,(\mathrm{cm}^{-1})$')
