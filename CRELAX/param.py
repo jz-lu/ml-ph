@@ -35,7 +35,7 @@ for folder in folder_names:
         f.write('module list\n')
         f.write('export TASKID=$SLURM_ARRAY_TASK_ID\n')
         f.write('echo "Task ID: " $TASKID\n')
-        f.write(f'python {CODE_DIR}/run_vasp.py $TASKID {fdir} -d {ROOT}\n')
+        f.write(f'python {CODE_DIR}/run_vasp.py $TASKID {folder} -d {ROOT}\n')
     cmd = f'sbatch --array=0-{n_eta-1} {fpath}'
     print(f"Running command `{cmd}` to shell...")
     stream = os.popen(cmd)
