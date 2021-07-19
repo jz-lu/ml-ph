@@ -5,7 +5,6 @@ CODE_DIR = '/n/home04/jzlu/codes/ml-ph/CRELAX/'
 
 folder_names = ['shear', 'stretch1', 'stretch2']
 
-print(f"Args: {sys.argv}")
 parser = argparse.ArgumentParser(description='Obtain energy calculations for elastic moduli fitting')
 parser.add_argument("mat", type=str, help="material to analyze, e.g. MoS2, Gr, etc.")
 parser.add_argument('-d', '--dir', type=str, help='working directory', default='.')
@@ -21,7 +20,8 @@ ROOT = pathify(updated_root)
 
 # Run VASP
 for folder in folder_names:
-    fpath = ROOT + folder + '/' + 'ELASTIC_BAT_DNE'
+    fdir = ROOT + folder + '/'
+    fpath = fdir + 'ELASTIC_BAT_DNE'
     with open(fpath, 'w') as f:
         f.write('#!/bin/bash\n')
         f.write(f'#SBATCH -J {folder}\n')
@@ -35,7 +35,7 @@ for folder in folder_names:
         f.write('module list\n')
         f.write('export TASKID=$SLURM_ARRAY_TASK_ID\n')
         f.write('echo "Task ID: " $TASKID\n')
-        f.write(f'python {CODE_DIR}/run_vasp.py $TASKID\n')
+        f.write(f'python {CODE_DIR}/run_vasp.py $TASKID {fdir} -d {ROOT}\n')
     cmd = f'sbatch --array=0-{n_eta-1} {fpath}'
     print(f"Running command `{cmd}` to shell...")
     stream = os.popen(cmd)

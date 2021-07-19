@@ -16,8 +16,8 @@ import argparse
 parser = argparse.ArgumentParser(description='Run VASP for elastic moduli calculations')
 parser.add_argument('integers', metavar='N', type=int, nargs='+',
                     help='shear/bulk strain index')
-parser.add_argument('-d', '--dir', type=str, help='working directory', default='.')
 parser.add_argument('folder', type=str, help='analysis folder (e.g. shear)')
+parser.add_argument('-d', '--dir', type=str, help='working directory', default='.')
 args = parser.parse_args()
 ind = args.integers[0]
 

@@ -51,7 +51,7 @@ def build_bash_exe(calc_type='basic', outdir='.', wdir=None, calc_list=[ENERGIES
             f.write('#SBATCH -N %s\n'%(compute_nnode))
         f.write('#SBATCH -n %s\n#SBATCH -t %s\n#SBATCH -p %s\n#SBATCH --mem-per-cpu=%s\n'%(compute_ncpu, compute_time, compute_partitions, compute_mem_per_cpu))
         if as_arr:
-            f.write('#SBATCH -o %s_%%A_%%a.out\n#SBATCH -e er_%s_%%A_%%a.err\n'%(compute_jobname, compute_jobname))
+            f.write('#SBATCH -o %s_%%a_%%A.out\n#SBATCH -e er_%s_%%a_%%A.err\n'%(compute_jobname, compute_jobname))
         else:
             f.write('#SBATCH -o %s_%%j.out\n#SBATCH -e er_%s_%%j.err\n'%(compute_jobname, compute_jobname))
         f.write('#SBATCH --mail-type=%s\n#SBATCH --mail-user=%s\n'%(compute_email_type, compute_email_to))

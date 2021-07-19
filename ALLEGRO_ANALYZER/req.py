@@ -39,6 +39,8 @@ else:
         ndisp = len(list(filter(lambda x: x.startswith('disp'), os.listdir(pdir))))
         fails = []
         for j in range(1, ndisp+1):
+            if j % 10 == 0:
+                print(f"Analysis finished up to shift {j}")
             subdir = pdir + f'disp{j}/'
             never_started = len(os.listdir(subdir)) <= 1
             if never_started:
