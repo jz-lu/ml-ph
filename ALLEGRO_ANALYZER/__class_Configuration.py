@@ -280,7 +280,8 @@ class Configuration:
     def load_lidxs(indir):
         assert os.path.isdir(indir), f"Directory {indir} does not exist"
         indir = checkPath(os.path.abspath(indir))
-        return np.load(build_dir([indir, CONFIG_DATA_DIR]) + LIDXS_NPY_NAME)
+        lidxs = np.load(build_dir([indir, CONFIG_DATA_DIR]) + LIDXS_NPY_NAME)
+        print(f"Layer indices: {lidxs}"); return lidxs
     
     @staticmethod
     def load_at_idxs(indir, expand=True):

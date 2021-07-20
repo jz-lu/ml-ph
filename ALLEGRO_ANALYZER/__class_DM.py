@@ -115,7 +115,7 @@ class MonolayerDM:
                 Mi = self.M[i]; idx = 3*i + j*l0sz
                 temp = np.split(self.DM_set[Gam][idx:idx+3,j*l0sz:(j+1)*l0sz], self.n_at, axis=1)
                 return [sqrt(Mi*Mj) * subblk for subblk, Mj in zip(temp, self.M)]
-            blksums_list[i] = [sum(force_from_dm(j)) for j in range(self.n_GM)]
+            blksums_list[i] = np.round([sum(force_from_dm(j)) for j in range(self.n_GM)], 8)
         return blksums_list
     
     def print_force_sum(self):
@@ -332,7 +332,7 @@ class TwistedDM:
             assert intrasum.shape == (3,3)
             intersum = sum([sum(inter_force_from_dm(0, i, self.n_ats[0], blk)) for blk in interblks])
             assert intersum.shape == (3,3)
-            totalsum = intrasum + intersum
+            totalsum = np.round(intrasum + intersum, 8)
             print(f"[Layer 1] [At {i}] total sum of forces:\n{totalsum}")
             
         print("Layer 2 ATOMS:")
@@ -342,7 +342,7 @@ class TwistedDM:
             intersum = sum([sum(inter_force_from_dm(1, i, self.n_ats[1], blk)) for blk in interblks])
             assert intrasum.shape == (3,3)
             assert intersum.shape == (3,3)
-            totalsum = intrasum + intersum
+            totalsum = np.round(intrasum + intersum, 8)
             print(f"[Layer 2] [At {i}] total sum of forces:\n{totalsum}")
 
     def get_k_set(self):

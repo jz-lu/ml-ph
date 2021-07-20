@@ -108,7 +108,7 @@ if __name__ == '__main__':
     update("Retrieving per-layer atomic indices...")
     per_layer_at_idxs = Configuration.load_at_idxs(build_dir([indir, CONFIG_DIR_NAME]))
     assert len(per_layer_at_idxs) == 2, f"Only 2 layers supported (for now), got {len(per_layer_at_idxs)}"
-    print(f"Found per-layer atomic indices: {per_layer_at_idxs}")
+    print(f"Found per-layer atomic indices.")
     
     update("Generating phonopy objects via API...")
     ph_api = PhonopyAPI(indir) # retreive phonopy objects
@@ -143,7 +143,7 @@ if __name__ == '__main__':
         assert os.path.isfile(shift_file_path), f"{shift_file_path} not found"
         with open(shift_file_path) as f:
             b_set[i] = np.array(list(map(float, f.read().splitlines()))[:2]) # shifts must be 2-dimensional
-    print("Shift vectors imported:", b_set)
+    print("Shift vectors imported.")
         
     print("Getting interlayer phonopy objects from API...")
     config_ph_list = ph_api.inter_ph_list()
@@ -175,7 +175,7 @@ if __name__ == '__main__':
     evals = LA.eigvals(ILDM.get_DM())
     signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
     modes_k = signs * np.sqrt(np.abs(evals)) * (15.633302*33.356) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
-    print("Interlayer modes (k-independent):", modes_k[modes_k != 0])
+    # print("Interlayer modes (k-independent):", modes_k[modes_k != 0])
     print("Interlayer DM objects constructed.")
 
     print("Combining into a single twisted dynamical matrix object...")
