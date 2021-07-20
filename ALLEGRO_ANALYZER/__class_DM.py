@@ -227,7 +227,7 @@ class InterlayerDM:
             self.all_blocks[i] = D0
         for i in range(1, n_GM): # fill first row/col
             self.DM[0][i] = self.__block_inter_l0(self.G0_set[i])
-            self.GMi_blocks[i+n_GM-1] = self.DM[0][i]
+            self.GMi_blocks[i-1] = self.DM[0][i]
             self.DM[i][0] = self.__block_inter_l0(-self.G0_set[i])
             self.GMi_blocks[i+(2*n_GM-1)-1] = self.DM[i][0]
             assert self.DM[0][i].shape == block_l0_shape and self.DM[i][0].shape == block_l0_shape, f"Shape GM0{i}={self.DM[0][i].shape}, GM{i}0={self.DM[i][0].shape}, expected {block_l0_shape}"
