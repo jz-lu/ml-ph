@@ -136,7 +136,7 @@ class TwistedRealspacePhonon:
                 # phonons = np.array([wf/LA.norm(wf) for wf in phonons])
                 plt.clf(); fig = plt.figure(); ax = fig.gca(projection='3d')
                 plt.quiver(coords[:,0], coords[:,1], np.zeros(self.n_r), 
-                            phonons[:,0], phonons[:,1], phonons[:,2], length=0.02)
+                            phonons[:,0], phonons[:,1], phonons[:,2], length=1)
                 ax.scatter(coords[:,0], coords[:,1], np.zeros(self.n_r), c='black')
                 this_outname = outname[:outname.index('.')] + f'_{m_j}_{at_i}' + outname[outname.index('.'):]
                 plt.title(f"Normalized phonons (" + r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ$" + f", mode {m_j}, atom {at_i}) in supercell")
