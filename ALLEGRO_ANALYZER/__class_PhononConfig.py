@@ -107,8 +107,8 @@ class TwistedRealspacePhonon:
         print("Transforming eigenmatrix into truncated Fourier phonon tensor...")
         # In this case n_at refers to number of atoms in entire bilayer unit cell
         evecs = np.array(evecs[:,:self.cut]).T # shape: (C, n_G x n_at x d) [c := cut = num evecs]
-        evecs = np.split(evecs, self.n_G, axis=1) # shape: (n_G, C, n_at x d)
-        evecs = np.split(evecs, self.n_at, axis=2) # shape: (n_at, n_G, C, d)
+        evecs = np.array(np.split(evecs, self.n_G, axis=1)) # shape: (n_G, C, n_at x d)
+        evecs = np.array(np.split(evecs, self.n_at, axis=2)) # shape: (n_at, n_G, C, d)
         self.phtnsr = np.transpose(evecs, axes=(1,0,2,3)) # shape: (n_G, n_at, C, d)
         assert self.phtnsr.shape == self.phtnsr_shape, f"Unexpected phonon tensor shape {self.phtnsr.shape}, expected {self.phtnsr_shape}"
         self.evals_real = np.real(np.array(evals)[:self.cut])
