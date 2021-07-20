@@ -131,6 +131,7 @@ class TwistedRealspacePhonon:
 
     def plot_phonons(self, outname='phreal.png'):
         coords = self.r_matrix
+        np.save(self.outdir + "rphtnsr.npy", self.rphtnsr)
         for at_i, atomic_blk in enumerate(self.rphtnsr):
             for m_j, phonons in enumerate(atomic_blk):
                 # phonons = np.array([wf/LA.norm(wf) for wf in phonons])
