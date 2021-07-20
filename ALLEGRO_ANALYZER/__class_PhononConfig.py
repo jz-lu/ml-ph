@@ -9,9 +9,11 @@ from pymatgen.io.vasp.inputs import Poscar
 from ___constants_vasp import VASP_FREQ_TO_INVCM_UNITS
 from ___constants_output import DEFAULT_MODE_LABELS
 from __directory_searchers import checkPath
-from ___helpers_parsing import succ
+from ___helpers_parsing import succ, update
 
-
+"""
+Phonon modes in configuration space; phonon displacements for each atom in realspace.
+"""
 class PhononConfig:
     def __init__(self, b_matrix, cob, ph_list, outdir='.'):
         self.outdir = checkPath(os.path.abspath(outdir))
@@ -67,54 +69,77 @@ class PhononConfig:
         succ(f"Successfully plotted configuration maps of mode indices {modeidxs}")
 
 
+"""
+Plots twisted phonons at Gamma point in realspace under continuum model. Since the twisted DM
+is expressed in Fourier basis, phonons are found as u(k|GM), Fourier transformed into 
+u(k=Gamma|r), then plotted as pairs {(r, u(k|r))} in realspace, with r sampled in a supercell.
+
+Note: while this was intended for analyzing phonons at the Gamma point, it makes 
+no assumption of what k is, and thus can be used for arbitrary k (just pass into `DM_at_Gamma`).
+"""
 class TwistedRealspacePhonon:
-    """
-    Plots twisted phonons at Gamma point in realspace. Modes are found as u(k=Gamma|GM), 
-    Fourier transformed into u(k=Gamma|r), then plotted as pairs {(r, u(k=Gamma|r))}
-    in realspace.
-    """
-    def __init__(self, theta, GM_set, DM_at_Gamma, poscar_sc : Poscar, gridsz=42, outdir='.'):
-        # R = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
-        # A_delta2 = np.eye(2) - R
-        self.GM_set = GM_set
+    def __init__(self, theta, GM_set, DM_at_Gamma, n_at, poscar_sc : Poscar, gridsz=11, outdir='.', cut=6):
+        self.GM_set = GM_set; self.n_G = len(GM_set)
+        self.cut = cut; self.n_at = n_at
         self.DM_at_Gamma = DM_at_Gamma
         self.sc_lattice = poscar_sc.structure.lattice.matrix[:2,:2]
-        self.__phonon_inverse_fourier()
         x = np.linspace(0, 1, num=gridsz, endpoint=False)
-        self.gridsz = gridsz
-        self.r_matrix = np.array(list(prod(x, x))); assert self.r_matrix.shape == (gridsz**2, 2)
+        self.d = 3
+        self.gridsz = gridsz; self.n_r = gridsz**2
+        self.r_matrix = np.array(list(prod(x, x))); assert self.r_matrix.shape == (self.n_r, 2)
         self.r_matrix = (self.sc_lattice @ self.r_matrix.T).T # make Cartesian
         self.outdir = checkPath(os.path.abspath(outdir))
+        self.phtnsr = None; self.rphtnsr = None # Fourier and real space phonons
+        self.rphtnsr_shape = (self.n_r, self.n_at, self.cut, self.d) # realspace phonons
+        self.phtnsr_shape = (self.n_G, self.n_at, self.cut, self.d)
+        print("Initializing twisted realspace phonon object...")
+        self.__phonon_inverse_fourier()
+        print("Twisted realspace phonon object initialized.")
 
     def __diagonalize_DMs(self):
+        print("Diagonalizing and sorting dynamical matrix at Gamma...")
         def sorted_eigsys(A):
             vals, vecs = LA.eig(A); idxs = vals.argsort()   
             vals = vals[idxs]; vecs = vecs[:,idxs]
             return vals, vecs
         evals, evecs = sorted_eigsys(self.DM_at_Gamma)
-        self.evecs = np.array(evecs)
-        self.evals_real = np.real(np.array(evals))
+        print("Diagonalized.")
+        print("Transforming eigenmatrix into truncated Fourier phonon tensor...")
+        # In this case n_at refers to number of atoms in entire bilayer unit cell
+        evecs = np.array(evecs[:,:self.cut]).T # shape: (C, n_G x n_at x d) [c := cut = num evecs]
+        evecs = np.split(evecs, self.n_G, axis=1) # shape: (n_G, C, n_at x d)
+        evecs = np.split(evecs, self.n_at, axis=2) # shape: (n_at, n_G, C, d)
+        self.phtnsr = np.transpose(evecs, axes=(1,0,2,3)) # shape: (n_G, n_at, C, d)
+        assert self.phtnsr.shape == self.phtnsr_shape, f"Unexpected phonon tensor shape {self.phtnsr.shape}, expected {self.phtnsr_shape}"
+        self.evals_real = np.real(np.array(evals)[:self.cut])
+        print("Fourier phonon tensor constructed.")
 
     def __build_modes(self):
         self.__diagonalize_DMs()
+        print("Signing and unitizing phonon modes...")
         self.modes = np.sign(self.evals_real) * np.sqrt(np.abs(self.evals_real)) * VASP_FREQ_TO_INVCM_UNITS
-        self.ph_at_GM = None # TODO
+        print("Modes prepared.")
 
     def __phonon_inverse_fourier(self):
         self.__build_modes()
-        # TODO should be -1 here right? -------------|
-        self.phonons = np.array([sum([mode * np.exp(-1j * np.dot(GM, r)) for mode, GM in zip(self.ph_at_GM, self.GM_set)]) for r in self.r_matrix])
-        assert self.phonons.shape == (self.gridsz**2, 3), f"Invalid phonon matrix shape {self.phonons.shape} != {(self.gridsz**2, 3)}"
+        print("Building realspace phonon tensor...")
+        self.rphtnsr = np.array([sum([G_blk * np.exp(-1j * np.dot(GM, r)) for G_blk, GM in zip(self.phtnsr, self.GM_set)]) for r in self.r_matrix])
+        assert self.rphtnsr.shape == self.rphtnsr_shape, f"Unexpected phonon tensor shape {self.rphtnsr.shape}, expected {self.rphtnsr_shape}"
+        self.rphtnsr = np.transpose(self.rphtnsr, axes=(1,2,0,3)) # shape: (n_at, C, n_r, d)
+        assert self.rphtnsr.shape == (self.n_at, self.cut, self.n_r, self.d)
+        print("Realspace phonon tensor built.")
 
-    def plot_phonons(self, outname='twistph.png'):
-        plt.clf(); fig = plt.figure()
-        ax = fig.gca(projection='3d')
-        this_outname = outname
-        # this_outname = outname[:outname.index('.')] + f'_{shift}_{modeidx}' + outname[outname.index('.'):]
-        wf = self.phonons; coords = self.r_matrix
-        ax.scatter(coords[:,0], coords[:,1], coords[:,2])
-        plt.quiver(coords[:,0], coords[:,1], coords[:,2], 
-                    wf[:,0], wf[:,1], wf[:,2], length=1, normalize=True)
-        plt.title(f"Phonons in supercell")
-        fig.savefig(self.outdir + this_outname)
-        succ(f"Successfully outputted twisted phonons in realspace to {self.outdir + this_outname}")
+    def plot_phonons(self, outname='phreal.png'):
+        coords = self.r_matrix
+        for at_i, atomic_blk in enumerate(self.rphtnsr):
+            for m_j, phonons in enumerate(atomic_blk):
+                plt.clf(); fig = plt.figure(); ax = fig.gca(projection='3d')
+                ax.scatter(coords[:,0], coords[:,1], np.zeros(self.n_r))
+                plt.quiver(coords[:,0], coords[:,1], np.zeros(self.n_r), 
+                            phonons[:,0], phonons[:,1], phonons[:,2], length=1, normalize=True)
+                this_outname = outname[:outname.index('.')] + f'_{m_j}_{at_i}' + outname[outname.index('.'):]
+                plt.title(f"Phonons (mode {m_j}, atom {at_i}) in supercell")
+                fig.savefig(self.outdir + this_outname)
+                update(f"Wrote twisted phonons in realspace to {self.outdir + this_outname}")
+        succ(f"Successfully generated {self.cut * self.n_at} realspace twisted phonon plots")
+

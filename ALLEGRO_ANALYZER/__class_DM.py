@@ -244,20 +244,17 @@ class TwistedDM:
         def enforce_acoustic_sum_rule():
             M = np.array([[species.atomic_mass for species in layer] for layer in self.species])
             n_GM = 1 + len(self.off_diag_blocks)
-            l0sz = DM_intras[0].shape[0] // n_GM 
+            l0sz = DM_intras[0].shape[0] // n_GM; print(f"Level 0 size: {l0sz}")
             assert DM_intras[0].shape[0] % n_GM == 0
             assert l0sz % 3 == 0
             for i in range(0, l0sz, 3): # intralayer1 and interlayer12
-                # DM_intras[0][i:i+3,i:i+3] -= 2 * sum([sum([blk[i:i+3,j:j+3] for j in range(0,len(blk[0]),3)]) for blk in self.off_diag_blocks])
                 DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[0,j//3]/M[0,i//3]) * blk[i:i+3,j:j+3] for j in range(0,len(blk[0]),3)]) for blk in self.off_diag_blocks])
             for i in range(0, l0sz, 3): # intralayer2 and interlayer 21
-                # TODO conjugate?
-                # DM_intras[1][i:i+3,i:i+3] -= 2 * sum([sum([blk.conjugate()[j:j+3,i:i+3] for j in range(0,len(blk),3)]) for blk in self.off_diag_blocks])
                 DM_intras[1][i:i+3,i:i+3] -= sum([sum([sqrt(M[1,j//3]/M[1,i//3]) * blk.conjugate()[j:j+3,i:i+3] for j in range(0,len(blk),3)]) for blk in self.off_diag_blocks])
-
+        
         assert len(DM_intras) == 2
         assert DM_intras[0].shape == DM_intras[1].shape == DM_inter.shape
-        # enforce_acoustic_sum_rule()
+        enforce_acoustic_sum_rule()
         DM = np.block([[DM_intras[0], DM_inter], [DM_inter.conjugate().T, DM_intras[1]]])
         return DM
     
