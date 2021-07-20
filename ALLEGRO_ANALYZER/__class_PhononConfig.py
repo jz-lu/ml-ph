@@ -133,12 +133,13 @@ class TwistedRealspacePhonon:
         coords = self.r_matrix
         for at_i, atomic_blk in enumerate(self.rphtnsr):
             for m_j, phonons in enumerate(atomic_blk):
+                # phonons = np.array([wf/LA.norm(wf) for wf in phonons])
                 plt.clf(); fig = plt.figure(); ax = fig.gca(projection='3d')
-                ax.scatter(coords[:,0], coords[:,1], np.zeros(self.n_r))
+                ax.scatter(coords[:,0], coords[:,1], np.zeros(self.n_r), c='k')
                 plt.quiver(coords[:,0], coords[:,1], np.zeros(self.n_r), 
-                            phonons[:,0], phonons[:,1], phonons[:,2], length=1, normalize=True)
+                            phonons[:,0], phonons[:,1], phonons[:,2], length=0.02, normalize=True)
                 this_outname = outname[:outname.index('.')] + f'_{m_j}_{at_i}' + outname[outname.index('.'):]
-                plt.title(f"Phonons (" + r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ$" + f", mode {m_j}, atom {at_i}) in supercell")
+                plt.title(f"Normalized phonons (" + r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ$" + f", mode {m_j}, atom {at_i}) in supercell")
                 fig.savefig(self.outdir + this_outname)
                 plt.close(fig)
                 update(f"Wrote twisted phonons in realspace to {self.outdir + this_outname}")
