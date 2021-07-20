@@ -272,7 +272,7 @@ class TwistedDM:
         print("Blocks built.")
         self.M = np.array([[species.atomic_mass for species in layer] for layer in species_per_layer])
         self.off_diag_blocks = inter.get_off_diag_blocks()
-        self.n_GM = l1.get_GM_set()
+        self.n_GM = len(l1.get_GM_set())
         self.k_mags = k_mags
         self.modes_built = False
         self.l0szs = [l1.l0_shape[0], l2.l0_shape[0]]
