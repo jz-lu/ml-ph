@@ -84,7 +84,7 @@ class TwistedRealspacePhonon:
         self.DM_at_Gamma = DM_at_Gamma
         angle = np.deg2rad(theta)
         A_delta2inv = LA.inv(np.array([[1-np.cos(angle), -np.sin(angle)],[np.sin(angle), 1-np.cos(angle)]]))
-        self.sc_lattice = A_delta2inv @ poscar_uc.structure.lattice.matrix[:2,:2]
+        self.sc_lattice = A_delta2inv @ poscar_uc.structure.lattice.matrix[:2,:2].T
         x = np.linspace(0, 1, num=gridsz, endpoint=False)
         self.d = 3; self.theta = theta
         self.gridsz = gridsz; self.n_r = gridsz**2
@@ -130,6 +130,21 @@ class TwistedRealspacePhonon:
         self.rphtnsr = np.transpose(self.rphtnsr, axes=(1,2,0,3)) # shape: (n_at, C, n_r, d)
         assert self.rphtnsr.shape == (self.n_at, self.cut, self.n_r, self.d)
         print("Realspace phonon tensor built.")
+    
+    def plot_avgs(self, outname='avg.png'):
+        for atomic_blk in self.rphtnsr:
+            atomic_blk = np.mean(atomic_blk, axis=1) # shape: (C, d)
+            for m_j, phonons in enumerate(atomic_blk):
+                plt.clf(); fig = plt.figure(); ax = fig.gca(projection='3d')
+                plt.quiver(0, 0, np.linspace(0,1,num=self.n_at), 
+                            phonons[:,0], phonons[:,1], phonons[:,2])
+                ax.scatter(0, 0, np.linspace(0,1,num=self.n_at), c='black')
+                ax.view_init(0, 0)
+                this_outname = outname[:outname.index('.')] + f'_{m_j}' + outname[outname.index('.'):]
+                fig.savefig(self.outdir + this_outname)
+                plt.close(fig)
+        succ("Successfully outputted average phonon plots")
+
 
     def plot_phonons(self, outname='phreal.png'):
         coords = self.r_matrix

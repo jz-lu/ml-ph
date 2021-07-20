@@ -197,6 +197,7 @@ if __name__ == '__main__':
         twrph = TwistedRealspacePhonon(np.rad2deg(theta), GM_set, TDM.get_DM_at_Gamma(), n_at, poscars_uc[0], outdir=outdir)
         print("Phonons in realspace analyzed.")
         twrph.plot_phonons()
+        twrph.plot_avgs()
 
     print(f"Diagonalizing and outputting modes with corners {corner_kmags}...")
     TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, filename=outname, cutoff=cutoff)
