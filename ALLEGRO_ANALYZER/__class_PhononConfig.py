@@ -94,7 +94,7 @@ class TwistedRealspacePhonon:
         self.phtnsr_shape = (self.n_G, self.n_at, self.cut, self.d)
         print("Initializing twisted realspace phonon object...")
         self.__phonon_inverse_fourier()
-        print("Twisted realspace phonon object initialized.")
+        print(f"Twisted realspace phonon object initialized. Cut={cut}")
 
     def __diagonalize_DMs(self):
         print("Diagonalizing and sorting dynamical matrix at Gamma...")
