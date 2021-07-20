@@ -84,7 +84,7 @@ class TwistedRealspacePhonon:
         self.DM_at_Gamma = DM_at_Gamma
         self.sc_lattice = poscar_sc.structure.lattice.matrix[:2,:2]
         x = np.linspace(0, 1, num=gridsz, endpoint=False)
-        self.d = 3
+        self.d = 3; self.theta = theta
         self.gridsz = gridsz; self.n_r = gridsz**2
         self.r_matrix = np.array(list(prod(x, x))); assert self.r_matrix.shape == (self.n_r, 2)
         self.r_matrix = (self.sc_lattice @ self.r_matrix.T).T # make Cartesian
@@ -138,7 +138,7 @@ class TwistedRealspacePhonon:
                 plt.quiver(coords[:,0], coords[:,1], np.zeros(self.n_r), 
                             phonons[:,0], phonons[:,1], phonons[:,2], length=1, normalize=True)
                 this_outname = outname[:outname.index('.')] + f'_{m_j}_{at_i}' + outname[outname.index('.'):]
-                plt.title(f"Phonons (mode {m_j}, atom {at_i}) in supercell")
+                plt.title(f"Phonons (" + r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ$" + f", mode {m_j}, atom {at_i}) in supercell")
                 fig.savefig(self.outdir + this_outname)
                 update(f"Wrote twisted phonons in realspace to {self.outdir + this_outname}")
         succ(f"Successfully generated {self.cut * self.n_at} realspace twisted phonon plots")

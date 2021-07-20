@@ -23,7 +23,7 @@ class BZSampler:
     def __init__(self, A0, G0, theta=None, outdir='./', log=False, lattice_type='hexagonal', super_dim=SUPER_DIM[:2]):
         G0 = np.array(G0) # ensure proper typing
         theta = theta if theta is not None else 1
-        assert 180 > theta >= 0
+        assert pi > theta >= 0 # in rad
         assert os.path.isdir(outdir)
         self.outdir = checkPath(outdir); self.theta = theta; self.G0 = G0; self.A0 = A0
         self.lattice_angle = CarCollector.lattice_basis_angle(self.A0, col=True)

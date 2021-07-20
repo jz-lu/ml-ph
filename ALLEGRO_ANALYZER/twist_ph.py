@@ -24,6 +24,7 @@ from __dirModifications import build_dir
 from __class_Configuration import Configuration
 from __class_RelaxerAPI import RelaxerAPI
 from __class_ForceInterp import ForceInterp, FourierForceInterp
+from __class_PhononConfig import TwistedRealspacePhonon
 from ___helpers_parsing import greet, update, succ, warn, err, is_flag, check_not_flag
 import os, sys
 
@@ -35,7 +36,7 @@ if __name__ == '__main__':
     USAGE_MSG = f"Usage: python3 {sys.argv[0]} -deg <twist angle (deg)> -name <solid name> -cut <frequency cutoff> -dir <base I/O dir> -o <output dir>"
     args = sys.argv[1:]; i = 0; n = len(args)
     indir = '.'; outdir = '.'; theta = None; name = None; outname = DEFAULT_PH_BAND_PLOT_NAME; cutoff = None
-    plot_intra = False; relax = False
+    plot_intra = False; relax = False; realspace = False
     while i < n:
         if not is_flag(args[i]):
             warn(f'Warning: token "{args[i]}" is out of place and will be ignored')
@@ -54,11 +55,13 @@ if __name__ == '__main__':
             i += 1; check_not_flag(args[i]); outname = args[i]; i += 1
         elif args[i] == '--intra':
             i += 1; plot_intra = True
-        elif args[i] == '--relax' or args[i] == 'r':
+        elif args[i] == '--relax' or args[i] == '-r':
             i += 1
             relax = RELAX_SPLINE_INTERP if args[i] in ['r', 'real', 'R', 'REAL'] else RELAX_FOURIER_INTERP
             i += 1 
-        elif args[i] in ['--usage', '--help']:
+        elif args[i] == '--real':
+            i += 1; realspace = True
+        elif args[i] in ['--usage', '--help', '-h']:
             print(USAGE_MSG)
             sys.exit(0)
         else:
@@ -173,6 +176,13 @@ if __name__ == '__main__':
     print("Combining into a single twisted dynamical matrix object...")
     TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc])
     print("Twisted dynamical matrix object constructed.")
+
+    if realspace:
+        print("Analyzing phonons in realspace...")
+        n_at = sum([sum(p.natoms) for p in poscars_uc])
+        print(f"Number of atoms in bilayer configuration cell: {n_at}")
+        twrph = TwistedRealspacePhonon(np.rad2deg(theta), GM_set, TDM.get_DM_at_Gamma(), n_at, poscars_sc[0])
+        print("Phonons in realspace analyzed.")
 
     print(f"Diagonalizing and outputting modes with corners {corner_kmags}...")
     TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, filename=outname, cutoff=cutoff)
