@@ -134,12 +134,13 @@ class TwistedRealspacePhonon:
     def plot_avgs(self, outname='avg.png'):
         avgtnsr = np.mean(self.rphtnsr, axis=2) # shape: (n_at, C, d)
         avgtnsr = np.transpose(avgtnsr, axes=(1,0,2)) # shape: (C, n_at, d)
+        print(f"Average tensor shape: {avgtnsr.shape}")
         for m_j, phonons in enumerate(avgtnsr): # shape: (n_at, d)
             plt.clf(); fig = plt.figure(); ax = fig.gca(projection='3d')
             plt.quiver(0, 0, np.linspace(0,1,num=self.n_at), 
                         phonons[:,0], phonons[:,1], phonons[:,2])
             ax.scatter(0, 0, np.linspace(0,1,num=self.n_at), c='black')
-            ax.view_init(0, 0)
+            # ax.view_init(0, 0)
             this_outname = outname[:outname.index('.')] + f'_{m_j}' + outname[outname.index('.'):]
             fig.savefig(self.outdir + this_outname)
             plt.close(fig)
