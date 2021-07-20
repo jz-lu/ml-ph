@@ -78,11 +78,13 @@ Note: while this was intended for analyzing phonons at the Gamma point, it makes
 no assumption of what k is, and thus can be used for arbitrary k (just pass into `DM_at_Gamma`).
 """
 class TwistedRealspacePhonon:
-    def __init__(self, theta, GM_set, DM_at_Gamma, n_at, poscar_sc : Poscar, gridsz=11, outdir='.', cut=6):
+    def __init__(self, theta, GM_set, DM_at_Gamma, n_at, poscar_uc : Poscar, gridsz=11, outdir='.', cut=6):
         self.GM_set = GM_set; self.n_G = len(GM_set)
         self.cut = cut; self.n_at = n_at
         self.DM_at_Gamma = DM_at_Gamma
-        self.sc_lattice = poscar_sc.structure.lattice.matrix[:2,:2]
+        angle = np.deg2rad(theta)
+        A_delta2inv = LA.inv(np.array([[1-np.cos(angle), -np.sin(angle)],[np.sin(angle), 1-np.cos(angle)]]))
+        self.sc_lattice = A_delta2inv @ poscar_uc.structure.lattice.matrix[:2,:2]
         x = np.linspace(0, 1, num=gridsz, endpoint=False)
         self.d = 3; self.theta = theta
         self.gridsz = gridsz; self.n_r = gridsz**2
