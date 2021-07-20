@@ -183,8 +183,10 @@ if __name__ == '__main__':
     print("Twisted dynamical matrix object constructed.")
 
     if force_sum:
-        print("Analyzing sum of forces in twisted bilayer...")
-        TDM.print_force_sum()
+        print("\nAnalyzing sum of forces in twisted bilayer (G0 only)...")
+        TDM.print_force_sum(G0_only=True)
+        print("\nAnalyzing sum of forces in twisted bilayer (all G)...")
+        TDM.print_force_sum(G0_only=False)
 
     if realspace:
         print("Analyzing phonons in realspace...")

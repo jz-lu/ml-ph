@@ -310,7 +310,7 @@ class TwistedDM:
     def get_DM_at_Gamma(self):
         return self.DMs[self.Gamma_idx]
     
-    def print_force_sum(self):
+    def print_force_sum(self, G0_only=True):
         def intra_force_from_dm(l, i, j, l0sz, n_at, DMintra):
             assert l in [0,1]
             Mi = self.M[l,i]; idx = 3*i + j*l0sz
@@ -327,10 +327,11 @@ class TwistedDM:
         dm = self.get_DM_at_Gamma()
         l0szs = self.l0szs
         interblks = self.interobj.get_all_blocks()
+        n_GM = 1 if G0_only else self.n_GM
         print("LAYER 1 ATOMS:")
         for i in range(self.n_ats[0]): # layer 1 atoms
             intra = dm[:self.szs[0],:self.szs[0]]
-            intrasum = sum([sum(intra_force_from_dm(0, i, j, l0szs[0], self.n_ats[0], intra)) for j in range(self.n_GM)])
+            intrasum = sum([sum(intra_force_from_dm(0, i, j, l0szs[0], self.n_ats[0], intra)) for j in range(n_GM)])
             assert intrasum.shape == (3,3)
             intersum = sum([sum(inter_force_from_dm(0, i, self.n_ats[0], blk)) for blk in interblks])
             assert intersum.shape == (3,3)
@@ -340,7 +341,7 @@ class TwistedDM:
         print("Layer 2 ATOMS:")
         for i in range(self.n_ats[1]): # layer 2 atoms
             intra = dm[self.szs[0]:self.szs[0]+self.szs[1],self.szs[0]:self.szs[0]+self.szs[1]]
-            intrasum = sum([sum(intra_force_from_dm(1, i, j, l0szs[1], self.n_ats[1], intra)) for j in range(self.n_GM)])
+            intrasum = sum([sum(intra_force_from_dm(1, i, j, l0szs[1], self.n_ats[1], intra)) for j in range(n_GM)])
             intersum = sum([sum(inter_force_from_dm(1, i, self.n_ats[1], blk)) for blk in interblks])
             assert intrasum.shape == (3,3), f"Invalid intra shape {intrasum.shape}"
             assert intersum.shape == (3,3), f"Invalid inter shape {intersum.shape}"
