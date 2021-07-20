@@ -105,18 +105,24 @@ class MonolayerDM:
         self.DM_set = [block_diag(*[self.__block_intra_l0(k+GM, self.ph) for GM in self.GM_set]) for k in self.k_set]
         return self.DM_set
 
-    def print_forces_info(self):
+    def get_block_force_sum(self):
         if self.DM_set is None:
             self.__block_intra_l1()
         l0sz = self.l0_shape[0]; Gam = self.Gamma_idx
-        print(f"\nINTRALAYER FORCE SUMS for {self.name}:")
-        for i in range(0, 3*self.n_at, 3):
+        blksums_list = [0]*self.n_at
+        for i in range(self.n_at):
             def force_from_dm(j):
-                Mi = self.M[i//3]
-                temp = np.split(self.DM_set[Gam][i + j*l0sz:i + j*l0sz+3], self.n_at, axis=1)
+                Mi = self.M[i]; idx = 3*i + j*l0sz
+                temp = np.split(self.DM_set[Gam][idx:idx+3,j*l0sz:(j+1)*l0sz], self.n_at, axis=1)
                 return [sqrt(Mi*Mj) * subblk for subblk, Mj in zip(temp, self.M)]
-            blksums = [sum(force_from_dm(j)) for j in range(self.n_GM)]
-            blksum_str = [f"[At: {i//3}] GM{j}:\n{s}\n" for j, s in enumerate(blksums)]
+            blksums_list[i] = [sum(force_from_dm(j)) for j in range(self.n_GM)]
+        return blksums_list
+    
+    def print_force_sum(self):
+        blksums_list = self.get_block_force_sum()
+        print(f"\nINTRALAYER FORCE SUMS for {self.name}:")
+        for i, blksums in enumerate(blksums_list):
+            blksum_str = [f"[At: {i}] GM{j}:\n{s}\n" for j, s in enumerate(blksums)]
             print(''.join(blksum_str))
         print(f"Total sum over all GM: {sum(blksums)}\n")
 
@@ -257,13 +263,18 @@ class InterlayerDM:
 # Build full dynamical matrix from intralayer and interlayer terms via the above 2 classes
 class TwistedDM:
     def __init__(self, l1 : MonolayerDM, l2 : MonolayerDM, inter : InterlayerDM, k_mags, species_per_layer):
+        self.interobj = inter; self.intraobjs = [l1, l2]
+        self.n_ats = [l1.n_at, l2.n_at]
         print("Building dynamical matrix intra(er) blocks...")
         DMs_layer1 = l1.get_DM_set(); DMs_layer2 = l2.get_DM_set(); DM_inter = inter.get_DM()
+        self.szs = [DMs_layer1[0].shape[0], DMs_layer2[0].shape[0]]
         print("Blocks built.")
-        self.species = species_per_layer
+        self.M = np.array([[species.atomic_mass for species in layer] for layer in species_per_layer])
         self.off_diag_blocks = inter.get_off_diag_blocks()
+        self.n_GM = l1.get_GM_set()
         self.k_mags = k_mags
         self.modes_built = False
+        self.l0szs = [l1.l0_shape[0], l2.l0_shape[0]]
         self.Gamma_idx = 0 # TODO change when using K-G-M-K
         self.DMs = [self.__block_l2([DMs_layer1[i], DMs_layer2[i]], DM_inter) for i in range(len(k_mags))]
 
@@ -272,7 +283,7 @@ class TwistedDM:
         # * On the first intralayer loop over the 3x3 block diagonal i and sum over all 3x3 blocks
         # * in the interlayer 1-2 matrix in row i. Repeat for second intralayer and interlayer 2-1.
         def enforce_acoustic_sum_rule():
-            M = np.array([[species.atomic_mass for species in layer] for layer in self.species])
+            M = self.M
             n_GM = 1 + len(self.off_diag_blocks)
             l0sz = DM_intras[0].shape[0] // n_GM; print(f"Level 0 size: {l0sz}")
             assert DM_intras[0].shape[0] % n_GM == 0
@@ -296,6 +307,43 @@ class TwistedDM:
     def get_DM_at_Gamma(self):
         return self.DMs[self.Gamma_idx]
     
+    def print_force_sum(self):
+        def intra_force_from_dm(l, i, j, l0sz, n_at, DMintra):
+            assert l in [0,1]
+            Mi = self.M[l,i]; idx = 3*i + j*l0sz
+            temp = np.split(DMintra[idx:idx+3,j*l0sz:(j+1)*l0sz], n_at, axis=1)
+            return [sqrt(Mi*Mj) * subblk for subblk, Mj in zip(temp, self.M[l])]
+        def inter_force_from_dm(l, i, n_at, blk):
+            assert l in [0,1]; Mi = self.M[l,i]
+            if l == 1:
+                blk = blk.conjugate().T
+            temp = np.split(blk[i:i+3], n_at, axis=1)
+            return [sqrt(Mi*Mj) * subblk for subblk, Mj in zip(temp, self.M[l])]
+
+        print("\nTWISTED FORCE SUMS:")
+        dm = self.get_DM_at_Gamma()
+        l0szs = self.l0szs
+        interblks = self.interobj.get_all_blocks()
+        print("LAYER 1 ATOMS:")
+        for i in range(self.n_ats[0]): # layer 1 atoms
+            intra = dm[:self.szs[0],:self.szs[0]]
+            intrasum = sum([sum(intra_force_from_dm(0, i, j, l0szs[0], self.n_ats[0], intra)) for j in range(self.n_GM)])
+            assert intrasum.shape == (3,3)
+            intersum = sum([sum(inter_force_from_dm(0, i, self.n_ats[0], blk)) for blk in interblks])
+            assert intersum.shape == (3,3)
+            totalsum = intrasum + intersum
+            print(f"[Layer 1] [At {i}] total sum of forces:\n{totalsum}")
+            
+        print("Layer 2 ATOMS:")
+        for i in range(self.n_ats[1]): # layer 2 atoms
+            intra = dm[self.szs[0]:self.szs[1],self.szs[0]:self.szs[1]]
+            intrasum = sum([sum(intra_force_from_dm(1, i, j, l0szs[1], self.n_ats[1], intra)) for j in range(self.n_GM)])
+            intersum = sum([sum(inter_force_from_dm(1, i, self.n_ats[1], blk)) for blk in interblks])
+            assert intrasum.shape == (3,3)
+            assert intersum.shape == (3,3)
+            totalsum = intrasum + intersum
+            print(f"[Layer 2] [At {i}] total sum of forces:\n{totalsum}")
+
     def get_k_set(self):
         print("Retrieved k set sample from twisted DM object")
         return self.k_mags

@@ -36,7 +36,7 @@ if __name__ == '__main__':
     USAGE_MSG = f"Usage: python3 {sys.argv[0]} -deg <twist angle (deg)> -name <solid name> -cut <frequency cutoff> -dir <base I/O dir> -o <output dir>"
     args = sys.argv[1:]; i = 0; n = len(args)
     indir = '.'; outdir = '.'; theta = None; name = None; outname = DEFAULT_PH_BAND_PLOT_NAME; cutoff = None
-    plot_intra = False; relax = False; realspace = False
+    plot_intra = False; relax = False; realspace = False; force_sum = False
     while i < n:
         if not is_flag(args[i]):
             warn(f'Warning: token "{args[i]}" is out of place and will be ignored')
@@ -61,6 +61,8 @@ if __name__ == '__main__':
             i += 1 
         elif args[i] == '--real':
             i += 1; realspace = True
+        elif args[i] == '--fsum':
+            i += 1; force_sum = True
         elif args[i] in ['--usage', '--help', '-h']:
             print(USAGE_MSG)
             sys.exit(0)
@@ -122,6 +124,10 @@ if __name__ == '__main__':
     update("Constructing intralayer dynamical matrix objects...")
     MLDMs = [MonolayerDM(uc, sc, ph, GM_set, k_set) for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
     assert len(MLDMs) == 2, f"Only 2-layer solids supported for twisted DM (for now), got {len(MLDMs)}"
+    if force_sum:
+        for i, MLDM in enumerate(MLDMs):
+            print(f"Computing layer {i} force sums...")
+            MLDM.print_force_sum()
     if plot_intra:
         print("Plotting one intralayer component...")
         MLDMs[0].plot_band(k_mags, corner_kmags, name=name, outdir=outdir, filename='intra_'+outname, cutoff=cutoff)
@@ -139,7 +145,6 @@ if __name__ == '__main__':
             b_set[i] = np.array(list(map(float, f.read().splitlines()))[:2]) # shifts must be 2-dimensional
     print("Shift vectors imported:", b_set)
         
-
     print("Getting interlayer phonopy objects from API...")
     config_ph_list = ph_api.inter_ph_list()
     print("Phonopy objects retrieved.")
@@ -176,6 +181,10 @@ if __name__ == '__main__':
     print("Combining into a single twisted dynamical matrix object...")
     TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc])
     print("Twisted dynamical matrix object constructed.")
+
+    if force_sum:
+        print("Analyzing sum of forces in twisted bilayer...")
+        TDM.print_force_sum()
 
     if realspace:
         print("Analyzing phonons in realspace...")
