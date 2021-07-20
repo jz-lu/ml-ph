@@ -143,6 +143,7 @@ class TwistedRealspacePhonon:
                 ax.scatter(coords[:,0], coords[:,1], np.zeros(self.n_r), c='black')
                 this_outname = outname[:outname.index('.')] + f'_{m_j}_{at_i}' + outname[outname.index('.'):]
                 plt.title(f"Normalized phonons (" + r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ$" + f", mode {m_j}, atom {at_i}) in supercell")
+                ax.view_init(0, 0)
                 fig.savefig(self.outdir + this_outname)
                 plt.close(fig)
                 update(f"Wrote twisted phonons in realspace to {self.outdir + this_outname}")
