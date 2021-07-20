@@ -310,7 +310,7 @@ class TwistedDM:
     def get_DM_at_Gamma(self):
         return self.DMs[self.Gamma_idx]
     
-    def print_force_sum(self, G0_only=True):
+    def print_force_sum(self, G0_only=True, no_inter_diag=False):
         def intra_force_from_dm(l, i, j, l0sz, n_at, DMintra):
             assert l in [0,1]
             Mi = self.M[l,i]; idx = 3*i + j*l0sz
@@ -327,6 +327,8 @@ class TwistedDM:
         dm = self.get_DM_at_Gamma()
         l0szs = self.l0szs
         interblks = self.interobj.get_all_blocks()
+        if no_inter_diag:
+            interblks = interblks[self.n_GM:]
         n_GM = 1 if G0_only else self.n_GM
         print("LAYER 1 ATOMS:")
         for i in range(self.n_ats[0]): # layer 1 atoms

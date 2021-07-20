@@ -185,6 +185,8 @@ if __name__ == '__main__':
     if force_sum:
         print("\nAnalyzing sum of forces in twisted bilayer (G0 only)...")
         TDM.print_force_sum(G0_only=True)
+        print("\nAnalyzing sum of forces in twisted bilayer (G0 only, no inter diag)...")
+        TDM.print_force_sum(G0_only=True, no_inter_diag=True)
         print("\nAnalyzing sum of forces in twisted bilayer (all G)...")
         TDM.print_force_sum(G0_only=False)
 
