@@ -286,7 +286,7 @@ class TwistedDM:
         def enforce_acoustic_sum_rule():
             M = self.M
             n_GM = 1 + len(self.off_diag_blocks)
-            l0sz = DM_intras[0].shape[0] // n_GM; print(f"Level 0 size: {l0sz}")
+            l0sz = DM_intras[0].shape[0] // n_GM
             assert DM_intras[0].shape[0] % n_GM == 0
             assert l0sz % 3 == 0
             for i in range(0, l0sz, 3): # intralayer1 and interlayer12
