@@ -37,14 +37,17 @@ yields the phonon modes as a function of k.
 # Monolayer dynamical matrix
 class MonolayerDM:
     def __init__(self, poscar_uc : Poscar, poscar_sc : Poscar, ph, GM_set, k_set, using_flex=False):
+        self.n_at = sum(poscar_uc.natoms)
         self.uc = poscar_uc.structure; self.sc = poscar_sc.structure # get structure objects from Poscar objects
-        self.GM_set = GM_set; self.k_set = k_set; self.ph = ph
+        self.GM_set = GM_set; self.n_GM = len(GM_set); self.k_set = k_set; self.ph = ph
         self.pos_sc_id = self.__sc_atomic_id() if using_flex else None
         self.A0 = self.uc.lattice.matrix[:2, :2] # remove z-axis
-        self.DM_set = None; self.dbgprint = True
+        self.DM_set = None; self.dbgprint = True; self.l0_shape = None
         self.name = poscar_uc.comment; self.modes_built = False
+        self.M = np.array([species.atomic_mass for species in poscar_uc.structure.species])
         if self.pos_sc_id is not None:
             print(f"MonolayerDM intralayer atomic IDs for {self.name}:", self.pos_sc_id)
+        self.Gamma_idx = 0 # TODO
 
     # Assign each atom a unique ID in the supercell
     def __sc_atomic_id(self):
@@ -59,12 +62,15 @@ class MonolayerDM:
         pos_sc_id = np.array(pos_sc_id); self.pos_sc_id = pos_sc_id
         return pos_sc_id
     
-    # Compute intralayer dynamical matrix block element for given some center `q` and phonopy object `ph`
+    # Compute intralayer dynamical matrix block element for given some (direct) center `q` and phonopy object `ph`
     def __block_intra_l0(self, q, ph):
+        dm = ph.get_dynamical_matrix_at_q(q)
         if self.dbgprint:
-            print(f"Intralayer Level-0 shape: {ph.get_dynamical_matrix_at_q(q).shape}")
+            print(f"Intralayer Level-0 shape: {dm.shape}")
             self.dbgprint = False
-        return ph.get_dynamical_matrix_at_q(q)
+        if self.l0_shape is None:
+            self.l0_shape = dm.shape
+        return dm
     
     # Deprecated: Calculates dynamical matrix elements for direct or Cartesian coordinates `q`
     def __flex_block_intra_l0(self, q, ph):
@@ -93,11 +99,26 @@ class MonolayerDM:
                     D[id1:id1+d, id2:id2+d] += (1/np.sqrt(Mx * My)) * fc_here * fourier_exp / multi
         D = (D + D.conj().T) / 2 # impose Hermiticity if not already satisfied
         return D
-        
+    
     # Create level-1 block matrix (each matrix becomes a block in level-2)
     def __block_intra_l1(self):
         self.DM_set = [block_diag(*[self.__block_intra_l0(k+GM, self.ph) for GM in self.GM_set]) for k in self.k_set]
         return self.DM_set
+
+    def print_forces_info(self):
+        if self.DM_set is None:
+            self.__block_intra_l1()
+        l0sz = self.l0_shape[0]; Gam = self.Gamma_idx
+        print(f"\nINTRALAYER FORCE SUMS for {self.name}:")
+        for i in range(0, 3*self.n_at, 3):
+            def force_from_dm(j):
+                Mi = self.M[i//3]
+                temp = np.split(self.DM_set[Gam][i + j*l0sz:i + j*l0sz+3], self.n_at, axis=1)
+                return [sqrt(Mi*Mj) * subblk for subblk, Mj in zip(temp, self.M)]
+            blksums = [sum(force_from_dm(j)) for j in range(self.n_GM)]
+            blksum_str = [f"[At: {i//3}] GM{j}:\n{s}\n" for j, s in enumerate(blksums)]
+            print(''.join(blksum_str))
+        print(f"Total sum over all GM: {sum(blksums)}\n")
 
     def get_DM_set(self):
         if self.DM_set is None:
@@ -194,12 +215,15 @@ class InterlayerDM:
         D0 = self.__block_inter_l0(self.G0_set[0]); block_l0_shape = D0.shape
         self.DM = [[None]*n_GM for _ in range(n_GM)] # NoneType interpreted by scipy as 0 matrix block
         self.GMi_blocks = [0]*(n_GM-1)
+        self.all_blocks = [0]*(3*(n_GM-1) + 1)
         for i in range(n_GM): # fill diagonal
             self.DM[i][i] = D0
+            self.all_blocks[i] = D0
         for i in range(1, n_GM): # fill first row/col
             self.DM[0][i] = self.__block_inter_l0(self.G0_set[i])
-            self.GMi_blocks[i-1] = self.DM[0][i]
+            self.GMi_blocks[i+n_GM-1] = self.DM[0][i]
             self.DM[i][0] = self.__block_inter_l0(-self.G0_set[i])
+            self.GMi_blocks[i+(2*n_GM-1)-1] = self.DM[i][0]
             assert self.DM[0][i].shape == block_l0_shape and self.DM[i][0].shape == block_l0_shape, f"Shape GM0{i}={self.DM[0][i].shape}, GM{i}0={self.DM[i][0].shape}, expected {block_l0_shape}"
             assert np.isclose(LA.norm(self.DM[0][i]), LA.norm(self.DM[i][0]), rtol=1e-5), f"Level-0 interlayer DM blocks for G0{i} not inversion-symmetric:\n {LA.norm(self.DM[0][i])}\nvs. \n{LA.norm(self.DM[i][0])}"
         self.DM = bmat(self.DM).toarray() # convert NoneTypes to zero-matrix blocks to make sparse matrix
@@ -211,6 +235,12 @@ class InterlayerDM:
             self.__block_inter_l1()
         print(f"Off-diagonal block shapes: {self.GMi_blocks[0].shape}")
         return self.GMi_blocks
+    
+    def get_all_blocks(self):
+        if self.DM is None:
+            print("Building interlayer dynamical matrix...")
+            self.__block_inter_l1()
+        return self.all_blocks
 
     def get_DM(self):
         if self.DM is None:
@@ -239,8 +269,8 @@ class TwistedDM:
 
     # Create level-2 (final level--full matrix) block matrix with intralayer and interlayer terms
     def __block_l2(self, DM_intras, DM_inter):
-        # On the first intralayer loop over the 3x3 block diagonal i and sum over all 3x3 blocks
-        # in the interlayer 1-2 matrix in row i. Repeat for second intralayer and interlayer 2-1.
+        # * On the first intralayer loop over the 3x3 block diagonal i and sum over all 3x3 blocks
+        # * in the interlayer 1-2 matrix in row i. Repeat for second intralayer and interlayer 2-1.
         def enforce_acoustic_sum_rule():
             M = np.array([[species.atomic_mass for species in layer] for layer in self.species])
             n_GM = 1 + len(self.off_diag_blocks)
