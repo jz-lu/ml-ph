@@ -140,6 +140,7 @@ class TwistedRealspacePhonon:
                 this_outname = outname[:outname.index('.')] + f'_{m_j}_{at_i}' + outname[outname.index('.'):]
                 plt.title(f"Phonons (" + r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ$" + f", mode {m_j}, atom {at_i}) in supercell")
                 fig.savefig(self.outdir + this_outname)
+                plt.close(fig)
                 update(f"Wrote twisted phonons in realspace to {self.outdir + this_outname}")
         succ(f"Successfully generated {self.cut * self.n_at} realspace twisted phonon plots")
 
