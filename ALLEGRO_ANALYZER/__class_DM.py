@@ -342,8 +342,8 @@ class TwistedDM:
             intra = dm[self.szs[0]:self.szs[1],self.szs[0]:self.szs[1]]
             intrasum = sum([sum(intra_force_from_dm(1, i, j, l0szs[1], self.n_ats[1], intra)) for j in range(self.n_GM)])
             intersum = sum([sum(inter_force_from_dm(1, i, self.n_ats[1], blk)) for blk in interblks])
-            assert intrasum.shape == (3,3)
-            assert intersum.shape == (3,3)
+            assert intrasum.shape == (3,3), f"Invalid intra shape {intrasum.shape}"
+            assert intersum.shape == (3,3), f"Invalid inter shape {intersum.shape}"
             totalsum = np.round(intrasum + intersum, 8)
             print(f"[Layer 2] [At {i}] total sum of forces:\n{totalsum}")
 
