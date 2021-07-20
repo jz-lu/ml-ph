@@ -339,7 +339,7 @@ class TwistedDM:
             
         print("Layer 2 ATOMS:")
         for i in range(self.n_ats[1]): # layer 2 atoms
-            intra = dm[self.szs[0]:self.szs[1],self.szs[0]:self.szs[1]]
+            intra = dm[self.szs[0]:self.szs[0]+self.szs[1],self.szs[0]:self.szs[0]+self.szs[1]]
             intrasum = sum([sum(intra_force_from_dm(1, i, j, l0szs[1], self.n_ats[1], intra)) for j in range(self.n_GM)])
             intersum = sum([sum(inter_force_from_dm(1, i, self.n_ats[1], blk)) for blk in interblks])
             assert intrasum.shape == (3,3), f"Invalid intra shape {intrasum.shape}"
