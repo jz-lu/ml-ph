@@ -120,7 +120,7 @@ class TwistedRealspacePhonon:
             evecs_by_layer[li] = np.array(np.split(evecs_by_layer[li], self.n_at//2, axis=2)) # shape: (n_at/2, n_G, C, d)
             print(f"Final evec shape for layer {li}: {evecs_by_layer[li].shape}")
         evecs = np.concatenate(evecs_by_layer, axis=0) # bring them together, so shape: (n_at, n_G, C, d)
-        assert self.phtnsr_shape == (self.n_at, self.n_G, self.cut, self.d), f"Incorrect shape {self.phtnsr_shape}"
+        assert evecs.shape == (self.n_at, self.n_G, self.cut, self.d), f"Incorrect shape {evecs.shape}"
         self.phtnsr = np.transpose(evecs, axes=(1,0,2,3)) # shape: (n_G, n_at, C, d)
         assert self.phtnsr.shape == self.phtnsr_shape, f"Unexpected phonon tensor shape {self.phtnsr.shape}, expected {self.phtnsr_shape}"
         self.evals_real = np.real(np.array(evals)[:self.cut])
