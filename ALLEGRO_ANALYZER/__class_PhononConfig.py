@@ -152,7 +152,7 @@ class TwistedRealspacePhonon:
         x = self.at_pos[:,0]; y = self.at_pos[:,1]; z = self.at_pos[:,2]
         for m_j, phonons in enumerate(avgtnsr): # shape: (n_at, d)
             plt.clf(); fig = plt.figure(); ax = fig.gca(projection='3d')
-            plt.quiver(x, y, z, phonons[:,0], phonons[:,1], phonons[:,2])
+            plt.quiver(x, y, z, phonons[:,0], phonons[:,1], phonons[:,2], length=1)
             ax.scatter(x, y, z, c='black')
             this_outname = outname[:outname.index('.')] + f'_{m_j}' + outname[outname.index('.'):]
             fig.savefig(self.outdir + this_outname)
@@ -168,7 +168,7 @@ class TwistedRealspacePhonon:
                 plt.clf(); fig = plt.figure(); ax = fig.gca(projection='3d')
                 plt.quiver(coords[:,0], coords[:,1], np.zeros(self.n_r), 
                             phonons[:,0], phonons[:,1], phonons[:,2], length=0.5)
-                ax.scatter(coords[:,0], coords[:,1], np.zeros(self.n_r), c='black')
+                ax.scatter(coords[:,0], coords[:,1], np.zeros(self.n_r), c=['black']*self.n_at//2 + ['mediumblue']*self.n_at//2)
                 this_outname = outname[:outname.index('.')] + f'_{m_j}_{at_i}' + outname[outname.index('.'):]
                 plt.title(f"Phonon directions (" + r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ$" + f", mode {m_j}, atom {at_i})in moire cell")
                 ax.view_init(elev=0, azim=60)
