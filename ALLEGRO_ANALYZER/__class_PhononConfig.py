@@ -149,11 +149,13 @@ class TwistedRealspacePhonon:
         avgtnsr = np.transpose(avgtnsr, axes=(1,0,2)) # shape: (C, n_at, d)
         np.save(self.outdir + "avgtnsr.npy", avgtnsr)
         print(f"Average tensor shape: {avgtnsr.shape}")
-        x = self.at_pos[:,0]; y = self.at_pos[:,1]; z = self.at_pos[:,2]; nuc_at = self.n_at//2
+        # x = self.at_pos[:,0]; y = self.at_pos[:,1]; z = self.at_pos[:,2]
+        nuc_at = self.n_at//2
+        x = np.zeros(self.n_at); y = x; z = np.linspace(0,1,num=self.n_at)
         for m_j, phonons in enumerate(avgtnsr): # shape: (n_at, d)
             plt.clf(); fig = plt.figure(); ax = fig.gca(projection='3d')
-            plt.quiver(x, y, z/2, phonons[:,0], phonons[:,1], phonons[:,2])
-            ax.scatter(x, y, z/2, c=['black']*nuc_at + ['maroon']*nuc_at)
+            plt.quiver(x, y, z, phonons[:,0], phonons[:,1], phonons[:,2])
+            ax.scatter(x, y, z, c=['black']*nuc_at + ['maroon']*nuc_at)
             plt.title(f"Mean phonons over continuum (mode {m_j})")
             this_outname = outname[:outname.index('.')] + f'_{m_j}' + outname[outname.index('.'):]
             fig.savefig(self.outdir + this_outname)
@@ -171,7 +173,7 @@ class TwistedRealspacePhonon:
                             phonons[:,0], phonons[:,1], phonons[:,2], length=0.5)
                 ax.scatter(coords[:,0], coords[:,1], np.zeros(self.n_r), c='black')
                 this_outname = outname[:outname.index('.')] + f'_{m_j}_{at_i}' + outname[outname.index('.'):]
-                plt.title(f"Phonon directions (" + r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ$" + f", mode {m_j}, atom {at_i})in moire cell")
+                plt.title(f"Phonon directions (" + r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" mode {m_j}, atom {at_i}) in moire cell")
                 ax.view_init(elev=0, azim=60)
                 fig.savefig(self.outdir + this_outname)
                 plt.close(fig)
