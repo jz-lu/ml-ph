@@ -174,7 +174,7 @@ class TwistedRealspacePhonon:
                 ax.scatter(coords[:,0], coords[:,1], np.zeros(self.n_r), c='black')
                 this_outname = outname[:outname.index('.')] + f'_{m_j}_{at_i}' + outname[outname.index('.'):]
                 plt.title(f"Phonon directions (" + r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" mode {m_j}, atom {at_i}) in moire cell")
-                ax.view_init(elev=0, azim=60); ax.set_zlim(-0.5,0.5)
+                ax.view_init(elev=90, azim=0); ax.set_zlim(-0.25,0.25)
                 fig.savefig(self.outdir + this_outname)
                 plt.close(fig)
                 update(f"Wrote twisted phonons in realspace to {self.outdir + this_outname}")
