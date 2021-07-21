@@ -38,7 +38,7 @@ yields the phonon modes as a function of k.
 class MonolayerDM:
     def __init__(self, poscar_uc : Poscar, poscar_sc : Poscar, ph, GM_set, k_set, using_flex=False):
         print("Symmetrizing force constants...")
-        ph.symmetrize_force_constants()
+        # ph.symmetrize_force_constants()
         print("Force constants symmetrized.")
         self.n_at = sum(poscar_uc.natoms)
         self.uc = poscar_uc.structure; self.sc = poscar_sc.structure # get structure objects from Poscar objects
@@ -201,7 +201,7 @@ class InterlayerDM:
         self.per_layer_at_idxs = per_layer_at_idxs; assert len(self.per_layer_at_idxs) == 2, f"Only 2 layers supported"
         if ph_list is not None:
             def sym_dm_at_gamma(i, ph):
-                print(f"Symmetrizing force constants for config {i}...")
+                # print(f"Symmetrizing force constants for config {i}...")
                 ph.symmetrize_force_constants()
                 return ph.get_dynamical_matrix_at_q([0,0,0])
             self.force_matrices = [sym_dm_at_gamma(i, ph) for i, ph in enumerate(ph_list)] # DM(Gamma) = FC (mass-scaled)
@@ -406,5 +406,3 @@ class TwistedDM:
         plt.savefig(outdir + filename)
         print(f"Plot written to {outdir+filename}")
         return
-
-
