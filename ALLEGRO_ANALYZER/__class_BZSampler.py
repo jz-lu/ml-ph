@@ -122,6 +122,7 @@ class BZSampler:
         self.k_sampled = True
         if log:
             print("Corner magnitudes:", corner_kmags)
+            print(f"k at Gamma index {self.Gamma_idx}: {k_set[self.Gamma_idx]}")
         self.corner_kmags = corner_kmags
         return (k_set, kmags)
 

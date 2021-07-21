@@ -37,6 +37,7 @@ yields the phonon modes as a function of k.
 # Monolayer dynamical matrix
 class MonolayerDM:
     def __init__(self, poscar_uc : Poscar, poscar_sc : Poscar, ph, GM_set, k_set, Gamma_idx, using_flex=False):
+        assert LA.norm(k_set[Gamma_idx]) == 0, f"Gamma index has nonzero norm {LA.norm(k_set[Gamma_idx])}"
         print("Symmetrizing force constants...")
         ph.symmetrize_force_constants()
         print("Force constants symmetrized.")
