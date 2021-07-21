@@ -89,9 +89,10 @@ class TwistedRealspacePhonon:
         self.DM_at_Gamma = DM_at_Gamma
         angle = np.deg2rad(theta)
         A_delta2inv = LA.inv(np.array([[1-np.cos(angle), -np.sin(angle)],[np.sin(angle), 1-np.cos(angle)]]))
-        self.sc_lattice = A_delta2inv @ poscars_uc[0].structure.lattice.matrix[:2,:2].T
+        A0 = poscars_uc[0].structure.lattice.matrix[:2,:2].T
+        self.sc_lattice = A_delta2inv @ A0
         self.at_pos = np.concatenate([p.structure.cart_coords for p in poscars_uc], axis=0)
-        self.at_pos[self.n_at//2:,2] += Z_LAYER_SEP # make interlayer space
+        self.at_pos[self.n_at//2:,2] += Z_LAYER_SEP*poscars_uc[0].structure.lattice.matrix[-1,-1] # make interlayer space
         x = np.linspace(0, 1, num=gridsz, endpoint=False)
         self.d = 3; self.theta = theta
         self.gridsz = gridsz; self.n_r = gridsz**2
