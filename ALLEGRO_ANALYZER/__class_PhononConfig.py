@@ -138,7 +138,7 @@ class TwistedRealspacePhonon:
     def __phonon_inverse_fourier(self):
         self.__build_modes()
         print("Building realspace phonon tensor...")
-        self.rphtnsr = np.array([sum([G_blk * np.exp(-1j * np.dot(GM, r)) for G_blk, GM in zip(self.phtnsr, self.GM_set)]) for r in self.r_matrix])
+        self.rphtnsr = np.array([sum([G_blk * np.exp(1j * np.dot(GM, r)) for G_blk, GM in zip(self.phtnsr, self.GM_set)]) for r in self.r_matrix])
         assert self.rphtnsr.shape == self.rphtnsr_shape, f"Unexpected phonon tensor shape {self.rphtnsr.shape}, expected {self.rphtnsr_shape}"
         self.rphtnsr = np.transpose(self.rphtnsr, axes=(1,2,0,3)) # shape: (n_at, C, n_r, d)
         assert self.rphtnsr.shape == (self.n_at, self.cut, self.n_r, self.d)
