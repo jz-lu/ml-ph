@@ -109,25 +109,21 @@ class MonolayerDM:
         return self.DM_set
 
     def get_block_force_sum(self):
+        l0sz = self.l0_shape[0]; Gam = self.Gamma_idx
+        def force_from_dm(i, GMj):
+            Mi = self.M[i]; idx = 3*i + GMj*l0sz
+            temp = np.split(self.DM_set[Gam][idx:idx+3,GMj*l0sz:(GMj+1)*l0sz], self.n_at, axis=1)
+            return sum([sqrt(Mi*Mj) * subblk for subblk, Mj in zip(temp, self.M)])
         if self.DM_set is None:
             self.__block_intra_l1()
-        l0sz = self.l0_shape[0]; Gam = self.Gamma_idx
-        blksums_list = [0]*self.n_at
-        for i in range(self.n_at):
-            def force_from_dm(j):
-                Mi = self.M[i]; idx = 3*i + j*l0sz
-                temp = np.split(self.DM_set[Gam][idx:idx+3,j*l0sz:(j+1)*l0sz], self.n_at, axis=1)
-                return [sqrt(Mi*Mj) * subblk for subblk, Mj in zip(temp, self.M)]
-            blksums_list[i] = np.round([sum(force_from_dm(j)) for j in range(self.n_GM)], 8)
+        blksums_list = [np.round(force_from_dm(i, 0), 8) for i in range(self.n_at)]
         return blksums_list
     
     def print_force_sum(self):
         blksums_list = self.get_block_force_sum()
         print(f"\nINTRALAYER FORCE SUMS for {self.name}:")
-        for i, blksums in enumerate(blksums_list):
-            blksum_str = [f"[At: {i}] GM{j}:\n{s}\n" for j, s in enumerate(blksums)]
-            print(''.join(blksum_str))
-        print(f"Total sum over all GM: {sum(blksums)}\n")
+        blksum_str = [f"[At: {i}]:\n{s}\n" for i, s in enumerate(blksums_list)]
+        print(''.join(blksum_str))
 
     def get_DM_set(self):
         if self.DM_set is None:
@@ -317,32 +313,30 @@ class TwistedDM:
     def get_DM_at_Gamma(self):
         return self.DMs[self.Gamma_idx]
     
-    def print_force_sum(self, G0_only=True, no_inter_diag=False):
+    def print_force_sum(self, G0_only=True):
         def intra_force_from_dm(l, i, j, l0sz, n_at, DMintra):
-            assert l in [0,1]
-            Mi = self.M[l,i]; idx = 3*i + j*l0sz
+            assert l in [0,1]; Mi = self.M[l,i]
+            idx = 3*i + j*l0sz
             temp = np.split(DMintra[idx:idx+3,j*l0sz:(j+1)*l0sz], n_at, axis=1)
-            return [sqrt(Mi*Mj) * subblk for subblk, Mj in zip(temp, self.M[l])]
-        def inter_force_from_dm(l, i, n_at, blk):
+            return sum([sqrt(Mi*Mj) * subblk for subblk, Mj in zip(temp, self.M[l])])
+        def inter_force_from_dm(l, i, n_at, blk): # n_at is number in *other* layer
             assert l in [0,1]; Mi = self.M[l,i]
             if l == 1:
                 blk = blk.conjugate().T
-            temp = np.split(blk[i:i+3], n_at, axis=1)
-            return [sqrt(Mi*Mj) * subblk for subblk, Mj in zip(temp, self.M[l])]
+            temp = np.split(blk[3*i:3*(i+1)], n_at, axis=1)
+            return sum([sqrt(Mi*Mj) * subblk for subblk, Mj in zip(temp, self.M[1-l])])
 
         print("\nTWISTED FORCE SUMS:")
         dm = self.get_DM_at_Gamma()
         l0szs = self.l0szs
         interblks = self.interobj.get_all_blocks()
-        if no_inter_diag:
-            interblks = interblks[self.n_GM:]
-        n_GM = 1 if G0_only else self.n_GM
+        print(f"Using {len(interblks)} blocks from interlayer component")
         print("LAYER 1 ATOMS:")
         for i in range(self.n_ats[0]): # layer 1 atoms
             intra = dm[:self.szs[0],:self.szs[0]]
-            intrasum = sum([sum(intra_force_from_dm(0, i, j, l0szs[0], self.n_ats[0], intra)) for j in range(n_GM)])
+            intrasum = intra_force_from_dm(0, i, 0, l0szs[0], self.n_ats[0], intra)
             assert intrasum.shape == (3,3)
-            intersum = sum([sum(inter_force_from_dm(0, i, self.n_ats[0], blk)) for blk in interblks])
+            intersum = sum([inter_force_from_dm(0, i, self.n_ats[1], blk) for blk in interblks])
             assert intersum.shape == (3,3)
             totalsum = np.round(intrasum + intersum, 8)
             print(f"[Layer 1] [At {i}] total sum of forces:\n{totalsum}")
@@ -350,8 +344,9 @@ class TwistedDM:
         print("Layer 2 ATOMS:")
         for i in range(self.n_ats[1]): # layer 2 atoms
             intra = dm[self.szs[0]:self.szs[0]+self.szs[1],self.szs[0]:self.szs[0]+self.szs[1]]
-            intrasum = sum([sum(intra_force_from_dm(1, i, j, l0szs[1], self.n_ats[1], intra)) for j in range(n_GM)])
-            intersum = sum([sum(inter_force_from_dm(1, i, self.n_ats[1], blk)) for blk in interblks])
+            assert dm.shape == tuple(map(lambda x: 2*x, intra.shape))
+            intrasum = intra_force_from_dm(1, i, 0, l0szs[1], self.n_ats[1], intra)
+            intersum = sum([inter_force_from_dm(1, i, self.n_ats[0], blk) for blk in interblks])
             assert intrasum.shape == (3,3), f"Invalid intra shape {intrasum.shape}"
             assert intersum.shape == (3,3), f"Invalid inter shape {intersum.shape}"
             totalsum = np.round(intrasum + intersum, 8)
