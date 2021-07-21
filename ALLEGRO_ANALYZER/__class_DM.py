@@ -303,7 +303,7 @@ class TwistedDM:
         
         assert len(DM_intras) == 2
         assert DM_intras[0].shape == DM_intras[1].shape == DM_inter.shape
-        DM_intras = list(map(lambda D: (D + D.conjugate().T) / 2), DM_intras) # impose Hermiticity
+        DM_intras = list(map(lambda D: (D + D.conjugate().T) / 2, DM_intras)) # impose Hermiticity
         enforce_acoustic_sum_rule()
         DM = np.block([[DM_intras[0], DM_inter], [DM_inter.conjugate().T, DM_intras[1]]])
         return DM
