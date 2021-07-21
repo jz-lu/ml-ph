@@ -152,8 +152,9 @@ class TwistedRealspacePhonon:
         x = self.at_pos[:,0]; y = self.at_pos[:,1]; z = self.at_pos[:,2]; nuc_at = self.n_at//2
         for m_j, phonons in enumerate(avgtnsr): # shape: (n_at, d)
             plt.clf(); fig = plt.figure(); ax = fig.gca(projection='3d')
-            plt.quiver(x, y, z, phonons[:,0], phonons[:,1], phonons[:,2], length=1)
-            ax.scatter(x, y, z, c=['black']*nuc_at + ['mediumblue']*nuc_at)
+            plt.quiver(x, y, z/2, phonons[:,0], phonons[:,1], phonons[:,2])
+            ax.scatter(x, y, z/2, c=['black']*nuc_at + ['maroon']*nuc_at)
+            plt.title(f"Mean phonons over continuum (mode {m_j})")
             this_outname = outname[:outname.index('.')] + f'_{m_j}' + outname[outname.index('.'):]
             fig.savefig(self.outdir + this_outname)
             plt.close(fig)
