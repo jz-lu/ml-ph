@@ -6,7 +6,7 @@ import os
 from itertools import product as prod
 from random import randint
 from pymatgen.io.vasp.inputs import Poscar
-from ___constants_vasp import VASP_FREQ_TO_INVCM_UNITS
+from ___constants_vasp import VASP_FREQ_TO_INVCM_UNITS, Z_LAYER_SEP
 from ___constants_output import DEFAULT_MODE_LABELS
 from __directory_searchers import checkPath
 from ___helpers_parsing import succ, update
@@ -83,13 +83,15 @@ some reason it is useful for different numbers of atoms, simply adjust layer sli
 of `phtnsr` to slice proportional to ratio of atoms, instead of in half.
 """
 class TwistedRealspacePhonon:
-    def __init__(self, theta, GM_set, DM_at_Gamma, n_at, poscar_uc : Poscar, gridsz=11, outdir='.', cut=6):
+    def __init__(self, theta, GM_set, DM_at_Gamma, n_at, poscars_uc, gridsz=11, outdir='.', cut=6):
         self.GM_set = GM_set; self.n_G = len(GM_set)
         self.cut = cut; self.n_at = n_at
         self.DM_at_Gamma = DM_at_Gamma
         angle = np.deg2rad(theta)
         A_delta2inv = LA.inv(np.array([[1-np.cos(angle), -np.sin(angle)],[np.sin(angle), 1-np.cos(angle)]]))
-        self.sc_lattice = A_delta2inv @ poscar_uc.structure.lattice.matrix[:2,:2].T
+        self.sc_lattice = A_delta2inv @ poscars_uc[0].structure.lattice.matrix[:2,:2].T
+        self.at_pos = np.concatenate([p.structure.cart_coords for p in poscars_uc], axis=0)
+        self.at_pos[self.n_at//2:,2] += Z_LAYER_SEP # make interlayer space
         x = np.linspace(0, 1, num=gridsz, endpoint=False)
         self.d = 3; self.theta = theta
         self.gridsz = gridsz; self.n_r = gridsz**2
@@ -124,7 +126,7 @@ class TwistedRealspacePhonon:
         self.phtnsr = np.transpose(evecs, axes=(1,0,2,3)) # shape: (n_G, n_at, C, d)
         assert self.phtnsr.shape == self.phtnsr_shape, f"Unexpected phonon tensor shape {self.phtnsr.shape}, expected {self.phtnsr_shape}"
         self.evals_real = np.real(np.array(evals)[:self.cut])
-        print("Fourier phonon tensor constructed.")
+        print(f"Fourier phonon tensor constructed: shape {self.phtnsr.shape}")
 
     def __build_modes(self):
         self.__DM_to_phtnsr()
@@ -139,19 +141,18 @@ class TwistedRealspacePhonon:
         assert self.rphtnsr.shape == self.rphtnsr_shape, f"Unexpected phonon tensor shape {self.rphtnsr.shape}, expected {self.rphtnsr_shape}"
         self.rphtnsr = np.transpose(self.rphtnsr, axes=(1,2,0,3)) # shape: (n_at, C, n_r, d)
         assert self.rphtnsr.shape == (self.n_at, self.cut, self.n_r, self.d)
-        print("Realspace phonon tensor built.")
+        print(f"Realspace phonon tensor built: shape {self.rphtnsr.shape}")
     
     def plot_avgs(self, outname='avg.png'):
         avgtnsr = np.mean(self.rphtnsr, axis=2) # shape: (n_at, C, d)
         avgtnsr = np.transpose(avgtnsr, axes=(1,0,2)) # shape: (C, n_at, d)
         np.save(self.outdir + "avgtnsr.npy", avgtnsr)
         print(f"Average tensor shape: {avgtnsr.shape}")
+        x = self.at_pos[:,0]; y = self.at_pos[:,1]; z = self.at_pos[:,2]
         for m_j, phonons in enumerate(avgtnsr): # shape: (n_at, d)
             plt.clf(); fig = plt.figure(); ax = fig.gca(projection='3d')
-            plt.quiver(0, 0, np.linspace(0,1,num=self.n_at), 
-                        phonons[:,0], phonons[:,1], phonons[:,2])
-            ax.scatter(0, 0, np.linspace(0,1,num=self.n_at), c='black')
-            # ax.view_init(0, 0)
+            plt.quiver(x, y, z, phonons[:,0], phonons[:,1], phonons[:,2])
+            ax.scatter(x, y, z, c='black')
             this_outname = outname[:outname.index('.')] + f'_{m_j}' + outname[outname.index('.'):]
             fig.savefig(self.outdir + this_outname)
             plt.close(fig)
@@ -168,8 +169,8 @@ class TwistedRealspacePhonon:
                             phonons[:,0], phonons[:,1], phonons[:,2], length=0.5)
                 ax.scatter(coords[:,0], coords[:,1], np.zeros(self.n_r), c='black')
                 this_outname = outname[:outname.index('.')] + f'_{m_j}_{at_i}' + outname[outname.index('.'):]
-                plt.title(f"Normalized phonons (" + r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ$" + f", mode {m_j}, atom {at_i}) in supercell")
-                ax.view_init(0, 0)
+                plt.title(f"Phonon directions (" + r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ$" + f", mode {m_j}, atom {at_i})in moire cell")
+                ax.view_init(elev=0, azim=60)
                 fig.savefig(self.outdir + this_outname)
                 plt.close(fig)
                 update(f"Wrote twisted phonons in realspace to {self.outdir + this_outname}")

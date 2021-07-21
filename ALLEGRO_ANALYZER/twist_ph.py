@@ -194,7 +194,7 @@ if __name__ == '__main__':
         print("Analyzing phonons in realspace...")
         n_at = sum([sum(p.natoms) for p in poscars_uc])
         print(f"Number of atoms in bilayer configuration cell: {n_at}")
-        twrph = TwistedRealspacePhonon(np.rad2deg(theta), GM_set, TDM.get_DM_at_Gamma(), n_at, poscars_uc[0], outdir=outdir)
+        twrph = TwistedRealspacePhonon(np.rad2deg(theta), GM_set, TDM.get_DM_at_Gamma(), n_at, poscars_uc, outdir=outdir)
         print("Phonons in realspace analyzed.")
         twrph.plot_phonons()
         twrph.plot_avgs()
