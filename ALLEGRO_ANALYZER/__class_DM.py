@@ -109,6 +109,8 @@ class MonolayerDM:
         return self.DM_set
 
     def get_block_force_sum(self):
+        if self.DM_set is None:
+            self.__block_intra_l1()
         l0sz = self.l0_shape[0]; Gam = self.Gamma_idx
         def force_from_dm(i, GMj):
             Mi = self.M[i]; idx = 3*i + GMj*l0sz

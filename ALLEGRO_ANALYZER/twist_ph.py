@@ -124,13 +124,13 @@ if __name__ == '__main__':
     update("Constructing intralayer dynamical matrix objects...")
     MLDMs = [MonolayerDM(uc, sc, ph, GM_set, k_set) for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
     assert len(MLDMs) == 2, f"Only 2-layer solids supported for twisted DM (for now), got {len(MLDMs)}"
+    if plot_intra:
+        print("Plotting one intralayer component...")
+        MLDMs[0].plot_band(k_mags, corner_kmags, name=name, outdir=outdir, filename='intra_'+outname, cutoff=cutoff)
     if force_sum:
         for i, MLDM in enumerate(MLDMs):
             print(f"Computing layer {i} force sums...")
             MLDM.print_force_sum()
-    if plot_intra:
-        print("Plotting one intralayer component...")
-        MLDMs[0].plot_band(k_mags, corner_kmags, name=name, outdir=outdir, filename='intra_'+outname, cutoff=cutoff)
     print("Intralayer DM objects constructed.")
 
     greet("Working on interlayer components...")
