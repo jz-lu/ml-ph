@@ -163,7 +163,7 @@ class TwistedRealspacePhonon:
         succ("Successfully outputted average phonon plots")
 
     def plot_phonons(self, outname='phreal.png'):
-        coords = self.r_matrix; coords[:,:1] /= 100
+        coords = self.r_matrix; coords[:,:1] /= 50
         np.save(self.outdir + "rphtnsr.npy", self.rphtnsr)
         for at_i, atomic_blk in enumerate(self.rphtnsr):
             for m_j, phonons in enumerate(atomic_blk):
@@ -171,10 +171,11 @@ class TwistedRealspacePhonon:
                 plt.clf(); fig = plt.figure(); ax = fig.gca(projection='3d')
                 plt.quiver(coords[:,0], coords[:,1], np.zeros(self.n_r), 
                             phonons[:,0], phonons[:,1], phonons[:,2], length=0.5)
+                plt.xlabel("x"); plt.ylabel("y")
                 ax.scatter(coords[:,0], coords[:,1], np.zeros(self.n_r), c='black')
                 this_outname = outname[:outname.index('.')] + f'_{m_j}_{at_i}' + outname[outname.index('.'):]
                 plt.title(f"Phonon directions (" + r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" mode {m_j}, atom {at_i}) in moire cell")
-                ax.view_init(elev=90, azim=0); ax.set_zlim(-0.25,0.25)
+                ax.view_init(elev=90, azim=-90); ax.set_zlim(-0.25,0.25)
                 fig.savefig(self.outdir + this_outname)
                 plt.close(fig)
                 update(f"Wrote twisted phonons in realspace to {self.outdir + this_outname}")
