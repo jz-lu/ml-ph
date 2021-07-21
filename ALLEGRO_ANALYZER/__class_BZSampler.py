@@ -117,7 +117,7 @@ class BZSampler:
             corner_kmags.append(kmag_start)
             kmag_start = mags[-1] # update start point of flattened-k to end of current line
             kmags[kidx : kidx+nk-1] = mags[:-1]
-        self.Gamma_idx = nk
+        self.Gamma_idx = nk-1
         self.k_set = k_set; self.kmags = kmags
         self.k_sampled = True
         if log:
