@@ -278,7 +278,7 @@ class TwistedDM:
         self.szs = [DMs_layer1[0].shape[0], DMs_layer2[0].shape[0]]
         print("Blocks built.")
         self.M = np.array([[species.atomic_mass for species in layer] for layer in species_per_layer])
-        self.off_diag_blocks = inter.get_off_diag_blocks()
+        self.off_diag_blocks = inter.get_all_blocks()
         self.n_GM = len(l1.get_GM_set())
         self.k_mags = k_mags
         self.modes_built = False
@@ -291,15 +291,14 @@ class TwistedDM:
         # * On the first intralayer loop over the 3x3 block diagonal i and sum over all 3x3 blocks
         # * in the interlayer 1-2 matrix in row i. Repeat for second intralayer and interlayer 2-1.
         def enforce_acoustic_sum_rule():
-            M = self.M
-            n_GM = 1 + len(self.off_diag_blocks)
+            M = self.M; n_GM = self.n_GM
             l0sz = DM_intras[0].shape[0] // n_GM
             assert DM_intras[0].shape[0] % n_GM == 0
             assert l0sz % 3 == 0
             for i in range(0, l0sz, 3): # intralayer1 and interlayer12
-                DM_intras[0][i:i+3,i:i+3] -= 1/2 * sum([sum([sqrt(M[1,j//3] / M[0,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3)]) for Gblk in self.off_diag_blocks])
+                DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[1,j//3] / M[0,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3)]) for Gblk in self.off_diag_blocks])
             for i in range(0, l0sz, 3): # intralayer2 and interlayer 21
-                DM_intras[1][i:i+3,i:i+3] -= 1/2 * sum([sum([sqrt(M[0,j//3] / M[1,i//3]) * Gblk.conjugate().T[i:i+3,j:j+3] for j in range(0,Gblk.shape[0],3)]) for Gblk in self.off_diag_blocks])
+                DM_intras[1][i:i+3,i:i+3] -= sum([sum([sqrt(M[0,j//3] / M[1,i//3]) * Gblk.conjugate().T[i:i+3,j:j+3] for j in range(0,Gblk.shape[0],3)]) for Gblk in self.off_diag_blocks])
         
         assert len(DM_intras) == 2
         assert DM_intras[0].shape == DM_intras[1].shape == DM_inter.shape
