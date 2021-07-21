@@ -162,13 +162,14 @@ class TwistedRealspacePhonon:
     def plot_phonons(self, outname='phreal.png'):
         coords = self.r_matrix
         np.save(self.outdir + "rphtnsr.npy", self.rphtnsr)
+        nuc_at = self.n_at//2
         for at_i, atomic_blk in enumerate(self.rphtnsr):
             for m_j, phonons in enumerate(atomic_blk):
                 # phonons = np.array([wf/LA.norm(wf) for wf in phonons])
                 plt.clf(); fig = plt.figure(); ax = fig.gca(projection='3d')
                 plt.quiver(coords[:,0], coords[:,1], np.zeros(self.n_r), 
                             phonons[:,0], phonons[:,1], phonons[:,2], length=0.5)
-                ax.scatter(coords[:,0], coords[:,1], np.zeros(self.n_r), c=['black']*self.n_at//2 + ['mediumblue']*self.n_at//2)
+                ax.scatter(coords[:,0], coords[:,1], np.zeros(self.n_r), c=['black']*nuc_at + ['mediumblue']*nuc_at)
                 this_outname = outname[:outname.index('.')] + f'_{m_j}_{at_i}' + outname[outname.index('.'):]
                 plt.title(f"Phonon directions (" + r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ$" + f", mode {m_j}, atom {at_i})in moire cell")
                 ax.view_init(elev=0, azim=60)
