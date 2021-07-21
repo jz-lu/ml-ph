@@ -242,7 +242,7 @@ class InterlayerDM:
         for i, blk in enumerate(self.all_blocks):
             assert blk is not None, f"Block {i} in interlayer block list was not filled"
         self.DM = bmat(self.DM).toarray() # convert NoneTypes to zero-matrix blocks to make sparse matrix
-        assert sum(sum(self.DM)) == sum(sum(sum(self.all_blocks))), f"The list of blocks does not match the interlayer DM, {sum(sum(sum(self.all_blocks)))} vs. {sum(sum(self.DM))}"
+        assert np.round(sum(sum(self.DM)), 12) == np.round(sum(sum(sum(self.all_blocks))), 12), f"The list of blocks does not match the interlayer DM, {sum(sum(sum(self.all_blocks)))} vs. {sum(sum(self.DM))}"
         return self.DM
     
     def get_off_diag_blocks(self):
