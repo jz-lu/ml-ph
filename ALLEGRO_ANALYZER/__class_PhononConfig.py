@@ -163,7 +163,7 @@ class TwistedRealspacePhonon:
         succ("Successfully outputted average phonon plots")
 
     def plot_phonons(self, outname='phreal.png'):
-        coords = self.r_matrix
+        coords = self.r_matrix; coords[:,:1] /= 100
         np.save(self.outdir + "rphtnsr.npy", self.rphtnsr)
         for at_i, atomic_blk in enumerate(self.rphtnsr):
             for m_j, phonons in enumerate(atomic_blk):
