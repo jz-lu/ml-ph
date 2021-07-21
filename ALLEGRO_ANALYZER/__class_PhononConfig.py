@@ -149,11 +149,11 @@ class TwistedRealspacePhonon:
         avgtnsr = np.transpose(avgtnsr, axes=(1,0,2)) # shape: (C, n_at, d)
         np.save(self.outdir + "avgtnsr.npy", avgtnsr)
         print(f"Average tensor shape: {avgtnsr.shape}")
-        x = self.at_pos[:,0]; y = self.at_pos[:,1]; z = self.at_pos[:,2]
+        x = self.at_pos[:,0]; y = self.at_pos[:,1]; z = self.at_pos[:,2]; nuc_at = self.n_at//2
         for m_j, phonons in enumerate(avgtnsr): # shape: (n_at, d)
             plt.clf(); fig = plt.figure(); ax = fig.gca(projection='3d')
             plt.quiver(x, y, z, phonons[:,0], phonons[:,1], phonons[:,2], length=1)
-            ax.scatter(x, y, z, c='black')
+            ax.scatter(x, y, z, c=['black']*nuc_at + ['mediumblue']*nuc_at)
             this_outname = outname[:outname.index('.')] + f'_{m_j}' + outname[outname.index('.'):]
             fig.savefig(self.outdir + this_outname)
             plt.close(fig)
@@ -162,14 +162,13 @@ class TwistedRealspacePhonon:
     def plot_phonons(self, outname='phreal.png'):
         coords = self.r_matrix
         np.save(self.outdir + "rphtnsr.npy", self.rphtnsr)
-        nuc_at = self.n_at//2
         for at_i, atomic_blk in enumerate(self.rphtnsr):
             for m_j, phonons in enumerate(atomic_blk):
                 # phonons = np.array([wf/LA.norm(wf) for wf in phonons])
                 plt.clf(); fig = plt.figure(); ax = fig.gca(projection='3d')
                 plt.quiver(coords[:,0], coords[:,1], np.zeros(self.n_r), 
                             phonons[:,0], phonons[:,1], phonons[:,2], length=0.5)
-                ax.scatter(coords[:,0], coords[:,1], np.zeros(self.n_r), c=['black']*nuc_at + ['mediumblue']*nuc_at)
+                ax.scatter(coords[:,0], coords[:,1], np.zeros(self.n_r), c='black')
                 this_outname = outname[:outname.index('.')] + f'_{m_j}_{at_i}' + outname[outname.index('.'):]
                 plt.title(f"Phonon directions (" + r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ$" + f", mode {m_j}, atom {at_i})in moire cell")
                 ax.view_init(elev=0, azim=60)
