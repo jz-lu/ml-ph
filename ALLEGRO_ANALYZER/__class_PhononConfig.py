@@ -76,6 +76,11 @@ u(k=Gamma|r), then plotted as pairs {(r, u(k|r))} in realspace, with r sampled i
 
 Note: while this was intended for analyzing phonons at the Gamma point, it makes 
 no assumption of what k is, and thus can be used for arbitrary k (just pass into `DM_at_Gamma`).
+
+Bugs: fails if number of atoms in each layer differ. In practice this is not much of a concern
+anyway, since the lattice constants will be too far apart to form a stable bilayer. If for
+some reason it is useful for different numbers of atoms, simply adjust layer slicing in formation 
+of `phtnsr` to slice proportional to ratio of atoms, instead of in half.
 """
 class TwistedRealspacePhonon:
     def __init__(self, theta, GM_set, DM_at_Gamma, n_at, poscar_uc : Poscar, gridsz=11, outdir='.', cut=6):
@@ -98,7 +103,7 @@ class TwistedRealspacePhonon:
         self.__phonon_inverse_fourier()
         print(f"Twisted realspace phonon object initialized. Cut={cut}")
 
-    def __diagonalize_DMs(self):
+    def __DM_to_phtnsr(self):
         print("Diagonalizing and sorting dynamical matrix at Gamma...")
         def sorted_eigsys(A):
             vals, vecs = LA.eig(A); idxs = vals.argsort()   
@@ -109,15 +114,19 @@ class TwistedRealspacePhonon:
         print("Transforming eigenmatrix into truncated Fourier phonon tensor...")
         # In this case n_at refers to number of atoms in entire bilayer unit cell
         evecs = np.array(evecs[:,:self.cut]).T # shape: (C, n_G x n_at x d) [c := cut = num evecs]
-        evecs = np.array(np.split(evecs, self.n_G, axis=1)) # shape: (n_G, C, n_at x d)
-        evecs = np.array(np.split(evecs, self.n_at, axis=2)) # shape: (n_at, n_G, C, d)
+        evecs_by_layer = np.split(evecs, 2, axis=1) # layer slice must be first
+        for li in range(2): # each layer has shape: (C, n_G x n_at/2 x d)
+            evecs_by_layer[li] = np.array(np.split(evecs_by_layer[li], self.n_G, axis=1)) # shape: (n_G, C, n_at/2 x d)
+            evecs_by_layer[li] = np.array(np.split(evecs_by_layer[li], self.n_at//2, axis=2)) # shape: (n_at/2, n_G, C, d)
+        evecs = np.concatenate(evecs_by_layer, axis=0) # bring them together, so shape: (n_at, n_G, C, d)
+        assert self.phtnsr_shape == (self.n_at, self.n_G, self.cut, self.d), f"Incorrect shape {self.phtnsr_shape}"
         self.phtnsr = np.transpose(evecs, axes=(1,0,2,3)) # shape: (n_G, n_at, C, d)
         assert self.phtnsr.shape == self.phtnsr_shape, f"Unexpected phonon tensor shape {self.phtnsr.shape}, expected {self.phtnsr_shape}"
         self.evals_real = np.real(np.array(evals)[:self.cut])
         print("Fourier phonon tensor constructed.")
 
     def __build_modes(self):
-        self.__diagonalize_DMs()
+        self.__DM_to_phtnsr()
         print("Signing and unitizing phonon modes...")
         self.modes = np.sign(self.evals_real) * np.sqrt(np.abs(self.evals_real)) * VASP_FREQ_TO_INVCM_UNITS
         print("Modes prepared.")
@@ -146,7 +155,6 @@ class TwistedRealspacePhonon:
             fig.savefig(self.outdir + this_outname)
             plt.close(fig)
         succ("Successfully outputted average phonon plots")
-
 
     def plot_phonons(self, outname='phreal.png'):
         coords = self.r_matrix
