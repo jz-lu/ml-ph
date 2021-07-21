@@ -101,12 +101,12 @@ class BZSampler:
         
         assert np.isclose(self.lattice_angle, 60) or np.isclose(self.lattice_angle, 120), f"k-sampler expects lattice angle to be 120 or 60 deg, but is {self.lattice_angle}"
         ncorners = 4; corners = np.zeros([ncorners, d]) # k-points IBZ boundary corners
-        corners[0,:] = Gamma; corners[1,:] = K; corners[2,:] = M; corners[3,:] = Gamma
+        corners[0,:] = K; corners[1,:] = Gamma; corners[2,:] = M; corners[3,:] = K
         self.corners = corners
 
         # Sample nk-1 (drop last point) per line (ncorners-1 lines)
         nsample = (nk-1) * (ncorners-1)
-        k_set = np.zeros([nsample, d]); kmags = np.zeros(nsample); kmag_start = LA.norm(Gamma)
+        k_set = np.zeros([nsample, d]); kmags = np.zeros(nsample); kmag_start = 0
         corner_kmags = []
         for line in range(ncorners-1): # last point equals first, so skip it
             kidx = line*(nk-1) # convert line index to k-index
@@ -115,9 +115,9 @@ class BZSampler:
             dline_mag = LA.norm(corners[line+1] - corners[line])
             mags = np.linspace(kmag_start, kmag_start + dline_mag, nk)
             corner_kmags.append(kmag_start)
-            kmag_start = mags[-1] # update start point of magnitude to end of current line
+            kmag_start = mags[-1] # update start point of flattened-k to end of current line
             kmags[kidx : kidx+nk-1] = mags[:-1]
-        # corner_kmags += [max(corner_kmags)]
+        self.Gamma_idx = nk
         self.k_set = k_set; self.kmags = kmags
         self.k_sampled = True
         if log:
@@ -128,7 +128,7 @@ class BZSampler:
     def plot_sampling(self, filename='sampling.png'):
         assert self.g_idxs is not None, "Cannot plot sampling until G vectors have been sampled"
         assert self.corners is not None, "Cannot plot sampling until k-points have been sampled"
-        labels = (r'$\Gamma$', r'K', r'M', r'$\Gamma$')
+        labels = (r'K', r'$\Gamma$', r'M', r'K')
         plt.clf()
         _, ax = plt.subplots()
         cols = list(mcolors.TABLEAU_COLORS.keys()); ncol = len(cols)
@@ -173,6 +173,10 @@ class BZSampler:
     def get_kpts(self):
         assert self.k_sampled, "Must run k-sampler before retrieving k-set"
         return self.k_set, self.kmags
+    
+    def get_Gamma_idx(self):
+        assert self.k_sampled, "Must run k-sampler before retrieving k-set"
+        return self.Gamma_idx
 
     def get_corner_kmags(self):
         return self.corner_kmags

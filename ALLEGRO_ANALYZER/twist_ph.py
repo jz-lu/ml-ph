@@ -118,11 +118,12 @@ if __name__ == '__main__':
     update("Sampling G and k sets...")
     bzsamples = get_bz_sample(theta, poscars_uc[0], outdir, make_plot=True, super_dim=super_dim)
     _, GM_set = bzsamples.get_GM_set(); _, G0_set = bzsamples.get_G0_set()
+    Gamma_idx = bzsamples.get_Gamma_idx()
     k_set, k_mags = bzsamples.get_kpts(); corner_kmags = bzsamples.get_corner_kmags()
     print("Sampling complete.")
 
     update("Constructing intralayer dynamical matrix objects...")
-    MLDMs = [MonolayerDM(uc, sc, ph, GM_set, k_set) for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
+    MLDMs = [MonolayerDM(uc, sc, ph, GM_set, k_set, Gamma_idx) for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
     assert len(MLDMs) == 2, f"Only 2-layer solids supported for twisted DM (for now), got {len(MLDMs)}"
     if plot_intra:
         print("Plotting one intralayer component...")
@@ -179,7 +180,7 @@ if __name__ == '__main__':
     print("Interlayer DM objects constructed.")
 
     print("Combining into a single twisted dynamical matrix object...")
-    TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc])
+    TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc], Gamma_idx)
     print("Twisted dynamical matrix object constructed.")
 
     if force_sum:

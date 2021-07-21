@@ -36,7 +36,7 @@ yields the phonon modes as a function of k.
 
 # Monolayer dynamical matrix
 class MonolayerDM:
-    def __init__(self, poscar_uc : Poscar, poscar_sc : Poscar, ph, GM_set, k_set, using_flex=False):
+    def __init__(self, poscar_uc : Poscar, poscar_sc : Poscar, ph, GM_set, k_set, Gamma_idx, using_flex=False):
         print("Symmetrizing force constants...")
         ph.symmetrize_force_constants()
         print("Force constants symmetrized.")
@@ -50,7 +50,7 @@ class MonolayerDM:
         self.M = np.array([species.atomic_mass for species in poscar_uc.structure.species])
         if self.pos_sc_id is not None:
             print(f"MonolayerDM intralayer atomic IDs for {self.name}:", self.pos_sc_id)
-        self.Gamma_idx = 0 # TODO
+        self.Gamma_idx = Gamma_idx
 
     # Assign each atom a unique ID in the supercell
     def __sc_atomic_id(self):
@@ -270,7 +270,7 @@ class InterlayerDM:
 
 # Build full dynamical matrix from intralayer and interlayer terms via the above 2 classes
 class TwistedDM:
-    def __init__(self, l1 : MonolayerDM, l2 : MonolayerDM, inter : InterlayerDM, k_mags, species_per_layer):
+    def __init__(self, l1 : MonolayerDM, l2 : MonolayerDM, inter : InterlayerDM, k_mags, species_per_layer, Gamma_idx):
         self.interobj = inter; self.intraobjs = [l1, l2]
         self.n_ats = [l1.n_at, l2.n_at]
         print("Building dynamical matrix intra(er) blocks...")
@@ -283,7 +283,7 @@ class TwistedDM:
         self.k_mags = k_mags
         self.modes_built = False
         self.l0szs = [l1.l0_shape[0], l2.l0_shape[0]]
-        self.Gamma_idx = 0 # TODO change when using K-G-M-K
+        self.Gamma_idx = Gamma_idx
         self.DMs = [self.__block_l2([DMs_layer1[i], DMs_layer2[i]], DM_inter) for i in range(len(k_mags))]
 
     # Create level-2 (final level--full matrix) block matrix with intralayer and interlayer terms
@@ -395,7 +395,7 @@ class TwistedDM:
             minmax[1] = max(minmax[1], max(modes))
             plt.scatter([k_mag] * len(modes), modes, c='royalblue', s=0.07)
         minmax[1] += 30; plt.ylim(minmax)
-        xlabs = (r'$\Gamma$', r'K', r'M')
+        xlabs = (r'K', r'$\Gamma$', r'M')
         plt.xticks(corner_kmags, xlabs)
         plt.ylabel(r'$\omega\,(\mathrm{cm}^{-1})$')
         title = r"Phonon modes"
