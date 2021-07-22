@@ -14,6 +14,7 @@ import numpy as np
 # The purpose of this script is to parse the command line and pass it inot main to being the calculation pipeline.
 
 parser = argparse.ArgumentParser(description="DFT calculations on multilayered and twisted materials")
+parser.add_argument("-n", "--name", type=str, help='calculation name', default='')
 parser.add_argument("-t", "--type", type=str, help="basic, config, diagcfg, or twisted",
                     default='basic', choices=TYPE_STRS)
 parser.add_argument("-s", "--sampling", type=str, help='low or high', default='low', choices=['low', 'high'])

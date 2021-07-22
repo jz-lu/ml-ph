@@ -18,6 +18,7 @@ class InputData:
     input_imported = False
 
     def __init__(self, args):
+        self.name = args.name
         self.cmdargs = args; self.sampling_diagonal = (args.type == CFG_DIAG); self.theta = args.twist
         self.sampling_z = (args.type == CFG_Z)
         self.cfg_grid_sz = None; self.calc_str = args.type; self.sampling = args.sampling

@@ -2,15 +2,16 @@ import os, shutil
 import argparse
 
 parser = argparse.ArgumentParser(description="Requeue failed jobs on cluster")
-parser.add_argument("sampling", type=str, help="low or high", choices=['high', 'low'])
+parser.add_argument("sampling", type=int, help="number of shifts")
 parser.add_argument("-s", "--skip", nargs="+", help="numbers to skip", default=[])
 parser.add_argument("-c", "--cfg", action="store_true", help="configuration requeue")
 args = parser.parse_args()
 
 d = os.getcwd()
 skip = list(map(lambda x: int(x), args.skip))
-print(f"Skipping: {skip}")
-N = 81 if args.sampling == 'high' else 9
+if len(skip) > 0:
+    print(f"Skipping: {skip}")
+N = args.sampling
 if args.cfg:
     fails = []
     for i in range(N):

@@ -47,9 +47,12 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
         compute_time = '08:00:00' if vdw == 'T' else '08:00:00'
         compute_ncpu = '8' if vdw == 'T' else '8' # change as necessary
         compute_jobname = DIAG_JOBNAME if user_input_settings.sampling_is_diagonal() else COMPUTE_JOBNAME
+        compute_jobname = user_input_settings.name + compute_jobname
         if user_input_settings.run_relaxer:
             compute_jobname = 'r-' + compute_jobname
-        if user_input_settings.sampling == 'low':
+        if user_input_settings.sampling_is_interlayer():
+            compute_jobname = 'z-' + compute_jobname
+        elif user_input_settings.sampling == 'low':
             compute_jobname = 'l-' + compute_jobname
         else:
             compute_jobname = 'h-' + compute_jobname
