@@ -16,7 +16,9 @@ from ___constants_names import (
     MONOLAYER_DIR_NAME, CONFIG_DIR_NAME, CONFIG_SUBDIR_NAME, 
     POSCAR_CONFIG_NAMEPRE, 
     SHIFT_NAME, SHIFTS_NPY_NAME, 
-    DEFAULT_PH_BAND_PLOT_NAME
+    DEFAULT_PH_BAND_PLOT_NAME, 
+    ANGLE_SAMPLE_INAME, 
+    MODE_TNSR_ONAME, ANGLE_SAMPLE_ONAME, GAMMA_IDX_ONAME, K_MAGS_ONAME
 )
 from ___constants_compute import DEFAULT_NUM_LAYERS
 from __directory_searchers import checkPath, findDirsinDir, findFilesInDir
@@ -30,13 +32,14 @@ import os, sys
 
 RELAX_FOURIER_INTERP = 1
 RELAX_SPLINE_INTERP = 2
+    
 
 if __name__ == '__main__':
     start = time()
     USAGE_MSG = f"Usage: python3 {sys.argv[0]} -deg <twist angle (deg)> -name <solid name> -cut <frequency cutoff> -dir <base I/O dir> -o <output dir>"
     args = sys.argv[1:]; i = 0; n = len(args)
     indir = '.'; outdir = '.'; theta = None; name = None; outname = DEFAULT_PH_BAND_PLOT_NAME; cutoff = None
-    plot_intra = False; relax = False; realspace = False; force_sum = False
+    plot_intra = False; relax = False; realspace = False; force_sum = False; multirelax = False
     while i < n:
         if not is_flag(args[i]):
             warn(f'Warning: token "{args[i]}" is out of place and will be ignored')
@@ -59,6 +62,9 @@ if __name__ == '__main__':
             i += 1
             relax = RELAX_SPLINE_INTERP if args[i] in ['r', 'real', 'R', 'REAL'] else RELAX_FOURIER_INTERP
             i += 1 
+        elif args[i] == '--mr':
+            i += 1
+            multirelax = True
         elif args[i] == '--real':
             i += 1; realspace = True
         elif args[i] == '--fsum':
@@ -74,6 +80,9 @@ if __name__ == '__main__':
     indir = checkPath(os.path.abspath(indir)); outdir = checkPath(os.path.abspath(outdir))
     assert os.path.isdir(indir), f"Directory {indir} does not exist"
     assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
+    if multirelax:
+        assert not relax, f"Cannot multirelax and relax"
+        assert os.path.isfile(indir + ANGLE_SAMPLE_INAME), f"Must provide input file {ANGLE_SAMPLE_INAME}"
     print(f"WD: {indir}, Output to: {outdir}")
     outname = 'd' + str(int(np.rad2deg(theta))) + "_" + outname
     print("Building twisted crystal phonon modes...")
@@ -150,55 +159,78 @@ if __name__ == '__main__':
     config_ph_list = ph_api.inter_ph_list()
     print("Phonopy objects retrieved.")
 
-    relaxed_forces = None
-    if relax:
-        print("Non-uniformizing configurations via relaxation...")
-        relax_api = RelaxerAPI(np.rad2deg(theta), gridsz, outdir, s0.T)
-        b_relaxed = relax_api.get_configs()
-        if relax == RELAX_SPLINE_INTERP:
-            print("Using spline interpolation...")
+    if multirelax:
+        thetas = None
+        with open(indir + ANGLE_SAMPLE_INAME, 'r') as f:
+            thetas = list(map(float, f.read().splitlines()))
+            assert len(thetas) == 3 and 20 > thetas[1] > thetas[0] > 0 and thetas[2] > 0, f"Invalid thetas {thetas}"
+        thetas = np.linspace(np.deg2rad(thetas[0]), np.deg2rad(thetas[1]), int(thetas[2]))
+        for i, theta in enumerate(thetas):
+            relax_api = RelaxerAPI(np.rad2deg(theta), gridsz, outdir, s0.T)
+            b_relaxed = relax_api.get_configs()
             interp = ForceInterp(config_ph_list, np.array(b_set))
             relaxed_forces = interp.fc_tnsr_at(b_relaxed)
-        else:
-            print("Using Fourier interpolation...")
-            interp = FourierForceInterp(config_ph_list, np.array(b_set), s0.T)
-            relaxed_forces = interp.predict(b_relaxed)
-        print(f"Relaxed interpolation force tensor is of shape: {relaxed_forces.shape}")
-        # Relaxed forces tensor has index (f1, f2, b), but needs to be of form (b, f1, f2)
-        relaxed_forces = np.transpose(relaxed_forces, axes=(2, 0, 1))
-        print(f"Transposed to shape: {relaxed_forces.shape}")
+            # interp = FourierForceInterp(config_ph_list, np.array(b_set), s0.T)
+            # relaxed_forces = interp.predict(b_relaxed)
+            relaxed_forces = np.transpose(relaxed_forces, axes=(2, 0, 1))
+            ILDM =  InterlayerDM(per_layer_at_idxs, b_set, GM_set, G0_set, ph_list=None, force_matrices=relaxed_forces)
+            TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc], Gamma_idx)
+            np.save(outdir + MODE_TNSR_ONAME%i, TDM.k_mode_tensor())
+        np.save(outdir + ANGLE_SAMPLE_ONAME, thetas)
+        np.save(outdir + GAMMA_IDX_ONAME, Gamma_idx)
+        np.save(outdir + K_MAGS_ONAME, k_mags)
+        update(f"Saved all multirelax output files to {outdir}")
 
-    print("Note: Using GM sampling set from intralayer calculations.")
-    print("Constructing interlayer dynamical matrix objects...")
-    ILDM = None
-    config_ph_list = None if relax else config_ph_list
-    ILDM =  InterlayerDM(per_layer_at_idxs, b_set, GM_set, G0_set, ph_list=config_ph_list, force_matrices=relaxed_forces)
-    evals = LA.eigvals(ILDM.get_DM())
-    signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
-    modes_k = signs * np.sqrt(np.abs(evals)) * (15.633302*33.356) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
-    # print("Interlayer modes (k-independent):", modes_k[modes_k != 0])
-    print("Interlayer DM objects constructed.")
+    else:
+        relaxed_forces = None
+        if relax:
+            print("Non-uniformizing configurations via relaxation...")
+            relax_api = RelaxerAPI(np.rad2deg(theta), gridsz, outdir, s0.T)
+            b_relaxed = relax_api.get_configs()
+            if relax == RELAX_SPLINE_INTERP:
+                print("Using spline interpolation...")
+                interp = ForceInterp(config_ph_list, np.array(b_set))
+                relaxed_forces = interp.fc_tnsr_at(b_relaxed)
+            else:
+                print("Using Fourier interpolation...")
+                interp = FourierForceInterp(config_ph_list, np.array(b_set), s0.T)
+                relaxed_forces = interp.predict(b_relaxed)
+            print(f"Relaxed interpolation force tensor is of shape: {relaxed_forces.shape}")
+            # Relaxed forces tensor has index (f1, f2, bidx), but needs to be of form (bidx, f1, f2)
+            relaxed_forces = np.transpose(relaxed_forces, axes=(2, 0, 1))
+            print(f"Transposed to shape: {relaxed_forces.shape}")
 
-    print("Combining into a single twisted dynamical matrix object...")
-    TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc], Gamma_idx)
-    print("Twisted dynamical matrix object constructed.")
+        print("Note: Using GM sampling set from intralayer calculations.")
+        print("Constructing interlayer dynamical matrix objects...")
+        ILDM = None
+        config_ph_list = None if relax or multirelax else config_ph_list
+        ILDM =  InterlayerDM(per_layer_at_idxs, b_set, GM_set, G0_set, ph_list=config_ph_list, force_matrices=relaxed_forces)
+        evals = LA.eigvals(ILDM.get_DM())
+        signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
+        modes_k = signs * np.sqrt(np.abs(evals)) * (15.633302*33.356) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
+        # print("Interlayer modes (k-independent):", modes_k[modes_k != 0])
+        print("Interlayer DM objects constructed.")
 
-    if force_sum:
-        print("\nAnalyzing sum of forces in twisted bilayer (G0 only)...")
-        TDM.print_force_sum()
+        print("Combining into a single twisted dynamical matrix object...")
+        TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc], Gamma_idx)
+        print("Twisted dynamical matrix object constructed.")
 
-    if realspace:
-        print("Analyzing phonons in realspace...")
-        n_at = sum([sum(p.natoms) for p in poscars_uc])
-        print(f"Number of atoms in bilayer configuration cell: {n_at}")
-        twrph = TwistedRealspacePhonon(np.rad2deg(theta), GM_set, TDM.get_DM_at_Gamma(), n_at, poscars_uc, outdir=outdir)
-        print("Phonons in realspace analyzed.")
-        twrph.plot_phonons()
-        twrph.plot_avgs()
+        if force_sum:
+            print("\nAnalyzing sum of forces in twisted bilayer (G0 only)...")
+            TDM.print_force_sum()
 
-    print(f"Diagonalizing and outputting modes with corners {corner_kmags}...")
-    TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, filename=outname, cutoff=cutoff)
-    print("Modes outputted.")
+        if realspace:
+            print("Analyzing phonons in realspace...")
+            n_at = sum([sum(p.natoms) for p in poscars_uc])
+            print(f"Number of atoms in bilayer configuration cell: {n_at}")
+            twrph = TwistedRealspacePhonon(np.rad2deg(theta), GM_set, TDM.get_DM_at_Gamma(), n_at, poscars_uc, outdir=outdir)
+            print("Phonons in realspace analyzed.")
+            twrph.plot_phonons()
+            twrph.plot_avgs()
+
+        print(f"Diagonalizing and outputting modes with corners {corner_kmags}...")
+        TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, filename=outname, cutoff=cutoff)
+        print("Modes outputted.")
 
     succ("Successfully completed phonon mode analysis (Took %.3lfs)."%(time()-start))
 

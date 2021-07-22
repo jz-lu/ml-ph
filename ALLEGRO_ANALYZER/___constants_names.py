@@ -26,6 +26,12 @@ CMD_LINE_ARG_LIST = [ELEDOS, ELEBAND, PHDOS, PHBAND, ENERGIES, PH]
 ANGLE_SAMPLE_INAME = 'theta.txt'
 ISPC_SAMPLE_INAME = 'ispc.txt'
 
+# Output files for interpolation
+MODE_TNSR_ONAME = 'mode_%d.npy'
+ANGLE_SAMPLE_ONAME = 'thetas.npy'
+GAMMA_IDX_ONAME = 'Gamidx.npy'
+K_MAGS_ONAME = 'kmags.npy'
+
 # Calculation types
 TYPE_RELAX_BASIC = 0
 TYPE_RELAX_CONFIG = 1

@@ -363,11 +363,13 @@ class TwistedDM:
     # Diagonalize the set of DMs to get phonon modes
     def build_modes(self, dump=False, outdir='.'):
         self.mode_set = [0]*len(self.k_mags)
+        self.modetnsr = [0]*len(self.k_mags)
         for i, (k_mag, DM) in enumerate(zip(self.k_mags, self.DMs)):
             evals = LA.eigvals(DM)
             signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
             modes_k = signs * np.sqrt(np.abs(evals)) * (VASP_FREQ_TO_INVCM_UNITS) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
             self.mode_set[i] = (k_mag, modes_k[modes_k != 0])
+            self.modetnsr[i] = modes_k
         if dump:
             outdir = checkPath(os.path.abspath(outdir))
             assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
@@ -379,7 +381,13 @@ class TwistedDM:
                 for k_mag, mode in zip(k_dump, mode_dump):
                     f.write(f"{k_mag}\t{mode}\n")
         self.modes_built = True
+        self.modetnsr = np.array(self.modetnsr)
         return self.mode_set
+    
+    def k_mode_tensor(self):
+        if not self.modes_built:
+            self.build_modes()
+        return self.modetnsr
     
     # Plot phonon modes as a function of k
     def plot_band(self, corner_kmags, angle, outdir='./', filename=DEFAULT_PH_BAND_PLOT_NAME, name=None, cutoff=None):

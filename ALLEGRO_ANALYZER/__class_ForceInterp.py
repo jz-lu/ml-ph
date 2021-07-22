@@ -12,8 +12,9 @@ from scipy.interpolate import interp2d
 
 # Realspace interpolation with linear spline fitting
 class ForceInterp:
-    # TODO symmetrize!
     def __init__(self, ph_list, b_matrix):
+        for i in range(len(ph_list)):
+            ph_list[i].symmetrize_force_constants()
         self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in ph_list]
         fcs = self.force_matrices[0].shape
         self.fc_tnsr = [[[fc[j][k] for fc in self.force_matrices] for k in range(fcs[1])] for j in range(fcs[0])]
@@ -35,7 +36,8 @@ class ForceInterp:
 # Fourier space interpolation with k-shell fitting
 class FourierForceInterp:
     def __init__(self, ph_list, b_matrix, lattice_matrix, ltype='hexagonal', sampling_type='grid', dump=False):
-        # TODO symmetrize!
+        for i in range(len(ph_list)):
+            ph_list[i].symmetrize_force_constants()
         self.stype = sampling_type; assert isinstance(self.stype, str)
         self.__A = lattice_matrix
         print("Initializing Fourier force interpolator object")
