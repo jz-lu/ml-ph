@@ -104,7 +104,7 @@ def begin_computation(user_input_settings):
             copy(p, BASE_ROOT, newPath=intra_path, newName=POSCAR_NAME)
             copy(p, BASE_ROOT, newPath=BASE_ROOT+CONFIG_DIR_NAME)
             exepath = build_bash_exe(calc_type='basic', calc_list=clist, outdir=intra_path,
-                   compute_jobname=MONOLAYER_JOBNAME+i, vdw=vdw, kpts=kpts)
+                   compute_jobname=MONOLAYER_JOBNAME+i, vdw=vdw, kpts=kpts, compute_partitions='kaxiras,shared')
             if not DEBUGGING:
                 os.chdir(intra_path)
                 print("Submitting monolayer job for layer " + i + "...")
@@ -115,7 +115,8 @@ def begin_computation(user_input_settings):
         exepath = build_bash_exe(calc_type='config', calc_list=clist, outdir=inter_path,
                    compute_jobname=CONFIG_JOBNAME, vdw=vdw, kpts=kpts, wdir=inter_path+CONFIG_SUBDIR_NAME,
                    compute_time='01:00:00', compute_ncpu='1', twist=user_input_settings.get_tw_angle(), 
-                   sampling=user_input_settings.sampling) # this just kicks off a bunch of jobs, so it doesn't need any time
+                   sampling=user_input_settings.sampling, compute_partitions='kaxiras,shared') 
+                   # just kicks off a bunch of jobs, so it doesn't need any time
         if not DEBUGGING:
             os.chdir(inter_path)
             print(f"Submitting configuration job (wdir={inter_path+CONFIG_SUBDIR_NAME})...")
