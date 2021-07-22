@@ -7,8 +7,10 @@ from math import ceil
 VASP_FREQ_TO_INVCM_UNITS = 15.633302*33.356
 
 # POSCAR z-basis vector magnitude, increase if we add a lot more (>3) layers
-Z_LATTICE_SIZE = 20.0
-Z_LAYER_SEP = 0.376723775 # Layer separation in terms of the z-basis vector
+# Z_LATTICE_SIZE = 20.0
+# Z_LAYER_SEP = 0.376723775 # Layer separation in terms of the z-basis vector
+Z_LATTICE_SIZE = 26.0
+Z_LAYER_SEP = 0.286 # Layer separation in terms of the z-basis vector
 # Precision of POSCAR lattice and atoms, in number of decimal places
 POSCAR_PRECISION = 6
 POSCAR_PREC_COMP_THRESHOLD = 0.0001
@@ -23,7 +25,7 @@ VASP_OUTFILE_CONVERGENCE_LINE_CUT = 6 # Number of lines from the bottom we scan 
 ISTART = 0 # No WAVECAR input
 ISMEAR = 0 # Gaussian smearing
 SIGMA = {'wide': 0.1, 'narrow': 0.01} # Width of smear
-ENCUT = 800 # Plane wave expansion cutoff index
+ENCUT = 500 # Plane wave expansion cutoff index
 AMIN = 0.01 # Parameter in initial approximation of dielectric function for screening
 NSW = {'relax': 300, 'no_relax': 0, 'relax_low': 100, 'relax_very_low': 80} # Number of ionic relaxation steps
 EDIFF = {'relax': 1E-7, 'no_relax': 1E-7} # Acceptable self-consistent energy difference in electronic relaxation 
