@@ -11,6 +11,7 @@ import os, argparse
 import numpy as np
 
 def optim_interlayer_spacing(ROOT, plot=True):
+    ROOT = checkPath(os.path.abspath(ROOT))
     data_dir = ROOT + checkPath(CONFIG_DATA_DIR)
     lidxs = np.load(data_dir + LIDXS_NPY_NAME)
     nshifts = len(findDirsinDir(ROOT, CONFIG_SUBDIR_NAME, searchType='start'))
@@ -38,7 +39,9 @@ def optim_interlayer_spacing(ROOT, plot=True):
         plt.clf(); fig, ax = plt.subplots()
         plt.title("Energy vs. interlayer spacing")
         plt.xlabel("Interlayer spacing (direct)"); plt.ylabel("Energy (eV)")
-        ax.scatter()
+        ax.scatter(z, e, c='black')
+        ax.plot(z, e, c='royalblue')
+        fig.savefig(ROOT + "einter.png")
         plt.close(fig)
     return idx, z, e
 
