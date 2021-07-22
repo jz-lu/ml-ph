@@ -1,5 +1,5 @@
-from ____debug import DEBUGGING, DEBUG_NOTICE_MSG
 from ____exit_with_error import exit_with_error
+from ____debug import DEBUGGING, DEBUG_NOTICE_MSG
 from ___constants_config import GRID_SAMPLE_LOW, GRID_SAMPLE_HIGH
 from ___constants_misc import NUM_AVAILABLE_CORES
 from ___constants_vasp import Z_LAYER_SEP
@@ -49,6 +49,13 @@ def begin_computation(user_input_settings):
             assert grid_size % 3 == 0, f"Number of points must be a multiple of 3 to properly assess high-symmetry points"
             sampling_set = Configuration.sample_line(npts=grid_size, basis=config.get_diagonal_basis())
             print(f"Sampled {grid_size} points along line {config.get_diagonal_basis()}")
+        elif user_input_settings.sampling_is_interlayer():
+            z_set = user_input_settings.get_interlayer_sampling(); nz = len(z_set)
+            print(f"Uniformly sampling {nz} interlayer spacings between {min(z_set)} and {max(z_set)}...")
+            init_interlayer_spacing = 0 # interlayer spacing is not fixed, but the sampling itself
+            pad = np.zeros(nz)
+            sampling_set = np.stack([pad, pad, z_set], axis=1)
+            assert sampling_set.shape == (nz, 3)
         else:
             print("Sampling grid points along unit cell...")
             if user_input_settings.get_tw_angle() is not None:

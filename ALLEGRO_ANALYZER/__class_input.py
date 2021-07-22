@@ -5,26 +5,32 @@ from ___constants_config import GRID_SAMPLE_HIGH, GRID_SAMPLE_LOW, DIAG_SAMPLE_H
 from ___constants_names import (
     CMD_LINE_ARG_LIST, 
     ENERGIES, ELEBAND, PHBAND, PHDOS, PH, 
-    TYPE_FLAGS, 
-    TYPE_RELAX_BASIC, TYPE_RELAX_CONFIG, TYPE_TWISTED_CONFIG, TYPE_NORELAX_BASIC
+    TYPE_FLAGS, CFG_STRS, CFG_DIAG, CFG_Z, 
+    TYPE_RELAX_BASIC, TYPE_RELAX_CONFIG, TYPE_TWISTED_CONFIG, TYPE_NORELAX_BASIC, 
+    ISPC_SAMPLE_INAME
 )
 from __directory_searchers import checkPath
 import os, argparse
+import numpy as np
 
 # Since this is a simple parsing class, we'll dispense with the usually reasonable move of mangling member variables to simulate privacy.
 class InputData:
     input_imported = False
 
     def __init__(self, args):
-        self.cmdargs = args; self.sampling_diagonal = (args.type == 'diag'); self.theta = args.twist
+        self.cmdargs = args; self.sampling_diagonal = (args.type == CFG_DIAG); self.theta = args.twist
+        self.sampling_z = (args.type == CFG_Z)
         self.cfg_grid_sz = None; self.calc_str = args.type; self.sampling = args.sampling
         if self.sampling_diagonal:
+            print("Configuration sampling: DIAGONAL")
             self.cfg_grid_sz = DIAG_SAMPLE_LOW if args.sampling == 'low' else DIAG_SAMPLE_HIGH
-        else:
+        elif not self.sampling_z:
+            print("Configuration sampling: GRID")
             self.cfg_grid_sz = GRID_SAMPLE_LOW if args.sampling == 'low' else GRID_SAMPLE_HIGH
         self.type_flag = TYPE_RELAX_BASIC
-        if args.type in ['config', 'diag']:
+        if args.type in CFG_STRS:
             self.type_flag = TYPE_RELAX_CONFIG
+        
         elif args.type == 'twist':
             self.type_flag = TYPE_TWISTED_CONFIG
             assert self.theta is not None, "Must provide a twist angle for twist calculations"
@@ -43,6 +49,14 @@ class InputData:
         self.input_imported = True
         self.__check_input_style()
         self.__parse_calculation_input()
+        self.z = None
+        if self.sampling_z:
+            print("Configuration sampling: INTERLAYER SPACING")
+            assert os.path.isfile(self.ROOT + ISPC_SAMPLE_INAME), f"Path {self.ROOT + ISPC_SAMPLE_INAME} does not exist"
+            with open(ISPC_SAMPLE_INAME, 'r') as f:
+                tup = tuple(map(float, f.read().splitlines()))
+                assert len(tup) == 3 and tup[1] > tup[0] > 0 and tup[2] > 0, f"Invalid z input {tup}"
+                self.z = np.linspace(tup[0], tup[1], num=int(tup[2]))
 
         print('Final calculation list (except energies if specified):', self.calculation_list)
 
@@ -152,7 +166,14 @@ class InputData:
     
     def sampling_is_diagonal(self):
         return self.sampling_diagonal
+
+    def sampling_is_interlayer(self):
+        return self.sampling_z
     
     def get_tw_angle(self):
         return self.theta
+    
+    def get_interlayer_sampling(self):
+        assert self.z is not None, "Calculation is not of interlayer sampling type"
+        return self.z
 

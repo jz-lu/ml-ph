@@ -201,11 +201,11 @@ class Configuration:
                 bspace_structure.append(at.species, at.frac_coords)
 
         assert bspace_structure.num_sites == num_fixed_atoms + num_nonfixed_atoms
-        # SD option 1 (deprecated): interlayer relaxation allowed for every layer except first
+        # * SD option 1 (deprecated): interlayer relaxation allowed for every layer except first
         #       sd_mat = self.__get_sd_matrix(num_fixed_atoms, num_nonfixed_atoms)
-        # SD option 2 (deprecated): interlayer relaxation allowed for every layer
+        # * SD option 2 (deprecated): interlayer relaxation allowed for every layer
         #       sd_mat = self.__get_sd_matrix(0, bspace_structure.num_sites)
-        # SD option 3: interlayer relaxation allowed for every atom except one in the first layer (serves as point of reference)
+        # * SD option 3: interlayer relaxation allowed for every atom except one in the first layer (serves as point of reference)
         sd_mat = self.__get_sd_matrix(1, bspace_structure.num_sites-1)
         
         # Created a new fixed poscar with selective dynamics adjusted

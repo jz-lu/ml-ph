@@ -22,13 +22,18 @@ ENERGIES = 'energies'
 PH = 'ph'
 CMD_LINE_ARG_LIST = [ELEDOS, ELEBAND, PHDOS, PHBAND, ENERGIES, PH]
 
+# Input files for sampling
+ANGLE_SAMPLE_INAME = 'theta.txt'
+ISPC_SAMPLE_INAME = 'ispc.txt'
+
 # Calculation types
 TYPE_RELAX_BASIC = 0
 TYPE_RELAX_CONFIG = 1
 TYPE_TWISTED_CONFIG = 2
 TYPE_NORELAX_BASIC = 3
 TYPE_FLAGS = [TYPE_RELAX_BASIC, TYPE_RELAX_CONFIG, TYPE_TWISTED_CONFIG, TYPE_NORELAX_BASIC]
-CFG_STRS = ['config', 'diag']
+CFG_GRID = 'config'; CFG_DIAG = 'diag'; CFG_Z = 'z'
+CFG_STRS = [CFG_GRID, CFG_DIAG, CFG_Z]
 TYPE_STRS = ['basic', 'twist', 'norelax'] + CFG_STRS
 
 # Directory and batch names
