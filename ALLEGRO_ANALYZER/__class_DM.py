@@ -280,7 +280,7 @@ class TwistedDM:
         self.szs = [DMs_layer1[0].shape[0], DMs_layer2[0].shape[0]]
         print("Blocks built.")
         self.M = np.array([[species.atomic_mass for species in layer] for layer in species_per_layer])
-        self.off_diag_blocks = inter.get_all_blocks()
+        self.off_diag_blocks = inter.get_off_diag_blocks()
         self.n_GM = len(l1.get_GM_set())
         self.k_mags = k_mags
         self.modes_built = False
@@ -299,9 +299,11 @@ class TwistedDM:
             assert l0sz % 3 == 0
             for i in range(0, l0sz, 3): # intralayer1 and interlayer12
                 DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[1,j//3] / M[0,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3)]) for Gblk in self.off_diag_blocks])
+                DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[0,j] / M[0,i//3]) * blk for j, blk in enumerate(np.split(DM_intras[0][Gidx*l0sz+i:Gidx*l0sz+i+3,Gidx*l0sz:(Gidx+1)*l0sz], self.n_ats[0], axis=1))]) for Gidx in range(1, self.n_GM)])
             for i in range(0, l0sz, 3): # intralayer2 and interlayer 21
                 DM_intras[1][i:i+3,i:i+3] -= sum([sum([sqrt(M[0,j//3] / M[1,i//3]) * Gblk.conjugate().T[i:i+3,j:j+3] for j in range(0,Gblk.shape[0],3)]) for Gblk in self.off_diag_blocks])
-        
+                DM_intras[1][i:i+3,i:i+3] -= sum([sum([sqrt(M[1,j] / M[1,i//3]) * blk for j, blk in enumerate(np.split(DM_intras[1][Gidx*l0sz+i:Gidx*l0sz+i+3,Gidx*l0sz:(Gidx+1)*l0sz], self.n_ats[1], axis=1))]) for Gidx in range(1, self.n_GM)])
+                
         assert len(DM_intras) == 2
         assert DM_intras[0].shape == DM_intras[1].shape == DM_inter.shape
         DM_intras = list(map(lambda D: (D + D.conjugate().T) / 2, DM_intras)) # impose Hermiticity
