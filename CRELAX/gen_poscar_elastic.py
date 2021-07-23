@@ -15,6 +15,7 @@ from pymatgen.io.vasp import inputs
 from pymatgen.io.vasp.inputs import Poscar
 import os, argparse, sys
 import numpy.linalg as LA
+import shutil
 
 def pathify(path):
     path = os.path.abspath(path); assert os.path.isdir(path), f"Directory {path} does not exist"
@@ -61,7 +62,10 @@ def get_poscar_elastic(args):
 
     if not os.path.isdir(fpath):
         os.mkdir(fpath)
+    for car in ['INCAR', 'POTCAR', 'KPOINTS']:
+        shutil.copyfile(ROOT+car, fpath+car)
     os.chdir(fpath)
+    print(f"Contents of {fpath}: {os.listdir(fpath)}")
 
     lattice = np.array([[sqrt(3)/2*a0, -0.5*a0, 0], [sqrt(3)/2*a0, 0.5*a0, 0], [0, 0, 20]])
 

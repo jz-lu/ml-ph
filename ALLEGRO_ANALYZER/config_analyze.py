@@ -159,8 +159,9 @@ if __name__ == '__main__':
         do.output_all_analysis()
         if ff_pred is not None:
             pts = [0, NPREDPTS//3, 2*NPREDPTS//3]
+            addendum = (np.linspace(0, 1, num=nshifts), energies)
             do_pred = DSamplingOutput(data_dir, NPREDPTS, special_pts=pts, energies=ff_pred, scaled=True, dump=False)
-            do_pred.plot_energies(pfx='pred', tsfx='fitted', interp=False, scat=False, line=True)
+            do_pred.plot_energies(pfx='pred', tsfx='fitted', interp=False, scat=False, line=True, addendum=addendum)
     else:
         # Combine into (b, z, e) points and pass to ConfigOutput
         bze = []

@@ -56,7 +56,8 @@ class DSamplingOutput:
             np.savez(self.out_dir + DSAMPLE_FORCES_NAME, *self.force_matrices)
         print(f"Saved raw data over {self.npts-1} diagonally sampled points to {self.out_dir}")
 
-    def __diag_plot(self, arr, plt_type='energy', pfx='', tsfx='', interp=True, scat=True, line=False):
+    def __diag_plot(self, arr, plt_type='energy', pfx='', tsfx='', 
+                    interp=True, scat=True, line=False, addendum=None):
         assert interp or scat or line, "Must specify at least 1 type of plot"
         assert not (interp and line), "Must choose at most one of interpolation and line plotting"
         assert plt_type in ['energy', 'z', 'forces']; plt.clf(); fig, ax = plt.subplots()
@@ -80,6 +81,8 @@ class DSamplingOutput:
         ax.set_ylabel(y_lab)
         if scat:
             ax.scatter(x, y, c='darkslategrey')
+        if addendum is not None:
+            ax.scatter(addendum[0], addendum[1], c='darkslategrey')
         if interp:
             interpol = interpolate_scatter(x, y)
             xp = np.linspace(0, 1, 301); yp = interpol(xp)
@@ -88,9 +91,10 @@ class DSamplingOutput:
             ax.plot(x, y, c='royalblue')
         fig.savefig(self.out_dir + pfx + f"diag_{plt_type}.png")
     
-    def plot_energies(self, pfx='', tsfx='', interp=True, scat=True, line=False):
+    def plot_energies(self, pfx='', tsfx='', interp=True, scat=True, line=False, addendum=None):
         assert self.energies is not None, "Energy data was not provided to analyzer"
-        self.__diag_plot(self.energies, plt_type='energy', pfx=pfx, tsfx=tsfx, interp=interp, scat=scat, line=line)
+        self.__diag_plot(self.energies, plt_type='energy', pfx=pfx, 
+                         tsfx=tsfx, interp=interp, scat=scat, line=line, addendum=addendum)
     
     def plot_spacings(self, pfx='', interp=True, scat=True, line=False):
         assert self.spacings is not None, "Interlayer spacings data was not provided to analyzer"

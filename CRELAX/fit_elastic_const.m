@@ -7,7 +7,7 @@ set(groot, 'DefaultAxesTickLabelInterpreter', 'Latex')
 set(0,'DefaultAxesFontSize',f_size)
 
 mat = 'MoS2_3.1';
-fpath = ['/Users/zoe/Desktop/CMT/relaxation/elastic_constant/' mat '/']; 
+fpath = ['/Users/jonathanlu/Documents/MoS2/coeff' mat '/']; 
 fname1 = 'stretch1.txt';
 fname2 = 'stretch2.txt';
 fname3 = 'shear.txt';
