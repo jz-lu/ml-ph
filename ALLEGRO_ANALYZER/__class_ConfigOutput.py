@@ -376,7 +376,7 @@ class FourierGSFE:
         ax.set_title(f"GSFE Fourier fitting on {self.stype} sampling")
         ax.plot([minmin, maxmax], [minmin, maxmax], c='royalblue') # y=x line
         print(f"Predicted GSFE:\n {x}\nActual GSFE: \n{y}")
-        print(f"PRED (min={min(x)} max={max(x)} range={max(x)-min(x)}) ACTUAL (min={min(y)} max={max(y)} range={max(y)-min(y)})")
+        print(f"PRED (min={min(x)} max={max(x)}@{x.index(max(x))} range={max(x)-min(x)}) ACTUAL (min={min(y)} max={max(y)}@{y.index(max(y))} range={max(y)-min(y)})")
         fig.savefig(outdir + outname)
     def plot_percent_error(self, b_mat, actual, title='', outpath='percent_err.png', bins=10):
         pred = self.predict(b_mat)
