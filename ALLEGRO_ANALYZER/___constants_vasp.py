@@ -10,7 +10,7 @@ VASP_FREQ_TO_INVCM_UNITS = 15.633302*33.356
 # Z_LATTICE_SIZE = 20.0
 # Z_LAYER_SEP = 0.376723775 # Layer separation in terms of the z-basis vector
 Z_LATTICE_SIZE = 26.0
-Z_LAYER_SEP = 0.286 # Layer separation in terms of the z-basis vector
+Z_LAYER_SEP = 0.2612 # Layer separation in terms of the z-basis vector
 # Precision of POSCAR lattice and atoms, in number of decimal places
 POSCAR_PRECISION = 6
 POSCAR_PREC_COMP_THRESHOLD = 0.0001
@@ -77,7 +77,7 @@ INCAR_VDW_SETTINGS = {
     'GGA': GGA,
     'IVDW': IVDW
 }
-# {'METAGGA': METAGGA,
+# INCAR_VDW_SETTINGS = {'METAGGA': METAGGA,
 #                       'LASPH': LASPH,
 #                       'LUSE_VDW': LUSE_VDW,
 #                       'BPARAM': BPARAM}
