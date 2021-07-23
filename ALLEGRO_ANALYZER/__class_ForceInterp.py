@@ -17,7 +17,7 @@ class ForceInterp:
             ph_list[i].symmetrize_force_constants()
         self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in ph_list]
         fcs = self.force_matrices[0].shape
-        self.fc_tnsr = [[[fc[j][k] for fc in self.force_matrices] for k in range(fcs[1])] for j in range(fcs[0])]
+        self.fc_tnsr = np.real_if_close([[[fc[j][k] for fc in self.force_matrices] for k in range(fcs[1])] for j in range(fcs[0])])
         print("Initializing spline force interpolator object")
         print(f"Force tensor shape: {self.fc_tnsr.shape}")
         self.b_matrix = b_matrix[:,:2]; self.f_mat = self.__functional_matrix()
