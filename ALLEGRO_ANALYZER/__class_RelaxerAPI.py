@@ -19,6 +19,7 @@ class RelaxerAPI:
         assert isinstance(gridsz, int) and gridsz > 1, f"Invalid grid size {gridsz}: must be positive integer"
         assert theta > 0 and theta < 180, f"Invalid twist angle {theta}"
         assert os.path.isdir(outdir), f"Invalid directory {outdir}"
+        self.pfx = f'_%.3lf'%theta
         self.outdir = checkPath(os.path.abspath(outdir))
         self.gridsz = gridsz; self.cob = cob; self.theta = theta
         self.langle = Configuration.lattice_angle_from_cob(self.cob)
@@ -57,10 +58,12 @@ class RelaxerAPI:
                  ha='center') # horizontal alignment can be left, right or center
         plt.legend(); plt.title("Relaxer before-after for " + str(self.theta) + r"$^\circ$")
         ax.set_xlabel(r'$x$'); ax.set_ylabel(r'$y$')
+        filename = filename[:filename.index('.')] + self.pfx + filename[filename.index('.'):]
         outname = self.outdir + 'ba_' + filename
         plt.savefig(outname)
         succ("Successfully wrote relax Cartesian before-after plot out to " + outname)
     def plot_relaxation_direct(self, filename='relax_direct.png'):
+        filename = filename[:filename.index('.')] + self.pfx + filename[filename.index('.'):]
         plt.clf(); _, ax = plt.subplots()
         b = (LA.inv(self.cob) @ self.b.T).T
         plt.scatter(b[:,0], b[:,1], c='royalblue', alpha=0.15, label='before')
@@ -81,6 +84,7 @@ class RelaxerAPI:
         plt.savefig(outname)
         succ("Successfully wrote relax Cartesian before-after plot out to " + outname)
     def plot_quiver(self, filename='quiver.png'):
+        filename = filename[:filename.index('.')] + self.pfx + filename[filename.index('.'):]
         plt.clf(); _, ax = plt.subplots()
         plt.quiver(self.b[:,0], self.b[:,1], self.u[:,0], self.u[:,1])
         ax.set_aspect('equal') # prevent stretching of space in plot
@@ -100,6 +104,7 @@ class RelaxerAPI:
         plt.savefig(outname)
         succ("Successfully wrote relax Cartesian vector field plot out to " + outname)
     def plot_quiver_direct(self, filename='quiver_direct.png'):
+        filename = filename[:filename.index('.')] + self.pfx + filename[filename.index('.'):]
         b = (LA.inv(self.cob) @ self.b.T).T; u = (LA.inv(self.cob) @ self.u.T).T
         plt.clf(); _, ax = plt.subplots()
         plt.quiver(b[:,0], b[:,1], u[:,0], u[:,1])

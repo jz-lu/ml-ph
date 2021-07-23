@@ -8,7 +8,7 @@ from sklearn.linear_model import LinearRegression
 from ___constants_names import FFTENS_COEFF_NAME, FFTENS_COEFF_TXT, FFTENS_SCORE_NAME
 from ___constants_output import NTERMS
 from __directory_searchers import checkPath
-from scipy.interpolate import interp2d
+from scipy.interpolate import griddata
 
 # Realspace interpolation with linear spline fitting
 class ForceInterp:
@@ -20,15 +20,20 @@ class ForceInterp:
         self.fc_tnsr = np.real_if_close([[[fc[j][k] for fc in self.force_matrices] for k in range(fcs[1])] for j in range(fcs[0])])
         print("Initializing spline force interpolator object")
         print(f"Force tensor shape: {self.fc_tnsr.shape}")
-        self.b_matrix = b_matrix[:,:2]; self.f_mat = self.__functional_matrix()
+        self.b_matrix = b_matrix[:,:2]
+        # self.f_mat = self.__functional_matrix()
     def __b_to_xy(self, b_matrix):
         x, y = b_matrix[:,0], b_matrix[:,1]
         return x, y
-    def __functional_matrix(self):
-        x, y = self.__b_to_xy(self.b_matrix)
-        return [[interp2d(x, y, fc) for fc in fcrow] for fcrow in self.fc_tnsr]
-    def fc_tnsr_at(self, b_matrix):
-        fc_tnsr = np.array([[f(*self.__b_to_xy(b_matrix)) for f in frow] for frow in self.f_mat])
+    # def __functional_matrix(self):
+    #     x, y = self.__b_to_xy(self.b_matrix)
+    #     return [[interp2d(x, y, fc) for fc in fcrow] for fcrow in self.fc_tnsr]
+    def fc_tnsr_at(self, new_b_matrix):
+        new_b_matrix = new_b_matrix[:,:2]
+        def itp(frcs):
+            return griddata(self.b_matrix, frcs, new_b_matrix, method='cubic')
+        # fc_tnsr = np.array([[f(*self.__b_to_xy(b_matrix)) for f in frow] for frow in self.f_mat])
+        fc_tnsr = np.array([[itp(frcs) for frcs in frow] for frow in self.fc_tnsr])
         print(f"Interpolated force tensor shape: {fc_tnsr.shape}")
         return fc_tnsr
 

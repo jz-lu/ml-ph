@@ -168,6 +168,7 @@ if __name__ == '__main__':
         for i, theta in enumerate(thetas):
             relax_api = RelaxerAPI(np.rad2deg(theta), gridsz, outdir, s0.T)
             b_relaxed = relax_api.get_configs()
+            relax_api.plot_relaxation()
             interp = ForceInterp(config_ph_list, np.array(b_set))
             relaxed_forces = interp.fc_tnsr_at(b_relaxed)
             # interp = FourierForceInterp(config_ph_list, np.array(b_set), s0.T)
@@ -187,6 +188,7 @@ if __name__ == '__main__':
             print("Non-uniformizing configurations via relaxation...")
             relax_api = RelaxerAPI(np.rad2deg(theta), gridsz, outdir, s0.T)
             b_relaxed = relax_api.get_configs()
+            relax_api.plot_relaxation()
             if relax == RELAX_SPLINE_INTERP:
                 print("Using spline interpolation...")
                 interp = ForceInterp(config_ph_list, np.array(b_set))
