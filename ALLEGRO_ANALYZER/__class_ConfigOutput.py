@@ -324,13 +324,15 @@ class FourierGSFE:
         assert self.__A.shape == (2,2)
         M = 2 * pi * np.array([[1,-1/sqrt(3)],[0,2/sqrt(3)]]) / LA.norm(self.__A.T[0])
         return (M @ self.__A @ b_mat.T).T
-    def __vw_to_fourier_basis(self, vw):
-        X = np.ones((len(vw), 5)); v = vw[:,0]; w = vw[:,1]
+    def __vw_to_fourier_basis(self, vw, sym=True):
+        nbas = 3 if sym else 5
+        X = np.ones((len(vw), nbas)); v = vw[:,0]; w = vw[:,1]
         X[:,0] = np.cos(v) + np.cos(w) + np.cos(v + w)
         X[:,1] = np.cos(v + 2*w) + np.cos(v - w) + np.cos(2*v + w) 
         X[:,2] = np.cos(2*v) + np.cos(2*w) + np.cos(2*v + 2*w) 
-        X[:,3] = np.sin(v) + np.sin(w) - np.sin(v + w)
-        X[:,4] = np.sin(2*v + 2*w) - np.sin(2*v) - np.sin(2*w)
+        if not sym:
+            X[:,3] = np.sin(v) + np.sin(w) - np.sin(v + w)
+            X[:,4] = np.sin(2*v + 2*w) - np.sin(2*v) - np.sin(2*w)
         # X[:,5] = np.cos(3*v) + np.cos(3*w) + np.cos(3*v + 3*w)
         # X[:,6] = np.cos(v - 2*w) + np.cos(2*v + 3*w) + np.cos(3*v + w)
         # X[:,7] = np.cos(2*v - w) + np.cos(v + 3*w) + np.cos(3*v + 2*w)
@@ -376,7 +378,7 @@ class FourierGSFE:
         ax.set_title(f"GSFE Fourier fitting on {self.stype} sampling")
         ax.plot([minmin, maxmax], [minmin, maxmax], c='royalblue') # y=x line
         print(f"Predicted GSFE:\n {x}\nActual GSFE: \n{y}")
-        print(f"PRED (min={min(x)} max={max(x)}@{x.index(max(x))} range={max(x)-min(x)}) ACTUAL (min={min(y)} max={max(y)}@{y.index(max(y))} range={max(y)-min(y)})")
+        print(f"PRED (min={min(x)} max={max(x)}@{np.where(x == max(x))} range={max(x)-min(x)}) ACTUAL (min={min(y)} max={max(y)}@{np.where(y == max(y))} range={max(y)-min(y)})")
         fig.savefig(outdir + outname)
     def plot_percent_error(self, b_mat, actual, title='', outpath='percent_err.png', bins=10):
         pred = self.predict(b_mat)
