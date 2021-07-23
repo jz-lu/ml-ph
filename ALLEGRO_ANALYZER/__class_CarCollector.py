@@ -261,7 +261,7 @@ class CarCollector:
         zs = p.structure.frac_coords[:,2]; nlayer = max(layer_idxs)
         z_per_layer = np.split(np.array([i for _,i in sorted(zip(layer_idxs, zs))]), nlayer)
         assert nlayer == 2, f"Found {nlayer} layers, but only 2 supported (for now)"
-        spacings = z_per_layer[1] - z_per_layer[0]
+        spacings = (z_per_layer[1] - z_per_layer[0]) % 1
         if dump:
             print(f"Interlayer spacings: {spacings}")
             print(f"Layer indices: {layer_idxs}")
