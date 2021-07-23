@@ -1,5 +1,6 @@
 # Constants for submitting jobs to a computing cluster in SLURM syntax
 # must all be strings
+ALT_COMPUTE_PARTITIONS = 'kaxiras,shared'
 COMPUTE_PARTITIONS = 'shared'
 COMPUTE_MEM_PER_CPU = '4000'
 COMPUTE_TIME = '08:00:00' # HR:MN:SC

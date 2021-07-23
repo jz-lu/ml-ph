@@ -59,7 +59,7 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
         build_bash_exe(calc_type='basic', outdir=BASE_ROOT,
                         compute_jobname=compute_jobname, compute_time=compute_time, vdw=vdw, kpts=kpts, fname=START_BATCH_NAME, 
                         as_arr=True, compute_ncpu=compute_ncpu, wdir=BASE_ROOT+CONFIG_SUBDIR_NAME, 
-                        calc_list=user_input_settings.get_raw_calculation_list())
+                        calc_list=user_input_settings.get_raw_calculation_list(), compute_partitions=ALT_COMPUTE_PARTITIONS)
 
         for i, shpath in enumerate(base_root_subpaths):
             bfile = shpath + SHIFT_NAME
