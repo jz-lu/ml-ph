@@ -195,13 +195,14 @@ class MonolayerDM:
 
 # Build interlayer dynamical matrix block via summing over configurations
 class InterlayerDM:
-    def __init__(self, per_layer_at_idxs, b_set, GM_set, G0_set, ph_list=None, force_matrices=None):
+    def __init__(self, per_layer_at_idxs, b_set, GM_set, G0_set, species_per_layer, ph_list=None, force_matrices=None):
         assert (ph_list is not None) ^ (force_matrices is not None), "Must give exactly one of: phonopy obj list, force matrix list"
         assert len(b_set[0]) == 2, "Shift vectors must be 2-dimensional"
         self.b_set = b_set; self.ph_list = ph_list # list of phonopy objects for each config
         self.nshift = len(b_set); print(f"Number of configurations: {self.nshift}")
         assert int(sqrt(self.nshift))**2 == self.nshift, f"Number of shifts {self.nshift} must be a perfect square"
         self.GM_set = GM_set; self.G0_set = G0_set; self.DM = None
+        self.M = np.array([[species.atomic_mass for species in layer] for layer in species_per_layer])
         self.per_layer_at_idxs = per_layer_at_idxs; assert len(self.per_layer_at_idxs) == 2, f"Only 2 layers supported"
         if ph_list is not None:
             def sym_dm_at_gamma(i, ph):
@@ -225,15 +226,19 @@ class InterlayerDM:
         return D_inter
 
     def __block_inter_l1(self):
+        def enforce_acoustic_sum_rule(D):
+            assert self.per_layer_at_idxs[0] % 3 == 0
+            M1 = self.M[0]; M2 = self.M[1]
+            for i in range(0, self.per_layer_at_idxs[0], 3):
+                D[i:i+3,i:i+3] -= sum([sum([sqrt(M2[j//3] / M1[i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3)]) for Gblk in self.GMi_blocks])
+            return D
+
         n_GM = len(self.GM_set); assert len(self.G0_set) == n_GM, f"|G0_set| {len(self.G0_set)} != |GM_set| = {n_GM}"
         assert LA.norm(self.G0_set[0]) == 0, f"G0[0] should be 0, but is {LA.norm(self.GM_set[0])}"
         D0 = self.__block_inter_l0(self.G0_set[0]); block_l0_shape = D0.shape
         self.DM = [[None]*n_GM for _ in range(n_GM)] # NoneType interpreted by scipy as 0 matrix block
         self.GMi_blocks = [0]*(n_GM-1)
         self.all_blocks = [None]*(3*(n_GM-1) + 1)
-        for i in range(n_GM): # fill diagonal
-            self.DM[i][i] = D0
-            self.all_blocks[i] = D0
         for i in range(1, n_GM): # fill first row/col
             self.DM[0][i] = self.__block_inter_l0(self.G0_set[i])
             self.GMi_blocks[i-1] = self.DM[0][i]
@@ -242,8 +247,11 @@ class InterlayerDM:
             self.all_blocks[i+(2*n_GM-1)-1] = self.DM[i][0]
             assert self.DM[0][i].shape == block_l0_shape and self.DM[i][0].shape == block_l0_shape, f"Shape GM0{i}={self.DM[0][i].shape}, GM{i}0={self.DM[i][0].shape}, expected {block_l0_shape}"
             assert np.isclose(LA.norm(self.DM[0][i]), LA.norm(self.DM[i][0]), rtol=1e-5), f"Level-0 interlayer DM blocks for G0{i} not inversion-symmetric:\n {LA.norm(self.DM[0][i])}\nvs. \n{LA.norm(self.DM[i][0])}"
-        for i, blk in enumerate(self.all_blocks):
-            assert blk is not None, f"Block {i} in interlayer block list was not filled"
+        
+        D0 = enforce_acoustic_sum_rule(D0)
+        for i in range(n_GM): # fill diagonal
+            self.DM[i][i] = D0
+            self.all_blocks[i] = D0
         self.DM = bmat(self.DM).toarray() # convert NoneTypes to zero-matrix blocks to make sparse matrix
         assert np.round(sum(sum(self.DM)), 12) == np.round(sum(sum(sum(self.all_blocks))), 12), f"The list of blocks does not match the interlayer DM, {sum(sum(sum(self.all_blocks)))} vs. {sum(sum(self.DM))}"
         return self.DM
@@ -312,7 +320,7 @@ class TwistedDM:
         assert len(DM_intras) == 2
         assert DM_intras[0].shape == DM_intras[1].shape == DM_inter.shape
         DM_intras = list(map(lambda D: (D + D.conjugate().T) / 2, DM_intras)) # impose Hermiticity
-        enforce_acoustic_sum_rule()
+        # enforce_acoustic_sum_rule()
         DM = np.block([[DM_intras[0], DM_inter], [DM_inter.conjugate().T, DM_intras[1]]])
         return DM
     

@@ -174,7 +174,7 @@ if __name__ == '__main__':
             # interp = FourierForceInterp(config_ph_list, np.array(b_set), s0.T)
             # relaxed_forces = interp.predict(b_relaxed)
             relaxed_forces = np.transpose(relaxed_forces, axes=(2, 0, 1))
-            ILDM =  InterlayerDM(per_layer_at_idxs, b_set, GM_set, G0_set, ph_list=None, force_matrices=relaxed_forces)
+            ILDM =  InterlayerDM(per_layer_at_idxs, b_set, GM_set, G0_set, [p.structure.species for p in poscars_uc], ph_list=None, force_matrices=relaxed_forces)
             TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc], Gamma_idx)
             np.save(outdir + MODE_TNSR_ONAME%i, TDM.k_mode_tensor())
         np.save(outdir + ANGLE_SAMPLE_ONAME, thetas)
@@ -206,7 +206,7 @@ if __name__ == '__main__':
         print("Constructing interlayer dynamical matrix objects...")
         ILDM = None
         config_ph_list = None if relax or multirelax else config_ph_list
-        ILDM =  InterlayerDM(per_layer_at_idxs, b_set, GM_set, G0_set, ph_list=config_ph_list, force_matrices=relaxed_forces)
+        ILDM =  InterlayerDM(per_layer_at_idxs, b_set, GM_set, G0_set, [p.structure.species for p in poscars_uc], ph_list=config_ph_list, force_matrices=relaxed_forces)
         evals = LA.eigvals(ILDM.get_DM())
         signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
         modes_k = signs * np.sqrt(np.abs(evals)) * (15.633302*33.356) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
