@@ -227,9 +227,10 @@ class InterlayerDM:
 
     def __block_inter_l1(self):
         def enforce_acoustic_sum_rule(D):
-            assert self.per_layer_at_idxs[0] % 3 == 0
+            n_at_1 = len(self.per_layer_at_idxs[0])
+            assert n_at_1 % 3 == 0
             M1 = self.M[0]; M2 = self.M[1]
-            for i in range(0, self.per_layer_at_idxs[0], 3):
+            for i in range(0, n_at_1, 3):
                 D[i:i+3,i:i+3] -= sum([sum([sqrt(M2[j//3] / M1[i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3)]) for Gblk in self.GMi_blocks])
             return D
 
