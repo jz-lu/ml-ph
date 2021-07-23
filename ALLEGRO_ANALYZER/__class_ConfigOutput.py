@@ -321,12 +321,16 @@ class FourierGSFE:
         M = 2 * pi * np.array([[1,-1/sqrt(3)],[0,2/sqrt(3)]]) / LA.norm(self.__A.T[0])
         return (M @ self.__A @ b_mat.T).T
     def __vw_to_fourier_basis(self, vw):
-        X = np.ones((len(vw), 5)); v = vw[:,0]; w = vw[:,1]
+        X = np.ones((len(vw), 9)); v = vw[:,0]; w = vw[:,1]
         X[:,0] = np.cos(v) + np.cos(w) + np.cos(v + w)
         X[:,1] = np.cos(v + 2*w) + np.cos(v - w) + np.cos(2*v + w) 
         X[:,2] = np.cos(2*v) + np.cos(2*w) + np.cos(2*v + 2*w) 
         X[:,3] = np.sin(v) + np.sin(w) - np.sin(v + w)
         X[:,4] = np.sin(2*v + 2*w) - np.sin(2*v) - np.sin(2*w)
+        X[:,5] = np.cos(3*v) + np.cos(3*w) + np.cos(3*v + 3*w)
+        X[:,6] = np.cos(v - 2*w) + np.cos(2*v + 3*w) + np.cos(3*v + w)
+        X[:,7] = np.cos(2*v - w) + np.cos(v + 3*w) + np.cos(3*v + 2*w)
+        X[:,8] = np.sin(3*v + 3*w) - np.sin(3*v) - np.sin(3*w)
         return X
     def __b_to_fourier_basis(self, b_mat):
         return self.__vw_to_fourier_basis(self.__b_to_vw(b_mat))
