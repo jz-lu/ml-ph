@@ -159,7 +159,8 @@ if __name__ == '__main__':
         do.output_all_analysis()
         if ff_pred is not None:
             pts = [0, NPREDPTS//3, 2*NPREDPTS//3]
-            addendum = (np.linspace(0, 1, num=nshifts), 1000*(np.array(energies)-min(energies)))
+            addendum = 1000*(np.array(energies)-min(energies))
+            addendum = (np.linspace(0, 1, num=nshifts+1), np.append(addendum, addendum[0]))
             do_pred = DSamplingOutput(data_dir, NPREDPTS, special_pts=pts, energies=ff_pred, scaled=True, dump=False)
             do_pred.plot_energies(pfx='pred', tsfx='fitted', interp=False, scat=False, line=True, addendum=addendum)
     else:
