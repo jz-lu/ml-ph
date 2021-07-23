@@ -108,6 +108,9 @@ class MonolayerDM:
     def __block_intra_l1(self):
         self.DM_set = [block_diag(*[self.__block_intra_l0(k+GM, self.ph) for GM in self.GM_set]) for k in self.k_set]
         return self.DM_set
+    
+    def Gamma_blks(self):
+        return [self.__block_intra_l0(GM, self.ph) for GM in self.GM_set]
 
     def get_block_force_sum(self):
         if self.DM_set is None:
@@ -286,6 +289,7 @@ class TwistedDM:
         self.modes_built = False
         self.l0szs = [l1.l0_shape[0], l2.l0_shape[0]]
         self.Gamma_idx = Gamma_idx
+        self.Gamma_intra_blks = [l1.Gamma_blks(), l2.Gamma_blks()]
         self.DMs = [self.__block_l2([DMs_layer1[i], DMs_layer2[i]], DM_inter) for i in range(len(k_mags))]
 
     # Create level-2 (final level--full matrix) block matrix with intralayer and interlayer terms
@@ -297,12 +301,13 @@ class TwistedDM:
             l0sz = DM_intras[0].shape[0] // n_GM
             assert DM_intras[0].shape[0] % n_GM == 0
             assert l0sz % 3 == 0
+            dg1 = self.Gamma_intra_blks[0][1:]; dg2 = self.Gamma_intra_blks[1][1:]
             for i in range(0, l0sz, 3): # intralayer1 and interlayer12
                 DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[1,j//3] / M[0,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3)]) for Gblk in self.off_diag_blocks])
-                DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[0,j] / M[0,i//3]) * blk for j, blk in enumerate(np.split(DM_intras[0][Gidx*l0sz+i:Gidx*l0sz+i+3,Gidx*l0sz:(Gidx+1)*l0sz], self.n_ats[0], axis=1))]) for Gidx in range(1, self.n_GM)])
+                DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[0,j//3] / M[0,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3)]) for Gblk in dg1])
             for i in range(0, l0sz, 3): # intralayer2 and interlayer 21
                 DM_intras[1][i:i+3,i:i+3] -= sum([sum([sqrt(M[0,j//3] / M[1,i//3]) * Gblk.conjugate().T[i:i+3,j:j+3] for j in range(0,Gblk.shape[0],3)]) for Gblk in self.off_diag_blocks])
-                DM_intras[1][i:i+3,i:i+3] -= sum([sum([sqrt(M[1,j] / M[1,i//3]) * blk for j, blk in enumerate(np.split(DM_intras[1][Gidx*l0sz+i:Gidx*l0sz+i+3,Gidx*l0sz:(Gidx+1)*l0sz], self.n_ats[1], axis=1))]) for Gidx in range(1, self.n_GM)])
+                DM_intras[1][i:i+3,i:i+3] -= sum([sum([sqrt(M[1,j//3] / M[1,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[0],3)]) for Gblk in dg2])
                 
         assert len(DM_intras) == 2
         assert DM_intras[0].shape == DM_intras[1].shape == DM_inter.shape
