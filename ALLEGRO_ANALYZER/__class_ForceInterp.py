@@ -48,7 +48,7 @@ class FourierForceInterp:
             print(f"Configurations (direct basis):\n {b_matrix}\nConfigurations (Cartesian):\n {(self.__A @ b_matrix.T).T}")
         self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in ph_list]
         fcs = self.force_matrices[0].shape
-        self.fc_tnsr = np.array([[[fc[j][k] for fc in self.force_matrices] for k in range(fcs[1])] for j in range(fcs[0])])
+        self.fc_tnsr = np.real_if_close([[[fc[j][k] for fc in self.force_matrices] for k in range(fcs[1])] for j in range(fcs[0])])
         print(f"Force tensor shape: {self.fc_tnsr.shape}")
         self.nb = len(b_matrix); self.b_matrix = b_matrix
         self.__fitted = False; self.coeffs = None; self.reg_mat = None; self.score_mat = None
