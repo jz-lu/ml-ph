@@ -31,7 +31,8 @@ class ForceInterp:
     def fc_tnsr_at(self, new_b_matrix):
         new_b_matrix = new_b_matrix[:,:2]
         def itp(frcs):
-            return griddata(self.b_matrix, frcs, new_b_matrix, method='cubic')
+            interp = griddata(self.b_matrix, frcs, new_b_matrix, method='cubic')
+            assert not np.any(np.isnan(interp)), f"NaN detected in interp {interp}"
         # fc_tnsr = np.array([[f(*self.__b_to_xy(b_matrix)) for f in frow] for frow in self.f_mat])
         fc_tnsr = np.array([[itp(frcs) for frcs in frow] for frow in self.fc_tnsr])
         print(f"Interpolated force tensor shape: {fc_tnsr.shape}")
