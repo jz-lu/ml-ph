@@ -220,10 +220,12 @@ class InterlayerDM:
         # Extract a submatrix with rows of atoms from layer 1 
         # and columns of atoms from layer 2, which is the interlayer 1-2 interactions.
         D_inter = D[np.ix_(self.per_layer_at_idxs[0], self.per_layer_at_idxs[1])] / self.nshift
+        D_intra1 = D[np.ix_(self.per_layer_at_idxs[0], self.per_layer_at_idxs[0])] / self.nshift
+        D_intra2 = D[np.ix_(self.per_layer_at_idxs[1], self.per_layer_at_idxs[1])] / self.nshift
         assert len(D.shape) == 2 and D.shape[0] == D.shape[1], f"D with shape {D.shape} not square matrix"
         assert len(D_inter.shape) == 2 and D_inter.shape[0] == D_inter.shape[1], f"D_inter with shape {D_inter.shape} not square matrix"
         assert 2*D_inter.shape[0] == D.shape[0] and 2*D_inter.shape[1] == D.shape[1], f"D_inter shape {D_inter.shape} should be half of D shape {D.shape}"
-        return D_inter
+        return D_inter, D_intra1, D_intra2
 
     def __block_inter_l1(self):
         def enforce_acoustic_sum_rule(D):
@@ -236,15 +238,16 @@ class InterlayerDM:
 
         n_GM = len(self.GM_set); assert len(self.G0_set) == n_GM, f"|G0_set| {len(self.G0_set)} != |GM_set| = {n_GM}"
         assert LA.norm(self.G0_set[0]) == 0, f"G0[0] should be 0, but is {LA.norm(self.GM_set[0])}"
-        D0 = self.__block_inter_l0(self.G0_set[0]); block_l0_shape = D0.shape
+        D0,_,_ = self.__block_inter_l0(self.G0_set[0]); block_l0_shape = D0.shape
         self.DM = [[None]*n_GM for _ in range(n_GM)] # NoneType interpreted by scipy as 0 matrix block
         self.GMi_blocks = [0]*(n_GM-1)
+        self.GMi_intra_blocks = [[0]*(n_GM-1) for i in range(2)]
         self.all_blocks = [None]*(3*(n_GM-1) + 1)
         for i in range(1, n_GM): # fill first row/col
-            self.DM[0][i] = self.__block_inter_l0(self.G0_set[i])
+            self.DM[0][i], self.GMi_intra_blocks[0][i-1], self.GMi_intra_blocks[1][i-1] = self.__block_inter_l0(self.G0_set[i])
             self.GMi_blocks[i-1] = self.DM[0][i]
             self.all_blocks[i+n_GM-1] = self.DM[0][i]
-            self.DM[i][0] = self.__block_inter_l0(-self.G0_set[i])
+            self.DM[i][0],_,_ = self.__block_inter_l0(-self.G0_set[i])
             self.all_blocks[i+(2*n_GM-1)-1] = self.DM[i][0]
             assert self.DM[0][i].shape == block_l0_shape and self.DM[i][0].shape == block_l0_shape, f"Shape GM0{i}={self.DM[0][i].shape}, GM{i}0={self.DM[i][0].shape}, expected {block_l0_shape}"
             assert np.isclose(LA.norm(self.DM[0][i]), LA.norm(self.DM[i][0]), rtol=1e-5), f"Level-0 interlayer DM blocks for G0{i} not inversion-symmetric:\n {LA.norm(self.DM[0][i])}\nvs. \n{LA.norm(self.DM[i][0])}"
@@ -263,6 +266,13 @@ class InterlayerDM:
             self.__block_inter_l1()
         print(f"Off-diagonal block shapes: {self.GMi_blocks[0].shape}")
         return self.GMi_blocks
+    
+    def get_intra_blocks(self):
+        if self.DM is None:
+            print("Building interlayer dynamical matrix...")
+            self.__block_inter_l1()
+        print(f"Config intralayer block shapes: {self.GMi_intra_blocks[0][0].shape} and {self.GMi_intra_blocks[1][0].shape}")
+        return self.GMi_intra_blocks
     
     def get_all_blocks(self):
         if self.DM is None:
@@ -293,6 +303,7 @@ class TwistedDM:
         print("Blocks built.")
         self.M = np.array([[species.atomic_mass for species in layer] for layer in species_per_layer])
         self.off_diag_blocks = inter.get_off_diag_blocks()
+        self.intra_config_blocks = inter.get_intra_blocks()
         self.n_GM = len(l1.get_GM_set())
         self.k_mags = k_mags
         self.modes_built = False
@@ -307,15 +318,17 @@ class TwistedDM:
         # * in the interlayer 1-2 matrix in row i. Repeat for second intralayer and interlayer 2-1.
         def enforce_acoustic_sum_rule():
             M = self.M; n_GM = self.n_GM
-            l0sz = DM_intras[0].shape[0] // n_GM
-            assert DM_intras[0].shape[0] % n_GM == 0
-            assert l0sz % 3 == 0
-            dg1 = self.Gamma_intra_blks[0][1:]; dg2 = self.Gamma_intra_blks[1][1:]
+            l0sz = DM_intras[0].shape[0] // n_GM; assert DM_intras[0].shape[0] % n_GM == 0; assert l0sz % 3 == 0
+            # dg1 = self.Gamma_intra_blks[0][1:]; dg2 = self.Gamma_intra_blks[1][1:]
+            d1 = self.intra_config_blocks[0]; d2 = self.intra_config_blocks[1]
             for i in range(0, l0sz, 3): # intralayer1 and interlayer12
-                DM_intras[0][i:i+3,i:i+3] -= 1/sqrt(6)*sum([sum([sqrt(M[1,j//3] / M[0,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3)]) for Gblk in self.off_diag_blocks])
+                DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[1,j//3] / M[0,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3)]) for Gblk in self.off_diag_blocks])
+                DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[0,j//3] / M[0,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3) if j != i]) for Gblk in d1])
                 # DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[0,j//3] / M[0,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3) if j != i]) for Gblk in dg1])
+            l0sz = DM_intras[1].shape[0] // n_GM; assert DM_intras[1].shape[0] % n_GM == 0; assert l0sz % 3 == 0
             for i in range(0, l0sz, 3): # intralayer2 and interlayer 21
-                DM_intras[1][i:i+3,i:i+3] -= 1/sqrt(6)*sum([sum([sqrt(M[0,j//3] / M[1,i//3]) * Gblk.conjugate().T[i:i+3,j:j+3] for j in range(0,Gblk.shape[0],3)]) for Gblk in self.off_diag_blocks])
+                DM_intras[1][i:i+3,i:i+3] -= sum([sum([sqrt(M[0,j//3] / M[1,i//3]) * Gblk.conjugate().T[i:i+3,j:j+3] for j in range(0,Gblk.shape[0],3)]) for Gblk in self.off_diag_blocks])
+                DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[1,j//3] / M[1,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3) if j != i]) for Gblk in d2])
                 # DM_intras[1][i:i+3,i:i+3] -= sum([sum([sqrt(M[1,j//3] / M[1,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[0],3) if j != i]) for Gblk in dg2])
                 
         assert len(DM_intras) == 2
