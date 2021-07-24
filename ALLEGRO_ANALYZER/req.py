@@ -35,7 +35,7 @@ else:
     no_fails = True
     for i in range(N):
         if i % 10 == 0:
-            print(f"Analysis finished up to shift {j}")
+            print(f"Analysis finished up to shift {i}")
         if i in skip:
             continue
         pdir = f'shift_{i}/analyses/phonon/'
