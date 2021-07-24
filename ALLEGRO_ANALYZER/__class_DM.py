@@ -319,17 +319,17 @@ class TwistedDM:
         def enforce_acoustic_sum_rule():
             M = self.M; n_GM = self.n_GM
             l0sz = DM_intras[0].shape[0] // n_GM; assert DM_intras[0].shape[0] % n_GM == 0; assert l0sz % 3 == 0
-            # dg1 = self.Gamma_intra_blks[0][1:]; dg2 = self.Gamma_intra_blks[1][1:]
+            dg1 = self.Gamma_intra_blks[0][1:]; dg2 = self.Gamma_intra_blks[1][1:]
             d1 = self.intra_config_blocks[0]; d2 = self.intra_config_blocks[1]
             for i in range(0, l0sz, 3): # intralayer1 and interlayer12
                 DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[1,j//3] / M[0,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3)]) for Gblk in self.off_diag_blocks])
                 # DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[0,j//3] / M[0,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3) if j != i]) for Gblk in d1])
-                # DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[0,j//3] / M[0,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3) if j != i]) for Gblk in dg1])
+                DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[0,j//3] / M[0,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3) if j != i]) for Gblk in dg1])
             l0sz = DM_intras[1].shape[0] // n_GM; assert DM_intras[1].shape[0] % n_GM == 0; assert l0sz % 3 == 0
             for i in range(0, l0sz, 3): # intralayer2 and interlayer 21
                 DM_intras[1][i:i+3,i:i+3] -= sum([sum([sqrt(M[0,j//3] / M[1,i//3]) * Gblk.conjugate().T[i:i+3,j:j+3] for j in range(0,Gblk.shape[0],3)]) for Gblk in self.off_diag_blocks])
                 # DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[1,j//3] / M[1,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3) if j != i]) for Gblk in d2])
-                # DM_intras[1][i:i+3,i:i+3] -= sum([sum([sqrt(M[1,j//3] / M[1,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[0],3) if j != i]) for Gblk in dg2])
+                DM_intras[1][i:i+3,i:i+3] -= sum([sum([sqrt(M[1,j//3] / M[1,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[0],3) if j != i]) for Gblk in dg2])
                 
         assert len(DM_intras) == 2
         assert DM_intras[0].shape == DM_intras[1].shape == DM_inter.shape
