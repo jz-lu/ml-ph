@@ -10,7 +10,12 @@ VASP_FREQ_TO_INVCM_UNITS = 15.633302*33.356
 # Z_LATTICE_SIZE = 20.0
 # Z_LAYER_SEP = 0.376723775 # Layer separation in terms of the z-basis vector
 Z_LATTICE_SIZE = 35.0
-Z_LAYER_SEP = 0.19403429 # Layer separation in terms of the z-basis vector
+Z_LAYER_SEP = {
+  'WSe2': 0.203525265,
+  'MoS2_0': 0.286, 
+  'MoS2_180': 0.19403429
+} # Layer separation in terms of the z-basis vector
+Z_LAYER_SEP = Z_LAYER_SEP['WSe2']
 # Precision of POSCAR lattice and atoms, in number of decimal places
 POSCAR_PRECISION = 6
 POSCAR_PREC_COMP_THRESHOLD = 0.0001
