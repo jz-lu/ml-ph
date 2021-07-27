@@ -82,7 +82,7 @@ class MonolayerDM:
             self.dbgprint = False
         if self.l0_shape is None:
             self.l0_shape = dm.shape
-        # enforce_trnsl_invrnc()
+        enforce_trnsl_invrnc()
         return dm
     
     # Deprecated: Calculates dynamical matrix elements for direct or Cartesian coordinates `q`

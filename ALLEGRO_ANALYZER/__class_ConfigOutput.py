@@ -215,7 +215,6 @@ class ConfigOutput:
             b = (self.cob @ np.array(b)[:,:2].T).T
         bx = b[:,0]; by = b[:,1]
         bdir = np.array(self.__direct_shifts)
-        print(bdir)
         plt.clf(); fig, ax = plt.subplots()
         cf = ax.tricontourf(bx, by, energies, levels=levels, cmap="RdGy")
         fig.colorbar(cf, ax=ax)
