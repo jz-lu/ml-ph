@@ -203,7 +203,6 @@ class ConfigOutput:
     # Smoothly interpolate toal energy at various shifts.
     def plot_e_vs_b(self, levels=DEFAULT_CONTOUR_LEVELS, pfx='', tpfx='', energies=None, b=None):
         need_direct = True
-        bdir = np.array(b)
         if energies is None:
             energies = self.__energies
         else:
@@ -213,8 +212,9 @@ class ConfigOutput:
             b = self.__shifts
         else:
             assert energies is not None
-            b = [np.dot(self.cob, i) for i in np.array(b)[:,:2]]
-        bx = [i[0] for i in b]; by = [i[1] for i in b]
+            b = (self.cob @ np.array(b)[:,:2].T).T
+        bx = b[:,0]; by = b[:,1]
+        bdir = self.__direct_shifts
         plt.clf(); fig, ax = plt.subplots()
         cf = ax.tricontourf(bx, by, energies, levels=levels, cmap="RdGy")
         fig.colorbar(cf, ax=ax)
