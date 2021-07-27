@@ -224,7 +224,7 @@ class InterlayerDM:
         assert self.force_matrices[0].shape[0] == self.force_matrices[0].shape[1], f"Force matrix is not square: shape {self.force_matrices[0].shape}"
         assert self.force_matrices[0].shape[0] % 2 == 0, f"Force matrix size is odd: shape {self.force_matrices[0].shape}"
 
-    def __block_inter_l0(self, G0, k=np.array([0,0,0])):
+    def __block_inter_l0(self, G0, k=np.array([0,0])):
         D = sum([force_matrix * np.exp(1j * np.dot(G0 + k, b)) for force_matrix, b in zip(self.force_matrices, self.b_set)])
         # Extract a submatrix with rows of atoms from layer 1 
         # and columns of atoms from layer 2, which is the interlayer 1-2 interactions.
