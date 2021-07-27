@@ -121,7 +121,8 @@ class MonolayerDM:
     def Gamma_blks(self, log=False):
         blks = [self.__block_intra_l0(GM, self.ph) for GM in self.GM_set]
         if log:
-            print(block_diag(*blks))
+            for i, blk in enumerate(blks):
+                print(f"G{i}", blk)
         return blks
 
     def get_block_force_sum(self):
