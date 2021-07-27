@@ -122,7 +122,7 @@ class MonolayerDM:
         blks = [self.__block_intra_l0(GM, self.ph) for GM in self.GM_set]
         if log:
             for i, blk in enumerate(blks):
-                print(f"G{i}", blk)
+                print(f"G{i}", np.real_if_close(blk))
         return blks
 
     def get_block_force_sum(self):
