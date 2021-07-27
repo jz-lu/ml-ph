@@ -214,6 +214,7 @@ class InterlayerDM:
         self.M = np.array([[species.atomic_mass for species in layer] for layer in species_per_layer])
         self.per_layer_at_idxs = per_layer_at_idxs; assert len(self.per_layer_at_idxs) == 2, f"Only 2 layers supported"
         self.k_set = k_set
+        self.modes_built = False
         if ph_list is not None:
             def sym_dm_at_gamma(i, ph):
                 # print(f"Symmetrizing force constants for config {i}...")
