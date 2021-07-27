@@ -125,6 +125,41 @@ class BZSampler:
             print(f"k at Gamma index {self.Gamma_idx}: {k_set[self.Gamma_idx]}")
         self.corner_kmags = corner_kmags
         return (k_set, kmags)
+    
+    # Sample nk points along each IBZ boundary line
+    def sample_k0(self, nk=DEFAULT_NK, log=False):
+        assert self.ltype == 'hexagonal'
+        G01 = self.G0[:,0]; G02 = self.G0[:,1] # Moire reciprocal lattice vectors
+        d = G01.shape[0]
+        print("k-sampler using Gamma-K-M sequence defined by pristine reciprocal lattice vectors G0")
+        Gamma = np.zeros(d); K = 1/3 * (G01 + G02); M = 1/2 * G01
+        if np.isclose(self.lattice_angle, 60):
+            print("Using 60-degree unit cell for BZ...")
+            M += 1/2 * G02
+            K += 1/3 * G01
+        else:
+            print("Using 120-degree unit cell for BZ...")
+        
+        assert np.isclose(self.lattice_angle, 60) or np.isclose(self.lattice_angle, 120), f"k-sampler expects lattice angle to be 120 or 60 deg, but is {self.lattice_angle}"
+        ncorners = 4; corners = np.zeros([ncorners, d]) # k-points IBZ boundary corners
+        corners[0,:] = K; corners[1,:] = Gamma; corners[2,:] = M; corners[3,:] = K
+        self.corners = corners
+
+        # Sample nk-1 (drop last point) per line (ncorners-1 lines)
+        nsample = (nk-1) * (ncorners-1)
+        k_set = np.zeros([nsample, d]); kmags = np.zeros(nsample); kmag_start = 0
+        corner_kmags = []
+        for line in range(ncorners-1): # last point equals first, so skip it
+            kidx = line*(nk-1) # convert line index to k-index
+            # Drop second corner point in each line to avoid resampling corner points
+            k_set[kidx : kidx+nk-1] = np.linspace(corners[line], corners[line+1], nk)[:-1]
+            dline_mag = LA.norm(corners[line+1] - corners[line])
+            mags = np.linspace(kmag_start, kmag_start + dline_mag, nk)
+            corner_kmags.append(kmag_start)
+            kmag_start = mags[-1] # update start point of flattened-k to end of current line
+            kmags[kidx : kidx+nk-1] = mags[:-1]
+        self.k0_set = k_set; self.k0mags = kmags
+        return k_set
 
     def plot_sampling(self, filename='sampling.png'):
         assert self.g_idxs is not None, "Cannot plot sampling until G vectors have been sampled"

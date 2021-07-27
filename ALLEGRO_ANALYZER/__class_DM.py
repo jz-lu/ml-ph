@@ -216,7 +216,7 @@ class InterlayerDM:
         self.k_set = k_set
         self.modes_built = False
         if ph_list is not None:
-            def sym_dm_at_gamma(i, ph):
+            def sym_dm_at_gsamamma(i, ph):
                 # print(f"Symmetrizing force constants for config {i}...")
                 ph.symmetrize_force_constants()
                 return ph.get_dynamical_matrix_at_q([0,0,0])

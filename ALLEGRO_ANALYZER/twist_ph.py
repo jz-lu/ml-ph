@@ -206,7 +206,7 @@ if __name__ == '__main__':
         print("Constructing interlayer dynamical matrix objects...")
         ILDM = None
         config_ph_list = None if relax or multirelax else config_ph_list
-        ILDM =  InterlayerDM(per_layer_at_idxs, b_set, k_set, GM_set, G0_set, [p.structure.species for p in poscars_uc], ph_list=config_ph_list, force_matrices=relaxed_forces)
+        ILDM =  InterlayerDM(per_layer_at_idxs, b_set, bzsamples.sample_k0(), GM_set, G0_set, [p.structure.species for p in poscars_uc], ph_list=config_ph_list, force_matrices=relaxed_forces)
         if plot_intra:
             print("Plotting intralayer parts of configuration matrix...")
             ILDM.get_intra_DM_set(k_mags=k_mags, corner_kmags=corner_kmags, outdir=outdir)
