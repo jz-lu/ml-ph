@@ -118,8 +118,11 @@ class MonolayerDM:
         self.DM_set = [block_diag(*[self.__block_intra_l0(k+GM, self.ph) for GM in self.GM_set]) for k in self.k_set]
         return self.DM_set
     
-    def Gamma_blks(self):
-        return [self.__block_intra_l0(GM, self.ph) for GM in self.GM_set]
+    def Gamma_blks(self, log=False):
+        blks = [self.__block_intra_l0(GM, self.ph) for GM in self.GM_set]
+        if log:
+            print(block_diag(*blks))
+        return blks
 
     def get_block_force_sum(self):
         if self.DM_set is None:
@@ -371,7 +374,7 @@ class TwistedDM:
         self.n_ats = [l1.n_at, l2.n_at]
         print("Building dynamical matrix intra(er) blocks...")
         DMs_layer1 = l1.get_DM_set(); DMs_layer2 = l2.get_DM_set(); DM_inter = inter.get_DM()
-        DMs_layer1, DMs_layer2 = inter.get_intra_DM_set()
+        # DMs_layer1, DMs_layer2 = inter.get_intra_DM_set()
         self.szs = [DMs_layer1[0].shape[0], DMs_layer2[0].shape[0]]
         print("Blocks built.")
         self.M = np.array([[species.atomic_mass for species in layer] for layer in species_per_layer])
