@@ -182,7 +182,7 @@ class MonolayerDM:
             if cutoff is not None:
                 modes = modes[modes <= cutoff]
             plt.scatter([k_mag] * len(modes), modes, c='royalblue', s=0.07)
-        xlabs = (r'$\Gamma$', r'K', r'M')
+        xlabs = (r'K', r'$\Gamma$', r'M')
         plt.xticks(corner_kmags, xlabs)
         plt.ylabel(r'$\omega\,(\mathrm{cm}^{-1})$')
         title = "First-layer phonon modes"
@@ -204,7 +204,7 @@ class MonolayerDM:
 
 # Build interlayer dynamical matrix block via summing over configurations
 class InterlayerDM:
-    def __init__(self, per_layer_at_idxs, b_set, GM_set, G0_set, species_per_layer, ph_list=None, force_matrices=None):
+    def __init__(self, per_layer_at_idxs, b_set, k_set, GM_set, G0_set, species_per_layer, ph_list=None, force_matrices=None):
         assert (ph_list is not None) ^ (force_matrices is not None), "Must give exactly one of: phonopy obj list, force matrix list"
         assert len(b_set[0]) == 2, "Shift vectors must be 2-dimensional"
         self.b_set = b_set; self.ph_list = ph_list # list of phonopy objects for each config
@@ -213,6 +213,7 @@ class InterlayerDM:
         self.GM_set = GM_set; self.G0_set = G0_set; self.DM = None
         self.M = np.array([[species.atomic_mass for species in layer] for layer in species_per_layer])
         self.per_layer_at_idxs = per_layer_at_idxs; assert len(self.per_layer_at_idxs) == 2, f"Only 2 layers supported"
+        self.k_set = k_set
         if ph_list is not None:
             def sym_dm_at_gamma(i, ph):
                 # print(f"Symmetrizing force constants for config {i}...")
@@ -268,6 +269,67 @@ class InterlayerDM:
         self.DM = bmat(self.DM).toarray() # convert NoneTypes to zero-matrix blocks to make sparse matrix
         assert np.round(sum(sum(self.DM)), 12) == np.round(sum(sum(sum(self.all_blocks))), 12), f"The list of blocks does not match the interlayer DM, {sum(sum(sum(self.all_blocks)))} vs. {sum(sum(self.DM))}"
         return self.DM
+    
+    def __intras_block_inter_l1(self):
+        l1 = [0]*len(self.k_set); l2 = [0]*len(self.k_set)
+        for i, k in enumerate(self.k_set):
+            blocks = [self.__block_inter_l0(G0j, k=k) for G0j in self.G0_set]
+            l1[i] = block_diag(*[b[1] for b in blocks])
+            l2[i] = block_diag(*[b[2] for b in blocks])
+        return l1, l2
+    
+    def get_intra_DM_set(self, k_mags=None, corner_kmags=None, outdir='.'):
+        l1, l2 = self.__intras_block_inter_l1()
+        if k_mags is not None and corner_kmags is not None:
+            self.__plot_band(l1, l2, k_mags, corner_kmags, outdir=outdir)
+        return l1, l2
+
+    # Diagonalize the set of DMs to get phonon modes
+    def __build_modes(self, k_mags, DM_set, dump=False, outdir=None):
+        self.k_mags = k_mags
+        self.DM_set = DM_set
+        self.mode_set = [0]*len(self.k_mags)
+        for i, (k_mag, DM) in enumerate(zip(self.k_mags, self.DM_set)):
+            evals = LA.eigvals(DM)
+            signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
+            modes_k = signs * np.sqrt(np.abs(evals)) * (VASP_FREQ_TO_INVCM_UNITS) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
+            self.mode_set[i] = (k_mag, modes_k[modes_k != 0])
+        if dump:
+            outdir = checkPath(os.path.abspath(outdir))
+            assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
+            k_dump = []; mode_dump = []
+            for k_mag, modes in self.mode_set:
+                    k_dump += [k_mag]*len(modes)
+                    mode_dump += list(modes)
+            with open(outdir + 'intra_modes.txt', 'w') as f:
+                for k_mag, mode in zip(k_dump, mode_dump):
+                    f.write(f"{k_mag}\t{mode}\n")
+        self.modes_built = True
+        return self.mode_set
+    
+    def __plot_band(self, l1, l2, k_mags, corner_kmags, outdir='./', 
+                  filename='interintra_' + DEFAULT_PH_BAND_PLOT_NAME, name=None, cutoff=None):
+        outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Invalid directory {outdir}"
+        if not self.modes_built:
+            print("Configuration intralayer modes not built yet, building...")
+            self.mode_set_per_layer = [self.__build_modes(k_mags, l, dump=False, outdir=outdir) for l in [l1, l2]]
+            print("Configuration intralayer modes built.")
+        plt.clf()
+        for i, mode_set in enumerate(self.mode_set_per_layer):
+            for k_mag, modes in mode_set:
+                if cutoff is not None:
+                    modes = modes[modes <= cutoff]
+                plt.scatter([k_mag] * len(modes), modes, c='royalblue', s=0.07)
+            xlabs = ('K', r'$\Gamma$', r'M')
+            plt.xticks(corner_kmags, xlabs)
+            plt.ylabel(r'$\omega\,(\mathrm{cm}^{-1})$')
+            title = f"Layer-{i+1} phonon modes"
+            if name is not None:
+                title += f" of {name}"
+            plt.title(title)
+            this_filename = filename[:filename.index('.')] + f'_{i+1}' + filename[filename.index('.'):]
+            plt.savefig(outdir + this_filename)
+            print(f"Intralayer plot {i+1} written to {outdir+this_filename}")
     
     def get_off_diag_blocks(self):
         if self.DM is None:
