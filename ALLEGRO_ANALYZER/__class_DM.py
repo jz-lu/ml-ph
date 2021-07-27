@@ -71,7 +71,7 @@ class MonolayerDM:
         dm = ph.get_dynamical_matrix_at_q(q)
         def enforce_trnsl_invrnc():
             if LA.norm(q) == 0.0:
-                print(f"Translational invariance ignored for q={q}")
+                print(f"Translational invariance rule ignored q={q}")
                 return
             assert dm.shape[0] == dm.shape[1] and dm.shape[0] == 3*self.n_at, f"Shape {dm.shape} inconsistent with num atoms {self.n_at}"
             for i in range(0, dm.shape[0], 3):
@@ -82,7 +82,7 @@ class MonolayerDM:
             self.dbgprint = False
         if self.l0_shape is None:
             self.l0_shape = dm.shape
-        enforce_trnsl_invrnc()
+        # enforce_trnsl_invrnc()
         return dm
     
     # Deprecated: Calculates dynamical matrix elements for direct or Cartesian coordinates `q`
@@ -343,7 +343,7 @@ class TwistedDM:
         assert len(DM_intras) == 2
         assert DM_intras[0].shape == DM_intras[1].shape == DM_inter.shape
         DM_intras = list(map(lambda D: (D + D.conjugate().T) / 2, DM_intras)) # impose Hermiticity
-        enforce_acoustic_sum_rule()
+        # enforce_acoustic_sum_rule()
         DM = np.block([[DM_intras[0], DM_inter], [DM_inter.conjugate().T, DM_intras[1]]])
         return DM
     
@@ -371,7 +371,7 @@ class TwistedDM:
         print("\nTWISTED FORCE SUMS:")
         dm = self.get_DM_at_Gamma()
         l0szs = self.l0szs
-        interblks = self.interobj.get_all_blocks()
+        interblks = self.interobj.get_off_diag_blocks()
         print(f"Using {len(interblks)} blocks from interlayer component")
         print("LAYER 1 ATOMS:")
         for i in range(self.n_ats[0]): # layer 1 atoms
