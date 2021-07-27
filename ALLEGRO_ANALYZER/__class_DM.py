@@ -242,8 +242,9 @@ class InterlayerDM:
                 print(f"Configuration intra translational enforcer ignored G0={G0}, k={k}")
                 return
             for i in range(0, D_intra1.shape[0], 3):
-                D_intra1[i:i+3,i+i+3] = np.zeros_like(D_intra1[i:i+3,i+i+3])
-                D_intra2[i:i+3,i+i+3] = np.zeros_like(D_intra2[i:i+3,i+i+3])
+                D_intra1[i:i+3,i:i+3] = np.zeros_like(D_intra1[i:i+3,i:i+3])
+            for i in range(0, D_intra2.shape[0], 3):
+                D_intra2[i:i+3,i:i+3] = np.zeros_like(D_intra2[i:i+3,i:i+3])
         assert len(D.shape) == 2 and D.shape[0] == D.shape[1], f"D with shape {D.shape} not square matrix"
         assert len(D_inter.shape) == 2 and D_inter.shape[0] == D_inter.shape[1], f"D_inter with shape {D_inter.shape} not square matrix"
         assert 2*D_inter.shape[0] == D.shape[0] and 2*D_inter.shape[1] == D.shape[1], f"D_inter shape {D_inter.shape} should be half of D shape {D.shape}"
