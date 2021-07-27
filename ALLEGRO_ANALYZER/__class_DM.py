@@ -69,11 +69,20 @@ class MonolayerDM:
     # Compute intralayer dynamical matrix block element for given some (direct) center `q` and phonopy object `ph`
     def __block_intra_l0(self, q, ph):
         dm = ph.get_dynamical_matrix_at_q(q)
+        def enforce_trnsl_invrnc():
+            if LA.norm(q) == 0.0:
+                print(f"Translational invariance ignored for q={q}")
+                return
+            assert dm.shape[0] == dm.shape[1] and dm.shape[0] == 3*self.n_at, f"Shape {dm.shape} inconsistent with num atoms {self.n_at}"
+            for i in range(0, dm.shape[0], 3):
+                dm[i:i+3,i:i+3] = np.zeros_like(dm[i:i+3,i:i+3])
+                    
         if self.dbgprint:
             print(f"Intralayer Level-0 shape: {dm.shape}")
             self.dbgprint = False
         if self.l0_shape is None:
             self.l0_shape = dm.shape
+        enforce_trnsl_invrnc()
         return dm
     
     # Deprecated: Calculates dynamical matrix elements for direct or Cartesian coordinates `q`
@@ -215,8 +224,8 @@ class InterlayerDM:
         assert self.force_matrices[0].shape[0] == self.force_matrices[0].shape[1], f"Force matrix is not square: shape {self.force_matrices[0].shape}"
         assert self.force_matrices[0].shape[0] % 2 == 0, f"Force matrix size is odd: shape {self.force_matrices[0].shape}"
 
-    def __block_inter_l0(self, G0):
-        D = sum([force_matrix * np.exp(1j * np.dot(G0, b)) for force_matrix, b in zip(self.force_matrices, self.b_set)])
+    def __block_inter_l0(self, G0, k=np.array([0,0,0])):
+        D = sum([force_matrix * np.exp(1j * np.dot(G0 + k, b)) for force_matrix, b in zip(self.force_matrices, self.b_set)])
         # Extract a submatrix with rows of atoms from layer 1 
         # and columns of atoms from layer 2, which is the interlayer 1-2 interactions.
         D_inter = D[np.ix_(self.per_layer_at_idxs[0], self.per_layer_at_idxs[1])] / self.nshift
@@ -228,13 +237,13 @@ class InterlayerDM:
         return D_inter, D_intra1, D_intra2
 
     def __block_inter_l1(self):
-        def enforce_acoustic_sum_rule(D):
-            n_at_1 = len(self.per_layer_at_idxs[0])
-            assert n_at_1 % 3 == 0
-            M1 = self.M[0]; M2 = self.M[1]
-            for i in range(0, n_at_1, 3):
-                D[i:i+3,i:i+3] -= sum([sum([sqrt(M2[j//3] / M1[i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3)]) for Gblk in self.GMi_blocks])
-            return D
+        # def enforce_acoustic_sum_rule(D):
+        #     n_at_1 = len(self.per_layer_at_idxs[0])
+        #     assert n_at_1 % 3 == 0
+        #     M1 = self.M[0]; M2 = self.M[1]
+        #     for i in range(0, 3*n_at_1, 3):
+        #         D[i:i+3,i:i+3] -= sum([sum([sqrt(M2[j//3] / M1[i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3)]) for Gblk in self.GMi_blocks])
+        #     return D
 
         n_GM = len(self.GM_set); assert len(self.G0_set) == n_GM, f"|G0_set| {len(self.G0_set)} != |GM_set| = {n_GM}"
         assert LA.norm(self.G0_set[0]) == 0, f"G0[0] should be 0, but is {LA.norm(self.GM_set[0])}"
@@ -324,12 +333,12 @@ class TwistedDM:
             for i in range(0, l0sz, 3): # intralayer1 and interlayer12
                 DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[1,j//3] / M[0,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3)]) for Gblk in self.off_diag_blocks])
                 # DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[0,j//3] / M[0,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3) if j != i]) for Gblk in d1])
-                DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[0,j//3] / M[0,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3) if j != i]) for Gblk in dg1])
+                # DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[0,j//3] / M[0,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3) if j != i]) for Gblk in dg1])
             l0sz = DM_intras[1].shape[0] // n_GM; assert DM_intras[1].shape[0] % n_GM == 0; assert l0sz % 3 == 0
             for i in range(0, l0sz, 3): # intralayer2 and interlayer 21
                 DM_intras[1][i:i+3,i:i+3] -= sum([sum([sqrt(M[0,j//3] / M[1,i//3]) * Gblk.conjugate().T[i:i+3,j:j+3] for j in range(0,Gblk.shape[0],3)]) for Gblk in self.off_diag_blocks])
                 # DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[1,j//3] / M[1,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3) if j != i]) for Gblk in d2])
-                DM_intras[1][i:i+3,i:i+3] -= sum([sum([sqrt(M[1,j//3] / M[1,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[0],3) if j != i]) for Gblk in dg2])
+                # DM_intras[1][i:i+3,i:i+3] -= sum([sum([sqrt(M[1,j//3] / M[1,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[0],3) if j != i]) for Gblk in dg2])
                 
         assert len(DM_intras) == 2
         assert DM_intras[0].shape == DM_intras[1].shape == DM_inter.shape
