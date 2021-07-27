@@ -5,11 +5,11 @@ from ___constants_names import (
     COB_NPY_NAME, LIDXS_NPY_NAME, 
     RELAXATION_DIR_NAME, ANALYSIS_DIR_NAME, 
     TOTAL_ENER_DIR_NAME, TOT_ENERGIES_NAME, 
-    POSCAR_NAME
+    POSCAR_NAME, POSCAR_CONFIG_NAMEPRE
 )
 from ___constants_output import NPREDPTS, DEFAULT_CONTOUR_LEVELS
 from __class_ConfigOutput import ConfigOutput, DSamplingOutput, FourierGSFE
-from __directory_searchers import checkPath
+from __directory_searchers import checkPath, findFilesInDir
 from __class_CarCollector import CarCollector
 from __class_Configuration import Configuration
 from __class_PhonopyAPI import PhonopyAPI
@@ -88,6 +88,9 @@ if __name__ == '__main__':
         print(f"Using minimum energy shift {abs_min_energy} eV.")
     print(f"Analysis type: {'along diagonal' if diag else 'grid configurations'}")
 
+    poscars_uc = sorted(findFilesInDir(BASE_ROOT, POSCAR_CONFIG_NAMEPRE, searchType='start')); npos = len(poscars_uc)
+    name = '-'.join([Poscar.from_file(BASE_ROOT + pname).comment for pname in poscars_uc])
+
     # Collect COB matrix and layer indices
     data_dir = BASE_ROOT + checkPath(CONFIG_DATA_DIR)
     print("Retrieving COB matrix and layer indices from '%s'..."%data_dir)
@@ -155,13 +158,13 @@ if __name__ == '__main__':
             ph_api = PhonopyAPI(BASE_ROOT, ctype='config')
             ncfg, ph_list = ph_api.nconfigs(), ph_api.inter_ph_list()
             assert ncfg == nshifts, f"Number of configurations found {ncfg} inconsistent with number entered {nshifts}"
-        do = DSamplingOutput(data_dir, nshifts, special_pts=pts, energies=energies, spacings=zspaces, ph_list=ph_list)
+        do = DSamplingOutput(data_dir, nshifts, name, special_pts=pts, energies=energies, spacings=zspaces, ph_list=ph_list)
         do.output_all_analysis()
         if ff_pred is not None:
             pts = [0, NPREDPTS//3, 2*NPREDPTS//3]
             addendum = 1000*(np.array(energies)-min(energies))
             addendum = (np.linspace(0, 1, num=nshifts+1), np.append(addendum, addendum[0]))
-            do_pred = DSamplingOutput(data_dir, NPREDPTS, special_pts=pts, energies=ff_pred, scaled=True, dump=False)
+            do_pred = DSamplingOutput(data_dir, NPREDPTS, name, special_pts=pts, energies=ff_pred, scaled=True, dump=False)
             do_pred.plot_energies(pfx='pred', tsfx='fitted', interp=False, scat=False, line=True, addendum=addendum)
     else:
         # Combine into (b, z, e) points and pass to ConfigOutput
@@ -173,7 +176,7 @@ if __name__ == '__main__':
         bze = np.array(bze)
         np.save(data_dir + 'bze', bze)
         print("Parsing successful, passing to analyzer...")
-        do = ConfigOutput(data_dir, bze, cob, ph_list=ph_list, abs_min_energy=abs_min_energy)
+        do = ConfigOutput(data_dir, bze, cob, name, ph_list=ph_list, abs_min_energy=abs_min_energy)
         do.output_all_analysis(levels=nlevel)
         if ff_pred is not None:
             print("Building fitted GSFE plot...")

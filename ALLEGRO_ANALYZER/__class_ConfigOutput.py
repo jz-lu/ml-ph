@@ -20,13 +20,14 @@ from ___helpers_parsing import warn
 import phonopy, copy, os
 
 class DSamplingOutput:
-    def __init__(self, out_dir, npts, special_pts=None, energies=None, spacings=None, scaled=False, dump=True, 
+    def __init__(self, out_dir, npts, name, special_pts=None, energies=None, spacings=None, scaled=False, dump=True, 
                  ph_list=None, ltype='hexagonal'):
         assert ltype == 'hexagonal', f"Only hexagonal lattices supported (for now), but got {ltype}"
         print("Initializing DSamplingOutput object")
         assert npts % 3 == 0, 'Must choose a number of points as a multiple of 3 to respect symmetry'
         self.out_dir = checkPath(out_dir); self.npts = npts + 1 # add 1 for periodici boundary conditions
         self.spacings = None; self.energies = None; self.force_matrices = None
+        self.name = name
         if energies is not None:
             minenergy = min(energies); self.energies = (1 if scaled else 1000)*(np.array(energies)-minenergy)
             if dump:
@@ -61,7 +62,7 @@ class DSamplingOutput:
         assert interp or scat or line, "Must specify at least 1 type of plot"
         assert not (interp and line), "Must choose at most one of interpolation and line plotting"
         assert plt_type in ['energy', 'z', 'forces']; plt.clf(); fig, ax = plt.subplots()
-        title = 'GSFE'; y_lab = r"$E_{tot} (meV)$"; y = self.energies
+        title = 'GSFE of '; y_lab = r"$E_{tot} (meV)$"; y = self.energies
         if plt_type == 'z':
             title = 'Interlayer spacing'; y_lab = 'Interlayer spacing (unitless)'
         title = title + (f' ({tsfx})' if tsfx != '' else '')
@@ -148,10 +149,11 @@ class DSamplingOutput:
 class ConfigOutput:
     # plot list is a list of tuples (b, z, e) = (shift, z-spacing, energy).
     # cob is the change-of-basis matrix to get fom lattice basis (which b is in) to Cartesian to plot.
-    def __init__(self, out_dir, plot_list, cob_matrix, 
+    def __init__(self, out_dir, plot_list, cob_matrix, name, 
                  ph_list=None, abs_min_energy=None, scaled=False, dump=False):
         print("Initalizing ConfigOutput object.")
         self.cob = cob_matrix; self.ph_list = ph_list
+        self.name = name
         # plot_list: list of (b, z, e) points
         self.__plot_list = plot_list
         self.__zspacings = np.array([i[1] for i in plot_list])
@@ -201,6 +203,7 @@ class ConfigOutput:
     # Smoothly interpolate toal energy at various shifts.
     def plot_e_vs_b(self, levels=DEFAULT_CONTOUR_LEVELS, pfx='', tpfx='', energies=None, b=None):
         need_direct = True
+        bdir = np.array(b)
         if energies is None:
             energies = self.__energies
         else:
@@ -217,16 +220,16 @@ class ConfigOutput:
         fig.colorbar(cf, ax=ax)
         ax.set_xlabel(r"$b_x$")
         ax.set_ylabel(r"$b_y$")
-        ax.set_title(tpfx + ('' if tpfx=='' else ' ') + r"GSFE$(\mathbf{b})$ (meV)")
+        ax.set_title(tpfx + ('' if tpfx=='' else ' ') + r"GSFE$(\mathbf{b})$ (meV) of %s"%self.name)
         out_file = self.__out_dir + pfx + f"energy_config_plot_{levels}.png"
         ax.set_aspect('equal') # prevent axis stretching
         fig.savefig(out_file)
         if need_direct:
             plt.clf(); fig, ax = plt.subplots()
-            cf = ax.tricontourf(bx, by, energies, levels=levels, cmap="RdGy"); fig.colorbar(cf, ax=ax)
+            cf = ax.tricontourf(bdir[:,0], bdir[1:], energies, levels=levels, cmap="RdGy"); fig.colorbar(cf, ax=ax)
             ax.set_xlabel(r"$a_1$")
             ax.set_ylabel(r"$a_2$")
-            ax.set_title(r"$E_{tot}(\mathbf{b}=b_1 \mathbf{a}_1 + b_2 \mathbf{a}_2)$ (meV)")
+            ax.set_title(r"$E_{tot}(\mathbf{b}=b_1 \mathbf{a}_1 + b_2 \mathbf{a}_2)$ (meV) of %s"%self.name)
             out_file = self.__out_dir + pfx + f"energy_config_plot_direct_{levels}.png"
             fig.savefig(out_file)
     
@@ -238,7 +241,7 @@ class ConfigOutput:
         fig.colorbar(cf, ax=ax)
         ax.set_xlabel(r"$b_x$")
         ax.set_ylabel(r"$b_y$")
-        ax.set_title(r"Relaxed interlayer spacing (direct coordinates)")
+        ax.set_title(f"Relaxed interlayer spacing (direct) of {self.name}")
         out_file = self.__out_dir + "z_config_plot_cart"
         ax.set_aspect('equal') # prevent axis stretching
         fig.savefig(out_file + "_eqasp.png")
