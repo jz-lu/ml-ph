@@ -215,6 +215,7 @@ class ConfigOutput:
             b = (self.cob @ np.array(b)[:,:2].T).T
         bx = b[:,0]; by = b[:,1]
         bdir = np.array(self.__direct_shifts)
+        print(bdir)
         plt.clf(); fig, ax = plt.subplots()
         cf = ax.tricontourf(bx, by, energies, levels=levels, cmap="RdGy")
         fig.colorbar(cf, ax=ax)
@@ -226,7 +227,7 @@ class ConfigOutput:
         fig.savefig(out_file)
         if need_direct:
             plt.clf(); fig, ax = plt.subplots()
-            cf = ax.tricontourf(bdir[:,0], bdir[1:], energies, levels=levels, cmap="RdGy"); fig.colorbar(cf, ax=ax)
+            cf = ax.tricontourf(bdir[:,0], bdir[:,1], energies, levels=levels, cmap="RdGy"); fig.colorbar(cf, ax=ax)
             ax.set_xlabel(r"$a_1$")
             ax.set_ylabel(r"$a_2$")
             ax.set_title(r"$E_{tot}(\mathbf{b}=b_1 \mathbf{a}_1 + b_2 \mathbf{a}_2)$ (meV) of %s"%self.name)
