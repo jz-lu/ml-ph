@@ -214,7 +214,7 @@ class ConfigOutput:
             assert energies is not None
             b = (self.cob @ np.array(b)[:,:2].T).T
         bx = b[:,0]; by = b[:,1]
-        bdir = self.__direct_shifts
+        bdir = np.array(self.__direct_shifts)
         plt.clf(); fig, ax = plt.subplots()
         cf = ax.tricontourf(bx, by, energies, levels=levels, cmap="RdGy")
         fig.colorbar(cf, ax=ax)
