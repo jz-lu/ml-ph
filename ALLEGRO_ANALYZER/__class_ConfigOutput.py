@@ -209,7 +209,7 @@ class ConfigOutput:
             assert b is not None
             need_direct = False
         if b is None:
-            b = self.__shifts
+            b = np.array(self.__shifts)
         else:
             assert energies is not None
             b = (self.cob @ np.array(b)[:,:2].T).T
