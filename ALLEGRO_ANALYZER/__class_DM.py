@@ -237,9 +237,17 @@ class InterlayerDM:
         D_inter = D[np.ix_(self.per_layer_at_idxs[0], self.per_layer_at_idxs[1])] / self.nshift
         D_intra1 = D[np.ix_(self.per_layer_at_idxs[0], self.per_layer_at_idxs[0])] / self.nshift
         D_intra2 = D[np.ix_(self.per_layer_at_idxs[1], self.per_layer_at_idxs[1])] / self.nshift
+        def enforce_intra_tranl_invrc():
+            if LA.norm(G0+k) == 0:
+                print(f"Configuration intra translational enforcer ignored G0={G0}, k={k}")
+                return
+            for i in range(0, D_intra1.shape[0], 3):
+                D_intra1[i:i+3,i+i+3] = np.zeros_like(D_intra1[i:i+3,i+i+3])
+                D_intra2[i:i+3,i+i+3] = np.zeros_like(D_intra2[i:i+3,i+i+3])
         assert len(D.shape) == 2 and D.shape[0] == D.shape[1], f"D with shape {D.shape} not square matrix"
         assert len(D_inter.shape) == 2 and D_inter.shape[0] == D_inter.shape[1], f"D_inter with shape {D_inter.shape} not square matrix"
         assert 2*D_inter.shape[0] == D.shape[0] and 2*D_inter.shape[1] == D.shape[1], f"D_inter shape {D_inter.shape} should be half of D shape {D.shape}"
+        enforce_intra_tranl_invrc()
         return D_inter, D_intra1, D_intra2
 
     def __block_inter_l1(self):
