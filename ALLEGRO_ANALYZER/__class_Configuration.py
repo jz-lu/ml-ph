@@ -303,7 +303,7 @@ class Configuration:
         for i in range(len(grid)):
             temp = []
             for sample_coord in range(grid[i]):
-                temp.append(round((sample_coord / float(grid[i])) + 0.00000001, 6))
+                temp.append(round((sample_coord / float(grid[i])) + 1e-11, 12))
             sample_coord_sets.append(temp)
         
         # Construct a shift vector for every combination of the coordinate shifts.
@@ -323,8 +323,8 @@ class Configuration:
         assert isinstance(npts, int), f"Number of points should be (an odd) integer, but is {npts}"
         pts = np.linspace(0, 1, num=npts, endpoint=False)
         if basis is not None:
-            basis = np.array(basis); n_star = 1/round(min(basis[basis > 0]), 6); m = np.ones(basis.shape)
-            pts = [np.round((c * n_star * basis) % m, 6) for c in pts]
+            basis = np.array(basis); n_star = 1/min(basis[basis > 0]); m = np.ones(basis.shape)
+            pts = [(c * n_star * basis) % m for c in pts]
             if as_mat:
                 pts = np.concatenate(pts).reshape(npts, 3)
             if dump:

@@ -33,6 +33,7 @@ class DSamplingOutput:
             if dump:
                 print(f"Adjusted energies (meV): {self.energies}")
             self.energies = np.append(self.energies, self.energies[0])
+            assert len(self.energies) == self.npts, f"{len(self.energies)} and {self.npts} points"
             print("Initialized energies")
         if spacings is not None:
             self.spacings = np.array(spacings)
@@ -74,11 +75,11 @@ class DSamplingOutput:
             plt.xticks(ticks=x[self.special_pts], labels=HIGH_SYMMETRY_LABELS)
         else:
             plt.tick_params(
-                axis='x',          # changes apply to the x-axis
-                which='both',      # both major and minor ticks are affected
-                bottom=False,      # ticks along the bottom edge are off
-                top=False,         # ticks along the top edge are off
-                labelbottom=False) # labels along the bottom edge are off
+                axis='x',           # changes apply to the x-axis
+                which='both',       # both major and minor ticks are affected
+                bottom=False,       # ticks along the bottom edge are off
+                top=False,          # ticks along the top edge are off
+                labelbottom=False)  # labels along the bottom edge are off
         ax.set_ylabel(y_lab)
         if scat:
             ax.scatter(x, y, c='darkslategrey')
@@ -206,9 +207,8 @@ class ConfigOutput:
         """
         bdir = np.array(self.__direct_shifts)
         diags = [np.isclose(i[0], i[1]) for i in bdir]
-        b = bdir[diags]
-        e = self.__energies[diags]
-        addendum = [b, e]
+        e = self.__energies[diags]; e = np.append(e, e[0])
+        addendum = [np.linspace(0,1,len(diags)), e]
         diags = [np.isclose(i[0], i[1]) for i in bprime]
         b = np.array(bprime)[diags]
         e = energies[diags]
