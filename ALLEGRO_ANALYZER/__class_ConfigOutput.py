@@ -63,10 +63,11 @@ class DSamplingOutput:
         assert interp or scat or line, "Must specify at least 1 type of plot"
         assert not (interp and line), "Must choose at most one of interpolation and line plotting"
         assert plt_type in ['energy', 'z', 'forces']; plt.clf(); fig, ax = plt.subplots()
-        title = 'GSFE of '; y_lab = r"$E_{tot} (meV)$"; y = self.energies
+        title = 'GSFE'; y_lab = r"$E_{tot} (meV)$"; y = self.energies
         if plt_type == 'z':
             title = 'Interlayer spacing'; y_lab = 'Interlayer spacing (unitless)'
-        title = title + (f' ({tsfx})' if tsfx != '' else '')
+        title = title + (f' of ({tsfx})' if tsfx != '' else '')
+        print(f"Title: {title} (sfx={tsfx})")
         ax.set_title(f"{title} along diagonal")
         x = np.linspace(0, 1, self.npts); y = self.energies if plt_type == 'energy' else self.spacings
         print(f"Now plotting TYPE={plt_type} of {len(x)} points")
@@ -155,9 +156,9 @@ class ConfigOutput:
     # cob is the change-of-basis matrix to get fom lattice basis (which b is in) to Cartesian to plot.
     def __init__(self, out_dir, plot_list, cob_matrix, name, 
                  ph_list=None, abs_min_energy=None, scaled=False, dump=False):
-        print(f"Initalizing ConfigOutput object on {name}.")
-        self.cob = cob_matrix; self.ph_list = ph_list
         self.name = name
+        print(f"Initalizing ConfigOutput object on {self.name}.")
+        self.cob = cob_matrix; self.ph_list = ph_list
         # plot_list: list of (b, z, e) points
         self.__plot_list = plot_list
         self.__zspacings = np.array([i[1] for i in plot_list])
