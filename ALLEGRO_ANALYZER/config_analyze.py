@@ -148,7 +148,7 @@ if __name__ == '__main__':
         if diag:
             large_cfg = Configuration.sample_line(npts=NPREDPTS, basis=Configuration.diagonal_basis_from_cob(cob), dump=False, as_mat=True)
         else:
-            large_cfg = np.array(Configuration.sample_grid(grid=(101, 101, 1)))
+            large_cfg = np.array(Configuration.sample_grid(grid=(81, 81, 1)))
         ff_pred = ff_gsfe.predict(large_cfg)
     if diag:
         pts = [0, nshifts//3, 2*nshifts//3]
@@ -181,6 +181,7 @@ if __name__ == '__main__':
         if ff_pred is not None:
             print("Building fitted GSFE plot...")
             do.plot_e_vs_b(pfx='pred', tpfx='Fitted', energies=ff_pred, b=large_cfg)
+            do.plot_diag_cut(ff_pred, large_cfg)
             if plot_perr:
                 bmat = input("Enter path for b matrix .npy file: ")
                 while not os.path.isfile(bmat):

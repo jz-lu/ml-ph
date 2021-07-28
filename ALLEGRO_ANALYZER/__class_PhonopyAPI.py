@@ -19,8 +19,9 @@ class PhonopyAPI:
         assert ctype in ['twist', 'config'], f"Unknown computation type {self.ctype}"
         if ctype == 'twist':
             self.nlayer, self.intra_list = self.__load_intra_ph_list(ROOT, spname)
-            succ("Successfully loaded interlayer and intralayer objects")
+            succ("Successfully loaded intralayer objects")
         self.nconfig, self.inter_list = self.__load_inter_ph_list(ROOT, spname)
+        succ("Successfully loaded interlayer objects")
 
     # Load monolayer phonopy objects
     def __load_intra_ph_list(self, ROOT, spname=SPOSCAR_NAME):

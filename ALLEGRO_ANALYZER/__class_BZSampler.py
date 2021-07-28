@@ -41,7 +41,8 @@ class BZSampler:
         self.g_idxs = None; self.GM_set = None; self.G0_set = None
         self.k_set = None; self.kmags = None; self.corners = None
         self.ltype = lattice_type
-        self.GM_sampled = False; self.k_sampled = False; self.nsh = None
+        self.GM_sampled = False; self.k_sampled = False; self.k0_sampled = False
+        self.nsh = None
         if lattice_type != 'hexagonal':
             exit_with_error("Error: k-points sampler does not (yet) support non-hexagonal lattices")
 
@@ -129,7 +130,7 @@ class BZSampler:
     # Sample nk points along each IBZ boundary line
     def sample_k0(self, nk=DEFAULT_NK, log=False):
         assert self.ltype == 'hexagonal'
-        G01 = self.G0[:,0]; G02 = self.G0[:,1] # Moire reciprocal lattice vectors
+        G01 = self.G0[:,0]; G02 = self.G0[:,1] # Pristine reciprocal lattice vectors
         d = G01.shape[0]
         print("k-sampler using Gamma-K-M sequence defined by pristine reciprocal lattice vectors G0")
         Gamma = np.zeros(d); K = 1/3 * (G01 + G02); M = 1/2 * G01
@@ -143,7 +144,7 @@ class BZSampler:
         assert np.isclose(self.lattice_angle, 60) or np.isclose(self.lattice_angle, 120), f"k-sampler expects lattice angle to be 120 or 60 deg, but is {self.lattice_angle}"
         ncorners = 4; corners = np.zeros([ncorners, d]) # k-points IBZ boundary corners
         corners[0,:] = K; corners[1,:] = Gamma; corners[2,:] = M; corners[3,:] = K
-        self.corners = corners
+        self.corners0 = corners
 
         # Sample nk-1 (drop last point) per line (ncorners-1 lines)
         nsample = (nk-1) * (ncorners-1)
@@ -159,7 +160,44 @@ class BZSampler:
             kmag_start = mags[-1] # update start point of flattened-k to end of current line
             kmags[kidx : kidx+nk-1] = mags[:-1]
         self.k0_set = k_set; self.k0mags = kmags
+        self.k0_sampled = True
         return k_set
+    
+    def plot_sampling0(self, filename='sampling0.png'):
+        assert self.g_idxs is not None, "Cannot plot sampling until G vectors have been sampled"
+        assert self.corners0 is not None, "Cannot plot sampling until k-points have been sampled"
+        labels = (r'K', r'$\Gamma$', r'M', r'K')
+        plt.clf()
+        _, ax = plt.subplots()
+        cols = list(mcolors.TABLEAU_COLORS.keys()); ncol = len(cols)
+        random.shuffle(cols)
+        G01 = self.G0_set[:,0]; G02 = self.G0_set[:,1]
+        last_cut = 0
+        for i in range(1, self.nsh+1):
+            g_cutoff = (i + self.tol) * LA.norm(self.G0[:,0])
+            cut_makers = np.logical_and(np.sqrt(G01**2 + G02**2) >= last_cut, np.sqrt(G01**2 + G02**2) <= g_cutoff)
+            last_cut = g_cutoff
+            plt.scatter(G01[cut_makers], G02[cut_makers], 
+                        c=cols[i%ncol], 
+                        label=r'$\widetilde{\mathbf{G}}_{mn}$ in shell %d'%i)
+        for idx, G0 in zip(self.g_idxs, self.G0_set):
+            plt.annotate(str(tuple(idx)), G0, # this is the point to label
+                 textcoords="offset points", # how to position the text
+                 xytext=(np.sign(G0[0])*10, -np.sign(G0[1])*10), # distance from text to points (x,y)
+                 ha='center', fontsize=9.5) # horizontal alignment can be left, right or center
+        plt.plot(self.k0_set[:,0], self.k0_set[:,1], 
+                 c='teal', 
+                 label=r'$\mathbf{k}$-points (%d pts)'%len(self.k_set))
+        ax.set_aspect('equal') # prevent stretching of space in plot
+        for (x, y), lab in zip(self.corners0, labels):
+            plt.annotate(lab, (x, y), # this is the point to label
+                 textcoords="offset points", # how to position the text
+                 xytext=(-10,0), # distance from text to points (x,y)
+                 ha='center') # horizontal alignment can be left, right or center
+        plt.title("Pristine Sampling Space")
+        ax.set_xlabel(r'$k_x$'); ax.set_ylabel(r'$k_y$')
+        outname = self.outdir + filename
+        plt.savefig(outname); succ("Successfully wrote sampling plot out to " + outname)
 
     def plot_sampling(self, filename='sampling.png'):
         assert self.g_idxs is not None, "Cannot plot sampling until G vectors have been sampled"
@@ -209,6 +247,10 @@ class BZSampler:
     def get_kpts(self):
         assert self.k_sampled, "Must run k-sampler before retrieving k-set"
         return self.k_set, self.kmags
+    
+    def get_kpts0(self):
+        assert self.k0_sampled, "Must run k-sampler before retrieving k-set"
+        return self.k0_set, self.k0mags
     
     def get_Gamma_idx(self):
         assert self.k_sampled, "Must run k-sampler before retrieving k-set"

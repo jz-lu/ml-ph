@@ -199,6 +199,24 @@ class ConfigOutput:
         np.savetxt(out_file, table, delimiter=",", 
             header="bx, by, relaxed z-spacing, energy\n")
         np.save(self.__out_dir + 'e.npy', self.__energies)
+
+    def plot_diag_cut(self, energies, bprime, outname='diagcut.png'):
+        """
+        Function assumes lattice angle is 60 deg.
+        """
+        bdir = np.array(self.__direct_shifts)
+        diags = [np.isclose(i[0], i[1]) for i in bdir]
+        b = bdir[diags]
+        e = self.__energies[diags]
+        addendum = [b, e]
+        diags = [np.isclose(i[0], i[1]) for i in bprime]
+        b = np.array(bprime)[diags]
+        e = energies[diags]
+        ndiag = len(diags)
+        do = DSamplingOutput(self.__out_dir, ndiag, self.name, 
+                        special_pts=[0, ndiag//3, 2*ndiag//3], energies=e, scaled=True)
+        do.plot_energies(interp=False, line=True, addendum=addendum)
+        
    
     # Smoothly interpolate toal energy at various shifts.
     def plot_e_vs_b(self, levels=DEFAULT_CONTOUR_LEVELS, pfx='', tpfx='', energies=None, b=None):

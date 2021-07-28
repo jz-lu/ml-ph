@@ -82,9 +82,17 @@ class MonolayerDM:
             self.dbgprint = False
         if self.l0_shape is None:
             self.l0_shape = dm.shape
-        enforce_trnsl_invrnc()
+        # enforce_trnsl_invrnc()
         return dm
     
+    def plot_sampled_l0(self, outdir='.'):
+        outdir = checkPath(os.path.abspath(outdir))
+        lst = np.absolute([self.__block_intra_l0(GM, self.ph)[0,0] for GM in self.GM_set])
+        plt.clf(); fig, ax = plt.subplots()
+        ax.scatter(np.arange(self.n_GM), lst)
+        fig.savefig(outdir + 'sampledl0.png')
+        plt.close(fig)
+
     # Deprecated: Calculates dynamical matrix elements for direct or Cartesian coordinates `q`
     def __flex_block_intra_l0(self, q, ph):
         assert self.pos_sc_id is not None, "Fatal error in class initialization"
@@ -231,24 +239,15 @@ class InterlayerDM:
         assert self.force_matrices[0].shape[0] % 2 == 0, f"Force matrix size is odd: shape {self.force_matrices[0].shape}"
 
     def __block_inter_l0(self, G0, k=np.array([0,0])):
-        D = sum([force_matrix * np.exp(1j * np.dot(G0 + k, b)) for force_matrix, b in zip(self.force_matrices, self.b_set)])
+        D = sum([force_matrix * np.exp(-1j * np.dot(G0 + k, b)) for force_matrix, b in zip(self.force_matrices, self.b_set)])
         # Extract a submatrix with rows of atoms from layer 1 
         # and columns of atoms from layer 2, which is the interlayer 1-2 interactions.
         D_inter = D[np.ix_(self.per_layer_at_idxs[0], self.per_layer_at_idxs[1])] / self.nshift
         D_intra1 = D[np.ix_(self.per_layer_at_idxs[0], self.per_layer_at_idxs[0])] / self.nshift
         D_intra2 = D[np.ix_(self.per_layer_at_idxs[1], self.per_layer_at_idxs[1])] / self.nshift
-        def enforce_intra_tranl_invrc():
-            if LA.norm(G0+k) == 0:
-                print(f"Configuration intra translational enforcer ignored G0={G0}, k={k}")
-                return
-            for i in range(0, D_intra1.shape[0], 3):
-                D_intra1[i:i+3,i:i+3] = np.zeros_like(D_intra1[i:i+3,i:i+3])
-            for i in range(0, D_intra2.shape[0], 3):
-                D_intra2[i:i+3,i:i+3] = np.zeros_like(D_intra2[i:i+3,i:i+3])
         assert len(D.shape) == 2 and D.shape[0] == D.shape[1], f"D with shape {D.shape} not square matrix"
         assert len(D_inter.shape) == 2 and D_inter.shape[0] == D_inter.shape[1], f"D_inter with shape {D_inter.shape} not square matrix"
         assert 2*D_inter.shape[0] == D.shape[0] and 2*D_inter.shape[1] == D.shape[1], f"D_inter shape {D_inter.shape} should be half of D shape {D.shape}"
-        enforce_intra_tranl_invrc()
         return D_inter, D_intra1, D_intra2
 
     def __block_inter_l1(self):
@@ -266,22 +265,23 @@ class InterlayerDM:
         self.DM = [[None]*n_GM for _ in range(n_GM)] # NoneType interpreted by scipy as 0 matrix block
         self.GMi_blocks = [0]*(n_GM-1)
         self.GMi_intra_blocks = [[0]*(n_GM-1) for i in range(2)]
-        self.all_blocks = [None]*(3*(n_GM-1) + 1)
+        self.all_blocks = [0]*(n_GM)
+        self.all_blocks[0] = D0
         for i in range(1, n_GM): # fill first row/col
             self.DM[0][i], self.GMi_intra_blocks[0][i-1], self.GMi_intra_blocks[1][i-1] = self.__block_inter_l0(self.G0_set[i])
             self.GMi_blocks[i-1] = self.DM[0][i]
-            self.all_blocks[i+n_GM-1] = self.DM[0][i]
+            self.all_blocks[i] = self.DM[0][i]
             self.DM[i][0],_,_ = self.__block_inter_l0(-self.G0_set[i])
-            self.all_blocks[i+(2*n_GM-1)-1] = self.DM[i][0]
             assert self.DM[0][i].shape == block_l0_shape and self.DM[i][0].shape == block_l0_shape, f"Shape GM0{i}={self.DM[0][i].shape}, GM{i}0={self.DM[i][0].shape}, expected {block_l0_shape}"
             assert np.isclose(LA.norm(self.DM[0][i]), LA.norm(self.DM[i][0]), rtol=1e-5), f"Level-0 interlayer DM blocks for G0{i} not inversion-symmetric:\n {LA.norm(self.DM[0][i])}\nvs. \n{LA.norm(self.DM[i][0])}"
         
         # D0 = enforce_acoustic_sum_rule(D0)
+        print("ALL BLOCKS:")
+        for i, blk in enumerate(self.all_blocks):
+            print(f"G{i}:", blk)
         for i in range(n_GM): # fill diagonal
             self.DM[i][i] = D0
-            self.all_blocks[i] = D0
         self.DM = bmat(self.DM).toarray() # convert NoneTypes to zero-matrix blocks to make sparse matrix
-        assert np.round(sum(sum(self.DM)), 12) == np.round(sum(sum(sum(self.all_blocks))), 12), f"The list of blocks does not match the interlayer DM, {sum(sum(sum(self.all_blocks)))} vs. {sum(sum(self.DM))}"
         return self.DM
     
     def __intras_block_inter_l1(self):
@@ -388,6 +388,7 @@ class TwistedDM:
         self.szs = [DMs_layer1[0].shape[0], DMs_layer2[0].shape[0]]
         print("Blocks built.")
         self.M = np.array([[species.atomic_mass for species in layer] for layer in species_per_layer])
+        # self.off_diag_blocks = inter.get_all_blocks()
         self.off_diag_blocks = inter.get_off_diag_blocks()
         self.intra_config_blocks = inter.get_intra_blocks()
         self.n_GM = len(l1.get_GM_set())
@@ -420,7 +421,7 @@ class TwistedDM:
         assert len(DM_intras) == 2
         assert DM_intras[0].shape == DM_intras[1].shape == DM_inter.shape
         DM_intras = list(map(lambda D: (D + D.conjugate().T) / 2, DM_intras)) # impose Hermiticity
-        # enforce_acoustic_sum_rule()
+        enforce_acoustic_sum_rule()
         DM = np.block([[DM_intras[0], DM_inter], [DM_inter.conjugate().T, DM_intras[1]]])
         return DM
     
