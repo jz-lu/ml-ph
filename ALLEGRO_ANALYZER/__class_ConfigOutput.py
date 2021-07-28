@@ -208,11 +208,11 @@ class ConfigOutput:
         bdir = np.array(self.__direct_shifts)
         diags = [np.isclose(i[0], i[1]) for i in bdir]
         e = self.__energies[diags]; e = np.append(e, e[0])
-        addendum = [np.linspace(0,1,len(diags)), e]
+        addendum = [np.linspace(0,1,sum(diags)), e]
         diags = [np.isclose(i[0], i[1]) for i in bprime]
         b = np.array(bprime)[diags]
         e = energies[diags]
-        ndiag = len(diags)
+        ndiag = sum(diags)
         do = DSamplingOutput(self.__out_dir, ndiag, self.name, 
                         special_pts=[0, ndiag//3, 2*ndiag//3], energies=e, scaled=True)
         do.plot_energies(interp=False, line=True, addendum=addendum)
