@@ -82,7 +82,7 @@ class DSamplingOutput:
                 labelbottom=False)  # labels along the bottom edge are off
         ax.set_ylabel(y_lab)
         if scat:
-            print(f"Scattering x,y with {x} points")
+            print(f"Scattering x,y with {len(x)} points")
             ax.scatter(x, y, c='darkslategrey')
         if addendum is not None:
             print(f"Scattering addendum {len(addendum[0])} points")
@@ -92,7 +92,7 @@ class DSamplingOutput:
             xp = np.linspace(0, 1, 301); yp = interpol(xp)
             ax.plot(xp, yp, c='royalblue')
         if line:
-            print(f"Lining x,y with {x} points")
+            print(f"Lining x,y with {len(x)} points")
             ax.plot(x, y, c='royalblue')
         fig.savefig(self.out_dir + pfx + f"diag_{plt_type}.png")
     
@@ -219,7 +219,7 @@ class ConfigOutput:
         ndiag = sum(diags)
         do = DSamplingOutput(self.__out_dir, ndiag, self.name, 
                         special_pts=[0, ndiag//3, 2*ndiag//3], energies=e, scaled=True)
-        do.plot_energies(interp=False, line=True, addendum=addendum, pfx=pfx)
+        do.plot_energies(interp=False, line=True, addendum=addendum, pfx=pfx, scat=False)
         
    
     # Smoothly interpolate toal energy at various shifts.
