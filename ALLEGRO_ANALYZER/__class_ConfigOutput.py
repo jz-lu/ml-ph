@@ -66,7 +66,7 @@ class DSamplingOutput:
         title = 'GSFE'; y_lab = r"$E_{tot} (meV)$"; y = self.energies
         if plt_type == 'z':
             title = 'Interlayer spacing'; y_lab = 'Interlayer spacing (unitless)'
-        title = title + (f' of ({tsfx})' if tsfx != '' else '')
+        title = title + (f' of {tsfx}' if tsfx != '' else '')
         print(f"Title: {title} (sfx={tsfx})")
         ax.set_title(f"{title} along diagonal")
         x = np.linspace(0, 1, self.npts); y = self.energies if plt_type == 'energy' else self.spacings
