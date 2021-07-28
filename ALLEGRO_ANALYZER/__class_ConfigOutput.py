@@ -69,7 +69,7 @@ class DSamplingOutput:
         title = title + (f' ({tsfx})' if tsfx != '' else '')
         ax.set_title(f"{title} along diagonal")
         x = np.linspace(0, 1, self.npts); y = self.energies if plt_type == 'energy' else self.spacings
-        print(f"Now plotting TYPE={plt_type}")
+        print(f"Now plotting TYPE={plt_type} of {len(x)} points")
         if self.special_pts is not None:
             print(f"Adding high-symmetry tick labels {HIGH_SYMMETRY_LABELS} at {x[self.special_pts]}")
             plt.xticks(ticks=x[self.special_pts], labels=HIGH_SYMMETRY_LABELS)
@@ -82,14 +82,17 @@ class DSamplingOutput:
                 labelbottom=False)  # labels along the bottom edge are off
         ax.set_ylabel(y_lab)
         if scat:
+            print(f"Scattering x,y with {x} points")
             ax.scatter(x, y, c='darkslategrey')
         if addendum is not None:
+            print(f"Scattering addendum {len(addendum[0])} points")
             ax.scatter(addendum[0], addendum[1], c='darkslategrey')
         if interp:
             interpol = interpolate_scatter(x, y)
             xp = np.linspace(0, 1, 301); yp = interpol(xp)
             ax.plot(xp, yp, c='royalblue')
         if line:
+            print(f"Lining x,y with {x} points")
             ax.plot(x, y, c='royalblue')
         fig.savefig(self.out_dir + pfx + f"diag_{plt_type}.png")
     

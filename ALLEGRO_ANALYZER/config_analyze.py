@@ -90,6 +90,7 @@ if __name__ == '__main__':
 
     poscars_uc = sorted(findFilesInDir(BASE_ROOT, POSCAR_CONFIG_NAMEPRE, searchType='start')); npos = len(poscars_uc)
     name = '-'.join([Poscar.from_file(BASE_ROOT + pname).comment for pname in poscars_uc])
+    print(f"Name: {name}")
 
     # Collect COB matrix and layer indices
     data_dir = BASE_ROOT + checkPath(CONFIG_DATA_DIR)
