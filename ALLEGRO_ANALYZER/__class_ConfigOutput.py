@@ -201,7 +201,7 @@ class ConfigOutput:
             header="bx, by, relaxed z-spacing, energy\n")
         np.save(self.__out_dir + 'e.npy', self.__energies)
 
-    def plot_diag_cut(self, energies, bprime, outname='diagcut.png'):
+    def plot_diag_cut(self, energies, bprime, pfx='cut'):
         """
         Function assumes lattice angle is 60 deg.
         """
@@ -215,7 +215,7 @@ class ConfigOutput:
         ndiag = sum(diags)
         do = DSamplingOutput(self.__out_dir, ndiag, self.name, 
                         special_pts=[0, ndiag//3, 2*ndiag//3], energies=e, scaled=True)
-        do.plot_energies(interp=False, line=True, addendum=addendum)
+        do.plot_energies(interp=False, line=True, addendum=addendum, pfx=pfx)
         
    
     # Smoothly interpolate toal energy at various shifts.
