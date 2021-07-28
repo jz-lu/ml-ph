@@ -207,6 +207,7 @@ class ConfigOutput:
         """
         bdir = np.array(self.__direct_shifts)
         diags = [np.isclose(i[0], i[1]) for i in bdir]
+        print(f"Diags:\n{bdir[diags]}")
         e = self.__energies[diags]; e = np.append(e, e[0])
         addendum = [np.linspace(0,1,sum(diags)+1), e]
         diags = [np.isclose(i[0], i[1]) for i in bprime]
