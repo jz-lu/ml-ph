@@ -155,7 +155,7 @@ class ConfigOutput:
     # cob is the change-of-basis matrix to get fom lattice basis (which b is in) to Cartesian to plot.
     def __init__(self, out_dir, plot_list, cob_matrix, name, 
                  ph_list=None, abs_min_energy=None, scaled=False, dump=False):
-        print("Initalizing ConfigOutput object.")
+        print(f"Initalizing ConfigOutput object on {name}.")
         self.cob = cob_matrix; self.ph_list = ph_list
         self.name = name
         # plot_list: list of (b, z, e) points
@@ -214,12 +214,11 @@ class ConfigOutput:
         e = self.__energies[diags]; e = np.append(e, e[0])
         addendum = [np.linspace(0,1,sum(diags)+1), e]
         diags = [np.isclose(i[0], i[1]) for i in bprime]
-        b = np.array(bprime)[diags]
         e = energies[diags]
         ndiag = sum(diags)
         do = DSamplingOutput(self.__out_dir, ndiag, self.name, 
                         special_pts=[0, ndiag//3, 2*ndiag//3], energies=e, scaled=True)
-        do.plot_energies(interp=False, line=True, addendum=addendum, pfx=pfx, scat=False)
+        do.plot_energies(interp=False, line=True, addendum=addendum, pfx=pfx, scat=False, tsfx=self.name)
         
    
     # Smoothly interpolate toal energy at various shifts.
@@ -329,7 +328,7 @@ class ConfigOutput:
 # Performs a mapping to a BZ associated with 60-degree realspace lattice, which works regardless of 
 # lattice in original POSCAR
 class FourierGSFE:
-    def __init__(self, energies, b_matrix, lattice_matrix, ltype='hexagonal', sampling_type='grid', dump=True):
+    def __init__(self, energies, b_matrix, lattice_matrix, ltype='hexagonal', sampling_type='grid', dump=False):
         self.stype = sampling_type; assert isinstance(self.stype, str)
         self.__A = lattice_matrix
         print("Initializing FourierGSFE object")
