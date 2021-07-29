@@ -377,13 +377,13 @@ class FourierGSFE:
         npts = len(X); z = np.ones(npts).reshape((npts, 1))
         return np.concatenate((z, X), axis=1) # bias trick
     def __fit_coeff(self):
+        self.__fitted = True
         X = self.__biasify(self.X)[:,:-1]
         print(f"Fitting {len(X[0])} coefficients (1 less than total)")
         self.coeffs = np.dot(LA.pinv(np.dot(X.T, X)), np.dot(X.T, self.GSFE))
         self.coeffs = np.append(self.coeffs, max(self.GSFE)/3 - sum(self.coeffs))
         print(f"Coefficients: {self.coeffs}")
         print(f"Residual sum of squares: {self.get_score()}")
-        self.__fitted = True
         self.X = X
     def __ensure_fitted(self):
         if not self.__fitted:
