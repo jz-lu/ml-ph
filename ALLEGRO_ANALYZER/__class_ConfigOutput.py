@@ -380,12 +380,12 @@ class FourierGSFE:
         self.__fitted = True
         X0 = self.__biasify(self.X)
         X = X0[:,:-1]
+        self.X = X0
         print(f"Fitting {len(X[0])} coefficients (1 less than total)")
         self.coeffs = np.dot(LA.pinv(np.dot(X.T, X)), np.dot(X.T, self.GSFE))
         self.coeffs = np.append(self.coeffs, max(self.GSFE)/3 - sum(self.coeffs))
         print(f"Coefficients: {self.coeffs}")
         print(f"Residual sum of squares: {self.get_score()}")
-        self.X = X0
     def __ensure_fitted(self):
         if not self.__fitted:
             self.__fit_coeff()
