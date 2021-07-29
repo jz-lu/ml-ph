@@ -384,7 +384,7 @@ class FourierGSFE:
     def __ensure_fitted(self):
         if not self.__fitted:
             self.__fit_coeff()
-        assert self.coeffs is not None and self.reg is not None, f"Fitting failed"
+        assert self.coeffs is not None, f"Fitting failed"
     def save_raw_data(self, outdir):
         print("Saving coefficents and score to file...")
         outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
