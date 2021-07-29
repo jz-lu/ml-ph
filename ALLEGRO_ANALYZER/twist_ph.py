@@ -73,7 +73,7 @@ if __name__ == '__main__':
             print(USAGE_MSG)
             sys.exit(0)
         else:
-            warn(f'Warning: unknown flag "{args[i]} ignored')
+            warn(f'Warning: unknown flag "{args[i]}" ignored')
             i += 1
     if not theta:
         err(f"Error: must supply twist angle. Run `python3 {sys.argv[0]} --usage` for help.")
@@ -219,6 +219,8 @@ if __name__ == '__main__':
 
         print("Combining into a single twisted dynamical matrix object...")
         TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc], Gamma_idx)
+        TDM.Gamma_acoustic_sum_rule()
+        TDM.Moire_acoustic_sum_rule()
         print("Twisted dynamical matrix object constructed.")
 
         if force_sum:

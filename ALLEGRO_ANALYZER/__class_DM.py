@@ -12,6 +12,7 @@ from __directory_searchers import checkPath
 from ___constants_phonopy import SUPER_DIM
 from ___constants_names import DEFAULT_PH_BAND_PLOT_NAME
 from ___constants_vasp import VASP_FREQ_TO_INVCM_UNITS
+from ___helpers_parsing import update
 from scipy.linalg import block_diag
 from scipy.sparse import bmat # block matrix
 from math import sqrt
@@ -69,20 +70,12 @@ class MonolayerDM:
     # Compute intralayer dynamical matrix block element for given some (direct) center `q` and phonopy object `ph`
     def __block_intra_l0(self, q, ph):
         dm = ph.get_dynamical_matrix_at_q(q)
-        def enforce_trnsl_invrnc():
-            if LA.norm(q) == 0.0:
-                print(f"Translational invariance rule ignored q={q}")
-                return
-            assert dm.shape[0] == dm.shape[1] and dm.shape[0] == 3*self.n_at, f"Shape {dm.shape} inconsistent with num atoms {self.n_at}"
-            for i in range(0, dm.shape[0], 3):
-                dm[i:i+3,i:i+3] = np.zeros_like(dm[i:i+3,i:i+3])
                     
         if self.dbgprint:
             print(f"Intralayer Level-0 shape: {dm.shape}")
             self.dbgprint = False
         if self.l0_shape is None:
             self.l0_shape = dm.shape
-        # enforce_trnsl_invrnc()
         return dm
     
     def plot_sampled_l0(self, outdir='.'):
@@ -137,19 +130,19 @@ class MonolayerDM:
         if self.DM_set is None:
             self.__block_intra_l1()
         l0sz = self.l0_shape[0]; Gam = self.Gamma_idx
-        def force_from_dm(i, GMj):
-            Mi = self.M[i]; idx = 3*i + GMj*l0sz
-            temp = np.split(self.DM_set[Gam][idx:idx+3,GMj*l0sz:(GMj+1)*l0sz], self.n_at, axis=1)
+        def force_from_dm(i, GMidx):
+            Mi = self.M[i]; idx = 3*i + GMidx*l0sz
+            temp = np.split(self.DM_set[Gam][idx:idx+3,GMidx*l0sz:(GMidx+1)*l0sz], self.n_at, axis=1)
             return sum([sqrt(Mi*Mj) * subblk for subblk, Mj in zip(temp, self.M)])
         if self.DM_set is None:
             self.__block_intra_l1()
-        blksums_list = [np.round(force_from_dm(i, 0), 8) for i in range(self.n_at)]
+        blksums_list = [np.real_if_close(force_from_dm(i, 0)) for i in range(self.n_at)]
         return blksums_list
     
     def print_force_sum(self):
         blksums_list = self.get_block_force_sum()
         print(f"\nINTRALAYER FORCE SUMS for {self.name}:")
-        blksum_str = [f"[At: {i}]:\n{s}\n" for i, s in enumerate(blksums_list)]
+        blksum_str = [f"[At: {i}]:\n{np.round(s, 8)}\n" for i, s in enumerate(blksums_list)]
         print(''.join(blksum_str))
 
     def get_DM_set(self):
@@ -157,6 +150,14 @@ class MonolayerDM:
             self.__block_intra_l1()
         print(f"Retrieved monolayer dynamical matrix of shape {self.DM_set[0].shape} for solid {self.name}")
         return self.DM_set
+    
+    def get_origin_G_blocks(self):
+        if self.DM_set is None:
+            self.__block_intra_l1()
+        blks = [self.__block_intra_l0(GM, self.ph) for GM in self.GM_set if LA.norm(GM) > 0]
+        assert np.allclose(block_diag(self.__block_intra_l0(0, self.ph), *blks), self.DM_set[self.Gamma_idx])
+        print(f"Retrieved {len(blks)} blocks from intralayer G-blocks")
+        return blks
     
     # Diagonalize the set of DMs to get phonon modes
     def build_modes(self, k_mags, dump=False, outdir=None):
@@ -267,6 +268,7 @@ class InterlayerDM:
         self.GMi_intra_blocks = [[0]*(n_GM-1) for i in range(2)]
         self.all_blocks = [0]*(n_GM)
         self.all_blocks[0] = D0
+        self.Gamma_block = D0
         for i in range(1, n_GM): # fill first row/col
             self.DM[0][i], self.GMi_intra_blocks[0][i-1], self.GMi_intra_blocks[1][i-1] = self.__block_inter_l0(self.G0_set[i])
             self.GMi_blocks[i-1] = self.DM[0][i]
@@ -276,9 +278,9 @@ class InterlayerDM:
             assert np.isclose(LA.norm(self.DM[0][i]), LA.norm(self.DM[i][0]), rtol=1e-5), f"Level-0 interlayer DM blocks for G0{i} not inversion-symmetric:\n {LA.norm(self.DM[0][i])}\nvs. \n{LA.norm(self.DM[i][0])}"
         
         # D0 = enforce_acoustic_sum_rule(D0)
-        print("ALL BLOCKS:")
-        for i, blk in enumerate(self.all_blocks):
-            print(f"G{i}:", blk)
+        # print("ALL BLOCKS:")
+        # for i, blk in enumerate(self.all_blocks):
+        #     print(f"G{i}:", blk)
         for i in range(n_GM): # fill diagonal
             self.DM[i][i] = D0
         self.DM = bmat(self.DM).toarray() # convert NoneTypes to zero-matrix blocks to make sparse matrix
@@ -352,6 +354,13 @@ class InterlayerDM:
         print(f"Off-diagonal block shapes: {self.GMi_blocks[0].shape}")
         return self.GMi_blocks
     
+    def get_Gamma_block(self):
+        if self.DM is None:
+            print("Building interlayer dynamical matrix...")
+            self.__block_inter_l1()
+        print(f"Interlayer Gamma block shape: {self.Gamma_block.shape}")
+        return self.Gamma_block
+    
     def get_intra_blocks(self):
         if self.DM is None:
             print("Building interlayer dynamical matrix...")
@@ -390,42 +399,136 @@ class TwistedDM:
         self.M = np.array([[species.atomic_mass for species in layer] for layer in species_per_layer])
         # self.off_diag_blocks = inter.get_all_blocks()
         self.off_diag_blocks = inter.get_off_diag_blocks()
+        self.on_diag_blocks = [l.get_origin_G_blocks() for l in [l1, l2]]
         self.intra_config_blocks = inter.get_intra_blocks()
         self.n_GM = len(l1.get_GM_set())
-        self.k_mags = k_mags
+        self.k_mags = k_mags; self.n_k = len(k_mags)
         self.modes_built = False
         self.l0szs = [l1.l0_shape[0], l2.l0_shape[0]]
         self.Gamma_idx = Gamma_idx
         self.Gamma_intra_blks = [l1.Gamma_blks(), l2.Gamma_blks()]
-        self.DMs = [self.__block_l2([DMs_layer1[i], DMs_layer2[i]], DM_inter) for i in range(len(k_mags))]
+        self.DMs = [self.__block_l2([DMs_layer1[i], DMs_layer2[i]], DM_inter) for i in range(self.n_k)]
 
     # Create level-2 (final level--full matrix) block matrix with intralayer and interlayer terms
     def __block_l2(self, DM_intras, DM_inter):
-        # * On the first intralayer loop over the 3x3 block diagonal i and sum over all 3x3 blocks
-        # * in the interlayer 1-2 matrix in row i. Repeat for second intralayer and interlayer 2-1.
-        def enforce_acoustic_sum_rule():
-            M = self.M; n_GM = self.n_GM
-            l0sz = DM_intras[0].shape[0] // n_GM; assert DM_intras[0].shape[0] % n_GM == 0; assert l0sz % 3 == 0
-            dg1 = self.Gamma_intra_blks[0][1:]; dg2 = self.Gamma_intra_blks[1][1:]
-            d1 = self.intra_config_blocks[0]; d2 = self.intra_config_blocks[1]
-            for i in range(0, l0sz, 3): # intralayer1 and interlayer12
-                DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[1,j//3] / M[0,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3)]) for Gblk in self.off_diag_blocks])
-                # DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[0,j//3] / M[0,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3) if j != i]) for Gblk in d1])
-                # DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[0,j//3] / M[0,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3) if j != i]) for Gblk in dg1])
-            l0sz = DM_intras[1].shape[0] // n_GM; assert DM_intras[1].shape[0] % n_GM == 0; assert l0sz % 3 == 0
-            for i in range(0, l0sz, 3): # intralayer2 and interlayer 21
-                DM_intras[1][i:i+3,i:i+3] -= sum([sum([sqrt(M[0,j//3] / M[1,i//3]) * Gblk.conjugate().T[i:i+3,j:j+3] for j in range(0,Gblk.shape[0],3)]) for Gblk in self.off_diag_blocks])
-                # DM_intras[0][i:i+3,i:i+3] -= sum([sum([sqrt(M[1,j//3] / M[1,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[1],3) if j != i]) for Gblk in d2])
-                # DM_intras[1][i:i+3,i:i+3] -= sum([sum([sqrt(M[1,j//3] / M[1,i//3]) * Gblk[i:i+3,j:j+3] for j in range(0,Gblk.shape[0],3) if j != i]) for Gblk in dg2])
-                
         assert len(DM_intras) == 2
         assert DM_intras[0].shape == DM_intras[1].shape == DM_inter.shape
         DM_intras = list(map(lambda D: (D + D.conjugate().T) / 2, DM_intras)) # impose Hermiticity
-        enforce_acoustic_sum_rule()
         DM = np.block([[DM_intras[0], DM_inter], [DM_inter.conjugate().T, DM_intras[1]]])
-        return DM
+        return DM 
     
-    # Retreieve list dynamical matrices corresponding to the list of sampled k-vectors
+    # enforce an acoustic sum rule at Gamma
+    def Gamma_acoustic_sum_rule(self):
+        """
+        Bugs: fails if number of atoms in layers differs. 
+        Change `mid` to `self.szs[0]` to fix (easy).
+        """
+        update("ENFORCING: Gamma aoustic sum rule")
+        def intra_adjust(l, i, j, l0sz, n_at, DMintra):
+            assert l in [0,1]; Mi = self.M[l,i]
+            idx = 3*i + j*l0sz
+            temp = np.split(DMintra[idx:idx+3,j*l0sz:(j+1)*l0sz], n_at, axis=1)
+            return sum([sqrt(Mj/Mi) * subblk for subblk, Mj in zip(temp, self.M[l])])
+        def inter_adjust(l, i, n_at, blk): # n_at is number in *other* layer
+            assert l in [0,1]; Mi = self.M[l,i]
+            if l == 1:
+                blk = blk.conjugate().T
+            temp = np.split(blk[3*i:3*(i+1)], n_at, axis=1)
+            return sum([sqrt(Mj/Mi) * subblk for subblk, Mj in zip(temp, self.M[1-l])])
+        dm = self.get_DM_at_Gamma()
+        l0szs = self.l0szs
+        inter_Gamma = self.interobj.get_Gamma_block()
+        for i in range(self.n_ats[0]): # layer 1 atoms
+            intra = dm[:self.szs[0],:self.szs[0]]
+            intrasum = np.real_if_close(intra_adjust(0, i, 0, l0szs[0], self.n_ats[0], intra))
+            intersum = np.real_if_close(inter_adjust(0, i, self.n_ats[1], inter_Gamma))
+            assert intrasum.shape == (3,3), f"Invalid intra shape {intrasum.shape}"
+            assert intersum.shape == (3,3), f"Invalid inter shape {intersum.shape}"
+            totalsum = np.real_if_close(intrasum + intersum)
+            for j in range(self.n_k):
+                self.DMs[j][3*i:3*(i+1),3*i:3*(i+1)] -= totalsum
+            
+        for i in range(self.n_ats[1]): # layer 2 atoms
+            intra = dm[self.szs[0]:self.szs[0]+self.szs[1],self.szs[0]:self.szs[0]+self.szs[1]]
+            assert dm.shape == tuple(map(lambda x: 2*x, intra.shape))
+            intrasum = np.real_if_close(intra_adjust(1, i, 0, l0szs[1], self.n_ats[1], intra))
+            intersum = np.real_if_close(inter_adjust(1, i, self.n_ats[0], inter_Gamma))
+            assert intrasum.shape == (3,3), f"Invalid intra shape {intrasum.shape}"
+            assert intersum.shape == (3,3), f"Invalid inter shape {intersum.shape}"
+            totalsum = np.real_if_close(intrasum + intersum)
+            mid = self.DMs[0].shape[0] // 2
+            for j in range(self.n_k):
+                self.DMs[j][mid + 3*i : mid + 3*(i+1), mid + 3*i : mid + 3*(i+1)] -= totalsum
+    
+    def Moire_acoustic_sum_rule(self):
+        """
+        Bugs: fails if number of atoms in layers differs. 
+        Change `mid` to `self.szs[0]` to fix (easy).
+        """
+        update("ENFORCING: Moire off diagonal aoustic sum rule")
+        def intra_adjust(l, i, j, l0sz, n_at, DMintra):
+            assert l in [0,1]; Mi = self.M[l,i]
+            idx = 3*i + j*l0sz
+            temp = np.split(DMintra[idx:idx+3,j*l0sz:(j+1)*l0sz], n_at, axis=1)
+            del temp[i] # remove diagonal II component
+            M = [m for midx, m in enumerate(self.M[l]) if midx != i]
+            return sum([sqrt(Mj/Mi) * subblk for subblk, Mj in zip(temp, M)])
+        def inter_adjust(l, i, n_at, blk): # n_at is number in *other* layer
+            assert l in [0,1]; Mi = self.M[l,i]
+            if l == 1:
+                blk = blk.conjugate().T
+            temp = np.split(blk[3*i:3*(i+1)], n_at, axis=1)
+            return sum([sqrt(Mj/Mi) * subblk for subblk, Mj in zip(temp, self.M[1-l])])
+
+        dm = self.get_DM_at_Gamma()
+        l0szs = self.l0szs
+        inter_Gammas = self.off_diag_blocks
+
+        intra = dm[:self.szs[0],:self.szs[0]]
+        for i in range(self.n_ats[0]): # layer 1 atoms
+            intrasum = np.real_if_close(sum([intra_adjust(0, i, j, l0szs[0], self.n_ats[0], intra) for j in range(1, self.n_GM)]))
+            intersum = np.real_if_close(sum([inter_adjust(0, i, self.n_ats[1], inter_Gamma) for inter_Gamma in inter_Gammas]))
+            assert intrasum.shape == (3,3), f"Invalid intra shape {intrasum.shape}"
+            assert intersum.shape == (3,3), f"Invalid inter shape {intersum.shape}"
+            totalsum = np.real_if_close(intrasum + intersum)
+            for j in range(self.n_k):
+                self.DMs[j][3*i:3*(i+1),3*i:3*(i+1)] -= totalsum
+            
+        intra = dm[self.szs[0]:self.szs[0]+self.szs[1],self.szs[0]:self.szs[0]+self.szs[1]]
+        for i in range(self.n_ats[1]): # layer 2 atoms
+            assert dm.shape == tuple(map(lambda x: 2*x, intra.shape))
+            intrasum = np.real_if_close(sum([intra_adjust(1, i, j, l0szs[1], self.n_ats[1], intra) for j in range(1, self.n_GM)]))
+            intersum = np.real_if_close(sum([inter_adjust(1, i, self.n_ats[0], inter_Gamma) for inter_Gamma in inter_Gammas]))
+            assert intrasum.shape == (3,3), f"Invalid intra shape {intrasum.shape}"
+            assert intersum.shape == (3,3), f"Invalid inter shape {intersum.shape}"
+            totalsum = np.real_if_close(intrasum + intersum)
+            mid = self.DMs[0].shape[0] // 2
+            for j in range(self.n_k):
+                self.DMs[j][mid + 3*i : mid + 3*(i+1), mid + 3*i : mid + 3*(i+1)] -= totalsum
+    
+    # enforce a moire sum rule for off-diagonal blocks in interlayer component
+    def dep_Moire_acoustic_sum_rule(self):
+        # * On the first intralayer loop over the 3x3 block diagonal i and sum over all 3x3 blocks
+        # * in the interlayer 1-2 matrix in row i. Repeat for second intralayer and interlayer 2-1.
+        update("ENFORCING: deprecated moire acoustic sum rule")
+        print(f"Moire acoustic sum rule on: {len(self.off_diag_blocks)} GM vectors")
+        M = self.M
+        mid = self.DMs[0].shape[0] // 2; print(f"Slicing intra at midpoint index {mid}")
+        for k in range(self.n_k):
+            for i in range(self.n_ats[0]): 
+                Mi = M[0,i]
+                # intralayer 1
+                self.DMs[k][3*i:3*(i+1), 3*i:3*(i+1)] -= sum([sum([sqrt(M[0,j//3] / Mi) * Gblk[3*i:3*(i+1),j:j+3] for j in range(0,Gblk.shape[1],3) if j != 3*i]) for Gblk in self.on_diag_blocks[0]])
+                # interlayer 1-2
+                self.DMs[k][3*i:3*(i+1), 3*i:3*(i+1)] -= sum([sum([sqrt(M[1,j//3] / Mi) * Gblk[3*i:3*(i+1),j:j+3] for j in range(0,Gblk.shape[1],3)]) for Gblk in self.off_diag_blocks])
+            for i in range(self.n_ats[1]): # interlayer 2-1
+                Mi = M[1,i]
+                # intralayer 2
+                self.DMs[k][mid+3*i : mid+3*(i+1), mid+3*i : mid+3*(i+1)] -= sum([sum([sqrt(M[1,j//3] / Mi) * Gblk[3*i:3*(i+1),j:j+3] for j in range(0,Gblk.shape[1],3) if j != 3*i]) for Gblk in self.on_diag_blocks[1]])
+                # interlayer 2-1
+                self.DMs[k][mid+3*i : mid+3*(i+1), mid+3*i : mid+3*(i+1)] -= sum([sum([sqrt(M[0,j//3] / Mi) * Gblk.conjugate().T[3*i:3*(i+1),j:j+3] for j in range(0,Gblk.shape[0],3)]) for Gblk in self.off_diag_blocks])
+
+    # Retrieve list dynamical matrices corresponding to the list of sampled k-vectors
     def get_DM_set(self):
         print(f"Retrieved DM set of shape {self.DMs[0].shape} from twisted DM object")
         return self.DMs
@@ -449,17 +552,18 @@ class TwistedDM:
         print("\nTWISTED FORCE SUMS:")
         dm = self.get_DM_at_Gamma()
         l0szs = self.l0szs
-        interblks = self.interobj.get_off_diag_blocks()
+        interblks = [self.interobj.get_Gamma_block()]
         print(f"Using {len(interblks)} blocks from interlayer component")
         print("LAYER 1 ATOMS:")
         for i in range(self.n_ats[0]): # layer 1 atoms
             intra = dm[:self.szs[0],:self.szs[0]]
-            intrasum = intra_force_from_dm(0, i, 0, l0szs[0], self.n_ats[0], intra)
+            intrasum = np.real_if_close(intra_force_from_dm(0, i, 0, l0szs[0], self.n_ats[0], intra))
             assert intrasum.shape == (3,3)
-            intersum = sum([inter_force_from_dm(0, i, self.n_ats[1], blk) for blk in interblks])
+            intersum = np.real_if_close(sum([inter_force_from_dm(0, i, self.n_ats[1], blk) for blk in interblks]))
             assert intersum.shape == (3,3)
-            totalsum = np.round(intrasum + intersum, 8)
-            print(f"[Layer 1] [At {i}] total sum of forces:\n{totalsum}")
+            totalsum = np.real_if_close(np.round(intrasum + intersum, 8))
+            print(f"[Layer 1] [At {i}] total sum of reciprocal-forces at Gamma:\n{totalsum}")
+            # print(f"[Layer 1] [At {i}] intra sum of forces:\n{totalsum}")
             
         print("Layer 2 ATOMS:")
         for i in range(self.n_ats[1]): # layer 2 atoms
@@ -469,8 +573,8 @@ class TwistedDM:
             intersum = sum([inter_force_from_dm(1, i, self.n_ats[0], blk) for blk in interblks])
             assert intrasum.shape == (3,3), f"Invalid intra shape {intrasum.shape}"
             assert intersum.shape == (3,3), f"Invalid inter shape {intersum.shape}"
-            totalsum = np.round(intrasum + intersum, 8)
-            print(f"[Layer 2] [At {i}] total sum of forces:\n{totalsum}")
+            totalsum = np.real_if_close(np.round(intrasum + intersum, 8))
+            print(f"[Layer 2] [At {i}] total sum of reciprocal-forces at Gamma:\n{totalsum}")
 
     def get_k_set(self):
         print("Retrieved k set sample from twisted DM object")

@@ -365,7 +365,7 @@ class FourierGSFE:
         return X
     def __b_to_fourier_basis(self, b_mat):
         return self.__vw_to_fourier_basis(self.__b_to_vw(b_mat))
-    def __fit_coeff(self):
+    def __sp_fit_coeff(self):
         assert not self.__fitted, f"Fitting already done"
         print("Fitting energies to Fourier series...")
         self.reg = LinearRegression().fit(self.X, self.GSFE)
@@ -373,6 +373,14 @@ class FourierGSFE:
         self.__fitted = True
         print(f"Final coefficients:\n{self.coeffs}")
         return self.coeffs
+    def __biasify(self, X):
+        npts = len(X); z = np.zeros(npts).reshape((npts, 1))
+        return np.concatenate((z, X), axis=1) # bias trick
+    def __fit_coeff(self):
+        X = self.__biasify(self.X)
+        self.coeffs = np.dot(LA.pinv(np.dot(X.T, X)), np.dot(X.T, self.GSFE))
+        self.__fitted = True
+        self.X = X
     def __ensure_fitted(self):
         if not self.__fitted:
             self.__fit_coeff()
@@ -386,12 +394,19 @@ class FourierGSFE:
         np.save(outdir + FGSFE_SCORE_NAME, self.get_score())
     def get_coeffs(self):
         self.__ensure_fitted(); return self.coeffs
-    def get_score(self):
+    def sp_get_score(self):
         self.__ensure_fitted()
         print(f"Fit score = {self.reg.score(self.X, self.GSFE)}")
         return self.reg.score(self.X, self.GSFE)
+    def get_score(self):
+        self.__ensure_fitted()
+        return np.sum(np.square(self.GSFE - np.dot(self.X, self.coeffs)))
+    def sp_predict(self, b_matrix):
+        self.__ensure_fitted()
+        return self.reg.predict(self.__b_to_fourier_basis(b_matrix[:,:2]))
     def predict(self, b_matrix):
-        self.__ensure_fitted(); return self.reg.predict(self.__b_to_fourier_basis(b_matrix[:,:2]))
+        X = self.__biasify(self.__b_to_fourier_basis(b_matrix[:,:2]))
+        return X @ self.coeffs
     def plot_pred_vs_actual(self, outdir, outname=FGSFE_PLOT_NAME):
         print("Plotting predicted vs. actual...")
         assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
