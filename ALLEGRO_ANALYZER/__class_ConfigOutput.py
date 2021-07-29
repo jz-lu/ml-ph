@@ -374,11 +374,12 @@ class FourierGSFE:
         print(f"Final coefficients:\n{self.coeffs}")
         return self.coeffs
     def __biasify(self, X):
-        npts = len(X); z = np.zeros(npts).reshape((npts, 1))
+        npts = len(X); z = np.ones(npts).reshape((npts, 1))
         return np.concatenate((z, X), axis=1) # bias trick
     def __fit_coeff(self):
         X = self.__biasify(self.X)
         self.coeffs = np.dot(LA.pinv(np.dot(X.T, X)), np.dot(X.T, self.GSFE))
+        print(f"Coefficients: {self.coeffs}")
         self.__fitted = True
         self.X = X
     def __ensure_fitted(self):
