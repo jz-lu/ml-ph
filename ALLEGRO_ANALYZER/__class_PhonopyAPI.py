@@ -47,7 +47,7 @@ class PhonopyAPI:
         configs = sorted(findDirsinDir(ROOT, CONFIG_SUBDIR_NAME, searchType='start'))
         configs.sort(key=len)
         ph_list = []
-        print(configs)
+        # print(configs)
         for config in configs:
             ph_dir = build_dir([ROOT, config, ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME])
             assert os.path.isdir(ph_dir), f"Directory {ph_dir} not found"
