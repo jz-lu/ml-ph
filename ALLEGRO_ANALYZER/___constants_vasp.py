@@ -12,17 +12,17 @@ VASP_FREQ_TO_INVCM_UNITS = 15.633302*33.356
 Z_LATTICE_SIZE = 35.0
 Z_LAYER_SEP = {
   'WSe2': 0.203525265,
-  'MoS2_0': 0.286, 
+  'MoS2_0': 0.19405515, 
   'MoS2_180': 0.19403429
 } # Layer separation in terms of the z-basis vector
-Z_LAYER_SEP = Z_LAYER_SEP['WSe2']
+Z_LAYER_SEP = Z_LAYER_SEP['MoS2_0']
 # Precision of POSCAR lattice and atoms, in number of decimal places
 POSCAR_PRECISION = 6
 POSCAR_PREC_COMP_THRESHOLD = 0.0001
 
 # Error checker for vasp.out
 VASP_OUTFILE_LEN_THRESHOLD = 1000
-VASP_MAX_CONVERGENCE_ATTEMPTS = 3 # Number of times we rerun the relaxation before we quit and say we failed to relax.
+VASP_MAX_CONVERGENCE_ATTEMPTS = 6 # Number of times we rerun the relaxation before we quit and say we failed to relax.
 VASP_OUTFILE_CONVERGENCE_LINE_CUT = 6 # Number of lines from the bottom we scan looking for an error message
 
 ### PARAMETERS FOR VASP INPUT FILES ###
