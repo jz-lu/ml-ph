@@ -226,43 +226,60 @@ class MonolayerDM:
 
 # Build interlayer dynamical matrix block via summing over configurations
 class InterlayerDM:
-    def __init__(self, per_layer_at_idxs, b_set, k_set, GM_set, G0_set, species_per_layer, ph_list=None, force_matrices=None):
+    def __init__(self, per_layer_at_idxs, bl_M, 
+                 b_set, k_set, 
+                 GM_set, G0_set, 
+                 species_per_layer, 
+                 ph_list=None, 
+                 force_matrices=None):
+        self.M = np.array([[species.atomic_mass for species in layer] for layer in species_per_layer])
+        self.bl_M = bl_M; self.bl_n_at = len(bl_M)
+        print(f"Interlayer DM uses bilayer with {self.bl_n_at} atoms of masses {self.bl_M}")
+        def force_from_dm(i, dm):
+            M = self.bl_M
+            Mi = M[i]
+            temp = np.split(dm[3*i:3*(i+1)], self.bl_n_at, axis=1)
+            assert temp[0].shape == (3,3)
+            return sum([sqrt(Mi*Mj) * subblk for subblk, Mj in zip(temp, M)])
+        def force_adjust(f):
+            for i in range(self.bl_n_at):
+                blM = self.bl_M
+                temp = np.split(f[3*i:3*(i+1)], self.bl_n_at, axis=1)
+                temp = [sqrt(blM[j]/blM[i]) * blk for j, blk in enumerate(temp)]
+                assert temp[0].shape == (3,3)
+                f[3*i:3*(i+1), 3*i:3*(i+1)] -= sum(temp)
+            return f
+
         assert (ph_list is not None) ^ (force_matrices is not None), "Must give exactly one of: phonopy obj list, force matrix list"
         assert len(b_set[0]) == 2, "Shift vectors must be 2-dimensional"
         self.b_set = b_set; self.ph_list = ph_list # list of phonopy objects for each config
         self.nshift = len(b_set); print(f"Number of configurations: {self.nshift}")
         assert int(sqrt(self.nshift))**2 == self.nshift, f"Number of shifts {self.nshift} must be a perfect square"
         self.GM_set = GM_set; self.G0_set = G0_set; self.DM = None
-        self.M = np.array([[species.atomic_mass for species in layer] for layer in species_per_layer])
         self.per_layer_at_idxs = per_layer_at_idxs; assert len(self.per_layer_at_idxs) == 2, f"Only 2 layers supported"
         self.k_set = k_set
         self.modes_built = False
         self.n_GM = len(GM_set)
         if ph_list is not None:
-            SHIFT_IDX = 30; STACKING = 'AB'
-            dm1 = ph_list[SHIFT_IDX].get_dynamical_matrix_at_q([0,0,0])
-
             def sym_dm_at_gamma(i, ph):
                 ph.symmetrize_force_constants()
                 return ph.get_dynamical_matrix_at_q([0,0,0])
-            self.force_matrices = [sym_dm_at_gamma(i, ph) for i, ph in enumerate(ph_list)] # DM(Gamma) = FC (mass-scaled)
-            
-            def force_from_dm(i, dm):
-                M = np.concatenate(self.M)
-                Mi = M[i]
-                temp = np.split(dm[3*i:3*(i+1)], 6, axis=1)
-                return sum([sqrt(Mi*Mj) * subblk for subblk, Mj in zip(temp, M)])
-
-            dm2 = self.force_matrices[SHIFT_IDX] # AA stacking
-            
-            blksums_list1 = [np.real_if_close(force_from_dm(i, dm1)) for i in range(6)]
-            blksums_list2 = [np.real_if_close(force_from_dm(i, dm2)) for i in range(6)]
-            for i, (blksum1, blksum2) in enumerate(zip(blksums_list1, blksums_list2)):
-                print(f"[At {i}] [No-Sym] TOTAL FORCE SUM in {STACKING} STACKING:\n{blksum1}\n")
-                print(f"[At {i}] [Sym] TOTAL FORCE SUM in {STACKING} STACKING:\n{blksum2}\n")
-
+            self.force_matrices = [sym_dm_at_gamma(i, ph) for i, ph in enumerate(ph_list)] # DM(Gamma) ~= FC (mass-scaled)
         else:
             self.force_matrices = force_matrices
+        SHIFT_IDX = 0; STACKING = 'AA'
+        dm = self.force_matrices[SHIFT_IDX]
+        blksums_list1 = [np.real_if_close(force_from_dm(i, dm)) for i in range(6)]
+        for i, blksum in enumerate(blksums_list1):
+            print(f"[At {i}] [No SR] TOTAL FORCE SUM in {STACKING} STACKING:\n{blksum}\n")
+        
+        self.force_matrices = list(map(force_adjust, self.force_matrices))
+        
+        dm = self.force_matrices[SHIFT_IDX]
+        blksums_list2 = [np.real_if_close(force_from_dm(i, dm)) for i in range(6)]
+        for i, blksum in enumerate(blksums_list2):
+            print(f"[At {i}] [SR] TOTAL FORCE SUM in {STACKING} STACKING:\n{blksum}\n")
+        
         assert self.force_matrices[0].shape[0] == self.force_matrices[0].shape[1], f"Force matrix is not square: shape {self.force_matrices[0].shape}"
         assert self.force_matrices[0].shape[0] % 2 == 0, f"Force matrix size is odd: shape {self.force_matrices[0].shape}"
 

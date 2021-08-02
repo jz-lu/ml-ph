@@ -178,3 +178,6 @@ class InputData:
         assert self.z is not None, "Calculation is not of interlayer sampling type"
         return self.z
 
+    def id(self):
+        return self.name
+

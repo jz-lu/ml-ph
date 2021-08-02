@@ -68,7 +68,7 @@ class CarCollector:
                     print('{} not in INCAR. Adding it automatically for relaxation calculations...'.format(default_keys[i]))
                     incar[default_keys[i]] = default_values[i]
         
-        if self.do_vdW:
+        if self.do_vdW in ['T', True]:
             print('Adding van der Waals interaction parameters to INCAR...')
             for i in range(0, len(vdW_keys)):
                 incar[vdW_keys[i]] = vdW_values[i]
@@ -109,7 +109,7 @@ class CarCollector:
                     print('{} not in INCAR. Adding it automatically for relaxation calculations...'.format(default_keys[i]))
                     incar[default_keys[i]] = default_values[i]
         
-        if self.do_vdW:
+        if self.do_vdW in ['T', True]:
             print('Adding van der Waals interaction parameters to INCAR...')
             for i in range(0, len(vdW_keys)):
                 incar[vdW_keys[i]] = vdW_values[i]
@@ -173,7 +173,7 @@ class CarCollector:
             #print(atoms)
 
             # Get a pymatgen Potcar object with our lab group settings in .pmgrc.yaml
-            func = 'PBE' if self.do_vdW else 'LDA_54'
+            func = 'PBE' if self.do_vdW in ['T', True] else 'LDA'
             print('POTCAR SETTINGS: using ' + func + ' functional')
             try:
                 potcar = Potcar(atoms, functional=func)

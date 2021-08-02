@@ -20,14 +20,15 @@ def compute_displacements(ROOT, user_input_settings, ndisp):
     assert os.path.isdir(ROOT), f"Directory {ROOT} does not exist"
     ROOT = checkPath(ROOT)
     print(f'Writing a job-array bash executable to {ROOT}')
-    vdw = 'T' if user_input_settings.do_vdW else 'F'
-    subname = ''
+    vdw = 'T' if user_input_settings.do_vdW in ['T', True] else 'F'
+    subname = user_input_settings.id()
     if user_input_settings.get_type_flag() == TYPE_RELAX_CONFIG:
-        subname = '-'
         if user_input_settings.sampling_is_diagonal():
-            subname += 'diag'
+            subname += '-d'
         else:
-            subname += 'cfg'
+            subname += '-c'
+    if vdw == 'T':
+        subname += '-v'
     kpts = 'GAMMA' if user_input_settings.kpoints_is_gamma_centered else 'MP'
     exepath = build_bash_exe(calc_type='norelax', outdir=ROOT, wdir=ROOT+PHDISP_STATIC_NAME, 
                    calc_list=[ENERGIES], compute_jobname=PHONON_JOBNAME+subname, vdw=vdw, kpts=kpts, compute_time='12:00:00', 

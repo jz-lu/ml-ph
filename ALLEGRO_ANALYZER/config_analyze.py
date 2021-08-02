@@ -14,7 +14,7 @@ from __class_CarCollector import CarCollector
 from __class_Configuration import Configuration
 from __class_PhonopyAPI import PhonopyAPI
 from __class_PhononConfig import PhononConfig
-import numpy as np
+import numpy as np; import numpy.linalg as LA
 import sys, copy
 from os.path import isdir
 import os
@@ -127,6 +127,18 @@ if __name__ == '__main__':
                     + checkPath(ANALYSIS_DIR_NAME) + checkPath(TOTAL_ENER_DIR_NAME) + TOT_ENERGIES_NAME) as f:
             energies[i] = float(f.readline().split(' ')[-1])
     print(f"Energies retrieved.")
+
+    # cob = Poscar.from_file('POSCAR').structure.lattice.matrix[:2,:2].T
+    # import csv
+    # with open('e.txt', 'r') as f:
+    #     c = csv.reader(f)
+    #     rows = [row for row in c][1:]
+    #     bshifts = np.array([list(map(float, row[:2])) for row in rows])
+    #     bshifts = bshifts @ LA.inv(cob).T
+    #     zspaces = np.array([float(row[2]) for row in rows])
+    #     energies = np.array([float(row[3]) for row in rows])
+    #     name = 'blG'
+    #     lidxs = []
 
     ff_pred = None; large_cfg = None; do = None; ph_list = None
     if fc or phcfg >= 0:

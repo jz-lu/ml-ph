@@ -177,7 +177,13 @@ if __name__ == '__main__':
             # interp = FourierForceInterp(config_ph_list, np.array(b_set), s0.T)
             # relaxed_forces = interp.predict(b_relaxed)
             relaxed_forces = np.transpose(relaxed_forces, axes=(2, 0, 1))
-            ILDM =  InterlayerDM(per_layer_at_idxs, b_set, k_set, GM_set, G0_set, [p.structure.species for p in poscars_uc], ph_list=None, force_matrices=relaxed_forces)
+            bl_M = ph_api.bl_masses()
+            print(f"Bilayer masses: {bl_M}")
+            ILDM =  InterlayerDM(per_layer_at_idxs, bl_M, 
+                                 b_set, k_set, 
+                                 GM_set, G0_set, 
+                                 [p.structure.species for p in poscars_uc], ph_list=None, 
+                                 force_matrices=relaxed_forces)
             TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc], Gamma_idx)
             np.save(outdir + MODE_TNSR_ONAME%i, TDM.k_mode_tensor())
         np.save(outdir + ANGLE_SAMPLE_ONAME, thetas)
@@ -209,7 +215,15 @@ if __name__ == '__main__':
         print("Constructing interlayer dynamical matrix objects...")
         ILDM = None
         config_ph_list = None if relax or multirelax else config_ph_list
-        ILDM =  InterlayerDM(per_layer_at_idxs, b_set, bzsamples.get_kpts0()[0], GM_set, G0_set, [p.structure.species for p in poscars_uc], ph_list=config_ph_list, force_matrices=relaxed_forces)
+        bl_M = ph_api.bl_masses()
+        print(f"Bilayer masses: {bl_M}")
+        ILDM =  InterlayerDM(per_layer_at_idxs, bl_M, 
+                             b_set, 
+                             bzsamples.get_kpts0()[0], 
+                             GM_set, G0_set, 
+                             [p.structure.species for p in poscars_uc], 
+                             ph_list=config_ph_list, 
+                             force_matrices=relaxed_forces)
         # if plot_intra:
         #     print("Plotting intralayer parts of configuration matrix...")
         #     ILDM.get_intra_DM_set(k_mags=k_mags, corner_kmags=corner_kmags, outdir=outdir)

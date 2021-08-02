@@ -1,13 +1,16 @@
 from ___constants_names import (
     SPOSCAR_NAME, PH_FORCE_SETS_NAME, 
     ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME, 
-    MONOLAYER_DIR_NAME, CONFIG_DIR_NAME, CONFIG_SUBDIR_NAME
+    MONOLAYER_DIR_NAME, CONFIG_DIR_NAME, CONFIG_SUBDIR_NAME,
+    POSCAR_NAME
 )
 from ___constants_misc import ERR_PH_FORCE_SETS_NOT_MADE
 from ___helpers_parsing import greet, succ, warn, err
 from __directory_searchers import checkPath, findDirsinDir
 from __dirModifications import build_dir
+from pymatgen.io.vasp.inputs import Poscar
 import os, phonopy
+import numpy as np
 
 class PhonopyAPI:
     def __init__(self, ROOT, spname=SPOSCAR_NAME, ctype='twist'):
@@ -56,6 +59,8 @@ class PhonopyAPI:
             assert os.path.isfile(spname), self.SPOSCAR_ERR_MSG
             assert os.path.isfile(PH_FORCE_SETS_NAME), ERR_PH_FORCE_SETS_NOT_MADE
             ph_list.append(phonopy.load(supercell_filename=spname))
+        p = Poscar.from_file(build_dir([ROOT, configs[0]]) + POSCAR_NAME)
+        self.bl_M = np.array(list(map(lambda x: x.atomic_mass, p.structure.species)))
         return len(configs), ph_list
     
     def nlayers(self):
@@ -68,5 +73,7 @@ class PhonopyAPI:
         return self.intra_list
     def inter_ph_list(self):
         return self.inter_list
+    def bl_masses(self):
+        return self.bl_M
 
 

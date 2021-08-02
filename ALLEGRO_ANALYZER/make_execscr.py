@@ -26,7 +26,8 @@ def build_bash_exe(calc_type='basic', outdir='.', wdir=None, calc_list=[ENERGIES
                    compute_time=COMPUTE_TIME, compute_partitions=COMPUTE_PARTITIONS, 
                    compute_mem_per_cpu=COMPUTE_MEM_PER_CPU, compute_email_type=COMPUTE_EMAIL_TYPE, 
                    compute_email_to=COMPUTE_EMAIL_TO, vdw=False, kpts='GAMMA', fname=START_BATCH_NAME,
-                   USE_NODE_INDICATOR=True, as_arr=False, twist=None, sampling='low'):
+                   USE_NODE_INDICATOR=True, as_arr=False, twist=None, sampling='low', passname='', 
+                   pass_idx=False):
     assert calc_type in TYPE_STRS, f"Unknown calculation type {calc_type}"
     assert isinstance(calc_list, list), "Calculation list must be of type list"
     assert vdw in ['T', 'F', True, False], "vdw parameter must be either 'T' or 'F'"
@@ -40,6 +41,9 @@ def build_bash_exe(calc_type='basic', outdir='.', wdir=None, calc_list=[ENERGIES
     vdw = '--vdw' if vdw in ['T', True, 'True'] else ''
     twist = '' if twist is None else f'--twist {twist}'
     sampling = f'-s {sampling}' if calc_type in CFG_STRS else ''
+    if pass_idx:
+        passname += ('' if passname == '' else '-') + '${SLURM_ARRAY_TASK_ID}'
+    passname = '-n ' + passname
 
     with open(exepath, 'w') as f:
         f.write('#!/bin/bash\n')
@@ -64,7 +68,7 @@ def build_bash_exe(calc_type='basic', outdir='.', wdir=None, calc_list=[ENERGIES
         f.write('ALLEGRO_DIR="%s"\n'%CODE_DIR)
         f.write('module load julia\nmodule list\nsource activate $HOME/%s\n'%(COMPUTE_ANACONDA_ENV))
         f.write('echo "Starting calculations..."\n')
-        f.write(f'python3 $ALLEGRO_DIR/start.py -t {calc_type} {twist} {sampling} -d $WDIR {vdw} {kpts} {calc_list}\n')
+        f.write(f'python3 $ALLEGRO_DIR/start.py -t {calc_type} {twist} {sampling} -d $WDIR {passname} {vdw} {kpts} {calc_list}\n')
         f.write('echo "Calculations complete!"\n')
     succ('Executable bash file successfully written to %s'%(exepath))
     return exepath
