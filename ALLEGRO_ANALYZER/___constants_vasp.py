@@ -5,6 +5,7 @@ from math import ceil
 
 # Unit conversion
 VASP_FREQ_TO_INVCM_UNITS = 15.633302*33.356
+USE_SCAN_VDW = True # change to false if using DFT-D3
 
 # POSCAR z-basis vector magnitude, increase if we add a lot more (>3) layers
 # Z_LATTICE_SIZE = 20.0
@@ -29,7 +30,7 @@ VASP_OUTFILE_CONVERGENCE_LINE_CUT = 6 # Number of lines from the bottom we scan 
 ## INCAR
 ISTART = 0 # No WAVECAR input
 ISMEAR = 0 # Gaussian smearing
-SIGMA = {'wide': 0.1, 'narrow': 0.01} # Width of smear
+SIGMA = {'wide': 0.1, 'narrow': 0.05} # Width of smear
 ENCUT = 400 # Plane wave expansion cutoff index
 AMIN = 0.01 # Parameter in initial approximation of dielectric function for screening
 NSW = {'relax': 300, 'no_relax': 0, 'relax_low': 100, 'relax_very_low': 80} # Number of ionic relaxation steps
@@ -82,10 +83,11 @@ INCAR_VDW_SETTINGS = {
     'GGA': GGA,
     'IVDW': IVDW
 }
-# INCAR_VDW_SETTINGS = {'METAGGA': METAGGA,
-#                       'LASPH': LASPH,
-#                       'LUSE_VDW': LUSE_VDW,
-#                       'BPARAM': BPARAM}
+if USE_SCAN_VDW:
+  INCAR_VDW_SETTINGS = {'METAGGA': METAGGA,
+                        'LASPH': LASPH,
+                        'LUSE_VDW': LUSE_VDW,
+                        'BPARAM': BPARAM}
 INCAR_NORELAX_SCON_SETTINGS = {'ISTART': ISTART, 
                           'ISMEAR': ISMEAR, 
                           'SIGMA': SIGMA['narrow'], 
