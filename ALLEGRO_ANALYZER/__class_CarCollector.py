@@ -173,7 +173,7 @@ class CarCollector:
             #print(atoms)
 
             # Get a pymatgen Potcar object with our lab group settings in .pmgrc.yaml
-            func = 'PBE' if self.do_vdW in ['T', True] else 'LDA'
+            func = 'PBE_54' if self.do_vdW in ['T', True] else 'LDA'
             print('POTCAR SETTINGS: using ' + func + ' functional')
             try:
                 potcar = Potcar(atoms, functional=func)
