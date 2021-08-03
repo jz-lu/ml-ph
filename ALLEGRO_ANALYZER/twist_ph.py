@@ -133,8 +133,11 @@ if __name__ == '__main__':
 
     update("Constructing intralayer dynamical matrix objects...")
     MLDMs = [MonolayerDM(uc, sc, ph, GM_set, k_set, Gamma_idx) for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
-    # for MLDM in MLDMs:
-    #     MLDM.symmetrize_forces()
+    d = os.getcwd()
+    os.chdir('config/shift_0/analyses/phonon/')
+    p1 = Poscar.from_file('POSCAR_unit')
+    p2 = Poscar.from_file('SPOSCAR')
+    MLDMs = [MonolayerDM(p1, p2, phonopy.load(supercell_filename='SPOSCAR'), GM_set, k_set, Gamma_idx)]
     assert len(MLDMs) == 2, f"Only 2-layer solids supported for twisted DM (for now), got {len(MLDMs)}"
     if plot_intra:
         print("Plotting one intralayer component...")

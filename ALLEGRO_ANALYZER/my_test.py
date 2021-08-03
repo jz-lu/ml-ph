@@ -3,6 +3,7 @@ import numpy as np
 import numpy.linalg as LA
 from math import sqrt
 from pymatgen.io.vasp.inputs import Poscar
+from phonopy.phonon.band_structure import get_band_qpoints_and_path_connections
 import os
 
 MAIN_DIR = '/Users/jonathanlu/Documents/' # must end with a '/'
@@ -23,7 +24,7 @@ def adjust_force(f):
     sums = np.sum(f, axis=1)
     for i, s in enumerate(sums):
         f[i,i] -= s
-        print(f"[{i}] Total change: {LA.norm(s)}")
+        # print(f"[{i}] Total change: {LA.norm(s)}")
     return f
 
 p = Poscar.from_file(MAIN_DIR+"tmos2/POSCAR_LAYER1")
@@ -37,12 +38,18 @@ ph = phonopy.load(
     phonopy_yaml="phonopy_disp.yaml", 
     symprec=1e-4
     )
+D = ph.get_dynamical_matrix_at_q([0,0,0])
+print("No compress:")
+dsum(D, M)
+print("SORTED EIGVALS", sorted(np.real_if_close(LA.eigvals(D))))
 ph.produce_force_constants()
 f = ph.force_constants
+help(ph)
 # fsum(ph.force_constants)
 D = ph.get_dynamical_matrix_at_q([0,0,0])
 print("Before:")
 dsum(D, M)
+print("SORTED EIGVALS", sorted(np.real_if_close(LA.eigvals(D))))
 print("After:")
 fprime = adjust_force(f)
 ph.force_constants = fprime
@@ -50,6 +57,7 @@ fpp = ph.force_constants
 ph.set_force_constants(fprime)
 assert np.allclose(fprime, fpp)
 D = ph.get_dynamical_matrix_at_q([0,0,0])
+print("SORTED EIGVALS", sorted(np.real_if_close(LA.eigvals(D))))
 dsum(D, M)
 
 # print(f"D:\n{np.real_if_close(D)}")

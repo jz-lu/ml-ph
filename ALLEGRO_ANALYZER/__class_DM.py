@@ -40,7 +40,7 @@ class MonolayerDM:
     def __init__(self, poscar_uc : Poscar, poscar_sc : Poscar, ph, GM_set, k_set, Gamma_idx, using_flex=False):
         assert LA.norm(k_set[Gamma_idx]) == 0, f"Gamma index has nonzero norm {LA.norm(k_set[Gamma_idx])}"
         print("Symmetrizing force constants...")
-        # ph.symmetrize_force_constants()
+        ph.symmetrize_force_constants()
         print("Force constants symmetrized.")
         self.n_at = sum(poscar_uc.natoms)
         self.uc = poscar_uc.structure; self.sc = poscar_sc.structure # get structure objects from Poscar objects
@@ -74,6 +74,18 @@ class MonolayerDM:
         if len(q) != 3:
             q = np.append(q, np.zeros(3-len(q)))
         dm = ph.get_dynamical_matrix_at_q(q)
+
+        def force_adjust(f):
+            for i in range(self.n_at):
+                M = self.M
+                temp = np.split(f[3*i:3*(i+1)], self.n_at, axis=1)
+                temp = [sqrt(M[j]/M[i]) * blk for j, blk in enumerate(temp)]
+                assert temp[0].shape == (3,3)
+                f[3*i:3*(i+1), 3*i:3*(i+1)] -= sum(temp)
+            return f
+        if LA.norm(q) == 0:
+            print("KJANSFJKNSAJDNAS Adjusting forces...")
+            dm = force_adjust(dm)
                     
         if self.dbgprint:
             print(f"Intralayer Level-0 shape: {dm.shape}")
@@ -479,8 +491,8 @@ class TwistedDM:
             assert intersum.shape == (3,3), f"Invalid inter shape {intersum.shape}"
             totalsum = np.real_if_close(intrasum + intersum)
             print(f"At {i} at Gamma before Gamma correction:\n{self.DMs[self.Gamma_idx][3*i:3*(i+1),3*i:3*(i+1)]}")
-            for j in range(self.n_k):
-                self.DMs[j][3*i:3*(i+1),3*i:3*(i+1)] -= totalsum
+            for k in range(self.n_k):
+                self.DMs[k][3*i:3*(i+1),3*i:3*(i+1)] -= totalsum
             print(f"At {i} at Gamma after Gamma correction:\n{self.DMs[self.Gamma_idx][3*i:3*(i+1),3*i:3*(i+1)]}")
             
         for i in range(self.n_ats[1]): # layer 2 atoms
