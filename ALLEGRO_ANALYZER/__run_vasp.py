@@ -62,7 +62,8 @@ def run_vasp_relaxation(vaspObj, dirName, outfile_name, errfile_name):
             print(f"LT: step at {vaspObj['INCAR']['EDIFF']} complete")
     return vaspObj
 
-def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax'):
+def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax', edinit=None):
+    assert edinit is not None, f"Initial EDIFF not given"
     if DEBUGGING:
         print(DEBUG_NOTICE_MSG)
         return
@@ -85,6 +86,8 @@ def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax'):
     # Relaxation -> need to make sure it converges
     else:
         EDIFF0 = vaspObj['INCAR']['EDIFF']
+        vaspObj['INCAR']['EDIFF'] = edinit
+        vaspObj['INCAR']['EDIFFG'] = vaspObj['INCAR']['EDIFFG'] = round(10 * edinit, 12)
         print("Starting initial LT-algorithm run...")
         vaspObj = run_vasp_relaxation(vaspObj, dirName, outfile_name, errfile_name)
         LT_converged = False

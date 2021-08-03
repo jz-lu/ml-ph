@@ -15,9 +15,10 @@ import numpy as np
 
 parser = argparse.ArgumentParser(description="DFT calculations on multilayered and twisted materials")
 parser.add_argument("-n", "--name", type=str, help='calculation name', default='')
-parser.add_argument("-t", "--type", type=str, help="basic, config, diag, or twist",
+parser.add_argument("-t", "--type", type=str, help="basic, config, diag, norelax, or twist",
                     default='basic', choices=TYPE_STRS)
 parser.add_argument("-s", "--sampling", type=str, help='low or high', default='low', choices=['low', 'high'])
+parser.add_argument("e", "--edinit", type=float, help="initial EDIFF for TLT algorithm", default=None)
 parser.add_argument("--twist", type=float, help="give a twist angle", default=None)
 parser.add_argument("-d", "--dir", type=str, help="directory containing desired VASP input files", default='.')
 parser.add_argument("-v", "--vdw", action="store_true", help="use van der Waals corrections")
