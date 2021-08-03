@@ -63,7 +63,7 @@ def run_vasp_relaxation(vaspObj, dirName, outfile_name, errfile_name):
     return vaspObj
 
 def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax', edinit=None):
-    assert edinit is not None, f"Initial EDIFF not given"
+    assert (edinit is not None) or run_type != 'relax', f"Initial EDIFF not given for relaxation"
     if DEBUGGING:
         print(DEBUG_NOTICE_MSG)
         return

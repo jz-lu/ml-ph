@@ -14,6 +14,7 @@ from pymatgen.io.vasp.outputs import Outcar # pylint: disable=import-error
 
 def relax_solid(user_input_settings, poscar=None, shift=None, user_inputted_root=None):
     # Get the right directory to import the relevant files.
+    edinit = user_input_settings.ediff0
     ROOT = user_input_settings.get_base_root_dir()
     if user_inputted_root != None:
         ROOT = user_inputted_root
@@ -41,7 +42,7 @@ def relax_solid(user_input_settings, poscar=None, shift=None, user_inputted_root
     # Call the relaxation
     print('Running VASP relaxation calculations...results to be sent to %s'%(DIR_RELAXATION))
     # print(init_vasp_obj)
-    run_vasp(init_vasp_obj, DIR_RELAXATION)
+    run_vasp(init_vasp_obj, DIR_RELAXATION, edinit=edinit)
     print('VASP relaxation calculations complete.')
 
     # Begin post-processing the relaxation calculations, handled by the postprocessing module
