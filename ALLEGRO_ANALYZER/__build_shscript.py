@@ -47,7 +47,7 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
         compute_time = '16:00:00' if vdw == 'T' else '08:00:00'
         compute_ncpu = '8' if vdw == 'T' else '8' # change as necessary
         compute_jobname = DIAG_JOBNAME if user_input_settings.sampling_is_diagonal() else COMPUTE_JOBNAME
-        compute_jobname = user_input_settings.id() + compute_jobname
+        compute_jobname = user_input_settings.passname() + compute_jobname
         compute_jobname = '-' + compute_jobname
         if user_input_settings.run_relaxer:
             compute_jobname = 'r' + compute_jobname
@@ -64,7 +64,7 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
                         as_arr=True, compute_ncpu=compute_ncpu, wdir=BASE_ROOT+CONFIG_SUBDIR_NAME, 
                         calc_list=user_input_settings.get_raw_calculation_list(), 
                         compute_partitions=ALT_COMPUTE_PARTITIONS, 
-                        passname=user_input_settings.id(), pass_idx=True)
+                        passname=user_input_settings.passname(), pass_idx=True)
 
         for i, shpath in enumerate(base_root_subpaths):
             bfile = shpath + SHIFT_NAME

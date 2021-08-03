@@ -21,7 +21,7 @@ def compute_displacements(ROOT, user_input_settings, ndisp):
     ROOT = checkPath(ROOT)
     print(f'Writing a job-array bash executable to {ROOT}')
     vdw = 'T' if user_input_settings.do_vdW in ['T', True] else 'F'
-    subname = user_input_settings.id()
+    subname = user_input_settings.passname()
     if user_input_settings.get_type_flag() == TYPE_RELAX_CONFIG:
         if user_input_settings.sampling_is_diagonal():
             subname += '-d'
