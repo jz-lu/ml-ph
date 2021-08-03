@@ -89,22 +89,24 @@ def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax', edinit=
         EDIFF0 = vaspObj['INCAR']['EDIFF']
         vaspObj['INCAR']['EDIFF'] = edinit
         vaspObj['INCAR']['EDIFFG'] = vaspObj['INCAR']['EDIFFG'] = round(10 * edinit, 12)
-        print("Starting initial LT-algorithm run...")
+        print(f"Starting initial LT-algorithm run at EDIFF={edinit}")
         vaspObj = run_vasp_relaxation(vaspObj, dirName, outfile_name, errfile_name)
         LT_converged = False
         tight_loopctr = 1
         while tight_loopctr <= VASP_MAX_CONVERGENCE_ATTEMPTS['T']:
-            tight_loopctr += 1
+            if np.isclose(vaspObj['INCAR']['EDIFF'], EDIFF0) or vaspObj['INCAR']['EDIFF'] == EDIFF0:
+                LT_converged = True
+                print(f"[{tight_loopctr}] LT: relaxation has fully converged")
+                break
+            else:
+                print(f"[{tight_loopctr}] LT: EDIFF={vaspObj['INCAR']['EDIFF']} not to thres level {EDIFF0} yet")
             vaspObj['INCAR']['EDIFFG'] = round(vaspObj['INCAR']['EDIFFG'] / 10, 12)
             vaspObj['INCAR']['EDIFF'] = round(vaspObj['INCAR']['EDIFF'] / 10, 12)
             print(f"LT: tightening EDIFF by one order to {vaspObj['INCAR']['EDIFF']}")
             new_poscar = Poscar.from_file(dirName + CONTCAR_NAME)
             vaspObj['POSCAR'] = new_poscar
             vaspObj = run_vasp_relaxation(vaspObj, dirName, outfile_name, errfile_name)
-            if np.isclose(vaspObj['INCAR']['EDIFF'], EDIFF0):
-                LT_converged = True
-                print("LT: relaxation has fully converged")
-                break
+            tight_loopctr += 1
         if not LT_converged:
             print(f"LT: too many runs failed with {tight_loopctr} T-runs. Keeping best EDIFF={vaspObj['INCAR']['EDIFF']}")
         
