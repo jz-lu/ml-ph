@@ -83,9 +83,10 @@ class MonolayerDM:
                 assert temp[0].shape == (3,3)
                 f[3*i:3*(i+1), 3*i:3*(i+1)] -= sum(temp)
             return f
-        if LA.norm(q) == 0:
-            print("KJANSFJKNSAJDNAS Adjusting forces...")
-            dm = force_adjust(dm)
+        # if LA.norm(q) == 0:
+        #     print(f"Adjusting forces (q={q})...")
+        #     dm = force_adjust(dm)
+        # TODO need to do this at l1 so subtract by the Gamma for all k, not just Gamma!
                     
         if self.dbgprint:
             print(f"Intralayer Level-0 shape: {dm.shape}")

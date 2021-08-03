@@ -1,5 +1,6 @@
 # Main file to be executed by user
 import os
+import numpy as np
 from pymatgen.io.vasp.inputs import VaspInput, Poscar
 from ____exit_with_error import exit_with_error
 from ____debug import DEBUG_NOTICE_MSG, DEBUGGING
@@ -19,6 +20,45 @@ from __class_CarCollector import CarCollector
 from __directory_searchers import checkPath
 from __check_convergence import check_if_not_converged
 
+# Implement the loosening part of the loosen-tighten algorithm to 
+# maximize efficient convergence at desired EDIFF in a relaxation.
+def run_vasp_relaxation(vaspObj, dirName, outfile_name, errfile_name):
+    loopCounter = 1 # Counts number of times we try to relax. We stop at VASP_MAX_CONVERGENCE_ATTEMPTS
+
+    # Run vasp and check convergence
+    vaspObj.run_vasp(run_dir=dirName, vasp_cmd=[BATCH_FILE_PATH], output_file=outfile_name, err_file=errfile_name)
+    not_converged = check_if_not_converged(dirName, outfile_name)
+    if not not_converged:
+        print('Relaxation has converged.')
+
+    while not_converged:
+        print('Relaxation has not converged. Proceeding to rerun relaxation with updated ionic positions...')
+        print('Loop counter: ' + str(loopCounter))
+        loopCounter += 1
+        if loopCounter > VASP_MAX_CONVERGENCE_ATTEMPTS['L']:
+            if vaspObj['INCAR']['EDIFFG'] < 1e-3:
+                vaspObj['INCAR']['EDIFFG'] = round(10 * vaspObj['INCAR']['EDIFFG'], 12)
+                vaspObj['INCAR']['EDIFF'] = round(10 * vaspObj['INCAR']['EDIFF'], 12)
+                print(f"LT: loosening EDIFF to {vaspObj['INCAR']['EDIFF']}")
+                print("Loop counter reset.")
+                loopCounter = 1
+            else:
+                print("Unable to further loosen EDIFFG threshold.")
+                print(ERR_VASP_NOT_CONVERGED)
+                break
+        
+        # Update POSCAR to be the new CONTCAR
+        new_poscar = Poscar.from_file(dirName + CONTCAR_NAME)
+        vaspObj['POSCAR'] = new_poscar 
+        print('CONTCAR copied to POSCAR. Rerunning relaxation...')
+        # No need to delete anything, the files will be overwritten. Just start the calculation.
+        vaspObj.run_vasp(run_dir=dirName, vasp_cmd=[BATCH_FILE_PATH], output_file=outfile_name, err_file=errfile_name)
+        print('Run complete.')
+        not_converged = check_if_not_converged(dirName, outfile_name)
+        if not not_converged:
+            print(f"LT: step at {vaspObj['INCAR']['EDIFF']} complete")
+    return vaspObj
+
 def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax'):
     if DEBUGGING:
         print(DEBUG_NOTICE_MSG)
@@ -32,46 +72,32 @@ def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax'):
     outfile_name = VASP_RUN_OUT_NAME%(run_type)
     errfile_name = VASP_RUN_ERR_NAME%(run_type)
 
-    # No relaxation -> no need to check for ionic convergence
+    # No relaxation -> single run, no need to check for ionic convergence
     if run_type != 'relax':
         vaspObj.run_vasp(run_dir=dirName, vasp_cmd=[BATCH_FILE_PATH], output_file=outfile_name, err_file=errfile_name)
 
     # Relaxation -> need to make sure it converges
     else:
-        loopCounter = 1 # Counts number of times we try to relax. We stop at VASP_MAX_CONVERGENCE_ATTEMPTS
-
-        # Run vasp and check convergence
-        vaspObj.run_vasp(run_dir=dirName, vasp_cmd=[BATCH_FILE_PATH], output_file=outfile_name, err_file=errfile_name)
-        not_converged = check_if_not_converged(dirName, outfile_name)
-        if not not_converged:
-            print('Relaxation has converged.')
-
-        while not_converged:
-            print('Relaxation has not converged. Proceeding to rerun relaxation with updated ionic positions...')
-            print('Loop counter: ' + str(loopCounter))
-            loopCounter += 1
-            if loopCounter > VASP_MAX_CONVERGENCE_ATTEMPTS:
-                if vaspObj['INCAR']['EDIFFG'] < 1e-3:
-                    vaspObj['INCAR']['EDIFFG'] *= 10
-                    vaspObj['INCAR']['EDIFF'] *= 10
-                    print(f"Exceeded maximum convergence attempts...loosening threshold EDIFFG to {vaspObj['INCAR']['EDIFFG']}")
-                    print("Loop counter reset.")
-                    loopCounter = 1
-                else:
-                    print("Unable to further loosen EDIFFG threshold.")
-                    print(ERR_VASP_NOT_CONVERGED)
-                    break
-            
+        EDIFF0 = vaspObj['INCAR']['EDIFF']
+        print("Starting initial LT-algorithm run...")
+        vaspObj = run_vasp_relaxation(vaspObj, dirName, outfile_name, errfile_name)
+        LT_converged = False
+        tight_loopctr = 1
+        while tight_loopctr <= VASP_MAX_CONVERGENCE_ATTEMPTS['T']:
+            tight_loopctr += 1
+            vaspObj['INCAR']['EDIFFG'] = round(vaspObj['INCAR']['EDIFFG'] / 10, 12)
+            vaspObj['INCAR']['EDIFF'] = round(vaspObj['INCAR']['EDIFF'] / 10, 12)
+            print(f"LT: tightening EDIFF by one order to {vaspObj['INCAR']['EDIFF']}")
             new_poscar = Poscar.from_file(dirName + CONTCAR_NAME)
-            vaspObj['POSCAR'] = new_poscar # Update POSCAR to be the new CONTCAR
-            print('CONTCAR copied to POSCAR. Rerunning relaxation...')
-            # No need to delete anything, the files will be overwritten. Just start the calculation.
-            vaspObj.run_vasp(run_dir=dirName, vasp_cmd=[BATCH_FILE_PATH], output_file=outfile_name, err_file=errfile_name)
-            print('Run complete.')
-            not_converged = check_if_not_converged(dirName, outfile_name)
-            if not not_converged:
-                print('Relaxation has converged.')
-    
+            vaspObj['POSCAR'] = new_poscar
+            vaspObj = run_vasp_relaxation(vaspObj, dirName, outfile_name, errfile_name)
+            if np.isclose(vaspObj['INCAR']['EDIFF'], EDIFF0):
+                LT_converged = True
+                print("LT: relaxation has fully converged")
+                break
+        if not LT_converged:
+            print(f"LT: too many runs failed with {tight_loopctr} T-runs. Keeping best EDIFF={vaspObj['INCAR']['EDIFF']}")
+        
     # Check the most obvious error in the run automatically
     if os.stat(dirName + outfile_name).st_size < VASP_OUTFILE_LEN_THRESHOLD:
         exit_with_error('It is very likely that something went wrong in the VASP relaxation calculation as the .out file is unreasonably short. If that is not the case, then modify the source code threshold constant.')
