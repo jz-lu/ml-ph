@@ -78,6 +78,7 @@ def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax', edinit=
     if run_type == 'dfpt':
         print("Using DFPT algorithm")
         vaspObj['INCAR']['IBRION'] = IBRION['dfpt']
+        vaspObj['INCAR']['NSW'] = 1
 
     # No relaxation -> single run, no need to check for ionic convergence
     if run_type != 'relax':
