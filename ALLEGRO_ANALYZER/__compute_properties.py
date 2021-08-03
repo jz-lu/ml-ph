@@ -63,6 +63,7 @@ def relax_solid(user_input_settings, poscar=None, shift=None, user_inputted_root
 
 def solve_electronic(user_input_settings, poscar=None, user_inputted_root=None):
     # Get the right directory to import the relevant files.
+    as_dfpt = user_input_settings.as_dfpt
     ROOT = user_input_settings.get_base_root_dir()
     if user_inputted_root:
         ROOT = user_inputted_root
@@ -79,7 +80,7 @@ def solve_electronic(user_input_settings, poscar=None, user_inputted_root=None):
     print('Created new folder %s to store self-consistent electronic step results.'%(DIR_ANALYSIS))
 
     print('Running VASP electronic step calculations...results to be sent to %s'%(DIR_ANALYSIS))
-    run_vasp(init_vasp_obj, DIR_ANALYSIS, run_type='no_relax')
+    run_vasp(init_vasp_obj, DIR_ANALYSIS, run_type=('dfpt' if as_dfpt else 'no_relax'))
     print('VASP electronic step calculations complete.')
     if user_input_settings.do_energy_calculation():
         get_energies(DIR_ANALYSIS, DIR_ANALYSIS, writeOut=True)    

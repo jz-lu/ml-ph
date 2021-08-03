@@ -15,7 +15,10 @@ from ___constants_names import (
     KPOINTS_NAME
 )
 from ___constants_misc import ERR_VASP_RUN_RELAX, ERR_VASP_NOT_CONVERGED
-from ___constants_vasp import VASP_OUTFILE_LEN_THRESHOLD, VASP_MAX_CONVERGENCE_ATTEMPTS
+from ___constants_vasp import (
+    VASP_OUTFILE_LEN_THRESHOLD, VASP_MAX_CONVERGENCE_ATTEMPTS, 
+    IBRION
+)
 from __class_CarCollector import CarCollector
 from __directory_searchers import checkPath
 from __check_convergence import check_if_not_converged
@@ -71,6 +74,9 @@ def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax'):
     
     outfile_name = VASP_RUN_OUT_NAME%(run_type)
     errfile_name = VASP_RUN_ERR_NAME%(run_type)
+    if run_type == 'dfpt':
+        print("Using DFPT algorithm")
+        vaspObj['INCAR']['IBRION'] = IBRION['dfpt']
 
     # No relaxation -> single run, no need to check for ionic convergence
     if run_type != 'relax':

@@ -45,6 +45,7 @@ class InputData:
 
         self.ROOT = args.dir
         self.do_vdW = args.vdw
+        self.as_dfpt = args.dfpt
         self.kpoints_is_gamma_centered = not args.mp
         self.calculation_list = tuple(dict.fromkeys(args.calc)) # Filter duplicates in calculation flag list
         self.input_imported = True

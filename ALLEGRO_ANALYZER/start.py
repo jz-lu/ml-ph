@@ -21,6 +21,7 @@ parser.add_argument("-s", "--sampling", type=str, help='low or high', default='l
 parser.add_argument("--twist", type=float, help="give a twist angle", default=None)
 parser.add_argument("-d", "--dir", type=str, help="directory containing desired VASP input files", default='.')
 parser.add_argument("-v", "--vdw", action="store_true", help="use van der Waals corrections")
+parser.add_argument("--dfpt", action="store_true", help="use DFPT instead of frozen phonon")
 parser.add_argument("-m", "--mp", action="store_true", help="use for MP k-points mesh, default: Gamma")
 parser.add_argument("-r", "--relax", action="store_true", help="use relaxed (non-uniform) configurations")
 parser.add_argument("calc", nargs="+", help="calculations list: energies, ph, eleband, eledos", default=[ENERGIES])
