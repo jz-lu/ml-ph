@@ -65,6 +65,7 @@ def solve_electronic(user_input_settings, poscar=None, user_inputted_root=None):
     # Get the right directory to import the relevant files.
     as_dfpt = user_input_settings.as_dfpt
     edinit = user_input_settings.ediff0
+    assert edinit is not None
     ROOT = user_input_settings.get_base_root_dir()
     if user_inputted_root:
         ROOT = user_inputted_root

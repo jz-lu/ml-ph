@@ -44,7 +44,6 @@ dsum(D, M)
 print("SORTED EIGVALS", sorted(np.real_if_close(LA.eigvals(D))))
 ph.produce_force_constants()
 f = ph.force_constants
-help(ph)
 # fsum(ph.force_constants)
 D = ph.get_dynamical_matrix_at_q([0,0,0])
 print("Before:")

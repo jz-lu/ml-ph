@@ -47,6 +47,7 @@ class InputData:
         self.ROOT = args.dir
         self.do_vdW = args.vdw
         self.ediff0 = args.edinit if args.edinit is not None else EDIFF['relax']
+        assert self.ediff0 is not None
         self.as_dfpt = args.dfpt
         self.kpoints_is_gamma_centered = not args.mp
         self.calculation_list = tuple(dict.fromkeys(args.calc)) # Filter duplicates in calculation flag list
