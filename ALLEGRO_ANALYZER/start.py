@@ -22,6 +22,7 @@ parser.add_argument("-e", "--edinit", type=float, help="initial EDIFF for TLT al
 parser.add_argument("--twist", type=float, help="give a twist angle", default=None)
 parser.add_argument("-d", "--dir", type=str, help="directory containing desired VASP input files", default='.')
 parser.add_argument("-v", "--vdw", action="store_true", help="use van der Waals corrections")
+parser.add_argument("-f", "--fcut", action="store_true", help="use force cutoff instead of energy for EDIFFG")
 parser.add_argument("--dfpt", action="store_true", help="use DFPT instead of frozen phonon")
 parser.add_argument("-m", "--mp", action="store_true", help="use for MP k-points mesh, default: Gamma")
 parser.add_argument("-r", "--relax", action="store_true", help="use relaxed (non-uniform) configurations")

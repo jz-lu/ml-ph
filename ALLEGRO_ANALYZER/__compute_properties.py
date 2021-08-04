@@ -42,7 +42,7 @@ def relax_solid(user_input_settings, poscar=None, shift=None, user_inputted_root
     # Call the relaxation
     print('Running VASP relaxation calculations...results to be sent to %s'%(DIR_RELAXATION))
     # print(init_vasp_obj)
-    run_vasp(init_vasp_obj, DIR_RELAXATION, edinit=edinit)
+    run_vasp(init_vasp_obj, DIR_RELAXATION, edinit=edinit, force_cut=user_input_settings.fcut)
     print('VASP relaxation calculations complete.')
 
     # Begin post-processing the relaxation calculations, handled by the postprocessing module
@@ -83,7 +83,8 @@ def solve_electronic(user_input_settings, poscar=None, user_inputted_root=None):
     print('Created new folder %s to store self-consistent electronic step results.'%(DIR_ANALYSIS))
 
     print('Running VASP electronic step calculations...results to be sent to %s'%(DIR_ANALYSIS))
-    run_vasp(init_vasp_obj, DIR_ANALYSIS, run_type=('dfpt' if as_dfpt else 'no_relax'), edinit=edinit)
+    run_vasp(init_vasp_obj, DIR_ANALYSIS, run_type=('dfpt' if as_dfpt else 'no_relax'), 
+             edinit=edinit, force_cut=user_input_settings.fcut)
     print('VASP electronic step calculations complete.')
     if user_input_settings.do_energy_calculation():
         get_energies(DIR_ANALYSIS, DIR_ANALYSIS, writeOut=True)    
