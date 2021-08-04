@@ -44,7 +44,7 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
         print('Building configuration space job array executables...')
         vdw = 'T' if user_input_settings.do_vdW in ['T', True] else 'F'
         kpts = 'GAMMA' if user_input_settings.kpoints_is_gamma_centered else 'MP'
-        compute_time = '16:00:00' if vdw == 'T' else '08:00:00'
+        compute_time = '24:00:00' if vdw == 'T' else '16:00:00'
         compute_ncpu = '8' if vdw == 'T' else '8' # change as necessary
         compute_jobname = DIAG_JOBNAME if user_input_settings.sampling_is_diagonal() else COMPUTE_JOBNAME
         compute_jobname = user_input_settings.passname() + compute_jobname
