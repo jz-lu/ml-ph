@@ -74,6 +74,19 @@ class MonolayerDM:
         if len(q) != 3:
             q = np.append(q, np.zeros(3-len(q)))
         dm = ph.get_dynamical_matrix_at_q(q)
+
+        def force_adjust(f):
+            adjusts = [0]*self.n_at
+            for i in range(self.n_at):
+                M = self.M
+                temp = np.split(f[3*i:3*(i+1)], self.n_at, axis=1)
+                temp = [sqrt(M[j]/M[i]) * blk for j, blk in enumerate(temp)]
+                assert temp[0].shape == (3,3)
+                adjusts[i] = sum(temp)
+            return adjusts
+        if LA.norm(q) == 0:
+            print(f"Adjusting forces (q={q})...")
+            self.adjusts = force_adjust(dm)
                     
         if self.dbgprint:
             print(f"Intralayer Level-0 shape: {dm.shape}")
@@ -120,7 +133,20 @@ class MonolayerDM:
     
     # Create level-1 block matrix (each matrix becomes a block in level-2)
     def __block_intra_l1(self):
+        def freqs(DM):
+            f = np.real_if_close(LA.eigvals(self.DM_set[self.Gamma_idx]))
+            f = (-1*(f < 0) + 1*(f > 0)) * np.sqrt(np.abs(f))
+            return sorted(VASP_FREQ_TO_INVCM_UNITS * f)
         self.DM_set = [block_diag(*[self.__block_intra_l0(k+GM, self.ph) for GM in self.GM_set]) for k in self.k_set]
+        print("ORIGINAL: evals")
+        print(freqs(self.DM_set[self.Gamma_idx]))
+        for k,_ in enumerate(self.DM_set):
+            for i in range(self.n_at):
+                self.DM_set[k][3*i:3*(i+1),3*i:3*(i+1)] -= self.adjusts[i]
+        # print("ADJUSTED: forces")
+        # print(self.adjusts)
+        print("ADJUSTED: evals")
+        print(freqs(self.DM_set[self.Gamma_idx]))
         return self.DM_set
     
     def Gamma_blks(self, log=False):

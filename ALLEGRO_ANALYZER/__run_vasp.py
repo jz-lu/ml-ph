@@ -88,7 +88,7 @@ def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax', edinit=
     else:
         EDIFF0 = vaspObj['INCAR']['EDIFF']
         vaspObj['INCAR']['EDIFF'] = edinit
-        vaspObj['INCAR']['EDIFFG'] = vaspObj['INCAR']['EDIFFG'] = round(10 * edinit, 12)
+        vaspObj['INCAR']['EDIFFG'] = vaspObj['INCAR']['EDIFFG'] = -round(10 * edinit, 12)
         print(f"Starting initial LT-algorithm run at EDIFF={edinit}")
         vaspObj = run_vasp_relaxation(vaspObj, dirName, outfile_name, errfile_name)
         LT_converged = False
