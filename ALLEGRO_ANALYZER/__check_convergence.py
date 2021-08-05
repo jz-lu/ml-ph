@@ -13,7 +13,7 @@ def last_N_lines(fname, N):
     return outstr
 
 # Uses last_N_lines to check convergence of file
-def check_if_not_converged(dirName, fileName):
+def check_if_not_converged(dirName, fileName, max_nsw=NSW['relax']):
     print('Now checking for convergence...')
     dirName = checkPath(dirName); filePath = dirName + fileName
 
@@ -34,7 +34,7 @@ def check_if_not_converged(dirName, fileName):
         while not nsw[0]:
             del nsw[0]
         nsw = int(nsw[0])
-        print(f"Took {nsw} out of max {NSW['relax']} steps")
-        nsw_reached = True if nsw >= NSW['relax'] else False
+        print(f"Took {nsw} out of max {max_nsw} steps")
+        nsw_reached = True if nsw >= max_nsw else False
     
     return fatal_bracket or nsw_reached
