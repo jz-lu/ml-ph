@@ -2,26 +2,26 @@ from ___constants_names import (
     ANALYSIS_DIR_NAME, RELAXATION_DIR_NAME, 
     TOTAL_ENER_DIR_NAME, TOT_ENERGIES_NAME, 
     CONFIG_SUBDIR_NAME, CONFIG_DATA_DIR, 
-    LIDXS_NPY_NAME
+    POSCAR_NAME
 )
 from __directory_searchers import findDirsinDir, checkPath
-from __class_CarCollector import CarCollector
+from pymatgen.io.vasp.inputs import Poscar
 import matplotlib.pyplot as plt
 import os, argparse
 import numpy as np
+import numpy.linalg as LA
 
-def optim_interlayer_spacing(ROOT, plot=True):
+def optim_lc(ROOT, plot=True):
     ROOT = checkPath(os.path.abspath(ROOT))
     data_dir = ROOT + checkPath(CONFIG_DATA_DIR)
-    lidxs = np.load(data_dir + LIDXS_NPY_NAME)
     nshifts = len(findDirsinDir(ROOT, CONFIG_SUBDIR_NAME, searchType='start'))
     print(f"Sample size: {nshifts}")
-    print("Retrieving z-spacings...")
-    zspaces = [0]*nshifts
+    print("Retrieving lattice constants...")
+    lcs = [0]*nshifts
     for i in range(nshifts):
         relax_dir = ROOT + checkPath(CONFIG_SUBDIR_NAME + str(i)) + checkPath(RELAXATION_DIR_NAME)
-        zspaces[i] = CarCollector.get_interlayer_spacing(lidxs, DIR_RELAXATION=relax_dir)
-    print("z-spacings retrieved.")
+        lcs[i] = LA.norm(Poscar.from_file(relax_dir + POSCAR_NAME).structure.lattice.matrix[0])
+    print("Lattice constants retrieved.")
 
     # Collect energies
     print("Retrieving energies...")
@@ -33,26 +33,26 @@ def optim_interlayer_spacing(ROOT, plot=True):
     print(f"Energies retrieved.")
     e = min(energies)
     idx = energies.index(min(energies))
-    z = zspaces[idx]
-    print(f"Index with minimum energy: {idx}, spacing (direct): {z}, energy: {'%.3lf'%e} eV")
+    lc_star = lcs[idx]
+    print(f"Index with minimum energy: {idx}, spacing (direct): {lc_star}, energy: {'%.3lf'%e} eV")
     if plot:
         plt.clf(); fig, ax = plt.subplots()
-        plt.title("Energy vs. interlayer spacing")
-        plt.xlabel("Interlayer spacing (direct)"); plt.ylabel("Energy (eV)")
-        ax.scatter(zspaces, energies, c='black')
-        ax.plot(zspaces, energies, c='royalblue')
-        fig.savefig(ROOT + "einter.png")
+        plt.title("Energy vs. lattice constant")
+        plt.xlabel(r"Lattice constants ($\AA$)"); plt.ylabel("Energy (eV)")
+        ax.scatter(lcs, energies, c='black')
+        ax.plot(lcs, energies, c='royalblue')
+        fig.savefig(ROOT + "e_vs_lc.png")
         plt.close(fig)
-    return idx, z, e
+    return idx, lc_star, e
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Optimize interlayer spacing for bilayer AA stacking")
+    parser = argparse.ArgumentParser(description="Optimize lattice constant for material calculation")
     parser.add_argument("-d", "--dir", type=str, help="directory containing calculations", default='.')
     parser.add_argument("-n", "--noplot", action="store_true", help="stop plotting")
     args = parser.parse_args()
     
     assert os.path.isdir(args.dir), f"Directory {args.dir} does not exist"
-    optim_interlayer_spacing(args.dir, plot=not args.noplot)
+    optim_lc(args.dir, plot=not args.noplot)
     
 
