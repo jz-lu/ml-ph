@@ -5,9 +5,9 @@ from ___constants_config import GRID_SAMPLE_HIGH, GRID_SAMPLE_LOW, DIAG_SAMPLE_H
 from ___constants_names import (
     CMD_LINE_ARG_LIST, 
     ENERGIES, ELEBAND, PHBAND, PHDOS, PH, 
-    TYPE_FLAGS, CFG_STRS, CFG_DIAG, CFG_Z, 
+    TYPE_FLAGS, CFG_STRS, CFG_DIAG, CFG_Z, CFG_LC, 
     TYPE_RELAX_BASIC, TYPE_RELAX_CONFIG, TYPE_TWISTED_CONFIG, TYPE_NORELAX_BASIC, 
-    ISPC_SAMPLE_INAME
+    ISPC_SAMPLE_INAME, LC_SAMPLE_INAME
 )
 from ___constants_vasp import EDIFF
 from __directory_searchers import checkPath
@@ -21,7 +21,7 @@ class InputData:
     def __init__(self, args):
         self.name = args.name; print(f"Name: '{args.name}'")
         self.cmdargs = args; self.sampling_diagonal = (args.type == CFG_DIAG); self.theta = args.twist
-        self.sampling_z = (args.type == CFG_Z)
+        self.sampling_z = (args.type == CFG_Z); self.sampling_lc = (args.type == CFG_LC)
         self.cfg_grid_sz = None; self.calc_str = args.type; self.sampling = args.sampling
         if self.sampling_diagonal:
             print("Configuration sampling: DIAGONAL")
@@ -55,14 +55,22 @@ class InputData:
         self.input_imported = True
         self.__check_input_style()
         self.__parse_calculation_input()
-        self.z = None
+        self.z = None; self.lcrange = None
         if self.sampling_z:
             print("Configuration sampling: INTERLAYER SPACING")
             assert os.path.isfile(self.ROOT + ISPC_SAMPLE_INAME), f"Path {self.ROOT + ISPC_SAMPLE_INAME} does not exist"
-            with open(ISPC_SAMPLE_INAME, 'r') as f:
+            with open(self.ROOT + ISPC_SAMPLE_INAME, 'r') as f:
                 tup = tuple(map(float, f.read().splitlines()))
                 assert len(tup) == 3 and tup[1] > tup[0] > 0 and tup[2] > 0, f"Invalid z input {tup}"
                 self.z = np.linspace(tup[0], tup[1], num=int(tup[2]))
+        elif self.sampling_lc:
+            print("Configuration sampling: LATTICE CONSTANT")
+            assert os.path.isfile(self.ROOT + LC_SAMPLE_INAME), f"Path {self.ROOT + LC_SAMPLE_INAME} does not exist"
+            with open(self.ROOT + LC_SAMPLE_INAME, 'r') as f:
+                tup = tuple(map(float, f.read().splitlines()))
+                assert len(tup) == 3 and tup[1] > tup[0] > 0 and tup[2] > 0, f"Invalid LC input {tup}"
+                self.lcrange = np.linspace(tup[0], tup[1], num=int(tup[2]))
+
 
         print('Final calculation list (except energies if specified):', self.calculation_list)
 
@@ -176,12 +184,19 @@ class InputData:
     def sampling_is_interlayer(self):
         return self.sampling_z
     
+    def sampling_is_lc(self):
+        return self.sampling_lc
+    
     def get_tw_angle(self):
         return self.theta
     
     def get_interlayer_sampling(self):
         assert self.z is not None, "Calculation is not of interlayer sampling type"
         return self.z
+    
+    def get_lc_sampling(self):
+        assert self.lcrange is not None, "Calculation is not of lattice constant sampling type"
+        return self.lcrange
 
     def passname(self):
         return self.name

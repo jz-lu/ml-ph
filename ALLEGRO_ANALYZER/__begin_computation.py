@@ -13,6 +13,7 @@ from ___constants_names import (
 )
 from __class_input import InputData
 from __class_Configuration import Configuration
+from __class_PoscarAdjuster import PoscarAdjuster
 from __class_RelaxerAPI import RelaxerAPI
 from __directory_searchers import checkPath, findFilesInDir
 from __dirModifications import mkdir, copy, move
@@ -56,6 +57,12 @@ def begin_computation(user_input_settings):
             pad = np.zeros(nz)
             sampling_set = np.stack([pad, pad, z_set], axis=1)
             assert sampling_set.shape == (nz, 3)
+        elif user_input_settings.sampling_is_lc():
+            lc_set = user_input_settings.get_lc_sampling(); nlc = len(lc_set)
+            print(f"Uniformly sampling {nlc} interlayer spacings between {min(lc_set)} and {max(lc_set)}...")
+            assert os.path.isfile(BASE_ROOT + POSCAR_NAME), f"No file {BASE_ROOT + POSCAR_NAME} found"
+            p = PoscarAdjuster(Poscar.from_file(BASE_ROOT + POSCAR_NAME))
+            configposcar_shift_tuple = [p.modify_lc(lc) for lc in lc_set]
         else:
             print("Sampling grid points along unit cell...")
             if user_input_settings.get_tw_angle() is not None:
@@ -69,8 +76,9 @@ def begin_computation(user_input_settings):
                 sampling_set = np.array(Configuration.sample_grid(grid=grid_size))
             print("Final b set:\n", sampling_set)
 
-        # Get a set of tuples (shift vector, poscar object) for each shift vector.
-        configposcar_shift_tuple = config.build_config_poscar_set(sampling_set, init_interlayer_spacing)
+        if not user_input_settings.sampling_is_lc():
+            # Get a set of tuples (shift vector, poscar object) for each shift vector.
+            configposcar_shift_tuple = config.build_config_poscar_set(sampling_set, init_interlayer_spacing)
 
         # Multiprocess over the configurations
         bze_points = compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple)
@@ -80,16 +88,17 @@ def begin_computation(user_input_settings):
         os.chdir(data_dir)
         print("Moved CWD to " + data_dir)
 
-        # Get the 2D (without z vector) lattice basis from the POSCAR of the fixed layer,
-        # then convert it into a change-of-basis matrix.
-        lattice_basis = config.get_fixed_layer_poscar().as_dict()['structure']['lattice']['matrix'][:-1]
-        cob_matrix = np.transpose([i[:-1] for i in lattice_basis])
-        np.save(data_dir + COB_NPY_NAME, cob_matrix)
-        print("Saved COB matrix for analysis at " + data_dir)
-        layer_idxs = config.get_layer_idxs()
-        np.save(data_dir + LIDXS_NPY_NAME, layer_idxs)
-        np.save(data_dir + SHIFTS_NPY_NAME, sampling_set)
-        print(f"Saved layer indices {layer_idxs} and shifts for analysis at " + data_dir)
+        if not user_input_settings.sampling_is_lc():
+            # Get the 2D (without z vector) lattice basis from the POSCAR of the fixed layer,
+            # then convert it into a change-of-basis matrix.
+            lattice_basis = config.get_fixed_layer_poscar().as_dict()['structure']['lattice']['matrix'][:-1]
+            cob_matrix = np.transpose([i[:-1] for i in lattice_basis])
+            np.save(data_dir + COB_NPY_NAME, cob_matrix)
+            print("Saved COB matrix for analysis at " + data_dir)
+            layer_idxs = config.get_layer_idxs()
+            np.save(data_dir + LIDXS_NPY_NAME, layer_idxs)
+            np.save(data_dir + SHIFTS_NPY_NAME, sampling_set)
+            print(f"Saved layer indices {layer_idxs} and shifts for analysis at " + data_dir)
 
         print("Configuration analysis complete. Returning data to `start.py`...")
         print("**IMPORTANT**: when computation on all shifts complete, run `config_analyze.py` to get data analysis")

@@ -15,7 +15,7 @@ import numpy as np
 
 parser = argparse.ArgumentParser(description="DFT calculations on multilayered and twisted materials")
 parser.add_argument("-n", "--name", type=str, help='calculation name', default='')
-parser.add_argument("-t", "--type", type=str, help="basic, config, diag, norelax, or twist",
+parser.add_argument("-t", "--type", type=str, help="basic, config, diag, norelax, z, lc, or twist",
                     default='basic', choices=TYPE_STRS)
 parser.add_argument("-s", "--sampling", type=str, help='low or high', default='low', choices=['low', 'high'])
 parser.add_argument("-e", "--edinit", type=float, help="initial EDIFF for TLT algorithm", default=None)
