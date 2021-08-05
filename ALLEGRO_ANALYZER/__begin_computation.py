@@ -127,7 +127,7 @@ def begin_computation(user_input_settings):
             copy(p, BASE_ROOT, newPath=BASE_ROOT+CONFIG_DIR_NAME)
             exepath = build_bash_exe(calc_type='basic', 
                                      calc_list=clist, outdir=intra_path,
-                                     compute_jobname=MONOLAYER_JOBNAME+i, 
+                                     compute_jobname=user_input_settings.passname()+MONOLAYER_JOBNAME+i, 
                                      vdw=vdw, kpts=kpts, 
                                      compute_partitions='kaxiras,shared', 
                                      ediff0=user_input_settings.ediff0, 

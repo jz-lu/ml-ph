@@ -165,7 +165,8 @@ class Configuration:
     # For each shift, construct a single POSCAR input file containing all the validated layers,
     # i.e. apply the strain-shift algorithm.
     def build_config_poscar(self, shift, init_interlayer_spacing):
-        print('Building configuration POSCAR for sampling shift {}'.format(str(shift)))
+        # print('Building configuration POSCAR for sampling shift {}'.format(str(shift)))
+        
         # Apply strain using the constant scalers array
         # Basically this is just scaling all the atoms in the other layers
         poscars = copy.deepcopy(self.__poscars) # So we don't delete everything in the class space
@@ -216,7 +217,6 @@ class Configuration:
             self.layer_idxs = [i for _,i in sorted(zip(bspace_poscar.structure, layer_idxs))] # permute to sorted location
             print(f"Final layer indices: {self.layer_idxs}")
         bspace_poscar.structure.sort() # must sort to be parsed properly by phonopy and VASP
-        print('Build complete.')
         return bspace_poscar
         
     # Return set of poscar objects that each describe a particular shift in b-space
@@ -224,6 +224,7 @@ class Configuration:
     def build_config_poscar_set(self, shift_set, init_interlayer_spacing):
         print('Constructing the set of POSCARs now with shifts. Starting POSCAR builds...')
         configposcar_shift_tuple = []
+        shift_set = np.round(shift_set, 10)
         for i in shift_set:
             p = self.build_config_poscar(i, init_interlayer_spacing)
             configposcar_shift_tuple.append((tuple(i), p))

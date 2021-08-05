@@ -32,7 +32,7 @@ def run_vasp_relaxation(vaspObj, dirName, outfile_name, errfile_name):
     vaspObj.run_vasp(run_dir=dirName, vasp_cmd=[BATCH_FILE_PATH], output_file=outfile_name, err_file=errfile_name)
     not_converged = check_if_not_converged(dirName, outfile_name, max_nsw=vaspObj['INCAR']['NSW'])
     if not not_converged:
-        print('Relaxation has converged.')
+        print(f"LT: step at {vaspObj['INCAR']['EDIFF']} complete")
 
     while not_converged:
         print('Relaxation has not converged. Proceeding to rerun relaxation with updated ionic positions...')
