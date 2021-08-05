@@ -233,7 +233,7 @@ if __name__ == '__main__':
         print("Combining into a single twisted dynamical matrix object...")
         TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc], Gamma_idx)
         TDM.Gamma_acoustic_sum_rule()
-        # TDM.Moire_acoustic_sum_rule()
+        TDM.Moire_acoustic_sum_rule()
         print("Twisted dynamical matrix object constructed.")
 
         if force_sum:
