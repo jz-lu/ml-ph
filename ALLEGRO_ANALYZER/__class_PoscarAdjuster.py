@@ -14,5 +14,5 @@ class PoscarAdjuster:
         A = A / lc0 * lc
         A[-1,-1] = vacspc
         d['structure']['lattice']['matrix'] = A
-        return (lc, Poscar.from_dict(d))
+        return ([lc], Poscar.from_dict(d))
 
