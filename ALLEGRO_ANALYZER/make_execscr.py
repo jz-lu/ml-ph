@@ -16,6 +16,7 @@ from ___constants_names import (
     TYPE_STRS, CFG_STRS, 
     TYPE_RELAX_BASIC, TYPE_RELAX_CONFIG, TYPE_TWISTED_CONFIG, TYPE_NORELAX_BASIC
 )
+from ___constants_vasp import INIT_EDIFF0
 from __directory_searchers import checkPath
 import sys, copy
 from ___helpers_parsing import greet, succ, warn, err, is_flag, check_not_flag
@@ -27,7 +28,7 @@ def build_bash_exe(calc_type='basic', outdir='.', wdir=None, calc_list=[ENERGIES
                    compute_mem_per_cpu=COMPUTE_MEM_PER_CPU, compute_email_type=COMPUTE_EMAIL_TYPE, 
                    compute_email_to=COMPUTE_EMAIL_TO, vdw=False, kpts='GAMMA', fname=START_BATCH_NAME,
                    USE_NODE_INDICATOR=True, as_arr=False, twist=None, sampling='low', passname='', 
-                   pass_idx=False, fcut=False):
+                   pass_idx=False, fcut=False, ediff0=INIT_EDIFF0):
     assert calc_type in TYPE_STRS, f"Unknown calculation type {calc_type}"
     assert isinstance(calc_list, list), "Calculation list must be of type list"
     assert vdw in ['T', 'F', True, False], "vdw parameter must be either 'T' or 'F'"
@@ -42,6 +43,10 @@ def build_bash_exe(calc_type='basic', outdir='.', wdir=None, calc_list=[ENERGIES
     fcut = '-f' if fcut in ['T', True, 'True'] else ''
     twist = '' if twist is None else f'--twist {twist}'
     sampling = f'-s {sampling}' if calc_type in CFG_STRS else ''
+    if ediff0 is None:
+        ediff0 = ''
+    else:
+        ediff0 = '-e ' + str(ediff0)
     if pass_idx:
         passname += ('' if passname == '' else '-') + '${SLURM_ARRAY_TASK_ID}'
     if len(passname) > 0:
@@ -71,7 +76,8 @@ def build_bash_exe(calc_type='basic', outdir='.', wdir=None, calc_list=[ENERGIES
         f.write('ALLEGRO_DIR="%s"\n'%CODE_DIR)
         f.write('module load julia\nmodule list\nsource activate $HOME/%s\n'%(COMPUTE_ANACONDA_ENV))
         f.write('echo "Starting calculations..."\n')
-        f.write(f'python3 $ALLEGRO_DIR/start.py -t {calc_type} {twist} {sampling} -d $WDIR {passname} {vdw} {fcut} {kpts} {calc_list}\n')
+        f.write(f'python3 $ALLEGRO_DIR/start.py -t {calc_type} {twist} {sampling} -d $WDIR {passname} {vdw} {fcut} {ediff0} {kpts} {calc_list}\n')
+        print(f"WRITING COMMAND: `python3 $ALLEGRO_DIR/start.py -t {calc_type} {twist} {sampling} -d $WDIR {passname} {vdw} {fcut} {ediff0} {kpts} {calc_list}`")
         f.write('echo "Calculations complete!"\n')
     succ('Executable bash file successfully written to %s'%(exepath))
     return exepath

@@ -3,7 +3,11 @@ from ____debug import DEBUGGING, DEBUG_NOTICE_MSG
 from ___constants_config import GRID_SAMPLE_LOW, GRID_SAMPLE_HIGH
 from ___constants_misc import NUM_AVAILABLE_CORES
 from ___constants_vasp import Z_LAYER_SEP
-from ___constants_compute import DEFAULT_NUM_LAYERS, MONOLAYER_JOBNAME, CONFIG_JOBNAME
+from ___constants_compute import (
+    DEFAULT_NUM_LAYERS, 
+    MONOLAYER_JOBNAME, CONFIG_JOBNAME, 
+    ALT_COMPUTE_PARTITIONS
+)
 from ___constants_names import (
     CONFIG_DATA_DIR, COB_NPY_NAME, LIDXS_NPY_NAME, SHIFTS_NPY_NAME, 
     TYPE_RELAX_BASIC, TYPE_RELAX_CONFIG, TYPE_TWISTED_CONFIG, TYPE_NORELAX_BASIC, 
@@ -121,8 +125,14 @@ def begin_computation(user_input_settings):
             mkdir(MONOLAYER_DIR_NAME + i, BASE_ROOT)
             copy(p, BASE_ROOT, newPath=intra_path, newName=POSCAR_NAME)
             copy(p, BASE_ROOT, newPath=BASE_ROOT+CONFIG_DIR_NAME)
-            exepath = build_bash_exe(calc_type='basic', calc_list=clist, outdir=intra_path,
-                   compute_jobname=MONOLAYER_JOBNAME+i, vdw=vdw, kpts=kpts, compute_partitions='kaxiras,shared')
+            exepath = build_bash_exe(calc_type='basic', 
+                                     calc_list=clist, outdir=intra_path,
+                                     compute_jobname=MONOLAYER_JOBNAME+i, 
+                                     vdw=vdw, kpts=kpts, 
+                                     compute_partitions='kaxiras,shared', 
+                                     ediff0=user_input_settings.ediff0, 
+                                     fcut=user_input_settings.fcut, 
+                                     passname=user_input_settings.passname())
             if not DEBUGGING:
                 os.chdir(intra_path)
                 print("Submitting monolayer job for layer " + i + "...")
@@ -133,7 +143,9 @@ def begin_computation(user_input_settings):
         exepath = build_bash_exe(calc_type='config', calc_list=clist, outdir=inter_path,
                    compute_jobname=CONFIG_JOBNAME, vdw=vdw, kpts=kpts, wdir=inter_path+CONFIG_SUBDIR_NAME,
                    compute_time='01:00:00', compute_ncpu='1', twist=user_input_settings.get_tw_angle(), 
-                   sampling=user_input_settings.sampling, compute_partitions='kaxiras,shared') 
+                   sampling=user_input_settings.sampling, compute_partitions=ALT_COMPUTE_PARTITIONS, 
+                   passname=user_input_settings.passname(), fcut=user_input_settings.fcut, 
+                   ediff0=user_input_settings.ediff0) 
                    # just kicks off a bunch of jobs, so it doesn't need any time
         if not DEBUGGING:
             os.chdir(inter_path)

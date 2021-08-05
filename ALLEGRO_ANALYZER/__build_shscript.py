@@ -65,7 +65,7 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
                         calc_list=user_input_settings.get_raw_calculation_list(), 
                         compute_partitions=ALT_COMPUTE_PARTITIONS, 
                         passname=user_input_settings.passname(), pass_idx=True, 
-                        fcut=user_input_settings.fcut)
+                        fcut=user_input_settings.fcut, ediff0=user_input_settings.ediff0)
 
         for i, shpath in enumerate(base_root_subpaths):
             bfile = shpath + SHIFT_NAME
