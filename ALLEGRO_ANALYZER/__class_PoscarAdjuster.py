@@ -7,7 +7,7 @@ class PoscarAdjuster:
         self.poscar = poscar
     def modify_lc(self, lc):
         d = self.poscar.as_dict()
-        A = d['structure']['lattice']['matrix']
+        A = np.array(d['structure']['lattice']['matrix'])
         vacspc = A[-1,-1]
         lc0 = LA.norm(A[0])
         assert np.isclose(LA.norm(A[0]), LA.norm(A[1]))
