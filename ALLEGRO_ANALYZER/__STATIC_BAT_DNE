@@ -9,6 +9,6 @@
 
 module list
 
-echo "[**VASP BATCH FILE**] VASP batch file starting (O2)..."
-mpirun -np $SLURM_NTASKS /n/kaxiras_lab/vasp.5.4.4-centos7/vasp-O2.std
+echo "[**VASP BATCH FILE**] VASP batch file starting..."
+mpirun -np $SLURM_NTASKS /n/kaxiras_lab/vasp/vasp.std
 echo "[**VASP BATCH FILE**] VASP batch file complete."
