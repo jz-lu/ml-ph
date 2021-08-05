@@ -39,7 +39,9 @@ def begin_computation(user_input_settings):
         grid_size = user_input_settings.get_cfg_grid_sz()
         print(f"Configuration grid: {grid_size}")
         init_interlayer_spacing = Z_LAYER_SEP
-        config = Configuration(BASE_ROOT)
+        config = None
+        if not user_input_settings.sampling_is_lc():
+            config = Configuration(BASE_ROOT)
         data_dir = user_input_settings.get_base_root_dir() + checkPath(CONFIG_DATA_DIR)
         if not os.path.isdir(data_dir):
             os.mkdir(data_dir)

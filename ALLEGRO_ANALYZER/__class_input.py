@@ -50,6 +50,10 @@ class InputData:
         assert self.ediff0 is not None
         self.as_dfpt = args.dfpt
         self.fcut = args.fcut
+        if self.fcut:
+            print("USING: relaxation force cutoff (negative EDIFFG)")
+        else:
+            print("USING: relaxation energy cutoff (positive EDIFFG)")
         self.kpoints_is_gamma_centered = not args.mp
         self.calculation_list = tuple(dict.fromkeys(args.calc)) # Filter duplicates in calculation flag list
         self.input_imported = True
