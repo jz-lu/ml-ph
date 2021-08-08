@@ -41,7 +41,6 @@ def begin_computation(user_input_settings):
     elif flg == TYPE_RELAX_CONFIG:
         print('Set to run parallel computations over grid sample in configuration space, defaulted to layer 1 (z = 0). Starting...')
         grid_size = user_input_settings.get_cfg_grid_sz()
-        print(f"Configuration grid: {grid_size}")
         init_interlayer_spacing = Z_LAYER_SEP
         config = None
         if not user_input_settings.sampling_is_lc():
@@ -65,12 +64,13 @@ def begin_computation(user_input_settings):
             assert sampling_set.shape == (nz, 3)
         elif user_input_settings.sampling_is_lc():
             lc_set = user_input_settings.get_lc_sampling(); nlc = len(lc_set)
-            print(f"Uniformly sampling {nlc} interlayer spacings between {min(lc_set)} and {max(lc_set)}...")
+            print(f"Uniformly sampling {nlc} lattice constants between {min(lc_set)} and {max(lc_set)}...")
             assert os.path.isfile(BASE_ROOT + POSCAR_NAME), f"No file {BASE_ROOT + POSCAR_NAME} found"
             p = PoscarAdjuster(Poscar.from_file(BASE_ROOT + POSCAR_NAME))
             configposcar_shift_tuple = [p.modify_lc(lc) for lc in lc_set]
         else:
             print("Sampling grid points along unit cell...")
+            print(f"Configuration grid: {grid_size}")
             if user_input_settings.get_tw_angle() is not None:
                 print(f"Supplied twist angle: {user_input_settings.get_tw_angle()} degrees")
             if user_input_settings.run_relaxer and user_input_settings.get_tw_angle() is not None:

@@ -19,6 +19,7 @@ class PhononConfig:
         self.outdir = checkPath(os.path.abspath(outdir))
         self.DM_at_Gamma = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in ph_list]
         self.dms = dms = self.DM_at_Gamma[0].shape
+        self.ncfg = len(ph_list)
         assert len(dms) == 2 and dms[0] == dms[1] and dms[0] % 3 == 0, f"Invalid force constants matrix shape {dms}"
         print(f"Bilayer dynamical matrix in configuration space has shape {dms}")
         self.b_matrix = (cob @ b_matrix[:,:2].T).T
@@ -41,7 +42,7 @@ class PhononConfig:
 
     def plot_mode_quiver(self, poscar : Poscar, shift=0, modeidxs=np.arange(6), labels=DEFAULT_MODE_LABELS, outname='cfgquiver.png'):
         coords = poscar.structure.cart_coords
-        assert 0 <= shift < self.dms[0], f"Invalid shift index {shift}, max={self.dms[0]}"
+        assert 0 <= shift < self.ncfg, f"Invalid shift index {shift}, max={self.ncfg}"
         assert len(modeidxs) == len(labels), f"Labels and mode indices must be in 1-1 correspondence, but is {labels} and {modeidxs}"
         for modeidx, lab in zip(modeidxs, labels):
             plt.clf(); fig = plt.figure()

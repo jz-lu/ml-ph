@@ -201,7 +201,7 @@ class MonolayerDM:
             evals = LA.eigvals(DM)
             signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
             modes_k = signs * np.sqrt(np.abs(evals)) * (VASP_FREQ_TO_INVCM_UNITS) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
-            self.mode_set[i] = (k_mag, modes_k[modes_k != 0])
+            self.mode_set[i] = (k_mag, modes_k)
         if dump:
             outdir = checkPath(os.path.abspath(outdir))
             assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
@@ -230,12 +230,12 @@ class MonolayerDM:
         xlabs = (r'K', r'$\Gamma$', r'M')
         plt.xticks(corner_kmags, xlabs)
         plt.ylabel(r'$\omega\,(\mathrm{cm}^{-1})$')
-        title = "First-layer phonon modes"
+        title = "AA phonon modes"
         if name is not None:
             title += f" of {name}"
         plt.title(title)
         plt.savefig(outdir + filename)
-        print(f"Intralayer pplot written to {outdir+filename}")
+        print(f"Intralayer plot written to {outdir+filename}")
         return
 
     def get_GM_set(self):
