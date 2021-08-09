@@ -49,6 +49,7 @@ class PhononConfig:
             ax = fig.gca(projection='3d')
             this_outname = outname[:outname.index('.')] + f'_{shift}_{modeidx}' + outname[outname.index('.'):]
             wf = np.real(self.evecs[shift, :, modeidx])
+            print(f"WF-{shift}-{modeidx}: {wf}")
             ax.scatter(coords[:,0], coords[:,1], coords[:,2])
             plt.quiver(coords[:,0], coords[:,1], coords[:,2], 
                        wf[0::3], wf[1::3], wf[2::3], length=1, normalize=True)

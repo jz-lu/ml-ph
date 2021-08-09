@@ -66,6 +66,7 @@ if __name__ == '__main__':
             i += 1; fc = int(cmdargs[i]); i += 1; fc = True
         elif cmdargs[i] == '--phcfg':
             i += 1; phcfg = int(cmdargs[i]); i += 1
+            print(f"Phonon configuration analysis on shift {phcfg}")
         elif cmdargs[i] == '--perr':
             i += 1; plot_perr = True
         elif cmdargs[i] == '--usage':

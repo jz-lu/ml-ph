@@ -74,6 +74,19 @@ class MonolayerDM:
         if len(q) != 3:
             q = np.append(q, np.zeros(3-len(q)))
         dm = ph.get_dynamical_matrix_at_q(q)
+
+        def force_adjust(f):
+            adjusts = [0]*self.n_at
+            for i in range(self.n_at):
+                M = self.M
+                temp = np.split(f[3*i:3*(i+1)], self.n_at, axis=1)
+                temp = [sqrt(M[j]/M[i]) * blk for j, blk in enumerate(temp)]
+                assert temp[0].shape == (3,3)
+                adjusts[i] = sum(temp)
+            return adjusts
+        if LA.norm(q) == 0:
+            print(f"Adjusting forces (q={q})...")
+            self.adjusts = force_adjust(dm)
                     
         if self.dbgprint:
             print(f"Intralayer Level-0 shape: {dm.shape}")
@@ -120,7 +133,20 @@ class MonolayerDM:
     
     # Create level-1 block matrix (each matrix becomes a block in level-2)
     def __block_intra_l1(self):
+        def freqs(DM):
+            f = np.real_if_close(LA.eigvals(self.DM_set[self.Gamma_idx]))
+            f = (-1*(f < 0) + 1*(f > 0)) * np.sqrt(np.abs(f))
+            return sorted(VASP_FREQ_TO_INVCM_UNITS * f)
         self.DM_set = [block_diag(*[self.__block_intra_l0(k+GM, self.ph) for GM in self.GM_set]) for k in self.k_set]
+        print("ORIGINAL: evals")
+        print(freqs(self.DM_set[self.Gamma_idx]))
+        for k,_ in enumerate(self.DM_set):
+            for i in range(self.n_at):
+                self.DM_set[k][3*i:3*(i+1),3*i:3*(i+1)] -= self.adjusts[i]
+        # print("ADJUSTED: forces")
+        # print(self.adjusts)
+        print("ADJUSTED: evals")
+        print(freqs(self.DM_set[self.Gamma_idx]))
         return self.DM_set
     
     def Gamma_blks(self, log=False):
@@ -175,7 +201,7 @@ class MonolayerDM:
             evals = LA.eigvals(DM)
             signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
             modes_k = signs * np.sqrt(np.abs(evals)) * (VASP_FREQ_TO_INVCM_UNITS) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
-            self.mode_set[i] = (k_mag, modes_k[modes_k != 0])
+            self.mode_set[i] = (k_mag, modes_k)
         if dump:
             outdir = checkPath(os.path.abspath(outdir))
             assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
@@ -204,12 +230,12 @@ class MonolayerDM:
         xlabs = (r'K', r'$\Gamma$', r'M')
         plt.xticks(corner_kmags, xlabs)
         plt.ylabel(r'$\omega\,(\mathrm{cm}^{-1})$')
-        title = "First-layer phonon modes"
+        title = "AA phonon modes"
         if name is not None:
             title += f" of {name}"
         plt.title(title)
         plt.savefig(outdir + filename)
-        print(f"Intralayer pplot written to {outdir+filename}")
+        print(f"Intralayer plot written to {outdir+filename}")
         return
 
     def get_GM_set(self):
@@ -336,7 +362,7 @@ class InterlayerDM:
             evals = LA.eigvals(DM)
             signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
             modes_k = signs * np.sqrt(np.abs(evals)) * (VASP_FREQ_TO_INVCM_UNITS) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
-            self.mode_set[i] = (k_mag, modes_k[modes_k != 0])
+            self.mode_set[i] = (k_mag, modes_k)
         if dump:
             outdir = checkPath(os.path.abspath(outdir))
             assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
@@ -649,7 +675,7 @@ class TwistedDM:
             evals = LA.eigvals(DM)
             signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
             modes_k = signs * np.sqrt(np.abs(evals)) * (VASP_FREQ_TO_INVCM_UNITS) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
-            self.mode_set[i] = (k_mag, modes_k[modes_k != 0])
+            self.mode_set[i] = (k_mag, modes_k)
             self.modetnsr[i] = modes_k
         if dump:
             outdir = checkPath(os.path.abspath(outdir))
