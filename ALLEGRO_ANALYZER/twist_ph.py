@@ -50,6 +50,7 @@ if __name__ == '__main__':
             i += 1; check_not_flag(args[i]); outdir = args[i]; i += 1
         elif args[i] == '-deg':
             i += 1; check_not_flag(args[i]); theta = np.deg2rad(float(args[i])); i += 1
+            print(f"theta: {np.rad2deg(theta)}")
         elif args[i] == '-name':
             i += 1; check_not_flag(args[i]); name = args[i]; i += 1
         elif args[i] == '-cut':
@@ -133,13 +134,6 @@ if __name__ == '__main__':
 
     update("Constructing intralayer dynamical matrix objects...")
     MLDMs = [MonolayerDM(uc, sc, ph, GM_set, k_set, Gamma_idx) for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
-    d = os.getcwd()
-    print(d)
-    os.chdir('/Users/jonathanlu/Documents/tmos2/config/shift_13/analyses/phonon/')
-    p1 = Poscar.from_file('POSCAR_unit')
-    p2 = Poscar.from_file('SPOSCAR')
-    MLDMs = [MonolayerDM(p1, p2, phonopy.load(supercell_filename='SPOSCAR'), GM_set, k_set, Gamma_idx)]
-    # assert len(MLDMs) == 2, f"Only 2-layer solids supported for twisted DM (for now), got {len(MLDMs)}"
     if plot_intra:
         print("Plotting one intralayer component...")
         print("Plotting samples over GM..."); MLDMs[0].plot_sampled_l0()
@@ -228,37 +222,37 @@ if __name__ == '__main__':
                              [p.structure.species for p in poscars_uc], 
                              ph_list=config_ph_list, 
                              force_matrices=relaxed_forces)
-        # if plot_intra:
-        #     print("Plotting intralayer parts of configuration matrix...")
-        #     ILDM.get_intra_DM_set(k_mags=k_mags, corner_kmags=corner_kmags, outdir=outdir)
-        # evals = LA.eigvals(ILDM.get_DM())
-        # signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
-        # modes_k = signs * np.sqrt(np.abs(evals)) * (15.633302*33.356) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
-        # # print("Interlayer modes (k-independent):", modes_k[modes_k != 0])
-        # print("Interlayer DM objects constructed.")
+        if plot_intra:
+            print("Plotting intralayer parts of configuration matrix...")
+            ILDM.get_intra_DM_set(k_mags=k_mags, corner_kmags=corner_kmags, outdir=outdir)
+        evals = LA.eigvals(ILDM.get_DM())
+        signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
+        modes_k = signs * np.sqrt(np.abs(evals)) * (15.633302*33.356) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
+        # print("Interlayer modes (k-independent):", modes_k[modes_k != 0])
+        print("Interlayer DM objects constructed.")
 
-        # print("Combining into a single twisted dynamical matrix object...")
-        # TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc], Gamma_idx)
-        # TDM.Gamma_acoustic_sum_rule()
+        print("Combining into a single twisted dynamical matrix object...")
+        TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc], Gamma_idx)
+        TDM.Gamma_acoustic_sum_rule()
         # TDM.Moire_acoustic_sum_rule()
-        # print("Twisted dynamical matrix object constructed.")
+        print("Twisted dynamical matrix object constructed.")
 
-        # if force_sum:
-        #     print("\nAnalyzing sum of forces in twisted bilayer (G0 only)...")
-        #     TDM.print_force_sum()
+        if force_sum:
+            print("\nAnalyzing sum of forces in twisted bilayer (G0 only)...")
+            TDM.print_force_sum()
 
-        # if realspace:
-        #     print("Analyzing phonons in realspace...")
-        #     n_at = sum([sum(p.natoms) for p in poscars_uc])
-        #     print(f"Number of atoms in bilayer configuration cell: {n_at}")
-        #     twrph = TwistedRealspacePhonon(np.rad2deg(theta), GM_set, TDM.get_DM_at_Gamma(), n_at, poscars_uc, outdir=outdir)
-        #     print("Phonons in realspace analyzed.")
-        #     twrph.plot_phonons()
-        #     twrph.plot_avgs()
+        if realspace:
+            print("Analyzing phonons in realspace...")
+            n_at = sum([sum(p.natoms) for p in poscars_uc])
+            print(f"Number of atoms in bilayer configuration cell: {n_at}")
+            twrph = TwistedRealspacePhonon(np.rad2deg(theta), GM_set, TDM.get_DM_at_Gamma(), n_at, poscars_uc, outdir=outdir)
+            print("Phonons in realspace analyzed.")
+            twrph.plot_phonons()
+            twrph.plot_avgs()
 
-        # print(f"Diagonalizing and outputting modes with corners {corner_kmags}...")
-        # TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, filename=outname, cutoff=cutoff)
-        # print("Modes outputted.")
+        print(f"Diagonalizing and outputting modes with corners {corner_kmags}...")
+        TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, filename=outname, cutoff=cutoff)
+        print("Modes outputted.")
 
     succ("Successfully completed phonon mode analysis (Took %.3lfs)."%(time()-start))
 
