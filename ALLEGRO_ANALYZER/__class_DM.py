@@ -12,10 +12,11 @@ from __directory_searchers import checkPath
 from ___constants_phonopy import SUPER_DIM
 from ___constants_names import DEFAULT_PH_BAND_PLOT_NAME
 from ___constants_vasp import VASP_FREQ_TO_INVCM_UNITS
-from ___helpers_parsing import update
+from ___helpers_parsing import update, succ
 from scipy.linalg import block_diag
 from scipy.sparse import bmat # block matrix
-from math import sqrt
+from math import sqrt, pi
+import sys
 
 """
 These classes together compute the twisted dynamical matrix from a sample of moire G vectors and k points along IBZ boundary.
@@ -34,10 +35,59 @@ There is one level-2 matrix for every k, which are the twisted Fourier dynamical
 yields the phonon modes as a function of k.
 """
 
+class DM:
+    def __init__(self, struct_sc, struct_uc):
+        self.sc = struct_sc; self.uc = struct_uc
+        self.pos_sc_idx = self.sc_idx()
+        print("Initialized parent DM calculator")
+    
+    def sc_idx(self):
+        pos_sc = self.sc.cart_coords
+        pos_uc = self.uc.cart_coords
+        self.A0 = np.transpose(self.uc.lattice.matrix[0:2,0:2])
+
+        pos_m = pos_sc[0:int(len(pos_sc)/3)]-pos_uc[0,:]
+        pos_x1 = pos_sc[int(len(pos_sc)/3):2*int(len(pos_sc)/3)]-pos_uc[1,:]
+        pos_x2 = pos_sc[2*int(len(pos_sc)/3):]-pos_uc[2,:]
+        pos_sc_idx = np.zeros([len(pos_sc)])
+        
+        for i in range(len(pos_m)):
+            pos_sc_idx[i] = 0
+            pos_sc_idx[i+len(pos_m)] = 1
+            pos_sc_idx[i+2*len(pos_m)] = 2 # sublattice index
+        return pos_sc_idx
+
+    def dm_calc(self, q, ph): 
+        pos_sc_idx = self.pos_sc_idx
+        smallest_vectors,multiplicity=ph.primitive.get_smallest_vectors()
+        species = self.uc.species
+        natom = len(species)
+        ph.produce_force_constants()
+        fc = ph.force_constants
+        d_matrix = np.zeros([natom*3, natom*3], dtype = complex)
+        for x in range(natom):
+            for y in range(natom):
+                idx_x = pos_sc_idx[pos_sc_idx==x]
+                idx_y = pos_sc_idx[pos_sc_idx==y]
+                id1 = 3*x
+                id2 = 3*y
+                m1 = species[x].atomic_mass
+                m2 = species[y].atomic_mass
+                for a in range(len(idx_y)): # iterate over all the sublattice y in the supercell
+                    fc_here = fc[x*len(idx_x),y*len(idx_y)+a]
+                    multi = multiplicity[y*len(idx_y)+a][x]
+                    for b in range(multi):
+                        vec = smallest_vectors[y*len(idx_y)+a][x][b]
+                        vec = vec[0] * self.A0[:,0] + vec[1] * self.A0[:,1]
+                        exp_here = np.exp(1j * np.dot(q, vec[0:2]))
+                        d_matrix[id1:id1+3, id2:id2+3] += fc_here * exp_here / np.sqrt(m1) / np.sqrt(m2) / multi
+        d_matrix = (d_matrix + d_matrix.conj().transpose()) / 2 # impose Hermiticity
+        return d_matrix
+
 
 # Monolayer dynamical matrix
-class MonolayerDM:
-    def __init__(self, poscar_uc : Poscar, poscar_sc : Poscar, ph, GM_set, k_set, Gamma_idx, using_flex=False):
+class MonolayerDM(DM):
+    def __init__(self, poscar_uc : Poscar, poscar_sc : Poscar, ph, GM_set, k_set, Gamma_idx, k_mags=None, using_flex=False):
         assert LA.norm(k_set[Gamma_idx]) == 0, f"Gamma index has nonzero norm {LA.norm(k_set[Gamma_idx])}"
         print("Symmetrizing force constants...")
         ph.symmetrize_force_constants()
@@ -48,13 +98,15 @@ class MonolayerDM:
         assert np.all(k_set[Gamma_idx] == [0,0]), f"Nonzero kGamma={k_set[Gamma_idx]}"
         self.n_k = len(k_set)
         self.pos_sc_id = self.__sc_atomic_id() if using_flex else None
-        self.A0 = self.uc.lattice.matrix[:2, :2] # remove z-axis
+        self.A0 = self.uc.lattice.matrix[:2, :2].T # remove z-axis
+        self.G0 = 2 * pi * LA.inv(self.A0).T
         self.DM_set = None; self.dbgprint = True; self.l0_shape = None
         self.name = poscar_uc.comment; self.modes_built = False
         self.M = np.array([species.atomic_mass for species in poscar_uc.structure.species])
         if self.pos_sc_id is not None:
             print(f"MonolayerDM intralayer atomic IDs for {self.name}:", self.pos_sc_id)
         self.Gamma_idx = Gamma_idx
+        self.k_mags = k_mags
 
     # Assign each atom a unique ID in the supercell
     def __sc_atomic_id(self):
@@ -71,6 +123,7 @@ class MonolayerDM:
     
     # Compute intralayer dynamical matrix block element for given some (direct) center `q` and phonopy object `ph`
     def __block_intra_l0(self, q, ph):
+        q = LA.inv(self.G0) @ q
         if len(q) != 3:
             q = np.append(q, np.zeros(3-len(q)))
         dm = ph.get_dynamical_matrix_at_q(q)
@@ -95,6 +148,7 @@ class MonolayerDM:
         assert self.pos_sc_id is not None, "Fatal error in class initialization"
         smallest_vectors, multiplicity = ph.primitive.get_smallest_vectors()
         species = self.uc.species; uc_nat = len(species); d = 3 # Cartesian DOF
+        ph.produce_force_constants()
         fc = ph.force_constants
         D = np.zeros([uc_nat*d, uc_nat*d], dtype=complex) # size: n_at x d (n_at of uc)
 
@@ -116,11 +170,25 @@ class MonolayerDM:
                     fourier_exp = np.exp(1j * np.dot(q, vec[:2]))
                     D[id1:id1+d, id2:id2+d] += (1/np.sqrt(Mx * My)) * fc_here * fourier_exp / multi
         D = (D + D.conj().T) / 2 # impose Hermiticity if not already satisfied
+        print("Done")
         return D
     
     # Create level-1 block matrix (each matrix becomes a block in level-2)
     def __block_intra_l1(self):
-        self.DM_set = [block_diag(*[self.__block_intra_l0(k+GM, self.ph) for GM in self.GM_set]) for k in self.k_set]
+        # print(self.k_set)
+        # print("AFTER:")
+        # kdir = self.k_set @ LA.inv(self.G0)
+        # breakpoint()
+        # ys = [LA.eigvals(self.__block_intra_l0(LA.inv(self.G0) @ k, self.ph)) for k in self.k_set]
+        # plt.clf()
+        # for k_mag, y in zip(self.k_mags, ys):
+        #     plt.scatter([k_mag]*len(y), y, c='royalblue', s=0.07)
+        # plt.xticks([])
+        # plt.savefig("/Users/jonathanlu/Documents/tmos2/zoe/GOOSEBERRY.png")
+        # sys.exit()
+        self.__sc_atomic_id()
+
+        self.DM_set = [block_diag(*[self.__flex_block_intra_l0(k+GM, self.ph) for GM in self.GM_set]) for k in self.k_set]
         return self.DM_set
     
     def Gamma_blks(self, log=False):
@@ -175,7 +243,7 @@ class MonolayerDM:
             evals = LA.eigvals(DM)
             signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
             modes_k = signs * np.sqrt(np.abs(evals)) * (VASP_FREQ_TO_INVCM_UNITS) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
-            self.mode_set[i] = (k_mag, modes_k[modes_k != 0])
+            self.mode_set[i] = (k_mag, modes_k)
         if dump:
             outdir = checkPath(os.path.abspath(outdir))
             assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
@@ -209,7 +277,7 @@ class MonolayerDM:
             title += f" of {name}"
         plt.title(title)
         plt.savefig(outdir + filename)
-        print(f"Intralayer pplot written to {outdir+filename}")
+        succ(f"Intralayer plot written to {outdir+filename}")
         return
 
     def get_GM_set(self):
@@ -222,7 +290,7 @@ class MonolayerDM:
 
 
 # Build interlayer dynamical matrix block via summing over configurations
-class InterlayerDM:
+class InterlayerDM(DM):
     def __init__(self, per_layer_at_idxs, bl_M, 
                  b_set, k_set, 
                  GM_set, G0_set, 
@@ -264,19 +332,7 @@ class InterlayerDM:
             self.force_matrices = [sym_dm_at_gamma(i, ph) for i, ph in enumerate(ph_list)] # DM(Gamma) ~= FC (mass-scaled)
         else:
             self.force_matrices = force_matrices
-        SHIFT_IDX = 0; STACKING = 'AA'
-        dm = self.force_matrices[SHIFT_IDX]
-        blksums_list1 = [np.real_if_close(force_from_dm(i, dm)) for i in range(6)]
-        for i, blksum in enumerate(blksums_list1):
-            print(f"[At {i}] [No SR] TOTAL FORCE SUM in {STACKING} STACKING:\n{blksum}\n")
-        
-        self.force_matrices = list(map(force_adjust, self.force_matrices))
-        
-        dm = self.force_matrices[SHIFT_IDX]
-        blksums_list2 = [np.real_if_close(force_from_dm(i, dm)) for i in range(6)]
-        for i, blksum in enumerate(blksums_list2):
-            print(f"[At {i}] [SR] TOTAL FORCE SUM in {STACKING} STACKING:\n{blksum}\n")
-        
+       
         assert self.force_matrices[0].shape[0] == self.force_matrices[0].shape[1], f"Force matrix is not square: shape {self.force_matrices[0].shape}"
         assert self.force_matrices[0].shape[0] % 2 == 0, f"Force matrix size is odd: shape {self.force_matrices[0].shape}"
 
@@ -337,7 +393,7 @@ class InterlayerDM:
             evals = LA.eigvals(DM)
             signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
             modes_k = signs * np.sqrt(np.abs(evals)) * (VASP_FREQ_TO_INVCM_UNITS) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
-            self.mode_set[i] = (k_mag, modes_k[modes_k != 0])
+            self.mode_set[i] = (k_mag, modes_k)
         if dump:
             outdir = checkPath(os.path.abspath(outdir))
             assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
@@ -648,7 +704,7 @@ class TwistedDM:
             evals = LA.eigvals(DM)
             signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
             modes_k = signs * np.sqrt(np.abs(evals)) * (VASP_FREQ_TO_INVCM_UNITS) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
-            self.mode_set[i] = (k_mag, modes_k[modes_k != 0])
+            self.mode_set[i] = (k_mag, modes_k)
             self.modetnsr[i] = modes_k
         if dump:
             outdir = checkPath(os.path.abspath(outdir))

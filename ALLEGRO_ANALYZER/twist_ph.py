@@ -129,11 +129,11 @@ if __name__ == '__main__':
     bzsamples = get_bz_sample(theta, poscars_uc[0], outdir, make_plot=True, super_dim=super_dim)
     _, GM_set = bzsamples.get_GM_set(); _, G0_set = bzsamples.get_G0_set()
     Gamma_idx = bzsamples.get_Gamma_idx()
-    k_set, k_mags = bzsamples.get_kpts(); corner_kmags = bzsamples.get_corner_kmags()
+    k_set, k_mags = bzsamples.get_kpts0(); corner_kmags = bzsamples.get_corner_kmags0()
     print("Sampling complete.")
 
     update("Constructing intralayer dynamical matrix objects...")
-    MLDMs = [MonolayerDM(uc, sc, ph, GM_set, k_set, Gamma_idx) for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
+    MLDMs = [MonolayerDM(uc, sc, ph, GM_set, k_set, Gamma_idx, k_mags=k_mags) for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
     if plot_intra:
         print("Plotting one intralayer component...")
         print("Plotting samples over GM..."); MLDMs[0].plot_sampled_l0()
@@ -247,8 +247,9 @@ if __name__ == '__main__':
             print(f"Number of atoms in bilayer configuration cell: {n_at}")
             twrph = TwistedRealspacePhonon(np.rad2deg(theta), GM_set, TDM.get_DM_at_Gamma(), n_at, poscars_uc, outdir=outdir)
             print("Phonons in realspace analyzed.")
-            twrph.plot_phonons()
-            twrph.plot_avgs()
+            # twrph.plot_phonons()
+            twrph.plot_spatial_avgs()
+            twrph.plot_atomic_avgs()
 
         print(f"Diagonalizing and outputting modes with corners {corner_kmags}...")
         TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, filename=outname, cutoff=cutoff)

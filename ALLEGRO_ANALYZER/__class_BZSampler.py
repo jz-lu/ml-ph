@@ -91,7 +91,7 @@ class BZSampler:
         assert self.ltype == 'hexagonal'
         GM1 = self.GM[:,0]; GM2 = self.GM[:,1] # Moire reciprocal lattice vectors
         d = GM1.shape[0]
-        print("k-sampler using Gamma-K-M sequence defined by moire reciprocal lattice vectors GM")
+        print("k-sampler using K-Gamma-M-K sequence defined by moire reciprocal lattice vectors GM")
         Gamma = np.zeros(d); K = 1/3 * (GM1 + GM2); M = 1/2 * GM1
         if np.isclose(self.lattice_angle, 60):
             print("Using 60-degree unit cell for BZ...")
@@ -160,8 +160,9 @@ class BZSampler:
             kmag_start = mags[-1] # update start point of flattened-k to end of current line
             kmags[kidx : kidx+nk-1] = mags[:-1]
         self.k0_set = k_set; self.k0mags = kmags
+        self.corner_kmags0 = corner_kmags
         self.k0_sampled = True
-        return k_set
+        return (k_set, kmags)
     
     def plot_sampling0(self, filename='sampling0.png'):
         assert self.g_idxs is not None, "Cannot plot sampling until G vectors have been sampled"
@@ -258,6 +259,9 @@ class BZSampler:
 
     def get_corner_kmags(self):
         return self.corner_kmags
+
+    def get_corner_kmags0(self):
+        return self.corner_kmags0
     
     def sampled(self):
         return self.GM_sampled and self.k_sampled

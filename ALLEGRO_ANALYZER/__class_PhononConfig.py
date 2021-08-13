@@ -1,6 +1,7 @@
 import phonopy
 import numpy as np
 import numpy.linalg as LA
+from math import floor, log10
 import matplotlib.pyplot as plt
 import os
 from itertools import product as prod
@@ -90,7 +91,7 @@ class TwistedRealspacePhonon:
         self.cut = cut; self.n_at = n_at
         self.DM_at_Gamma = DM_at_Gamma
         angle = np.deg2rad(theta)
-        A_delta2inv = LA.inv(np.array([[1-np.cos(angle), -np.sin(angle)],[np.sin(angle), 1-np.cos(angle)]]))
+        A_delta2inv = LA.inv(np.array([[1-np.cos(angle), np.sin(angle)],[-np.sin(angle), 1-np.cos(angle)]]))
         A0 = poscars_uc[0].structure.lattice.matrix[:2,:2].T
         self.sc_lattice = A_delta2inv @ A0
         self.at_pos = np.concatenate([p.structure.cart_coords for p in poscars_uc], axis=0)
@@ -99,10 +100,12 @@ class TwistedRealspacePhonon:
         self.d = 3; self.theta = theta
         self.gridsz = gridsz; self.n_r = gridsz**2
         self.r_matrix = np.array(list(prod(x, x))); assert self.r_matrix.shape == (self.n_r, 2)
+        self.diagidxs = self.r_matrix[:,0] == self.r_matrix[:,1]
+        self.r_linecut_direct = self.r_matrix[self.diagidxs]
         self.r_matrix = (self.sc_lattice @ self.r_matrix.T).T # make Cartesian
         self.outdir = checkPath(os.path.abspath(outdir))
         self.phtnsr = None; self.rphtnsr = None # Fourier and real space phonons
-        self.rphtnsr_shape = (self.n_r, self.n_at, self.cut, self.d) # realspace phonons
+        self.old_rphtnsr_shape = (self.n_r, self.n_at, self.cut, self.d) # realspace phonons
         self.phtnsr_shape = (self.n_G, self.n_at, self.cut, self.d)
         print("Initializing twisted realspace phonon object...")
         self.__phonon_inverse_fourier()
@@ -141,28 +144,68 @@ class TwistedRealspacePhonon:
         self.__build_modes()
         print("Building realspace phonon tensor...")
         self.rphtnsr = np.array([sum([G_blk * np.exp(1j * np.dot(GM, r)) for G_blk, GM in zip(self.phtnsr, self.GM_set)]) for r in self.r_matrix])
-        assert self.rphtnsr.shape == self.rphtnsr_shape, f"Unexpected phonon tensor shape {self.rphtnsr.shape}, expected {self.rphtnsr_shape}"
+        assert self.rphtnsr.shape == self.old_rphtnsr_shape, f"Unexpected phonon tensor shape {self.rphtnsr.shape}, expected {self.old_rphtnsr_shape}"
         self.rphtnsr = np.transpose(self.rphtnsr, axes=(1,2,0,3)) # shape: (n_at, C, n_r, d)
         assert self.rphtnsr.shape == (self.n_at, self.cut, self.n_r, self.d)
         print(f"Realspace phonon tensor built: shape {self.rphtnsr.shape}")
     
-    def plot_avgs(self, outname='avg.png'):
+    def plot_spatial_avgs(self, outname='spavg.png'):
         avgtnsr = np.mean(self.rphtnsr, axis=2) # shape: (n_at, C, d)
         avgtnsr = np.transpose(avgtnsr, axes=(1,0,2)) # shape: (C, n_at, d)
         np.save(self.outdir + "avgtnsr.npy", avgtnsr)
-        print(f"Average tensor shape: {avgtnsr.shape}")
-        # x = self.at_pos[:,0]; y = self.at_pos[:,1]; z = self.at_pos[:,2]
+        print(f"Realspace average tensor shape: {avgtnsr.shape}")
         nuc_at = self.n_at//2
-        x = np.zeros(self.n_at); y = x; z = np.linspace(0,1,num=self.n_at)
+        plt.clf(); plt.plot(avgtnsr[0,:,0], avgtnsr[0,:,1]) # just to get the right dom/range
+        left, right = plt.xlim()
+        x = np.zeros(self.n_at); y = np.linspace(10*left,10*right,num=self.n_at); yset = False; lim = None
+        lcol = ['black']*nuc_at + ['maroon']*nuc_at
         for m_j, phonons in enumerate(avgtnsr): # shape: (n_at, d)
-            plt.clf(); fig = plt.figure(); ax = fig.gca(projection='3d')
-            plt.quiver(x, y, z, phonons[:,0], phonons[:,1], phonons[:,2])
-            ax.scatter(x, y, z, c=['black']*nuc_at + ['maroon']*nuc_at)
-            plt.title(f"Mean phonons over continuum (mode {m_j})")
+            plt.clf(); fig, axes = plt.subplots(nrows=1, ncols=2)
+            if not yset:
+                dummy = axes[0].quiver(x, y, phonons[:,0], phonons[:,1], color=lcol)
+                lim = np.array(axes[0].get_xlim()); lim = lim/2
+                y = np.linspace(lim[0]*2/3, lim[1]*2/3, num=self.n_at)
+                dummy.remove()
+            axes[0].quiver(x, y, phonons[:,0], phonons[:,1], color=lcol) # xy projection
+            lscale = floor(log10(np.mean(list(map(LA.norm, phonons[:,0:2])))))
+            axes[0].text(lim[0], lim[1], str(lscale))
+            axes[1].quiver(x, y, phonons[:,0], phonons[:,2], color=lcol) # xz projection
+            lscale = floor(log10(np.mean(list(map(LA.norm, phonons[:,1:3])))))
+            axes[0].text(lim[0], lim[1], str(lscale))
+            axes[0].set_title('xy')
+            axes[1].set_title('xz')
+            for ax in axes:
+                ax.set_ylim(lim)
+                ax.set_xlim(lim)
+                ax.set_aspect('equal')
+            plt.suptitle(f"Mean field phonons from continuum (mode {m_j})")
             this_outname = outname[:outname.index('.')] + f'_{m_j}' + outname[outname.index('.'):]
             fig.savefig(self.outdir + this_outname)
             plt.close(fig)
-        succ("Successfully outputted average phonon plots")
+        succ("Successfully outputted spatial-average phonon plots")
+    
+    def plot_atomic_avgs(self, outname='atavg.png'):
+        # Take a diagonal cut of the sampling, and plot averages over all atoms
+        # Key idea: shear/LB modes will cancel on average, while translations will not.
+        # For this function only n_r := number of realsoace points along the line cut.
+        avgtnsr = np.mean(self.rphtnsr, axis=0) # shape: (C, n_r, d)
+        avgtnsr = avgtnsr[:,self.diagidxs,:] # keep diagonal terms only
+        print(f"Atomic average tensor shape: {avgtnsr.shape}")
+        x = self.r_linecut_direct[:,0] / 15; y = self.r_linecut_direct[:,1] / 15
+        assert len(x) == sum(self.diagidxs)
+        for m_j, phonons in enumerate(avgtnsr): # shape: (n_r, d)
+            plt.clf(); fig, axes = plt.subplots(nrows=1, ncols=2)
+            axes[0].quiver(x, y, phonons[:,0], phonons[:,1]) # xy projection
+            axes[1].quiver(x, y, phonons[:,0], phonons[:,2]) # xz projection
+            axes[0].set_title('xy')
+            axes[1].set_title('xz')
+            for ax in axes:
+                ax.set_aspect('equal')
+            plt.suptitle(f"Mean atom phonons in diagonal cut (mode {m_j})")
+            this_outname = outname[:outname.index('.')] + f'_{m_j}' + outname[outname.index('.'):]
+            fig.savefig(self.outdir + this_outname)
+            plt.close(fig)
+        succ("Successfully outputted atomic-average phonon plots")
 
     def plot_phonons(self, outname='phreal.png'):
         coords = self.r_matrix; coords[:,:1] /= 50
