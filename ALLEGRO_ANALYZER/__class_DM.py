@@ -98,7 +98,7 @@ class MonolayerDM(DM):
         assert np.all(k_set[Gamma_idx] == [0,0]), f"Nonzero kGamma={k_set[Gamma_idx]}"
         self.n_k = len(k_set)
         self.pos_sc_id = self.__sc_atomic_id() if using_flex else None
-        self.A0 = self.uc.lattice.matrix[:2, :2].T # remove z-axis
+        self.A0 = self.uc.lattice.matrix[:2,:2].T # remove z-axis
         self.G0 = 2 * pi * LA.inv(self.A0).T
         self.DM_set = None; self.dbgprint = True; self.l0_shape = None
         self.name = poscar_uc.comment; self.modes_built = False
@@ -145,7 +145,9 @@ class MonolayerDM(DM):
 
     # Deprecated: Calculates dynamical matrix elements for direct or Cartesian coordinates `q`
     def __flex_block_intra_l0(self, q, ph):
+        q = LA.inv(self.G0) @ q[:2]
         assert self.pos_sc_id is not None, "Fatal error in class initialization"
+        pos_sc_idx = self.pos_sc_id
         smallest_vectors, multiplicity = ph.primitive.get_smallest_vectors()
         species = self.uc.species; uc_nat = len(species); d = 3 # Cartesian DOF
         ph.produce_force_constants()
@@ -157,21 +159,28 @@ class MonolayerDM(DM):
         then iterate through all instances of the other. Add to the matrix the Fourier term
         divided by the multiplicity, which is determined by phonopy based on nearest-neighbor symmetry.
         """
-        for x, y in prod(range(uc_nat), range(uc_nat)):
-            idxs_x = self.pos_sc_id[self.pos_sc_id == x]; n_xidxs = len(idxs_x)
-            idxs_y = self.pos_sc_id[self.pos_sc_id == y]; n_yidxs = len(idxs_y)
-            id1 = d * x; id2 = d * y
-            Mx = species[x].atomic_mass; My = species[y].atomic_mass
-            for a in range(n_yidxs): # iterate over all the sublattice y in the supercell
-                fc_here = fc[x*n_xidxs, y*n_yidxs + a]
-                multi = multiplicity[y*n_yidxs + a][x]
-                for vec in smallest_vectors[y*n_yidxs + a][x]:
-                    vec = vec[0] * self.A0[:,0] + vec[1] * self.A0[:,1] # convert to Cartesian coords to get R vector
-                    fourier_exp = np.exp(1j * np.dot(q, vec[:2]))
-                    D[id1:id1+d, id2:id2+d] += (1/np.sqrt(Mx * My)) * fc_here * fourier_exp / multi
-        D = (D + D.conj().T) / 2 # impose Hermiticity if not already satisfied
-        print("Done")
-        return D
+        natom = len(species)
+        ph.produce_force_constants()
+        fc = ph.force_constants
+        d_matrix = np.zeros([natom*3, natom*3], dtype = complex)
+        for x in range(natom):
+            for y in range(natom):
+                idx_x = pos_sc_idx[pos_sc_idx==x]
+                idx_y = pos_sc_idx[pos_sc_idx==y]
+                id1 = 3*x
+                id2 = 3*y
+                m1 = species[x].atomic_mass
+                m2 = species[y].atomic_mass
+                for a in range(len(idx_y)): # iterate over all the sublattice y in the supercell
+                    fc_here = fc[x*len(idx_x),y*len(idx_y)+a]
+                    multi = multiplicity[y*len(idx_y)+a][x]
+                    for b in range(multi):
+                        vec = smallest_vectors[y*len(idx_y)+a][x][b]
+                        vec = vec[0] * self.A0[:,0] + vec[1] * self.A0[:,1]
+                        exp_here = np.exp(1j * np.dot(q, vec[0:2]))
+                        d_matrix[id1:id1+3, id2:id2+3] += fc_here * exp_here / np.sqrt(m1) / np.sqrt(m2) / multi
+        d_matrix = (d_matrix + d_matrix.conj().transpose()) / 2 # impose Hermiticity
+        return d_matrix
     
     # Create level-1 block matrix (each matrix becomes a block in level-2)
     def __block_intra_l1(self):

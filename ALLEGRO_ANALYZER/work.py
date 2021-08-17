@@ -4,6 +4,7 @@ import numpy as np
 import numpy.linalg as LA
 from math import pi
 import matplotlib.pyplot as plt
+import sys
 
 def sc_idx(poscar_sc, poscar_uc):
     pos_sc = poscar_sc.cart_coords
@@ -78,13 +79,27 @@ for line in range(ncorners-1): # last point equals first, so skip it
 Gamma_idx = nk-1
 
 pos_sc_idx = sc_idx(sc.structure, uc.structure)
-# evals = np.array([np.real_if_close(LA.eigvals(dm_calc(q, ph, sc.structure, uc.structure, pos_sc_idx))) for q in kline])
-evals = np.array([np.real_if_close(LA.eigvals(ph.get_dynamical_matrix_at_q(q))) for q in kline])
-evals = (-1*(evals < 0) + (evals > 0)) * np.sqrt(np.abs(evals))
-evals = 15.633302 * evals
-for q, modes in zip(kmag, evals):
+# G1 = np.sqrt(np.real(sorted(LA.eigvals(ph.get_dynamical_matrix_at_q([0,0])))))
+# G2 = np.sqrt(sorted(LA.eigvals(dm_calc([0,0], ph, sc.structure, uc.structure, pos_sc_idx))))
+# diffs = FREQUENCY_CONVERSTION_FACTOR * np.real_if_close(G1 - G2)
+# print(f"Diffs: {diffs}")
+# print(f"G1 = {np.real_if_close(G1)}")
+# print(f"G2 = {np.real_if_close(G2)}")
+# sys.exit()
+
+evals1 = np.array([np.real_if_close(LA.eigvals(dm_calc(q, ph, sc.structure, uc.structure, pos_sc_idx))) for q in kline])
+evals2 = np.array([np.real_if_close(LA.eigvals(ph.get_dynamical_matrix_at_q(q))) for q in kline])
+# evals = (-1*(evals < 0) + (evals > 0)) * np.sqrt(np.abs(evals))
+evals1 = 15.633302 * evals1
+evals2 = 15.633302 * evals2
+for q, modes in zip(kmag, evals1):
     plt.scatter([q]*len(modes), modes, s=0.1, color='black')
 plt.xticks(corner_kmags, ["K", r"$\Gamma$", "M"])
 plt.ylabel("Frequency (THz)")
-plt.savefig('/Users/jonathanlu/Documents/ml-ph/ALLEGRO_ANALYZER/work.png')
+plt.savefig('/Users/jonathanlu/Documents/ml-ph/ALLEGRO_ANALYZER/work_dmcalc.png')
+for q, modes in zip(kmag, evals2):
+    plt.scatter([q]*len(modes), modes, s=0.1, color='black')
+plt.xticks(corner_kmags, ["K", r"$\Gamma$", "M"])
+plt.ylabel("Frequency (THz)")
+plt.savefig('/Users/jonathanlu/Documents/ml-ph/ALLEGRO_ANALYZER/work_ph_at_q.png')
 

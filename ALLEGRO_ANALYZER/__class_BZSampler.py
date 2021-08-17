@@ -21,7 +21,7 @@ import random
 
 class BZSampler:
     def __init__(self, A0, G0, theta=None, outdir='./', log=False, lattice_type='hexagonal', super_dim=SUPER_DIM[:2]):
-        G0 = np.array(G0) # ensure proper typing
+        G0 = np.array(G0)
         theta = theta if theta is not None else 1
         assert pi > theta >= 0 # in rad
         assert os.path.isdir(outdir)
@@ -34,8 +34,9 @@ class BZSampler:
         R2 = LA.inv(R1) # rot by -theta/2
         G1 = np.matmul(R1, G0); G2 = np.matmul(R2, G0); self.G0 = G0
         self.GM = G1 - G2 # moire G-basis
-        self.AM = LA.inv(self.GM).T / (2 * pi) # moire A-basis
+        self.AM = LA.inv(self.GM).T * 2 * pi # moire A-basis
         if log:
+            print(f"Lattice angle: {self.lattice_angle}")
             print("Moire G-basis:\n", self.GM)
             print("Moire A-basis:\n", self.AM)
         self.g_idxs = None; self.GM_set = None; self.G0_set = None
