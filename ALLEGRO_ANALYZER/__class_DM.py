@@ -39,22 +39,20 @@ class DM:
     def __init__(self, struct_sc, struct_uc):
         self.sc = struct_sc; self.uc = struct_uc
         self.pos_sc_idx = self.sc_idx()
+        self.A0 = struct_uc.lattice.matrix[:2,:2].T
         print("Initialized parent DM calculator")
     
     def sc_idx(self):
-        pos_sc = self.sc.cart_coords
-        pos_uc = self.uc.cart_coords
-        self.A0 = np.transpose(self.uc.lattice.matrix[0:2,0:2])
+        uc_coords = self.uc.cart_coords; sc_coords = self.sc.cart_coords
+        sc_nat = len(sc_coords); uc_nat = len(uc_coords) # num sc/uc atoms
+        pos_sc_idx = []; n_uc = int(sc_nat/uc_nat) # num unit cells
 
-        pos_m = pos_sc[0:int(len(pos_sc)/3)]-pos_uc[0,:]
-        pos_x1 = pos_sc[int(len(pos_sc)/3):2*int(len(pos_sc)/3)]-pos_uc[1,:]
-        pos_x2 = pos_sc[2*int(len(pos_sc)/3):]-pos_uc[2,:]
-        pos_sc_idx = np.zeros([len(pos_sc)])
-        
-        for i in range(len(pos_m)):
-            pos_sc_idx[i] = 0
-            pos_sc_idx[i+len(pos_m)] = 1
-            pos_sc_idx[i+2*len(pos_m)] = 2 # sublattice index
+        # SPOSCAR arranges all atoms of each type contiguously, so the indexes must
+        # be the same for each contiguous region of `n_uc`.
+        for i in range(uc_nat):
+            pos_sc_idx += [i]*n_uc
+        pos_sc_idx = np.array(pos_sc_idx)
+        print(f"MonolayerDM intralayer atomic IDs:", pos_sc_idx)
         return pos_sc_idx
 
     def dm_calc(self, q, ph): 
@@ -87,39 +85,23 @@ class DM:
 
 # Monolayer dynamical matrix
 class MonolayerDM(DM):
-    def __init__(self, poscar_uc : Poscar, poscar_sc : Poscar, ph, GM_set, k_set, Gamma_idx, k_mags=None, using_flex=False):
+    def __init__(self, poscar_uc : Poscar, poscar_sc : Poscar, ph, GM_set, k_set, Gamma_idx, k_mags=None):
         assert LA.norm(k_set[Gamma_idx]) == 0, f"Gamma index has nonzero norm {LA.norm(k_set[Gamma_idx])}"
         print("Symmetrizing force constants...")
         ph.symmetrize_force_constants()
         print("Force constants symmetrized.")
         self.n_at = sum(poscar_uc.natoms)
         self.uc = poscar_uc.structure; self.sc = poscar_sc.structure # get structure objects from Poscar objects
-        self.GM_set = GM_set; self.n_GM = len(GM_set); self.k_set = k_set; self.ph = ph
+        self.GM_set = GM_set; self.n_GM = len(GM_set); self.k_set = np.array(k_set); self.ph = ph
         assert np.all(k_set[Gamma_idx] == [0,0]), f"Nonzero kGamma={k_set[Gamma_idx]}"
         self.n_k = len(k_set)
-        self.pos_sc_id = self.__sc_atomic_id() if using_flex else None
         self.A0 = self.uc.lattice.matrix[:2,:2].T # remove z-axis
         self.G0 = 2 * pi * LA.inv(self.A0).T
         self.DM_set = None; self.dbgprint = True; self.l0_shape = None
         self.name = poscar_uc.comment; self.modes_built = False
         self.M = np.array([species.atomic_mass for species in poscar_uc.structure.species])
-        if self.pos_sc_id is not None:
-            print(f"MonolayerDM intralayer atomic IDs for {self.name}:", self.pos_sc_id)
         self.Gamma_idx = Gamma_idx
         self.k_mags = k_mags
-
-    # Assign each atom a unique ID in the supercell
-    def __sc_atomic_id(self):
-        uc_coords = self.uc.cart_coords; sc_coords = self.sc.cart_coords
-        sc_nat = len(sc_coords); uc_nat = len(uc_coords) # num sc/uc atoms
-        pos_sc_id = []; n_uc = int(sc_nat/uc_nat) # num unit cells
-
-        # SPOSCAR arranges all atoms of each type contiguously, so the indexes must
-        # be the same for each contiguous region of `n_uc`.
-        for i in range(uc_nat):
-            pos_sc_id += [i]*n_uc
-        pos_sc_id = np.array(pos_sc_id); self.pos_sc_id = pos_sc_id
-        return pos_sc_id
     
     # Compute intralayer dynamical matrix block element for given some (direct) center `q` and phonopy object `ph`
     def __block_intra_l0(self, q, ph):
@@ -135,69 +117,10 @@ class MonolayerDM(DM):
             self.l0_shape = dm.shape
         return dm
     
-    def plot_sampled_l0(self, outdir='.'):
-        outdir = checkPath(os.path.abspath(outdir))
-        lst = np.absolute([self.__block_intra_l0(GM, self.ph)[0,0] for GM in self.GM_set])
-        plt.clf(); fig, ax = plt.subplots()
-        ax.scatter(np.arange(self.n_GM), lst)
-        fig.savefig(outdir + 'sampledl0.png')
-        plt.close(fig)
-
-    # Deprecated: Calculates dynamical matrix elements for direct or Cartesian coordinates `q`
-    def __flex_block_intra_l0(self, q, ph):
-        q = LA.inv(self.G0) @ q[:2]
-        assert self.pos_sc_id is not None, "Fatal error in class initialization"
-        pos_sc_idx = self.pos_sc_id
-        smallest_vectors, multiplicity = ph.primitive.get_smallest_vectors()
-        species = self.uc.species; uc_nat = len(species); d = 3 # Cartesian DOF
-        ph.produce_force_constants()
-        fc = ph.force_constants
-        D = np.zeros([uc_nat*d, uc_nat*d], dtype=complex) # size: n_at x d (n_at of uc)
-
-        """
-        Iteration: choose a pair of atoms (given by sc ID, may be the same), fix one, 
-        then iterate through all instances of the other. Add to the matrix the Fourier term
-        divided by the multiplicity, which is determined by phonopy based on nearest-neighbor symmetry.
-        """
-        natom = len(species)
-        ph.produce_force_constants()
-        fc = ph.force_constants
-        d_matrix = np.zeros([natom*3, natom*3], dtype = complex)
-        for x in range(natom):
-            for y in range(natom):
-                idx_x = pos_sc_idx[pos_sc_idx==x]
-                idx_y = pos_sc_idx[pos_sc_idx==y]
-                id1 = 3*x
-                id2 = 3*y
-                m1 = species[x].atomic_mass
-                m2 = species[y].atomic_mass
-                for a in range(len(idx_y)): # iterate over all the sublattice y in the supercell
-                    fc_here = fc[x*len(idx_x),y*len(idx_y)+a]
-                    multi = multiplicity[y*len(idx_y)+a][x]
-                    for b in range(multi):
-                        vec = smallest_vectors[y*len(idx_y)+a][x][b]
-                        vec = vec[0] * self.A0[:,0] + vec[1] * self.A0[:,1]
-                        exp_here = np.exp(1j * np.dot(q, vec[0:2]))
-                        d_matrix[id1:id1+3, id2:id2+3] += fc_here * exp_here / np.sqrt(m1) / np.sqrt(m2) / multi
-        d_matrix = (d_matrix + d_matrix.conj().transpose()) / 2 # impose Hermiticity
-        return d_matrix
-    
     # Create level-1 block matrix (each matrix becomes a block in level-2)
     def __block_intra_l1(self):
-        # print(self.k_set)
-        # print("AFTER:")
-        # kdir = self.k_set @ LA.inv(self.G0)
-        # breakpoint()
-        # ys = [LA.eigvals(self.__block_intra_l0(LA.inv(self.G0) @ k, self.ph)) for k in self.k_set]
-        # plt.clf()
-        # for k_mag, y in zip(self.k_mags, ys):
-        #     plt.scatter([k_mag]*len(y), y, c='royalblue', s=0.07)
-        # plt.xticks([])
-        # plt.savefig("/Users/jonathanlu/Documents/tmos2/zoe/GOOSEBERRY.png")
-        # sys.exit()
-        self.__sc_atomic_id()
-
-        self.DM_set = [block_diag(*[self.__flex_block_intra_l0(k+GM, self.ph) for GM in self.GM_set]) for k in self.k_set]
+        breakpoint()
+        self.DM_set = [block_diag(*[self.dm_calc(k+GM, self.ph) for GM in self.GM_set]) for k in self.k_set]
         return self.DM_set
     
     def Gamma_blks(self, log=False):
@@ -241,6 +164,30 @@ class MonolayerDM(DM):
         blks = [DM[i*l0sz:(i+1)*l0sz, i*l0sz:(i+1)*l0sz] for i in range(1, self.n_at)]
         print(f"Retrieved {len(blks)} blocks from intralayer G-blocks")
         return blks
+    
+    def plot_sampled_l0(self, outdir='.'):
+        outdir = checkPath(os.path.abspath(outdir))
+        lst = np.absolute([self.__block_intra_l0(GM, self.ph)[0,0] for GM in self.GM_set])
+        plt.clf(); fig, ax = plt.subplots()
+        ax.scatter(np.arange(self.n_GM), lst)
+        fig.savefig(outdir + 'sampledl0.png')
+        plt.close(fig)
+    
+    def plot_pristine_band(self, corner_kmags, outdir='.'):
+        d_matrix = np.zeros((3*self.n_at, 3*self.n_at, self.k_set.shape[0]))
+        evals = np.zeros((3*self.n_at, self.k_set.shape[0]))
+        for q_idx, k in enumerate(self.k_set):
+            d_matrix[:, :, q_idx] = self.dm_calc(k, self.ph)
+            evals[:, q_idx] = VASP_FREQ_TO_INVCM_UNITS**2 * np.sort(LA.eigvals(d_matrix[:,:,q_idx]))
+
+        fig, ax = plt.subplots()
+        ax.plot(self.k_mags, np.transpose(np.sqrt(evals)), color='black')
+        ax.set_title(f"Pristine bands in {self.name}")
+        ax.set_xticks(corner_kmags)
+        ax.set_xticklabels(["K", r"$\Gamma$", "M", "K"])
+        ax.set_xlim([0, np.max(corner_kmags)])
+        fig.savefig(checkPath(outdir) + "pristine.png")
+        plt.close(fig)
     
     # Diagonalize the set of DMs to get phonon modes
     def build_modes(self, k_mags, dump=False, outdir=None):

@@ -14,34 +14,16 @@ from mpl_toolkits.mplot3d import Axes3D
 import sys
 
 def sc_idx(sc, uc):
-        uc_coords = uc.cart_coords; sc_coords = sc.cart_coords
-        sc_nat = len(sc_coords); uc_nat = len(uc_coords) # num sc/uc atoms
-        pos_sc_id = []; n_uc = int(sc_nat/uc_nat) # num unit cells
+    uc_coords = uc.cart_coords; sc_coords = sc.cart_coords
+    sc_nat = len(sc_coords); uc_nat = len(uc_coords) # num sc/uc atoms
+    pos_sc_id = []; n_uc = int(sc_nat/uc_nat) # num unit cells
 
-        # SPOSCAR arranges all atoms of each type contiguously, so the indexes must
-        # be the same for each contiguous region of `n_uc`.
-        for i in range(uc_nat):
-            pos_sc_id += [i]*n_uc
-        pos_sc_id = np.array(pos_sc_id)
-        return pos_sc_id
-
-# def sc_idx(poscar_sc, poscar_uc):
-#     pos_sc = poscar_sc.cart_coords
-#     pos_uc = poscar_uc.cart_coords
-#     A0 = np.transpose(poscar_uc.lattice.matrix[0:2,0:2])
-
-#     pos_m = pos_sc[0:int(len(pos_sc)/3)]-pos_uc[0,:]
-#     pos_x1 = pos_sc[int(len(pos_sc)/3):2*int(len(pos_sc)/3)]-pos_uc[1,:]
-#     pos_x2 = pos_sc[2*int(len(pos_sc)/3):]-pos_uc[2,:]
-#     pos_sc_idx = np.zeros([len(pos_sc)])
-    
-#     for i in range(len(pos_m)):
-#         pos_sc_idx[i] = 0
-#         pos_sc_idx[i+len(pos_m)] = 1
-#         pos_sc_idx[i+2*len(pos_m)] = 2 # sublattice index
-#     return pos_sc_idx
-
-
+    # SPOSCAR arranges all atoms of each type contiguously, so the indexes must
+    # be the same for each contiguous region of `n_uc`.
+    for i in range(uc_nat):
+        pos_sc_id += [i]*n_uc
+    pos_sc_id = np.array(pos_sc_id)
+    return pos_sc_id
 
 def dm_calc(q, ph, poscar_sc, poscar_uc, pos_sc_idx): 
     smallest_vectors,multiplicity=ph.primitive.get_smallest_vectors()
@@ -150,8 +132,7 @@ for q_idx, k in enumerate(k_set):
     evals[:, q_idx] = 15.633302**2 * np.sort(eigvals(d_matrix[:,:,q_idx]))
     d_matrix2[:, :, q_idx] = ph1.get_dynamical_matrix_at_q(k_direct[q_idx])
     evals2[:, q_idx] = 15.633302**2 * np.real(np.sort(eigvals(d_matrix2[:,:,q_idx])))
-    
-    
+
 fig,ax=plt.subplots(1,2, figsize=(20,6))
 ax[0].plot(k_mags, np.transpose(np.sqrt(evals)), color='black')
 ax[0].set_title("dm_calc")

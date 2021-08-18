@@ -107,26 +107,38 @@ class BZSampler:
         self.corners = corners
 
         # Sample nk-1 (drop last point) per line (ncorners-1 lines)
-        nsample = (nk-1) * (ncorners-1)
-        k_set = np.zeros([nsample, d]); kmags = np.zeros(nsample); kmag_start = 0
-        corner_kmags = []
-        for line in range(ncorners-1): # last point equals first, so skip it
-            kidx = line*(nk-1) # convert line index to k-index
-            # Drop second corner point in each line to avoid resampling corner points
-            k_set[kidx : kidx+nk-1] = np.linspace(corners[line], corners[line+1], nk)[:-1]
-            dline_mag = LA.norm(corners[line+1] - corners[line])
-            mags = np.linspace(kmag_start, kmag_start + dline_mag, nk)
-            corner_kmags.append(kmag_start)
-            kmag_start = mags[-1] # update start point of flattened-k to end of current line
-            kmags[kidx : kidx+nk-1] = mags[:-1]
-        self.Gamma_idx = nk-1
-        self.k_set = k_set; self.kmags = kmags
+        nq = nk # notation change
+        k_set = np.zeros([nq*3-2,2]) # 3(nq-1) + 1 with kline[0] = kline[-1] for boundary 
+        k_mags = np.zeros([nq*3-2]) # flattening for plotting
+        kmag0 = 0
+        for kidx in range(np.shape(corners)[0]-1):
+            id1 = kidx*(nq-1)+1
+            for i in range(2):
+                kline_tmp = np.linspace(corners[kidx,i], corners[kidx+1,i], nq)
+                if kidx != np.shape(corners)[0]-1:
+                    k_set[id1:id1+nq-1, i] = kline_tmp[0:nq-1]
+                else:
+                    k_set[id1:id1+nq, i] = kline_tmp
+            dk = corners[kidx+1,:] - corners[kidx,:]
+            dk_norm = LA.norm(dk)
+            kmag_tmp = np.linspace(kmag0, kmag0+dk_norm, nq)
+            kmag0 = kmag_tmp[-1]
+            if kidx != np.shape(corners)[0]-1:
+                k_mags[id1:id1+nq-1] = kmag_tmp[0:nq-1]
+            else:
+                k_mags[id1:id1+nq] = kmag_tmp
+        corner_kmags = k_mags[0]
+        for kidx in range(np.shape(corners)[0]-1):
+            corner_kmags=np.append([corner_kmags], k_mags[(kidx+1)*(nq-1)])
+
+        self.Gamma_idx = nk-1 # change to new Gamma index if path changes
+        self.k_set = k_set; self.kmags = k_mags
         self.k_sampled = True
         if log:
             print("Corner magnitudes:", corner_kmags)
             print(f"k at Gamma index {self.Gamma_idx}: {k_set[self.Gamma_idx]}")
         self.corner_kmags = corner_kmags
-        return (k_set, kmags)
+        return (k_set, k_mags)
     
     # Sample nk points along each IBZ boundary line
     def sample_k0(self, nk=DEFAULT_NK, log=False):
@@ -147,23 +159,34 @@ class BZSampler:
         corners[0,:] = K; corners[1,:] = Gamma; corners[2,:] = M; corners[3,:] = K
         self.corners0 = corners
 
-        # Sample nk-1 (drop last point) per line (ncorners-1 lines)
-        nsample = (nk-1) * (ncorners-1)
-        k_set = np.zeros([nsample, d]); kmags = np.zeros(nsample); kmag_start = 0
-        corner_kmags = []
-        for line in range(ncorners-1): # last point equals first, so skip it
-            kidx = line*(nk-1) # convert line index to k-index
-            # Drop second corner point in each line to avoid resampling corner points
-            k_set[kidx : kidx+nk-1] = np.linspace(corners[line], corners[line+1], nk)[:-1]
-            dline_mag = LA.norm(corners[line+1] - corners[line])
-            mags = np.linspace(kmag_start, kmag_start + dline_mag, nk)
-            corner_kmags.append(kmag_start)
-            kmag_start = mags[-1] # update start point of flattened-k to end of current line
-            kmags[kidx : kidx+nk-1] = mags[:-1]
-        self.k0_set = k_set; self.k0mags = kmags
+        nq = nk # notation change
+        k_set = np.zeros([nq*3-2,2]) # 3(nq-1) + 1 with kline[0] = kline[-1] for boundary 
+        k_mags = np.zeros([nq*3-2]) # flattening for plotting
+        kmag0 = 0
+        for kidx in range(np.shape(corners)[0]-1):
+            id1 = kidx*(nq-1)+1
+            for i in range(2):
+                kline_tmp = np.linspace(corners[kidx,i], corners[kidx+1,i], nq)
+                if kidx != np.shape(corners)[0]-1:
+                    k_set[id1:id1+nq-1, i] = kline_tmp[0:nq-1]
+                else:
+                    k_set[id1:id1+nq, i] = kline_tmp
+            dk = corners[kidx+1,:] - corners[kidx,:]
+            dk_norm = LA.norm(dk)
+            kmag_tmp = np.linspace(kmag0, kmag0+dk_norm, nq)
+            kmag0 = kmag_tmp[-1]
+            if kidx != np.shape(corners)[0]-1:
+                k_mags[id1:id1+nq-1] = kmag_tmp[0:nq-1]
+            else:
+                k_mags[id1:id1+nq] = kmag_tmp
+        corner_kmags = k_mags[0]
+        for kidx in range(np.shape(corners)[0]-1):
+            corner_kmags=np.append([corner_kmags], k_mags[(kidx+1)*(nq-1)])
+
+        self.k0_set = k_set; self.k0mags = k_mags
         self.corner_kmags0 = corner_kmags
         self.k0_sampled = True
-        return (k_set, kmags)
+        return (k_set, k_mags)
     
     def plot_sampling0(self, filename='sampling0.png'):
         assert self.g_idxs is not None, "Cannot plot sampling until G vectors have been sampled"
