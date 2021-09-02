@@ -51,8 +51,7 @@ def get_poscar_elastic(args):
         a0 = 3.28
     elif mat[0] == 'M':
         species = ['Mo', 'S', 'S']
-        a0 = 3.18
-        a0 = 3.1
+        a0 = 3.122
         print(f"Material: MoS2 with lattice constants {a0}")
         pos = [[0, 0, 0], [sqrt(3)/3*a0, 0, -1.565], [sqrt(3)/3*a0, 0, 1.565]]
     elif mat[0] == 'J':

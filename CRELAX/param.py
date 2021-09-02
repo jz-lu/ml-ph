@@ -1,3 +1,7 @@
+"""
+Run this script to kick off jobs generating data 
+to calculate the shear and bulk modulus constants for a given material.
+"""
 import argparse
 import os, sys
 from gen_poscar_elastic import get_poscar_elastic, pathify
