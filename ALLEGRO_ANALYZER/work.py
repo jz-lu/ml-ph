@@ -1,26 +1,29 @@
-import phonopy, os
-from pymatgen.io.vasp.inputs import Poscar
 import numpy as np
-import numpy.linalg as LA
-from math import pi
+from numpy.linalg import *
+from phonopy import Phonopy
+import phonopy
+from phonopy.phonon.band_structure import get_band_qpoints_and_path_connections
+import os
+import pymatgen.core.structure as struct
+import pymatgen.io.vasp.inputs as inputs
+import pymatgen.io.vasp.outputs as outputs
+import h5py
+from math import *
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import sys
 
-def sc_idx(poscar_sc, poscar_uc):
-    pos_sc = poscar_sc.cart_coords
-    pos_uc = poscar_uc.cart_coords
-    A0 = np.transpose(poscar_uc.lattice.matrix[0:2,0:2])
+def sc_idx(sc, uc):
+    uc_coords = uc.cart_coords; sc_coords = sc.cart_coords
+    sc_nat = len(sc_coords); uc_nat = len(uc_coords) # num sc/uc atoms
+    pos_sc_id = []; n_uc = int(sc_nat/uc_nat) # num unit cells
 
-    pos_m = pos_sc[0:int(len(pos_sc)/3)]-pos_uc[0,:]
-    pos_x1 = pos_sc[int(len(pos_sc)/3):2*int(len(pos_sc)/3)]-pos_uc[1,:]
-    pos_x2 = pos_sc[2*int(len(pos_sc)/3):]-pos_uc[2,:]
-    pos_sc_idx = np.zeros([len(pos_sc)])
-    
-    for i in range(len(pos_m)):
-        pos_sc_idx[i] = 0
-        pos_sc_idx[i+len(pos_m)] = 1
-        pos_sc_idx[i+2*len(pos_m)] = 2 # sublattice index
-    return pos_sc_idx
+    # SPOSCAR arranges all atoms of each type contiguously, so the indexes must
+    # be the same for each contiguous region of `n_uc`.
+    for i in range(uc_nat):
+        pos_sc_id += [i]*n_uc
+    pos_sc_id = np.array(pos_sc_id)
+    return pos_sc_id
 
 def dm_calc(q, ph, poscar_sc, poscar_uc, pos_sc_idx): 
     smallest_vectors,multiplicity=ph.primitive.get_smallest_vectors()
@@ -47,59 +50,96 @@ def dm_calc(q, ph, poscar_sc, poscar_uc, pos_sc_idx):
                     d_matrix[id1:id1+3, id2:id2+3] += fc_here * exp_here / np.sqrt(m1) / np.sqrt(m2) / multi
     d_matrix = (d_matrix + d_matrix.conj().transpose()) / 2 # impose Hermiticity
     return d_matrix
+    
+main = "/Users/jonathanlu/Documents/tmos2/layer_1/analyses/phonon/"
 
-a = '/Users/jonathanlu/Documents/tmos2/layer_1/analyses/phonon/'
-uc = Poscar.from_file(a+'POSCAR_unit')
-sc = Poscar.from_file(a+'SPOSCAR')
-A0 = uc.structure.lattice.matrix[:2,:2].T
-G0 = 2 * pi * LA.inv(A0).T
-os.chdir(a)
-ph = phonopy.load(supercell_filename='SPOSCAR')
-FREQUENCY_CONVERSTION_FACTOR = 521.4644215120001
-d = 2
+os.chdir(main)
+ph = phonopy.load(unitcell_filename="POSCAR_unit", 
+                   supercell_matrix=np.array([3,3,1]), 
+                   primitive_matrix=np.eye(3),
+                   log_level=1)
+ph._log_level = 0
 
-nq = nk = 101
-K = [0.666667, 0.333333]
-M = [0.5, 0.5]
-Gamma = [0, 0]
-pt = corners = np.array([K, Gamma, M, K]); ncorners = len(pt)
+# unit cell 
+mos2 = struct.Structure.from_file("POSCAR_unit")
+A0 = mos2.lattice.matrix[0:2,0:2].T
+G0 = 2*pi*inv(A0).T
 
-nsample = (nk-1) * (ncorners-1)
-kline = np.zeros([nsample, d]); kmag = np.zeros(nsample); kmag_start = 0
-corner_kmags = []
-for line in range(ncorners-1): # last point equals first, so skip it
-    kidx = line*(nk-1) # convert line index to k-index
-    # Drop second corner point in each line to avoid resampling corner points
-    kline[kidx : kidx+nk-1] = np.linspace(corners[line], corners[line+1], nk)[:-1]
-    dline_mag = LA.norm(corners[line+1] - corners[line])
-    mags = np.linspace(kmag_start, kmag_start + dline_mag, nk)
-    corner_kmags.append(kmag_start)
-    kmag_start = mags[-1] # update start point of flattened-k to end of current line
-    kmag[kidx : kidx+nk-1] = mags[:-1]
-Gamma_idx = nk-1
+# N x N x 1 supercell structure 
+mos2_sc = struct.Structure.from_file("SPOSCAR")
 
-pos_sc_idx = sc_idx(sc.structure, uc.structure)
-# G1 = np.sqrt(np.real(sorted(LA.eigvals(ph.get_dynamical_matrix_at_q([0,0])))))
-# G2 = np.sqrt(sorted(LA.eigvals(dm_calc([0,0], ph, sc.structure, uc.structure, pos_sc_idx))))
-# diffs = FREQUENCY_CONVERSTION_FACTOR * np.real_if_close(G1 - G2)
-# print(f"Diffs: {diffs}")
-# print(f"G1 = {np.real_if_close(G1)}")
-# print(f"G2 = {np.real_if_close(G2)}")
-# sys.exit()
+nq = 101
+Gamma = np.zeros(np.shape(G0[:,0]))
+K = 2./3 * G0[:,0] + 1./3 * G0[:,1]
+M = 0.5 * (G0[:,0] + G0[:,1])
+corners = np.zeros([4,2])
 
-evals1 = np.array([np.real_if_close(LA.eigvals(dm_calc(q, ph, sc.structure, uc.structure, pos_sc_idx))) for q in kline])
-evals2 = np.array([np.real_if_close(LA.eigvals(ph.get_dynamical_matrix_at_q(q))) for q in kline])
-# evals = (-1*(evals < 0) + (evals > 0)) * np.sqrt(np.abs(evals))
-evals1 = 15.633302 * evals1
-evals2 = 15.633302 * evals2
-for q, modes in zip(kmag, evals1):
-    plt.scatter([q]*len(modes), modes, s=0.1, color='black')
-plt.xticks(corner_kmags, ["K", r"$\Gamma$", "M"])
-plt.ylabel("Frequency (THz)")
-plt.savefig('/Users/jonathanlu/Documents/ml-ph/ALLEGRO_ANALYZER/work_dmcalc.png')
-for q, modes in zip(kmag, evals2):
-    plt.scatter([q]*len(modes), modes, s=0.1, color='black')
-plt.xticks(corner_kmags, ["K", r"$\Gamma$", "M"])
-plt.ylabel("Frequency (THz)")
-plt.savefig('/Users/jonathanlu/Documents/ml-ph/ALLEGRO_ANALYZER/work_ph_at_q.png')
+corners[0, :] = K
+corners[1, :] = Gamma
+corners[2, :] = M
+corners[3, :] = K
+xticklabels = ('K', r'$\Gamma$', 'M', 'K')
+
+k_set = np.zeros([nq*3-2,2]) # 3(nq-1) + 1 with kline[0] = kline[-1] for boundary 
+k_mags = np.zeros([nq*3-2]) # flattening for plotting
+kmag0 = 0
+for kidx in range(np.shape(corners)[0]-1):
+    idx_rng = kidx*(nq-1)
+    kline_tmp = np.linspace(corners[kidx], corners[kidx+1], nq)
+    if kidx != np.shape(corners)[0]-2:
+        k_set[idx_rng:idx_rng+nq-1] = kline_tmp[0:nq-1]
+    else:
+        k_set[idx_rng:idx_rng+nq] = kline_tmp
+    dk = corners[kidx+1,:] - corners[kidx,:]
+    dk_norm = norm(dk)
+    kmag_tmp = np.linspace(kmag0, kmag0+dk_norm, nq)
+    kmag0 = kmag_tmp[-1]
+    if kidx != np.shape(corners)[0]-2:
+        k_mags[idx_rng:idx_rng+nq-1] = kmag_tmp[0:nq-1]
+    else:
+        k_mags[idx_rng:idx_rng+nq] = kmag_tmp
+np.save("/Users/jonathanlu/Documents/k1.npy", k_mags)
+
+corner_kmags = k_mags[0]
+for kidx in range(np.shape(corners)[0]-1):
+    corner_kmags=np.append([corner_kmags], k_mags[(kidx+1)*(nq-1)])
+# fix, ax = plt.subplots()
+# ax.scatter(k_set[:,0], k_set[:,1])
+# G0_set = np.array([[0,0], G0[:,0], G0[:,1], -G0[:,0], -G0[:,1], G0[:,0]+G0[:,1], -G0[:,1]-G0[:,0]])
+# for i, G in enumerate(G0_set[1:]):
+#     plt.text(G[0], G[1], str(i+1))
+# plt.title("Sampling space"); plt.xlabel(r"$k_x$"); plt.ylabel(r"$k_y$")
+# ax.scatter(G0_set[:,0], G0_set[:,1])
+# ax.set_aspect("equal")
+# plt.show()
+
+# test the functions (work fine)
+pos_sc_idx = sc_idx(mos2_sc, mos2)
+d_matrix = np.zeros([9, 9, k_set.shape[0]], dtype=complex)
+d_matrix2 = np.zeros_like(d_matrix)
+
+evals = np.zeros([9, k_set.shape[0]], dtype=complex)
+evals2 = np.zeros_like(evals)
+
+k_direct = k_set @ inv(G0).T
+    
+for q_idx, k in enumerate(k_set):
+    d_matrix[:, :, q_idx] = dm_calc(k, ph, mos2_sc, mos2, pos_sc_idx)
+    evals[:, q_idx] = 15.633302**2 * np.sort(eigvals(d_matrix[:,:,q_idx]))
+    d_matrix2[:, :, q_idx] = ph.get_dynamical_matrix_at_q(k_direct[q_idx])
+    evals2[:, q_idx] = 15.633302**2 * np.real(np.sort(eigvals(d_matrix2[:,:,q_idx])))
+
+fig,ax=plt.subplots(1,2, figsize=(20,6))
+ax[0].plot(k_mags, np.transpose(np.sqrt(evals)), color='black')
+ax[0].set_title("dm_calc")
+ax[0].set_xticks(corner_kmags)
+ax[0].set_xticklabels(xticklabels)
+ax[0].set_xlim([0, np.max(corner_kmags)])
+ax[1].plot(k_mags, np.transpose(np.sqrt(evals)), color='black')
+ax[1].set_title("get_dynamical_matrix_at_q")
+ax[1].set_xticks(corner_kmags)
+ax[1].set_xticklabels(xticklabels)
+ax[1].set_xlim([0, np.max(corner_kmags)])
+plt.savefig("/Users/jonathanlu/Documents/ml-ph/ALLEGRO_ANALYZER/work_cmp.png")
+
 

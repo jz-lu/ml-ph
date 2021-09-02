@@ -112,21 +112,21 @@ class BZSampler:
         k_mags = np.zeros([nq*3-2]) # flattening for plotting
         kmag0 = 0
         for kidx in range(np.shape(corners)[0]-1):
-            id1 = kidx*(nq-1)+1
-            for i in range(2):
-                kline_tmp = np.linspace(corners[kidx,i], corners[kidx+1,i], nq)
-                if kidx != np.shape(corners)[0]-1:
-                    k_set[id1:id1+nq-1, i] = kline_tmp[0:nq-1]
-                else:
-                    k_set[id1:id1+nq, i] = kline_tmp
+            idx_rng = kidx*(nq-1)
+            kline_tmp = np.linspace(corners[kidx], corners[kidx+1], nq)
+            if kidx != np.shape(corners)[0]-2:
+                k_set[idx_rng:idx_rng+nq-1] = kline_tmp[0:nq-1]
+            else:
+                k_set[idx_rng:idx_rng+nq] = kline_tmp
             dk = corners[kidx+1,:] - corners[kidx,:]
             dk_norm = LA.norm(dk)
             kmag_tmp = np.linspace(kmag0, kmag0+dk_norm, nq)
             kmag0 = kmag_tmp[-1]
-            if kidx != np.shape(corners)[0]-1:
-                k_mags[id1:id1+nq-1] = kmag_tmp[0:nq-1]
+            if kidx != np.shape(corners)[0]-2:
+                k_mags[idx_rng:idx_rng+nq-1] = kmag_tmp[0:nq-1]
             else:
-                k_mags[id1:id1+nq] = kmag_tmp
+                k_mags[idx_rng:idx_rng+nq] = kmag_tmp
+
         corner_kmags = k_mags[0]
         for kidx in range(np.shape(corners)[0]-1):
             corner_kmags=np.append([corner_kmags], k_mags[(kidx+1)*(nq-1)])
@@ -146,11 +146,10 @@ class BZSampler:
         G01 = self.G0[:,0]; G02 = self.G0[:,1] # Pristine reciprocal lattice vectors
         d = G01.shape[0]
         print("k-sampler using Gamma-K-M sequence defined by pristine reciprocal lattice vectors G0")
-        Gamma = np.zeros(d); K = 1/3 * (G01 + G02); M = 1/2 * G01
+        Gamma = np.zeros(d); K = 1./3 * (G01 + G02); M = 0.5 * G01
         if np.isclose(self.lattice_angle, 60):
             print("Using 60-degree unit cell for BZ...")
-            M += 1/2 * G02
-            K += 1/3 * G01
+            K = 2./3 * G01 + 1./3 * G02; M = 0.5 * (G01 + G02)
         else:
             print("Using 120-degree unit cell for BZ...")
         
@@ -164,21 +163,21 @@ class BZSampler:
         k_mags = np.zeros([nq*3-2]) # flattening for plotting
         kmag0 = 0
         for kidx in range(np.shape(corners)[0]-1):
-            id1 = kidx*(nq-1)+1
-            for i in range(2):
-                kline_tmp = np.linspace(corners[kidx,i], corners[kidx+1,i], nq)
-                if kidx != np.shape(corners)[0]-1:
-                    k_set[id1:id1+nq-1, i] = kline_tmp[0:nq-1]
-                else:
-                    k_set[id1:id1+nq, i] = kline_tmp
+            idx_rng = kidx*(nq-1)
+            kline_tmp = np.linspace(corners[kidx], corners[kidx+1], nq)
+            if kidx != np.shape(corners)[0]-2:
+                k_set[idx_rng:idx_rng+nq-1] = kline_tmp[0:nq-1]
+            else:
+                k_set[idx_rng:idx_rng+nq] = kline_tmp
             dk = corners[kidx+1,:] - corners[kidx,:]
             dk_norm = LA.norm(dk)
             kmag_tmp = np.linspace(kmag0, kmag0+dk_norm, nq)
             kmag0 = kmag_tmp[-1]
-            if kidx != np.shape(corners)[0]-1:
-                k_mags[id1:id1+nq-1] = kmag_tmp[0:nq-1]
+            if kidx != np.shape(corners)[0]-2:
+                k_mags[idx_rng:idx_rng+nq-1] = kmag_tmp[0:nq-1]
             else:
-                k_mags[id1:id1+nq] = kmag_tmp
+                k_mags[idx_rng:idx_rng+nq] = kmag_tmp
+
         corner_kmags = k_mags[0]
         for kidx in range(np.shape(corners)[0]-1):
             corner_kmags=np.append([corner_kmags], k_mags[(kidx+1)*(nq-1)])

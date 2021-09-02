@@ -10,7 +10,7 @@ from ___helpers_parsing import greet, succ, warn, err
 from __directory_searchers import checkPath, findDirsinDir
 from __dirModifications import build_dir
 from pymatgen.io.vasp.inputs import Poscar
-import os, phonopy
+import os, phonopy, sys
 import numpy as np; import numpy.linalg as LA
 
 class PhonopyAPI:
@@ -50,9 +50,11 @@ class PhonopyAPI:
             assert os.path.isfile(pname), self.POSCAR_ERR_MSG
             assert os.path.isfile(PH_FORCE_SETS_NAME), ERR_PH_FORCE_SETS_NOT_MADE
             ph_list.append(phonopy.load(unitcell_filename=pname, 
-                                        supercell_matrix=self.sp_mat, 
+                                        supercell_matrix=np.diag(self.sp_mat).astype(int), 
                                         primitive_matrix=np.eye(3),
-                                        log_level=0)) # `log_level` is just the debug-paranoia level
+                                        log_level=1)) # `log_level` is just the debug-paranoia level
+            print(f"Loaded phonopy object from {ph_dir}")
+            ph_list[-1]._log_level = 0
         return len(layers), ph_list
 
     # Load configuration phonopy objects
@@ -69,7 +71,7 @@ class PhonopyAPI:
             assert os.path.isfile(pname), self.POSCAR_ERR_MSG
             assert os.path.isfile(PH_FORCE_SETS_NAME), ERR_PH_FORCE_SETS_NOT_MADE
             ph_list.append(phonopy.load(unitcell_filename=pname, 
-                                        supercell_matrix=self.sp_mat, 
+                                        supercell_matrix=np.diag(self.sp_mat).astype(int), 
                                         primitive_matrix=np.eye(3),
                                         log_level=0)) # `log_level` is just the debug-paranoia level
         p = Poscar.from_file(build_dir([ROOT, configs[0]]) + POSCAR_NAME)

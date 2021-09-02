@@ -1,7 +1,6 @@
 import numpy as np
 import numpy.linalg as LA
 import os
-from phonopy import Phonopy
 import phonopy
 import pymatgen.core.structure as struct
 from pymatgen.io.vasp.inputs import Poscar
@@ -17,9 +16,10 @@ from scipy.linalg import block_diag
 from scipy.sparse import bmat # block matrix
 from math import sqrt, pi
 import sys
+from __class_PhonopyAPI import PhonopyAPI
 
 """
-These classes together compute the twisted dynamical matrix from a sample of moire G vectors and k points along IBZ boundary.
+These classes tosgether compute the twisted dynamical matrix from a sample of moire G vectors and k points along IBZ boundary.
 The large size of the matrix encourages breaking it into blocks. Define a level-0 block to be the intralayer dynamical 
 matrix for a specific choice of (GM, k) in a monolayer. A level-1 intralayer block is the concatenation of all such 
 level-0 matrices, indexed by the 2 indices of GM (for a given k). A level-0 interlayer block is the sum of over 
@@ -35,64 +35,18 @@ There is one level-2 matrix for every k, which are the twisted Fourier dynamical
 yields the phonon modes as a function of k.
 """
 
-class DM:
-    def __init__(self, struct_sc, struct_uc):
-        self.sc = struct_sc; self.uc = struct_uc
-        self.pos_sc_idx = self.sc_idx()
-        self.A0 = struct_uc.lattice.matrix[:2,:2].T
-        print("Initialized parent DM calculator")
-    
-    def sc_idx(self):
-        uc_coords = self.uc.cart_coords; sc_coords = self.sc.cart_coords
-        sc_nat = len(sc_coords); uc_nat = len(uc_coords) # num sc/uc atoms
-        pos_sc_idx = []; n_uc = int(sc_nat/uc_nat) # num unit cells
-
-        # SPOSCAR arranges all atoms of each type contiguously, so the indexes must
-        # be the same for each contiguous region of `n_uc`.
-        for i in range(uc_nat):
-            pos_sc_idx += [i]*n_uc
-        pos_sc_idx = np.array(pos_sc_idx)
-        print(f"MonolayerDM intralayer atomic IDs:", pos_sc_idx)
-        return pos_sc_idx
-
-    def dm_calc(self, q, ph): 
-        pos_sc_idx = self.pos_sc_idx
-        smallest_vectors,multiplicity=ph.primitive.get_smallest_vectors()
-        species = self.uc.species
-        natom = len(species)
-        ph.produce_force_constants()
-        fc = ph.force_constants
-        d_matrix = np.zeros([natom*3, natom*3], dtype = complex)
-        for x in range(natom):
-            for y in range(natom):
-                idx_x = pos_sc_idx[pos_sc_idx==x]
-                idx_y = pos_sc_idx[pos_sc_idx==y]
-                id1 = 3*x
-                id2 = 3*y
-                m1 = species[x].atomic_mass
-                m2 = species[y].atomic_mass
-                for a in range(len(idx_y)): # iterate over all the sublattice y in the supercell
-                    fc_here = fc[x*len(idx_x),y*len(idx_y)+a]
-                    multi = multiplicity[y*len(idx_y)+a][x]
-                    for b in range(multi):
-                        vec = smallest_vectors[y*len(idx_y)+a][x][b]
-                        vec = vec[0] * self.A0[:,0] + vec[1] * self.A0[:,1]
-                        exp_here = np.exp(1j * np.dot(q, vec[0:2]))
-                        d_matrix[id1:id1+3, id2:id2+3] += fc_here * exp_here / np.sqrt(m1) / np.sqrt(m2) / multi
-        d_matrix = (d_matrix + d_matrix.conj().transpose()) / 2 # impose Hermiticity
-        return d_matrix
-
-
 # Monolayer dynamical matrix
-class MonolayerDM(DM):
-    def __init__(self, poscar_uc : Poscar, poscar_sc : Poscar, ph, GM_set, k_set, Gamma_idx, k_mags=None):
+class MonolayerDM:
+    def __init__(self, poscar_uc : Poscar, poscar_sc : Poscar, ph, 
+                 GM_set, G0_set, k_set, Gamma_idx, k_mags=None):
         assert LA.norm(k_set[Gamma_idx]) == 0, f"Gamma index has nonzero norm {LA.norm(k_set[Gamma_idx])}"
         print("Symmetrizing force constants...")
         ph.symmetrize_force_constants()
         print("Force constants symmetrized.")
         self.n_at = sum(poscar_uc.natoms)
-        self.uc = poscar_uc.structure; self.sc = poscar_sc.structure # get structure objects from Poscar objects
+        self.uc = poscar_uc.structure; self.sc = None if poscar_sc is None else poscar_sc.structure # get structure objects from Poscar objects
         self.GM_set = GM_set; self.n_GM = len(GM_set); self.k_set = np.array(k_set); self.ph = ph
+        self.G0_set = G0_set
         assert np.all(k_set[Gamma_idx] == [0,0]), f"Nonzero kGamma={k_set[Gamma_idx]}"
         self.n_k = len(k_set)
         self.A0 = self.uc.lattice.matrix[:2,:2].T # remove z-axis
@@ -102,25 +56,22 @@ class MonolayerDM(DM):
         self.M = np.array([species.atomic_mass for species in poscar_uc.structure.species])
         self.Gamma_idx = Gamma_idx
         self.k_mags = k_mags
+        self.l0_shape = [3*self.n_at]*2
+        self.corr_mat = None
+        # super().__init__(self.sc, self.uc)
     
     # Compute intralayer dynamical matrix block element for given some (direct) center `q` and phonopy object `ph`
     def __block_intra_l0(self, q, ph):
         q = LA.inv(self.G0) @ q
-        if len(q) != 3:
-            q = np.append(q, np.zeros(3-len(q)))
         dm = ph.get_dynamical_matrix_at_q(q)
-                    
         if self.dbgprint:
             print(f"Intralayer Level-0 shape: {dm.shape}")
             self.dbgprint = False
-        if self.l0_shape is None:
-            self.l0_shape = dm.shape
         return dm
     
     # Create level-1 block matrix (each matrix becomes a block in level-2)
     def __block_intra_l1(self):
-        breakpoint()
-        self.DM_set = [block_diag(*[self.dm_calc(k+GM, self.ph) for GM in self.GM_set]) for k in self.k_set]
+        self.DM_set = [block_diag(*[self.__block_intra_l0(k+GM, self.ph) for GM in self.GM_set]) for k in self.k_set]
         return self.DM_set
     
     def Gamma_blks(self, log=False):
@@ -152,7 +103,15 @@ class MonolayerDM(DM):
         if self.DM_set is None:
             self.__block_intra_l1()
         print(f"Retrieved monolayer dynamical matrix of shape {self.DM_set[0].shape} for solid {self.name}")
+        print(f"Frobenius norm of pristine intralayer piece at Gamma: {LA.norm(self.DM_set[self.Gamma_idx])}")
+        np.save("/Users/jonathanlu/Documents/tmos2_2/pristine/pristine.npy", self.DM_set[self.Gamma_idx]) #! delete later
         return self.DM_set
+    
+    def get_corr_mat(self):
+        if self.corr_mat is None:
+            blks = [self.ph.get_dynamical_matrix_at_q([0,0]) for _ in self.G0_set]
+            self.corr_mat = block_diag(*blks)
+        return self.corr_mat
     
     def get_origin_G_blocks(self):
         if self.DM_set is None:
@@ -173,21 +132,22 @@ class MonolayerDM(DM):
         fig.savefig(outdir + 'sampledl0.png')
         plt.close(fig)
     
-    def plot_pristine_band(self, corner_kmags, outdir='.'):
-        d_matrix = np.zeros((3*self.n_at, 3*self.n_at, self.k_set.shape[0]))
-        evals = np.zeros((3*self.n_at, self.k_set.shape[0]))
-        for q_idx, k in enumerate(self.k_set):
-            d_matrix[:, :, q_idx] = self.dm_calc(k, self.ph)
-            evals[:, q_idx] = VASP_FREQ_TO_INVCM_UNITS**2 * np.sort(LA.eigvals(d_matrix[:,:,q_idx]))
+    def plot_pristine_band(self, k0_set, k0_mags, corner_k0mags, outdir='.'):
+        d_matrix = np.zeros([9, 9, k0_set.shape[0]], dtype=complex)
+        evals = np.zeros([9, k0_set.shape[0]], dtype=complex)
+        
+        for q_idx, k0 in enumerate(k0_set):
+            d_matrix[:, :, q_idx] = self.__block_intra_l0(k0 + self.G0_set[1], self.ph)
+            evals[:, q_idx] = VASP_FREQ_TO_INVCM_UNITS**2 * np.real(np.sort(LA.eigvals(d_matrix[:,:,q_idx])))
 
-        fig, ax = plt.subplots()
-        ax.plot(self.k_mags, np.transpose(np.sqrt(evals)), color='black')
-        ax.set_title(f"Pristine bands in {self.name}")
-        ax.set_xticks(corner_kmags)
+        _,ax = plt.subplots(1,1, figsize=(8,6))
+        evals = (-1*(evals < 0) + 1*(evals > 0)) * np.sqrt(np.abs(evals))
+        ax.plot(k0_mags, np.transpose(evals), color='black')
+        ax.set_title(f"ph from API")
+        ax.set_xticks(corner_k0mags)
         ax.set_xticklabels(["K", r"$\Gamma$", "M", "K"])
-        ax.set_xlim([0, np.max(corner_kmags)])
-        fig.savefig(checkPath(outdir) + "pristine.png")
-        plt.close(fig)
+        ax.set_xlim([0, np.max(corner_k0mags)])
+        plt.savefig(outdir + "pristine.png")
     
     # Diagonalize the set of DMs to get phonon modes
     def build_modes(self, k_mags, dump=False, outdir=None):
@@ -225,15 +185,15 @@ class MonolayerDM(DM):
             if cutoff is not None:
                 modes = modes[modes <= cutoff]
             plt.scatter([k_mag] * len(modes), modes, c='royalblue', s=0.07)
-        xlabs = (r'K', r'$\Gamma$', r'M')
+        xlabs = (r'K', r'$\Gamma$', r'M', r'K')
         plt.xticks(corner_kmags, xlabs)
         plt.ylabel(r'$\omega\,(\mathrm{cm}^{-1})$')
-        title = "First-layer phonon modes"
+        title = "Moire intralayer phonon modes"
         if name is not None:
             title += f" of {name}"
         plt.title(title)
         plt.savefig(outdir + filename)
-        succ(f"Intralayer plot written to {outdir+filename}")
+        succ(f"Moire intralayer plot written to {outdir+filename}")
         return
 
     def get_GM_set(self):
@@ -246,51 +206,51 @@ class MonolayerDM(DM):
 
 
 # Build interlayer dynamical matrix block via summing over configurations
-class InterlayerDM(DM):
+class InterlayerDM:
     def __init__(self, per_layer_at_idxs, bl_M, 
                  b_set, k_set, 
                  GM_set, G0_set, 
                  species_per_layer, 
                  ph_list=None, 
-                 force_matrices=None):
+                 force_matrices=None, G0=None):
         self.M = np.array([[species.atomic_mass for species in layer] for layer in species_per_layer])
         self.bl_M = bl_M; self.bl_n_at = len(bl_M)
+        self.ph_list = ph_list
         print(f"Interlayer DM uses bilayer with {self.bl_n_at} atoms of masses {self.bl_M}")
-        def force_from_dm(i, dm):
-            M = self.bl_M
-            Mi = M[i]
-            temp = np.split(dm[3*i:3*(i+1)], self.bl_n_at, axis=1)
-            assert temp[0].shape == (3,3)
-            return sum([sqrt(Mi*Mj) * subblk for subblk, Mj in zip(temp, M)])
-        def force_adjust(f):
-            for i in range(self.bl_n_at):
-                blM = self.bl_M
-                temp = np.split(f[3*i:3*(i+1)], self.bl_n_at, axis=1)
-                temp = [sqrt(blM[j]/blM[i]) * blk for j, blk in enumerate(temp)]
-                assert temp[0].shape == (3,3)
-                f[3*i:3*(i+1), 3*i:3*(i+1)] -= sum(temp)
-            return f
 
         assert (ph_list is not None) ^ (force_matrices is not None), "Must give exactly one of: phonopy obj list, force matrix list"
         assert len(b_set[0]) == 2, "Shift vectors must be 2-dimensional"
         self.b_set = b_set; self.ph_list = ph_list # list of phonopy objects for each config
         self.nshift = len(b_set); print(f"Number of configurations: {self.nshift}")
         assert int(sqrt(self.nshift))**2 == self.nshift, f"Number of shifts {self.nshift} must be a perfect square"
-        self.GM_set = GM_set; self.G0_set = G0_set; self.DM = None
+        self.GM_set = GM_set; self.G0_set = G0_set; self.DM = None; self.DM_intra = None
         self.per_layer_at_idxs = per_layer_at_idxs; assert len(self.per_layer_at_idxs) == 2, f"Only 2 layers supported"
         self.k_set = k_set
         self.modes_built = False
         self.n_GM = len(GM_set)
         if ph_list is not None:
-            def sym_dm_at_gamma(i, ph):
-                ph.symmetrize_force_constants()
-                return ph.get_dynamical_matrix_at_q([0,0,0])
-            self.force_matrices = [sym_dm_at_gamma(i, ph) for i, ph in enumerate(ph_list)] # DM(Gamma) ~= FC (mass-scaled)
+            self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0]) for ph in ph_list] # DM(Gamma) ~= FC (mass-scaled)
         else:
             self.force_matrices = force_matrices
        
         assert self.force_matrices[0].shape[0] == self.force_matrices[0].shape[1], f"Force matrix is not square: shape {self.force_matrices[0].shape}"
         assert self.force_matrices[0].shape[0] % 2 == 0, f"Force matrix size is odd: shape {self.force_matrices[0].shape}"
+
+    # Plot pristine bilayer for a given shift (currently shift=30 which is AB stacking)
+    def plot_pristine_band(self, G0_mat, k0_set, k0_mags, corner_k0mags, outdir='.'):
+        modes = np.zeros((18,len(k0_set)))
+        for kidx, k in enumerate(k0_set):
+            dm = self.ph_list[0].get_dynamical_matrix_at_q(LA.inv(G0_mat) @ k)
+            evals = np.sort(LA.eigvals(dm))
+            modes[:,kidx] = (-1*(evals < 0) + 1*(evals > 0))*np.sqrt(np.abs(evals))
+        _,ax = plt.subplots(1,1, figsize=(8,6))
+        ax.plot(k0_mags, np.transpose(modes), color='black')
+        ax.set_title(f"AA ph inter from API")
+        ax.set_xticks(corner_k0mags)
+        ax.set_xticklabels(["K", r"$\Gamma$", "M", "K"])
+        ax.set_xlim([0, np.max(corner_k0mags)])
+        plt.savefig(outdir + "blpristine.png")
+        succ("ILDM DONE")
 
     def __block_inter_l0(self, G0, k=np.array([0,0])):
         D = sum([force_matrix * np.exp(-1j * np.dot(G0 + k, b)) for force_matrix, b in zip(self.force_matrices, self.b_set)])
@@ -311,34 +271,30 @@ class InterlayerDM(DM):
         D0,_,_ = self.__block_inter_l0(self.G0_set[0]); block_l0_shape = D0.shape
         # D0 = 1.15 * D0
         self.DM = [[None]*n_GM for _ in range(n_GM)] # NoneType interpreted by scipy as 0 matrix block
+        self.DM_intra = [[[None]*n_GM for _ in range(n_GM)] for _ in range(2)]
         self.GMi_intra_blocks = [[0]*(n_GM-1) for i in range(2)]
         self.all_blocks = [0]*(n_GM)
         self.all_blocks[0] = D0
         self.Gamma_block = D0
         for i in range(1, n_GM): # fill first row/col
-            self.DM[0][i], self.GMi_intra_blocks[0][i-1], self.GMi_intra_blocks[1][i-1] = self.__block_inter_l0(self.G0_set[i])
+            self.DM[0][i], self.DM_intra[0][0][i], self.DM_intra[1][0][i] = self.__block_inter_l0(self.G0_set[i])
+            self.GMi_intra_blocks[0][i-1] = self.DM_intra[0][0][i]
+            self.GMi_intra_blocks[1][i-1] = self.DM_intra[1][0][i]
             self.all_blocks[i] = self.DM[0][i]
-            self.DM[i][0],_,_ = self.__block_inter_l0(-self.G0_set[i])
+            self.DM[i][0], self.DM_intra[0][i][0], self.DM_intra[1][i][0] = self.__block_inter_l0(-self.G0_set[i])
             assert self.DM[0][i].shape == block_l0_shape and self.DM[i][0].shape == block_l0_shape, f"Shape GM0{i}={self.DM[0][i].shape}, GM{i}0={self.DM[i][0].shape}, expected {block_l0_shape}"
             assert np.isclose(LA.norm(self.DM[0][i]), LA.norm(self.DM[i][0]), rtol=1e-5), f"Level-0 interlayer DM blocks for G0{i} not inversion-symmetric:\n {LA.norm(self.DM[0][i])}\nvs. \n{LA.norm(self.DM[i][0])}"
-        for i in range(n_GM): # fill diagonal
+            for j in range(2):
+                assert np.isclose(LA.norm(self.DM_intra[j][0][i]), LA.norm(self.DM_intra[j][i][0]), rtol=1e-5), \
+                    f"Level-0 cfg-intra-l{j} DM blocks for G0{i} not inversion-symmetric:\
+                        \n {LA.norm(self.DM_intra[j][0][i])}\nvs. \n{LA.norm(self.DM_intra[j][i][0])}"
+        for i in range(n_GM): # fill diagonal, but only for interlayer piece
             self.DM[i][i] = D0
         self.DM = bmat(self.DM).toarray() # convert NoneTypes to zero-matrix blocks to make sparse matrix
+        for i in range(2):
+            self.DM_intra[i] = bmat(self.DM_intra[i]).toarray()
+            print(f"Frobenius norm of cfg-{i} intralayer piece at Gamma: {LA.norm(self.DM_intra[i])}")
         return self.DM
-    
-    def __intras_block_inter_l1(self):
-        l1 = [0]*len(self.k_set); l2 = [0]*len(self.k_set)
-        for i, k in enumerate(self.k_set):
-            blocks = [self.__block_inter_l0(G0j, k=k) for G0j in self.G0_set]
-            l1[i] = block_diag(*[b[1] for b in blocks])
-            l2[i] = block_diag(*[b[2] for b in blocks])
-        return l1, l2
-    
-    def get_intra_DM_set(self, k_mags=None, corner_kmags=None, outdir='.'):
-        l1, l2 = self.__intras_block_inter_l1()
-        if k_mags is not None and corner_kmags is not None:
-            self.__plot_band(l1, l2, k_mags, corner_kmags, outdir=outdir)
-        return l1, l2
 
     # Diagonalize the set of DMs to get phonon modes
     def __build_modes(self, k_mags, DM_set, dump=False, outdir=None):
@@ -362,30 +318,6 @@ class InterlayerDM(DM):
                     f.write(f"{k_mag}\t{mode}\n")
         self.modes_built = True
         return self.mode_set
-    
-    def __plot_band(self, l1, l2, k_mags, corner_kmags, outdir='./', 
-                  filename='interintra_' + DEFAULT_PH_BAND_PLOT_NAME, name=None, cutoff=None):
-        outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Invalid directory {outdir}"
-        if not self.modes_built:
-            print("Configuration intralayer modes not built yet, building...")
-            self.mode_set_per_layer = [self.__build_modes(k_mags, l, dump=False, outdir=outdir) for l in [l1, l2]]
-            print("Configuration intralayer modes built.")
-        plt.clf()
-        for i, mode_set in enumerate(self.mode_set_per_layer):
-            for k_mag, modes in mode_set:
-                if cutoff is not None:
-                    modes = modes[modes <= cutoff]
-                plt.scatter([k_mag] * len(modes), modes, c='royalblue', s=0.07)
-            xlabs = ('K', r'$\Gamma$', r'M')
-            plt.xticks(corner_kmags, xlabs)
-            plt.ylabel(r'$\omega\,(\mathrm{cm}^{-1})$')
-            title = f"Layer-{i+1} phonon modes"
-            if name is not None:
-                title += f" of {name}"
-            plt.title(title)
-            this_filename = filename[:filename.index('.')] + f'_{i+1}' + filename[filename.index('.'):]
-            plt.savefig(outdir + this_filename)
-            print(f"Intralayer plot {i+1} written to {outdir+this_filename}")
     
     def get_off_diag_blocks(self):
         if self.DM is None:
@@ -422,6 +354,15 @@ class InterlayerDM(DM):
             self.__block_inter_l1()
         print(f"Retrieved interlayer dynamical matrix of shape {self.DM.shape}")
         return self.DM
+    
+    def get_DM_intra_piece(self):
+        if self.DM is None:
+            print("Building interlayer dynamical matrix...")
+            self.__block_inter_l1()
+        print(f"Retrieved interlayer dynamical matrix of shape {self.DM.shape}")
+        assert self.DM_intra[0].shape == self.DM_intra[1].shape == self.DM.shape
+        np.save("/Users/jonathanlu/Documents/tmos2_2/pristine/cfg.npy", self.DM_intra[0]) #! delete later
+        return self.DM_intra
 
     def get_GM_set(self):
         print("Retrieved GM sample set")
@@ -435,7 +376,8 @@ class TwistedDM:
         self.n_ats = [l1.n_at, l2.n_at]
         self.GM_set = inter.get_GM_set()
         print("Building dynamical matrix intra(er) blocks...")
-        DMs_layer1 = l1.get_DM_set(); DMs_layer2 = l2.get_DM_set(); DM_inter = inter.get_DM()
+        DMs_layer1 = l1.get_DM_set(); DMs_layer2 = l2.get_DM_set()
+        DM_inter = inter.get_DM(); DM_cfgintra = inter.get_DM_intra_piece()
         # DMs_layer1, DMs_layer2 = inter.get_intra_DM_set()
         self.szs = [DMs_layer1[0].shape[0], DMs_layer2[0].shape[0]]
         print("Blocks built.")
@@ -450,15 +392,18 @@ class TwistedDM:
         self.l0szs = [l1.l0_shape[0], l2.l0_shape[0]]
         self.Gamma_idx = Gamma_idx
         self.Gamma_intra_blks = [l1.Gamma_blks(), l2.Gamma_blks()]
-        self.DMs = [self.__block_l2([DMs_layer1[i], DMs_layer2[i]], DM_inter) for i in range(self.n_k)]
+        self.DMs = [self.__block_l2([DMs_layer1[i] + DM_cfgintra[0],\
+             DMs_layer2[i] + DM_cfgintra[1]], DM_inter) for i in range(self.n_k)]
+        self.corr_mat = self.__block_l2([l1.get_corr_mat() + DM_cfgintra[0], \
+             l2.get_corr_mat() + DM_cfgintra[1]], DM_inter)
+        np.save("/Users/jonathanlu/Documents/lukas/my_korr.npy", self.corr_mat)
 
     # Create level-2 (final level--full matrix) block matrix with intralayer and interlayer terms
     def __block_l2(self, DM_intras, DM_inter):
         assert len(DM_intras) == 2
         assert DM_intras[0].shape == DM_intras[1].shape == DM_inter.shape
-        DM_intras = list(map(lambda D: (D + D.conjugate().T) / 2, DM_intras)) # impose Hermiticity
         DM = np.block([[DM_intras[0], DM_inter], [DM_inter.conjugate().T, DM_intras[1]]])
-        return DM 
+        return DM
     
     # enforce an acoustic sum rule at Gamma
     def Gamma_acoustic_sum_rule(self):
@@ -502,6 +447,21 @@ class TwistedDM:
             mid = self.DMs[0].shape[0] // 2
             for j in range(self.n_k):
                 self.DMs[j][mid + 3*i : mid + 3*(i+1), mid + 3*i : mid + 3*(i+1)] -= totalsum
+    
+    def Lukas_sum_rule(self):
+        update("ENFORCING: Lukas sum rule")
+        dm = self.corr_mat # similar to D(Gamma) but intralayer terms are all at Gamma instead of GM
+        blkshp = len(dm)//3
+        corr = np.zeros_like(dm, dtype=complex)
+        M = self.M.tolist()
+        M = M[0]*self.n_GM + M[1]*self.n_GM # masses per block
+        assert len(M) == blkshp, f"Inconsistent Cartesian-reduced moire DM shape and mass list shapes {blkshp} vs. {len(M)}"
+        for i in range(blkshp):
+            corr[3*i:3*(i+1),3*i:3*(i+1)] = corr[3*i:3*(i+1),3*i:3*(i+1)] - sum([sqrt(M[j]/M[i]) \
+                * dm[3*j:3*(j+1), 3*i:3*(i+1)] \
+                    for j in range(blkshp)])
+        for k in range(self.n_k):
+            self.DMs[k] = self.DMs[k] + corr
     
     def Moire_acoustic_sum_rule(self, plotG=False):
         """
@@ -555,7 +515,7 @@ class TwistedDM:
             totalsum = np.real_if_close(intrasum + intersum)
             print(f"At {i} at Gamma before Moire correction:\n{self.DMs[self.Gamma_idx][3*i:3*(i+1),3*i:3*(i+1)]}")
             for j in range(self.n_k):
-                self.DMs[j][3*i:3*(i+1),3*i:3*(i+1)] -= intersum
+                self.DMs[j][3*i:3*(i+1),3*i:3*(i+1)] -= totalsum
             # Plot the matrix elements/averages
             print("PLOTTING: G != 0 components for intra and inter in layer 1 reference")
             if plotG:
@@ -683,21 +643,22 @@ class TwistedDM:
     
     # Plot phonon modes as a function of k
     def plot_band(self, corner_kmags, angle, outdir='./', filename=DEFAULT_PH_BAND_PLOT_NAME, name=None, cutoff=None):
+        np.save("/Users/jonathanlu/Documents/tmos2_2/mydm.npy", self.DMs[self.Gamma_idx])
         outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Invalid directory {outdir}"
         if not self.modes_built:
             print("Modes not built yet, building...")
             self.build_modes(dump=True, outdir=outdir)
             print("Modes built.")
         plt.clf()
-        minmax = [0,0]
+        lims = [0,0]
         for k_mag, modes in self.mode_set:
             if cutoff is not None:
                 modes = modes[modes <= cutoff]
-            minmax[0] = min(0, minmax[0], min(modes))
-            minmax[1] = max(minmax[1], max(modes))
-            plt.scatter([k_mag] * len(modes), modes, c='royalblue', s=0.07)
-        minmax[1] += 30; plt.ylim(minmax)
-        xlabs = (r'K', r'$\Gamma$', r'M')
+            lims[0] = min(0, lims[0], min(modes))
+            lims[1] = max(lims[1], max(modes))
+            plt.scatter([k_mag] * len(modes), modes, c='black', s=0.07)
+        lims[1] += 30; plt.ylim(lims)
+        xlabs = (r'K', r'$\Gamma$', r'M', r'K')
         plt.xticks(corner_kmags, xlabs)
         plt.ylabel(r'$\omega\,(\mathrm{cm}^{-1})$')
         title = r"Phonon modes"
@@ -705,7 +666,7 @@ class TwistedDM:
             title += f" of {name} bilayer"
         title += r" at " + '%.1lf'%angle + r"$^\circ$"
         plt.title(title)
-        plt.savefig(outdir + filename)
+        plt.savefig(outdir + filename, format='pdf')
         print(f"Plot written to {outdir+filename}")
         return
 

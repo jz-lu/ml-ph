@@ -29,11 +29,11 @@ from __class_ForceInterp import ForceInterp, FourierForceInterp
 from __class_PhononConfig import TwistedRealspacePhonon
 from ___helpers_parsing import greet, update, succ, warn, err, is_flag, check_not_flag
 import os, sys
+from math import pi
 
 RELAX_FOURIER_INTERP = 1
 RELAX_SPLINE_INTERP = 2
     
-
 if __name__ == '__main__':
     start = time()
     USAGE_MSG = f"Usage: python3 {sys.argv[0]} -deg <twist angle (deg)> -name <solid name> -cut <frequency cutoff> -dir <base I/O dir> -o <output dir>"
@@ -97,6 +97,7 @@ if __name__ == '__main__':
     assert npos == DEFAULT_NUM_LAYERS, "Twist calculations for more than 2 layers not supported (yet)"
     s0 = poscars_uc[0].structure.lattice.matrix[0:2, 0:2]
     s1 = poscars_uc[1].structure.lattice.matrix[0:2, 0:2]
+    A0 = s0.T
     assert np.allclose(s0, s1), "Input POSCARs must have the same lattice matrices"
     print("POSCAR inputs found.")
 
@@ -129,14 +130,23 @@ if __name__ == '__main__':
     bzsamples = get_bz_sample(theta, poscars_uc[0], outdir, make_plot=True, super_dim=super_dim)
     _, GM_set = bzsamples.get_GM_set(); _, G0_set = bzsamples.get_G0_set()
     Gamma_idx = bzsamples.get_Gamma_idx()
-    k_set, k_mags = bzsamples.get_kpts0(); corner_kmags = bzsamples.get_corner_kmags0()
+    k_set, k_mags = bzsamples.get_kpts(); corner_kmags = bzsamples.get_corner_kmags()
+    k0_set, k0_mags = bzsamples.get_kpts0(); corner_k0mags = bzsamples.get_corner_kmags0()
+    np.save(outdir + "km.npy", k_mags)
+    np.save(outdir + "k.npy", k_set)
+    np.save(outdir + "ck.npy", corner_kmags)
     print("Sampling complete.")
+    os.chdir(outdir)
 
     update("Constructing intralayer dynamical matrix objects...")
-    MLDMs = [MonolayerDM(uc, sc, ph, GM_set, k_set, Gamma_idx, k_mags=k_mags) for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
+    MLDMs = [MonolayerDM(uc, sc, ph, GM_set, \
+                         G0_set, k_set, Gamma_idx, k_mags=k_mags) \
+                         for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
     if plot_intra:
         print("Plotting one intralayer component...")
-        print("Plotting samples over GM..."); MLDMs[0].plot_sampled_l0()
+        print("Plotting in pristine space...")
+        MLDMs[0].plot_pristine_band(k0_set, k0_mags, corner_k0mags, outdir=outdir)
+        print("Plotting in moire space..."); MLDMs[0].plot_sampled_l0()
         MLDMs[0].plot_band(k_mags, corner_kmags, name=name, outdir=outdir, filename='intra_'+outname, cutoff=cutoff)
     if force_sum:
         for i, MLDM in enumerate(MLDMs):
@@ -154,6 +164,9 @@ if __name__ == '__main__':
         assert os.path.isfile(shift_file_path), f"{shift_file_path} not found"
         with open(shift_file_path) as f:
             b_set[i] = np.array(list(map(float, f.read().splitlines()))[:2]) # shifts must be 2-dimensional
+    b_set = np.array(b_set)
+    b_set = b_set @ A0.T
+    breakpoint()
     print("Shift vectors imported.")
         
     print("Getting interlayer phonopy objects from API...")
@@ -214,7 +227,7 @@ if __name__ == '__main__':
         ILDM = None
         config_ph_list = None if relax or multirelax else config_ph_list
         bl_M = ph_api.bl_masses()
-        print(f"Bilayer masses: {bl_M}")
+        print(f"Bilayer masses: {list(bl_M)}")
         ILDM =  InterlayerDM(per_layer_at_idxs, bl_M, 
                              b_set, 
                              bzsamples.get_kpts0()[0], 
@@ -222,19 +235,20 @@ if __name__ == '__main__':
                              [p.structure.species for p in poscars_uc], 
                              ph_list=config_ph_list, 
                              force_matrices=relaxed_forces)
-        if plot_intra:
-            print("Plotting intralayer parts of configuration matrix...")
-            ILDM.get_intra_DM_set(k_mags=k_mags, corner_kmags=corner_kmags, outdir=outdir)
-        evals = LA.eigvals(ILDM.get_DM())
-        signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
-        modes_k = signs * np.sqrt(np.abs(evals)) * (15.633302*33.356) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
+        ILDM.plot_pristine_band(2*pi*LA.inv(poscars_uc[0].structure.lattice.matrix[:2,:2].T).T, 
+                                k0_set, k0_mags, corner_k0mags, outdir=outdir)
+        # evals = LA.eigvals(ILDM.get_DM())
+        # signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
+        # modes_k = signs * np.sqrt(np.abs(evals)) * (15.633302*33.356) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
         # print("Interlayer modes (k-independent):", modes_k[modes_k != 0])
         print("Interlayer DM objects constructed.")
 
         print("Combining into a single twisted dynamical matrix object...")
         TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc], Gamma_idx)
-        TDM.Gamma_acoustic_sum_rule()
-        # TDM.Moire_acoustic_sum_rule()
+
+        TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, filename="nosum"+outname, cutoff=cutoff)
+        TDM.modes_built = False
+        TDM.Lukas_sum_rule()
         print("Twisted dynamical matrix object constructed.")
 
         if force_sum:
