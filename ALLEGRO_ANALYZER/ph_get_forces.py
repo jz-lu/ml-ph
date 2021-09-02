@@ -1,4 +1,8 @@
-# Extract FORCE_SETS from VASP calculations using phonopy
+"""
+Extract FORCE_SETS from VASP calculations using phonopy.
+Modes: configuration, twisted cell.
+(For basic it is easier just to call phonopy directly.)
+"""
 import os, sys, copy
 from ___helpers_parsing import update, succ, warn, err, is_flag, check_not_flag
 from ___constants_names import (

@@ -1,3 +1,8 @@
+"""
+Script to build the band.conf and mesh.conf files for
+phonopy to generate band structures and DOS. 
+(If analyzing a pristine material by hand.)
+"""
 from pymatgen.io.vasp.inputs import Poscar, Kpoints
 from __get_ph_analysis import ph_create_band_conf, ph_create_mesh_conf
 from __directory_searchers import checkPath

@@ -19,6 +19,7 @@ class InputData:
     input_imported = False
 
     def __init__(self, args):
+        self.super_dim = args.super; assert args.super > 0
         self.name = args.name; print(f"Name: '{args.name}'")
         self.cmdargs = args; self.sampling_diagonal = (args.type == CFG_DIAG); self.theta = args.twist
         self.sampling_z = (args.type == CFG_Z); self.sampling_lc = (args.type == CFG_LC)
@@ -178,6 +179,10 @@ class InputData:
             return [ENERGIES] + self.get_calculation_list()
         else:
             return self.get_calculation_list()
+        
+    # Phonon supercell dimensions
+    def get_super_dim(self):
+        return self.super_dim
 
     def get_cfg_grid_sz(self):
         return self.cfg_grid_sz

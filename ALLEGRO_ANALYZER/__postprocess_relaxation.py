@@ -136,7 +136,11 @@ def postProcess_relaxation(outDirName, relaxation_dirName, unrelaxed_vaspObj, us
                 print(f"Making directory {ph_dir}...")
                 mkdir(PHONOPY_DIR_NAME, outDirName)
             poscar_relaxed.write_file(ph_dir + POSCAR_UNIT_NAME)
-            ph_preprocess(ph_dir, None, Poscar_unitcell_name=POSCAR_UNIT_NAME, onejob=False, user_input_settings=user_input_settings)
+            gsz = user_input_settings.get_super_dim()
+            superdim_str = ' '.join((gsz, gsz, 1))
+            ph_preprocess(ph_dir, None, Poscar_unitcell_name=POSCAR_UNIT_NAME, 
+                          onejob=False, user_input_settings=user_input_settings, 
+                          supercellDim=superdim_str)
             print('Phonon displacement calculations kicked off successfully')
         else: 
             # Only case left is that we have phonon calculations to do.

@@ -1,3 +1,7 @@
+"""
+Script to analyze output of ml-ph 
+VASP calculation for optimal interlayer spacing.
+"""
 from ___constants_names import (
     ANALYSIS_DIR_NAME, RELAXATION_DIR_NAME, 
     TOTAL_ENER_DIR_NAME, TOT_ENERGIES_NAME, 

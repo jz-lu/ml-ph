@@ -5,6 +5,7 @@ from ___constants_misc import GENERAL_ERR_USAGE_MSG
 from ___constants_names import ENERGIES, TYPE_STRS
 from __begin_computation import begin_computation
 from ___constants_config import BZE_OUT_FILENAME
+from ___constants_phonopy import SUPER_DIM
 from pymatgen.io.vasp.inputs import Poscar
 import argparse
 import copy, sys, os
@@ -26,6 +27,7 @@ parser.add_argument("-f", "--fcut", action="store_true", help="use force cutoff 
 parser.add_argument("--dfpt", action="store_true", help="use DFPT instead of frozen phonon")
 parser.add_argument("-m", "--mp", action="store_true", help="use for MP k-points mesh, default: Gamma")
 parser.add_argument("-r", "--relax", action="store_true", help="use relaxed (non-uniform) configurations")
+parser.add_argument("--super", type=int, help="phonon supercell", default=SUPER_DIM[0])
 parser.add_argument("calc", nargs="+", help="calculations list: energies, ph, eleband, eledos", default=[ENERGIES])
 cmdargs = parser.parse_args()
 

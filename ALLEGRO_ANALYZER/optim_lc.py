@@ -1,3 +1,7 @@
+"""
+Script to analyze the output of ml-ph 
+VASP calculation for optimal lattice constant.
+"""
 from ___constants_names import (
     ANALYSIS_DIR_NAME, RELAXATION_DIR_NAME, 
     TOTAL_ENER_DIR_NAME, TOT_ENERGIES_NAME, 

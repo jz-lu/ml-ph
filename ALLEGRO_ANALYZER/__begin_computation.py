@@ -15,6 +15,7 @@ from ___constants_names import (
     MONOLAYER_DIR_NAME, CONFIG_DIR_NAME, CONFIG_SUBDIR_NAME, 
     PH
 )
+from ___constants_phonopy import LARGE_SUPER_DIM, SUPER_DIM
 from __class_input import InputData
 from __class_Configuration import Configuration
 from __class_PoscarAdjuster import PoscarAdjuster
@@ -132,7 +133,8 @@ def begin_computation(user_input_settings):
                                      compute_partitions='kaxiras,shared', 
                                      ediff0=user_input_settings.ediff0, 
                                      fcut=user_input_settings.fcut, 
-                                     passname=user_input_settings.passname())
+                                     passname=user_input_settings.passname(), 
+                                     super_dim=LARGE_SUPER_DIM[0])
             if not DEBUGGING:
                 os.chdir(intra_path)
                 print("Submitting monolayer job for layer " + i + "...")
@@ -145,7 +147,7 @@ def begin_computation(user_input_settings):
                    compute_time='01:00:00', compute_ncpu='1', twist=user_input_settings.get_tw_angle(), 
                    sampling=user_input_settings.sampling, compute_partitions=ALT_COMPUTE_PARTITIONS, 
                    passname=user_input_settings.passname(), fcut=user_input_settings.fcut, 
-                   ediff0=user_input_settings.ediff0) 
+                   ediff0=user_input_settings.ediff0, super_dim=SUPER_DIM[0]) 
                    # just kicks off a bunch of jobs, so it doesn't need any time
         if not DEBUGGING:
             os.chdir(inter_path)

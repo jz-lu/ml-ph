@@ -1,3 +1,7 @@
+"""
+Script to systematically search for and resubmit failed 
+ml-ph VASP jobs submitted to the computing cluster.
+"""
 import os, shutil
 import argparse
 

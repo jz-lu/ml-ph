@@ -1,4 +1,7 @@
-# Automated bash executable generator for Harvard FASRC computing cluster
+"""
+Automated bash executable generator for Harvard FASRC computing cluster.
+(This would work for any SLURM-scheduled cluster, just change the computing node names.)
+"""
 from ___constants_compute import (
     COMPUTE_PARTITIONS, 
     COMPUTE_MEM_PER_CPU, 
@@ -17,6 +20,7 @@ from ___constants_names import (
     TYPE_RELAX_BASIC, TYPE_RELAX_CONFIG, TYPE_TWISTED_CONFIG, TYPE_NORELAX_BASIC
 )
 from ___constants_vasp import INIT_EDIFF0
+from ___constants_phonopy import SUPER_DIM
 from __directory_searchers import checkPath
 import sys, copy
 from ___helpers_parsing import greet, succ, warn, err, is_flag, check_not_flag
@@ -28,7 +32,7 @@ def build_bash_exe(calc_type='basic', outdir='.', wdir=None, calc_list=[ENERGIES
                    compute_mem_per_cpu=COMPUTE_MEM_PER_CPU, compute_email_type=COMPUTE_EMAIL_TYPE, 
                    compute_email_to=COMPUTE_EMAIL_TO, vdw=False, kpts='GAMMA', fname=START_BATCH_NAME,
                    USE_NODE_INDICATOR=True, as_arr=False, twist=None, sampling='low', passname='', 
-                   pass_idx=False, fcut=False, ediff0=INIT_EDIFF0):
+                   pass_idx=False, fcut=False, ediff0=INIT_EDIFF0, super_dim=SUPER_DIM[0]):
     assert calc_type in TYPE_STRS, f"Unknown calculation type {calc_type}"
     assert isinstance(calc_list, list), "Calculation list must be of type list"
     assert vdw in ['T', 'F', True, False], "vdw parameter must be either 'T' or 'F'"
@@ -77,7 +81,7 @@ def build_bash_exe(calc_type='basic', outdir='.', wdir=None, calc_list=[ENERGIES
         f.write('module load julia\nmodule list\nsource activate $HOME/%s\n'%(COMPUTE_ANACONDA_ENV))
         f.write('echo "Starting calculations..."\n')
         f.write(f'python3 $ALLEGRO_DIR/start.py -t {calc_type} {twist} {sampling} -d $WDIR {passname} {vdw} {fcut} {ediff0} {kpts} {calc_list}\n')
-        print(f"WRITING COMMAND: `python3 $ALLEGRO_DIR/start.py -t {calc_type} {twist} {sampling} -d $WDIR {passname} {vdw} {fcut} {ediff0} {kpts} {calc_list}`")
+        print(f"WRITING COMMAND: `python3 $ALLEGRO_DIR/start.py -t {calc_type} {twist} {sampling} -d $WDIR --super {super_dim} {passname} {vdw} {fcut} {ediff0} {kpts} {calc_list}`")
         f.write('echo "Calculations complete!"\n')
     succ('Executable bash file successfully written to %s'%(exepath))
     return exepath

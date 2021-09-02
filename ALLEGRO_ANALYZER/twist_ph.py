@@ -1,4 +1,8 @@
-# Compute the phonon modes for a twisted cell
+"""
+Frontend script for computing the phonon dispersion, 
+realspace transforms, and Gamma modes in 
+configuration space for a twisted cell.
+"""
 import numpy as np
 import numpy.linalg as LA
 from math import sqrt
@@ -82,7 +86,7 @@ if __name__ == '__main__':
     assert os.path.isdir(indir), f"Directory {indir} does not exist"
     assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
     if multirelax:
-        assert not relax, f"Cannot multirelax and relax"
+        assert not relax, f"`multirelax` and `relax` are incompatible options"
         assert os.path.isfile(indir + ANGLE_SAMPLE_INAME), f"Must provide input file {ANGLE_SAMPLE_INAME}"
     print(f"WD: {indir}, Output to: {outdir}")
     outname = 'd' + str(round(np.rad2deg(theta))) + "_" + outname
