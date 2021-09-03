@@ -37,11 +37,12 @@ for folder in folder_names:
         ind = ind + 1
 
     writepath = main_dir + folder + '.txt'
-
+    apath = main_dir + folder + '.npy'
     with open(writepath, "a+") as f:
         f.write('a1x, a1y, a2x, a2y, xf, yf, E0\n')
         for i in range(len(xf)): 
             f.write(str(a1x[i]) + ', ' + str(a1y[i]) + ', ' + str(a2x[i]) + ', ' + str(a2y[i]) + ', ' + str(xf[i]) + ', ' + str(yf[i]) + ', ' + str(E0[i]) + '\n')
+    np.save(apath, E0)
     print(f"Finished writing to {writepath}")
 print("All analyses completed. Run MATLAB analyzer to obtain moduli coefficients.")
 

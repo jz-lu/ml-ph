@@ -5,7 +5,7 @@ from math import ceil
 
 # Unit conversion
 VASP_FREQ_TO_INVCM_UNITS = 15.633302*33.356
-USE_SCAN_VDW = True # change to false if using DFT-D3
+USE_SCAN_VDW = False # change to false if using DFT-D3
 
 # POSCAR z-basis vector magnitude, increase if we add a lot more (>3) layers
 # Z_LATTICE_SIZE = 20.0

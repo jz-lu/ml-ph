@@ -13,7 +13,35 @@ from __directory_searchers import checkPath
 from ___helpers_parsing import succ
 from math import cos, sin
 
-def rotate_atoms(theta, p, out=None):
+# Change the lattice constant
+def update_lc(p, lc, out=None):
+    p = p.as_dict()
+    old_mat = np.array(p['structure']['lattice']['matrix'])
+    old_lc = LA.norm(old_mat[0])
+    m = old_mat[-1,-1] * np.eye(3)
+    m[:2,:2] = lc/old_lc * old_mat[:2,:2]
+    p['structure']['lattice']['matrix'] = m
+    p = Poscar.from_dict(p)
+    if out is not None:
+        p.write_file(out)
+        succ(f"Wrote updated POSCAR with lattice constant {lc} to {out}")
+    return p
+
+# Change the vacuum spacing
+def update_z(p, z, out=None):
+    n_at = len(p.structure.species)
+    old_z = p.structure.lattice.matrix[-1,-1]
+    p = p.as_dict()
+    for i in range(n_at):
+        p['structure']['sites'][i]['abc'][-1] *= z/old_z
+    p['structure']['lattice']['matrix'][-1][-1] = z
+    p = Poscar.from_dict(p)
+    if out is not None:
+        p.write_file(out)
+        succ(f"Wrote updated POSCAR with vacuum spacing {z} to {out}")
+    return p
+
+def rotate_atoms(theta, p, out=None): # theta in rad
     # everything is row-wise, so a little algebra shows how to minimize transposes
     R = np.array([[cos(theta), -sin(theta), 0], [sin(theta), cos(theta), 0], [0,0,1]])
     pos = p.structure.cart_coords @ R.T
@@ -26,16 +54,23 @@ def rotate_atoms(theta, p, out=None):
     return struct
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Adjust POSCARs, such as rotating atoms")
-    parser.add_argument("deg", type=float, help="rotation angle", default=None)
+    parser = argparse.ArgumentParser(description="Adjust POSCARs, such as rotating atoms or changing constants")
+    parser.add_argument("type", choices=['lc', 'z', 'rot'])
+    parser.add_argument("param", type=float, help="parameter (e.g. angle for rotation, lattie constant, etc.", default=None)
     parser.add_argument("-d", "--dir", type=str, help="directory containing POSCAR", default='.')
     parser.add_argument("-p", "--pos", type=str, help="POSCAR name", default=POSCAR_NAME)
     parser.add_argument("-o", "--out", type=str, help="Output POSCAR name", default=POSCAR_NAME+"_out")
     args = parser.parse_args()
 
     args.dir = checkPath(os.path.abspath(args.dir))
-    ppath = args.dir + args.pos
+    ppath = args.dir + args.pos; outpath = args.dir+args.out
     assert os.path.isfile(ppath), f"Invalid path {ppath}"
     p = Poscar.from_file(ppath)
-    rotate_atoms(np.deg2rad(args.deg), p, out=args.dir+args.out)
+    if args.type == 'rotate':
+        rotate_atoms(np.deg2rad(args.param), p, out=outpath)
+    elif args.type == 'lc':
+        update_lc(p, args.param, out=outpath)
+    elif args.type == 'z':
+        update_z(p, args.param, out=outpath)
+
 
