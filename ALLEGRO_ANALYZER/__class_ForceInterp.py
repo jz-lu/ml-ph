@@ -44,6 +44,7 @@ class FourierForceInterp:
     def __init__(self, ph_list, b_matrix, lattice_matrix, ltype='hexagonal', sampling_type='grid', dump=False):
         for i in range(len(ph_list)):
             ph_list[i].symmetrize_force_constants()
+            ph_list[i].produce_force_constants()
         self.stype = sampling_type; assert isinstance(self.stype, str)
         self.__A = lattice_matrix
         print("Initializing Fourier force interpolator object")
@@ -52,9 +53,9 @@ class FourierForceInterp:
         b_matrix = b_matrix[:,:2]
         if dump:
             print(f"Configurations (direct basis):\n {b_matrix}\nConfigurations (Cartesian):\n {(self.__A @ b_matrix.T).T}")
-        self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in ph_list]
-        fcs = self.force_matrices[0].shape
-        self.fc_tnsr = np.real_if_close([[[fc[j][k] for fc in self.force_matrices] for k in range(fcs[1])] for j in range(fcs[0])])
+        self.force_tnsrs = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in ph_list]
+        fcs = self.force_tnsrs[0].shape
+        self.fc_tnsr = np.real_if_close([[[fc[j][k] for fc in self.force_tnsrs] for k in range(fcs[1])] for j in range(fcs[0])])
         print(f"Force tensor shape: {self.fc_tnsr.shape}")
         self.nb = len(b_matrix); self.b_matrix = b_matrix
         self.__fitted = False; self.coeffs = None; self.reg_mat = None; self.score_mat = None

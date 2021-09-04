@@ -21,12 +21,19 @@ class PhonopyAPI:
         self.ROOT = checkPath(os.path.abspath(ROOT)); self.spname = spname; self.ctype = ctype
         self.nlayer = None; self.intra_list = None; self.nconfig = None; self.inter_list = None
 
-        # Extract supercell dimensions
+        # Extract supercell dimensions, which may be different for 
+        # pristine (intra) and configuration (inter) terms.
         d = checkPath(findDirsinDir(self.ROOT, MONOLAYER_DIR_NAME, searchType='start')[0])
         d = build_dir([d, ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME])
         A0 = Poscar.from_file(d+pname).structure.lattice.matrix
         A1 = Poscar.from_file(d+spname).structure.lattice.matrix
-        self.sp_mat = np.round(A1 @ LA.inv(A0)) # diagonal matrix, diagonal is supercell dim
+        self.intra_sp_mat = np.round(A1 @ LA.inv(A0)) # diagonal matrix, diagonal is supercell dim
+        d = checkPath(findDirsinDir(checkPath(self.ROOT + CONFIG_DIR_NAME), CONFIG_SUBDIR_NAME, searchType='start')[0])
+        d = build_dir([d, ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME])
+        A2 = Poscar.from_file(d+spname).structure.lattice.matrix
+        self.inter_sp_mat = np.round(A2 @ LA.inv(A0))
+        print(f"Monolayer supercell size: {np.diag(self.intra_sp_mat)}")
+        print(f"Configuration supercell size: {np.diag(self.inter_sp_mat)}")
 
         assert ctype in ['twist', 'config'], f"Unknown computation type {self.ctype}"
         if ctype == 'twist':
@@ -50,10 +57,10 @@ class PhonopyAPI:
             assert os.path.isfile(pname), self.POSCAR_ERR_MSG
             assert os.path.isfile(PH_FORCE_SETS_NAME), ERR_PH_FORCE_SETS_NOT_MADE
             ph_list.append(phonopy.load(unitcell_filename=pname, 
-                                        supercell_matrix=np.diag(self.sp_mat).astype(int), 
+                                        supercell_matrix=np.diag(self.intra_sp_mat).astype(int), 
                                         primitive_matrix=np.eye(3),
                                         log_level=1)) # `log_level` is just the debug-paranoia level
-            print(f"Loaded phonopy object from {ph_dir}")
+            print("Loaded phonopy object from {ph_dir}")
             ph_list[-1]._log_level = 0
         return len(layers), ph_list
 
@@ -71,7 +78,7 @@ class PhonopyAPI:
             assert os.path.isfile(pname), self.POSCAR_ERR_MSG
             assert os.path.isfile(PH_FORCE_SETS_NAME), ERR_PH_FORCE_SETS_NOT_MADE
             ph_list.append(phonopy.load(unitcell_filename=pname, 
-                                        supercell_matrix=np.diag(self.sp_mat).astype(int), 
+                                        supercell_matrix=np.diag(self.inter_sp_mat).astype(int), 
                                         primitive_matrix=np.eye(3),
                                         log_level=0)) # `log_level` is just the debug-paranoia level
         p = Poscar.from_file(build_dir([ROOT, configs[0]]) + POSCAR_NAME)
