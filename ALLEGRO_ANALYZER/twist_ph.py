@@ -22,7 +22,8 @@ from ___constants_names import (
     SHIFT_NAME, SHIFTS_NPY_NAME, 
     DEFAULT_PH_BAND_PLOT_NAME, 
     ANGLE_SAMPLE_INAME, 
-    MODE_TNSR_ONAME, ANGLE_SAMPLE_ONAME, GAMMA_IDX_ONAME, K_MAGS_ONAME
+    MODE_TNSR_ONAME, ANGLE_SAMPLE_ONAME, GAMMA_IDX_ONAME, 
+    K_MAGS_ONAME, K_SET_ONAME, DM_TNSR_ONAME
 )
 from ___constants_compute import DEFAULT_NUM_LAYERS
 from __directory_searchers import checkPath, findDirsinDir, findFilesInDir
@@ -32,11 +33,15 @@ from __class_RelaxerAPI import RelaxerAPI
 from __class_ForceInterp import ForceInterp, FourierForceInterp
 from __class_PhononConfig import TwistedRealspacePhonon
 from ___helpers_parsing import greet, update, succ, warn, err, is_flag, check_not_flag
-import os, sys
+import os, sys, copy
 from math import pi
 
 RELAX_FOURIER_INTERP = 1
 RELAX_SPLINE_INTERP = 2
+
+# TODO if the relaxation doesn't work, it might be because phonopy is using the atomic positions
+# TODO of the non-relaxed version but with the relaxed forces. Figure out how to feed phonopy the right POSCAR
+# TODO it's possible you will have to just rewrite the POSCAR or something like that.
     
 if __name__ == '__main__':
     start = time()
@@ -101,6 +106,7 @@ if __name__ == '__main__':
     assert npos == DEFAULT_NUM_LAYERS, "Twist calculations for more than 2 layers not supported (yet)"
     s0 = poscars_uc[0].structure.lattice.matrix[0:2, 0:2]
     s1 = poscars_uc[1].structure.lattice.matrix[0:2, 0:2]
+    n_at = [len(posc.structure.species) for posc in poscars_uc]
     A0 = s0.T
     assert np.allclose(s0, s1), "Input POSCARs must have the same lattice matrices"
     print("POSCAR inputs found.")
@@ -182,28 +188,40 @@ if __name__ == '__main__':
         with open(indir + ANGLE_SAMPLE_INAME, 'r') as f:
             thetas = list(map(float, f.read().splitlines()))
             assert len(thetas) == 3 and 20 > thetas[1] > thetas[0] > 0 and thetas[2] > 0, f"Invalid thetas {thetas}"
-        thetas = np.linspace(np.deg2rad(thetas[0]), np.deg2rad(thetas[1]), int(thetas[2]))
+        ntheta = int(thetas[2])
+        thetas = np.linspace(np.deg2rad(thetas[0]), np.deg2rad(thetas[1]), ntheta)
+        dmat_dim = 3 * len(GM_set) * sum(n_at); print(f"Moire dynamical matrix size = {dmat_dim}")
+        dmat_tnsr = np.zeros((ntheta, len(k_set), dmat_dim, dmat_dim))
         for i, theta in enumerate(thetas):
+            # See non-multirelax case for comments
             relax_api = RelaxerAPI(np.rad2deg(theta), gridsz, outdir, s0.T)
-            b_relaxed = relax_api.get_configs()
-            relax_api.plot_relaxation()
-            interp = ForceInterp(config_ph_list, np.array(b_set))
-            relaxed_forces = interp.fc_tnsr_at(b_relaxed)
-            # interp = FourierForceInterp(config_ph_list, np.array(b_set), s0.T)
-            # relaxed_forces = interp.predict(b_relaxed)
-            relaxed_forces = np.transpose(relaxed_forces, axes=(2, 0, 1))
+            b_relaxed = relax_api.get_configs(cartesian=True)
+
+            interp = FourierForceInterp(config_ph_list, np.array(b_set), s0.T)
+            relaxed_forces = interp.predict(b_relaxed)
+            relaxed_forces = np.transpose(relaxed_forces, axes=(4,0,1,2,3))
+
+            relaxed_ph_list = copy.deepcopy(config_ph_list)
+            for i in range(len(config_ph_list)):
+                relaxed_ph_list[i].force_constants = relaxed_forces[i]
+
             bl_M = ph_api.bl_masses()
             print(f"Bilayer masses: {bl_M}")
             ILDM =  InterlayerDM(per_layer_at_idxs, bl_M, 
-                                 b_set, k_set, 
+                                 b_relaxed, k_set, 
                                  GM_set, G0_set, 
-                                 [p.structure.species for p in poscars_uc], ph_list=None, 
-                                 force_matrices=relaxed_forces)
+                                 [p.structure.species for p in poscars_uc], 
+                                 ph_list=relaxed_ph_list, 
+                                 force_matrices=None)
             TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc], Gamma_idx)
-            np.save(outdir + MODE_TNSR_ONAME%i, TDM.k_mode_tensor())
+            TDM.apply_sum_rule()
+            dmat_tnsr[i] = TDM.get_DM_set()
+            # np.save(outdir + MODE_TNSR_ONAME%i, TDM.k_mode_tensor())
         np.save(outdir + ANGLE_SAMPLE_ONAME, thetas)
         np.save(outdir + GAMMA_IDX_ONAME, Gamma_idx)
         np.save(outdir + K_MAGS_ONAME, k_mags)
+        np.save(outdir + K_SET_ONAME, k_set)
+        np.save(outdir + DM_TNSR_ONAME, dmat_tnsr)
         update(f"Saved all multirelax output files to {outdir}")
 
     else:
@@ -211,7 +229,7 @@ if __name__ == '__main__':
         if relax:
             print("Non-uniformizing configurations via relaxation...")
             relax_api = RelaxerAPI(np.rad2deg(theta), gridsz, outdir, s0.T)
-            b_relaxed = relax_api.get_configs()
+            b_relaxed = relax_api.get_configs(cartesian=True)
             relax_api.plot_relaxation()
             if relax == RELAX_SPLINE_INTERP:
                 print("Using spline interpolation...")
@@ -221,15 +239,19 @@ if __name__ == '__main__':
                 print("Using Fourier interpolation...")
                 interp = FourierForceInterp(config_ph_list, np.array(b_set), s0.T)
                 relaxed_forces = interp.predict(b_relaxed)
+                assert relaxed_forces.shape[-1] == b_relaxed.shape[0], \
+                    f"Inconsistent force index {relaxed_forces.shape[-1]}, b index {b_relaxed.shape[0]}"
             print(f"Relaxed interpolation force tensor is of shape: {relaxed_forces.shape}")
-            # Relaxed forces tensor has index (f1, f2, bidx), but needs to be of form (bidx, f1, f2)
-            relaxed_forces = np.transpose(relaxed_forces, axes=(2, 0, 1))
+            # Relaxed forces tensor has index (nS,nS,3,3,bidx), but needs to be of form (bidx,nS,nS,3,3)
+            relaxed_forces = np.transpose(relaxed_forces, axes=(4,0,1,2,3))
             print(f"Transposed to shape: {relaxed_forces.shape}")
+            b_set = b_relaxed # update b_set to correspond to new relaxed set
 
         print("Note: Using GM sampling set from intralayer calculations.")
         print("Constructing interlayer dynamical matrix objects...")
         ILDM = None
-        config_ph_list = None if relax or multirelax else config_ph_list
+        for i in range(len(config_ph_list)):
+            config_ph_list[i]._force_constants = relaxed_forces[i]
         bl_M = ph_api.bl_masses()
         print(f"Bilayer masses: {list(bl_M)}")
         ILDM =  InterlayerDM(per_layer_at_idxs, bl_M, 
@@ -238,9 +260,9 @@ if __name__ == '__main__':
                              GM_set, G0_set, 
                              [p.structure.species for p in poscars_uc], 
                              ph_list=config_ph_list, 
-                             force_matrices=relaxed_forces)
-        ILDM.plot_pristine_band(2*pi*LA.inv(poscars_uc[0].structure.lattice.matrix[:2,:2].T).T, 
-                                k0_set, k0_mags, corner_k0mags, outdir=outdir)
+                             force_matrices=None)
+        # ILDM.plot_pristine_band(2*pi*LA.inv(poscars_uc[0].structure.lattice.matrix[:2,:2].T).T, 
+        #                         k0_set, k0_mags, corner_k0mags, outdir=outdir)
         # evals = LA.eigvals(ILDM.get_DM())
         # signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
         # modes_k = signs * np.sqrt(np.abs(evals)) * (15.633302*33.356) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
@@ -249,10 +271,9 @@ if __name__ == '__main__':
 
         print("Combining into a single twisted dynamical matrix object...")
         TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc], Gamma_idx)
-
         TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, filename="nosum"+outname, cutoff=cutoff)
-        TDM.modes_built = False
-        TDM.Lukas_sum_rule()
+        TDM.apply_sum_rule()
+        TDM.modes_built = False # re-diagonalize matrix after applying sum rule
         print("Twisted dynamical matrix object constructed.")
 
         if force_sum:

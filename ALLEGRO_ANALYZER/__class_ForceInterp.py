@@ -10,6 +10,8 @@ from ___constants_output import NTERMS
 from __directory_searchers import checkPath
 from scipy.interpolate import griddata
 
+# TODO rewrite using map() instead of brute force iteration
+
 # Realspace interpolation with linear spline fitting
 class ForceInterp:
     def __init__(self, ph_list, b_matrix):
@@ -53,12 +55,13 @@ class FourierForceInterp:
         b_matrix = b_matrix[:,:2]
         if dump:
             print(f"Configurations (direct basis):\n {b_matrix}\nConfigurations (Cartesian):\n {(self.__A @ b_matrix.T).T}")
-        self.force_tnsrs = [ph.get_dynamical_matrix_at_q([0,0,0]) for ph in ph_list]
-        fcs = self.force_tnsrs[0].shape
-        self.fc_tnsr = np.real_if_close([[[fc[j][k] for fc in self.force_tnsrs] for k in range(fcs[1])] for j in range(fcs[0])])
-        print(f"Force tensor shape: {self.fc_tnsr.shape}")
+        
+        # shape: (nS, nS, 3, 3, ncfg) with ncfg number of configs, nS num atoms in supercell
+        self.fc_tnsr = np.transpose([ph.force_constants for ph in ph_list], axes=(1,2,3,4,0)) 
+        self.shape = self.fc_tnsr.shape
+        print(f"Force tensor shape: {self.shape}")
         self.nb = len(b_matrix); self.b_matrix = b_matrix
-        self.__fitted = False; self.coeffs = None; self.reg_mat = None; self.score_mat = None
+        self.__fitted = False; self.coeffs = None; self.reg_tnsr = None; self.score_mat = None
         self.X = self.__b_to_fourier_basis(b_matrix)
     def __b_to_vw(self, b_mat):
         print(f"Scaling by lattice constant {LA.norm(self.__A[:,0])}")
@@ -86,14 +89,24 @@ class FourierForceInterp:
     def __fit_coeff(self):
         assert not self.__fitted, f"Fitting already done"
         print("Fitting energies to Fourier series...")
-        self.reg_mat = [[LinearRegression().fit(self.X, forces) for forces in i] for i in self.fc_tnsr]
-        self.coeffs = [[np.append(reg.intercept_, reg.coef_) for reg in reg_row] for reg_row in self.reg_mat]
-        self.__fitted = True
+        self.reg_tnsr = [[[\
+            [LinearRegression().fit(self.X, forces) for forces in f3] \
+            for f3 in f2] \
+                for f2 in f1] \
+                    for f1 in self.fc_tnsr] # shape: (nS, nS, 3, 3)
+        self.coeffs = np.array(\
+            [[[[\
+            np.append(reg.intercept_, reg.coef_) for reg in r3] \
+                for r3 in r2] \
+                    for r2 in r1] \
+                        for r1 in self.reg_tnsr])
+        print(f"Fourier force constants fit coefficient tensor shape: {self.coeffs.shape}")
+        self.__fitted = True; self.score_mat = None
         return self.coeffs
     def __ensure_fitted(self):
         if not self.__fitted:
             self.__fit_coeff()
-        assert self.coeffs is not None and self.reg_mat is not None, f"Fitting failed"
+        assert self.coeffs is not None and self.reg_tnsr is not None, f"Fitting failed"
     def save_raw_data(self, outdir):
         print("Saving coefficents and score to file...")
         outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
@@ -105,13 +118,26 @@ class FourierForceInterp:
         self.__ensure_fitted(); return self.coeffs
     def get_score(self):
         self.__ensure_fitted()
-        [[LinearRegression().fit(self.X, forces) for forces in i] for i in self.fc_tnsr]
-        self.score_mat = np.array([[r.score(self.X, f) for f, r in zip(frow, rrow)] for frow, rrow in zip(self.fc_tnsr, self.reg_mat)])
-        print(f"Fit score = {self.score_mat}")
+        if self.score_mat is None:
+            self.score_mat = np.array(\
+                [[[[\
+                reg.score(self.X, f) for f, reg in zip(f3, r3)] \
+                    for f3, r3 in zip(f2, r2)] \
+                        for f2, r2 in zip(f1, r1)] \
+                            for f1, r1 in zip(self.fc_tnsr, self.reg_tnsr)])
+            print("Constructed Fourier force fit score tensor")
         return self.score_mat
-    def predict(self, b_matrix):
+    def predict(self, b_matrix, dbglog=False):
         self.__ensure_fitted()
         X = self.__b_to_fourier_basis(b_matrix[:,:2])
-        ptensor = np.array([[r.predict(X) for r in rrow] for rrow in self.reg_mat])
-        print(f"Prediction tensor shape: {ptensor.shape}")
-        return ptensor
+
+        # Shape: (nS, nS, 3, 3, ncfg*) with ncfg* == len(b_matrix) in the function arg
+        predtnsr = np.array(\
+            [[[[\
+            reg.predict(X) for reg in r3] \
+                for r3 in r2] \
+                    for r2 in r1] \
+                        for r1 in self.reg_tnsr])
+        if dbglog:
+            print(f"Prediction tensor shape: {predtnsr.shape}")
+        return predtnsr

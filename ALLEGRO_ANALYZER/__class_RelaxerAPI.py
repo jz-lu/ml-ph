@@ -37,10 +37,10 @@ class RelaxerAPI:
         self.bprime_dir_raw = (LA.inv(self.cob) @ bprime_cart.T).T
         bprime = np.round((self.bprime_dir_raw + 1.0000001) % 1, 7) # mod unit cell torus
         self.bprime_dir = np.hstack((bprime, np.zeros(self.gridsz**2).reshape(self.gridsz**2, 1)))
-    def get_configs(self, save=True):
+    def get_configs(self, save=True, cartesian=False):
         if save:
             np.save(self.outdir + RELAXED_CONFIGS_NPY, self.bprime_dir)
-        return self.bprime_dir
+        return self.bprime_cart if cartesian else self.bprime_dir
     def plot_relaxation(self, filename='relax.png'):
         plt.clf(); _, ax = plt.subplots()
         plt.scatter(self.b[:,0], self.b[:,1], c='royalblue', alpha=0.15, label='before')

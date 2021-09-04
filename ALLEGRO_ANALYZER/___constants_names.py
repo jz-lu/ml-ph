@@ -32,6 +32,8 @@ MODE_TNSR_ONAME = 'mode_%d.npy'
 ANGLE_SAMPLE_ONAME = 'thetas.npy'
 GAMMA_IDX_ONAME = 'Gamidx.npy'
 K_MAGS_ONAME = 'kmags.npy'
+K_SET_ONAME = 'kset.npy'
+DM_TNSR_ONAME = 'dmtnsr.npy'
 
 # Calculation types
 TYPE_RELAX_BASIC = 0
