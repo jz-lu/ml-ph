@@ -20,8 +20,7 @@ if mat(1) == 'm'
 elseif mat(1) == 'W' 
     a0 = 3.28; 
 elseif mat(1) == 'M'
-    a0 = 3.18;
-    a0 = 3.1;
+    a0 = 3.122;
 elseif mat(1) == 'J' && mat(end) == '1'
     a0 = 3.1;
 end 

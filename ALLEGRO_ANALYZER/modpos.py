@@ -28,7 +28,7 @@ def update_lc(p, lc, out=None):
     return p
 
 # Change the vacuum spacing
-def update_z(p, z, out=None):
+def update_vacspc(p, z, out=None):
     n_at = len(p.structure.species)
     old_z = p.structure.lattice.matrix[-1,-1]
     p = p.as_dict()
@@ -71,6 +71,6 @@ if __name__ == "__main__":
     elif args.type == 'lc':
         update_lc(p, args.param, out=outpath)
     elif args.type == 'z':
-        update_z(p, args.param, out=outpath)
+        update_vacspc(p, args.param, out=outpath)
 
 
