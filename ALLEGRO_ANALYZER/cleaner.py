@@ -23,7 +23,7 @@ for root, dirs, files in os.walk(ROOT, topdown=True):
             print(f"REMOVING: {path}")
             os.remove(path)
 
-update("Clearning folders...")
+update("Cleaning folders...")
 for root, dirs, files in os.walk(ROOT, topdown=True):
     for name in dirs:
         path = os.path.join(root, name)

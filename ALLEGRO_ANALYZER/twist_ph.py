@@ -39,7 +39,7 @@ from math import pi
 RELAX_FOURIER_INTERP = 1
 RELAX_SPLINE_INTERP = 2
 
-# TODO if the relaxation doesn't work, it might be because phonopy is using the atomic positions
+# TODO if the interpolation doesn't work, it might be because phonopy is using the atomic positions
 # TODO of the non-relaxed version but with the relaxed forces. Figure out how to feed phonopy the right POSCAR
 # TODO it's possible you will have to just rewrite the POSCAR or something like that.
     

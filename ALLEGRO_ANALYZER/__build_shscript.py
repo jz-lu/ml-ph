@@ -59,6 +59,9 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
             compute_jobname = 'l' + compute_jobname
         else:
             compute_jobname = 'h' + compute_jobname
+        no_ionic_step = False
+        if user_input_settings.sampling_is_interlayer() or user_input_settings.sampling_is_lc():
+            no_ionic_step = True
         build_bash_exe(calc_type='basic', outdir=BASE_ROOT,
                         compute_jobname=compute_jobname, compute_time=compute_time, vdw=vdw, kpts=kpts, fname=START_BATCH_NAME, 
                         as_arr=True, compute_ncpu=compute_ncpu, wdir=BASE_ROOT+CONFIG_SUBDIR_NAME, 
@@ -66,7 +69,8 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
                         compute_partitions=ALT_COMPUTE_PARTITIONS, 
                         passname=user_input_settings.passname(), pass_idx=True, 
                         fcut=user_input_settings.fcut, ediff0=user_input_settings.ediff0, 
-                        super_dim=user_input_settings.get_super_dim())
+                        super_dim=user_input_settings.get_super_dim(), 
+                        no_ionic_step=no_ionic_step)
 
         for i, shpath in enumerate(base_root_subpaths):
             bfile = shpath + SHIFT_NAME

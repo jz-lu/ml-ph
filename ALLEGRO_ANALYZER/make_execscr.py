@@ -33,7 +33,7 @@ def build_bash_exe(calc_type='basic', outdir='.', wdir=None, calc_list=[ENERGIES
                    compute_email_to=COMPUTE_EMAIL_TO, vdw=False, kpts='GAMMA', fname=START_BATCH_NAME,
                    USE_NODE_INDICATOR=True, as_arr=False, twist=None, sampling='low', passname='', 
                    pass_idx=False, fcut=False, ediff0=INIT_EDIFF0, super_dim=SUPER_DIM[0], 
-                   relaxer=False):
+                   relaxer=False, no_ionic_step=False):
     assert calc_type in TYPE_STRS, f"Unknown calculation type {calc_type}"
     assert isinstance(calc_list, list), "Calculation list must be of type list"
     assert vdw in ['T', 'F', True, False], "vdw parameter must be either 'T' or 'F'"
@@ -49,6 +49,7 @@ def build_bash_exe(calc_type='basic', outdir='.', wdir=None, calc_list=[ENERGIES
     relaxer = '--relax' if relaxer else ''
     twist = '' if twist is None else f'--twist {twist}'
     sampling = f'-s {sampling}' if calc_type in CFG_STRS else ''
+    no_ionic_step = '--noionicstep' if no_ionic_step else ''
     if ediff0 is None:
         ediff0 = ''
     else:
@@ -82,7 +83,7 @@ def build_bash_exe(calc_type='basic', outdir='.', wdir=None, calc_list=[ENERGIES
         f.write('ALLEGRO_DIR="%s"\n'%CODE_DIR)
         f.write('module load julia\nmodule list\nsource activate $HOME/%s\n'%(COMPUTE_ANACONDA_ENV))
         f.write('echo "Starting calculations..."\n')
-        cmdstr = f'python3 $ALLEGRO_DIR/start.py -t {calc_type} {twist} {sampling} {relaxer} -d $WDIR {passname} --super {super_dim} {vdw} {fcut} {ediff0} {kpts} {calc_list}\n'
+        cmdstr = f'python3 $ALLEGRO_DIR/start.py -t {calc_type} {twist} {sampling} {no_ionic_step} {relaxer} -d $WDIR {passname} --super {super_dim} {vdw} {fcut} {ediff0} {kpts} {calc_list}\n'
         f.write(cmdstr)
         print(f"WRITING COMMAND: `{cmdstr}`")
         f.write('echo "Calculations complete!"\n')

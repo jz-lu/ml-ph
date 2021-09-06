@@ -23,6 +23,9 @@ def relax_solid(user_input_settings, poscar=None, shift=None, user_inputted_root
     # Collect input files
     vasp_input_initializers = CarCollector(ROOT, user_input_settings.do_vdW, user_input_settings.kpoints_is_gamma_centered, user_input_settings.need_line_kpoints(), poscar=poscar)
     init_vasp_obj = vasp_input_initializers.build_relaxation_input(print_all_info=True)
+    if user_input_settings.no_ionic_step:
+        init_vasp_obj['INCAR']['EDIFF'] = 1e-8
+        init_vasp_obj['INCAR']['NSW'] = 1
 
     # Before we build the relaxation calculation inputs below, we need a sanity check as to whether the calculations can be done
     # The only thing we need to check besides poscar validity (code will handle other input files if none are given)
@@ -42,7 +45,9 @@ def relax_solid(user_input_settings, poscar=None, shift=None, user_inputted_root
     # Call the relaxation
     print('Running VASP relaxation calculations...results to be sent to %s'%(DIR_RELAXATION))
     # print(init_vasp_obj)
-    run_vasp(init_vasp_obj, DIR_RELAXATION, edinit=edinit, force_cut=user_input_settings.fcut)
+    run_type = 'no_relax' if user_input_settings.no_ionic_step else 'relax'
+    run_vasp(init_vasp_obj, DIR_RELAXATION, 
+             edinit=edinit, force_cut=user_input_settings.fcut, run_type=run_type)
     print('VASP relaxation calculations complete.')
 
     # Begin post-processing the relaxation calculations, handled by the postprocessing module
