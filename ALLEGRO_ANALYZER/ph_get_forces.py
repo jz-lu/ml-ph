@@ -53,7 +53,7 @@ if __name__ == '__main__':
             ftype = 'twist'; i += 1
         elif args[i] == '--cfg':
             ftype = 'config'; i += 1
-        elif args[i] == '--usage':
+        elif args[i] in ['--usage', '-h', '--help']:
             print(USAGE_ERR_MSG)
             sys.exit(0)
         else:
