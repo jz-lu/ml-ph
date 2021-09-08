@@ -29,16 +29,19 @@ def optim_lc(ROOT, plot=True):
 
     # Collect energies
     print("Retrieving energies...")
-    energies = [0]*nshifts
+    energies = np.zeros(nshifts)
     for i in range(nshifts):
         with open(ROOT + checkPath(CONFIG_SUBDIR_NAME + str(i)) 
                     + checkPath(ANALYSIS_DIR_NAME) + checkPath(TOTAL_ENER_DIR_NAME) + TOT_ENERGIES_NAME) as f:
             energies[i] = float(f.readline().split(' ')[-1])
     print(f"Energies retrieved.")
     e = min(energies)
-    idx = energies.index(min(energies))
+    idx = np.where(energies == e)[0]
     lc_star = lcs[idx]
-    print(f"Index with minimum energy: {idx}, spacing (direct): {lc_star}, energy: {'%.3lf'%e} eV")
+    e_toprint = np.vstack((np.arange(nshifts)+1, (energies - e)*1000))
+    print("All energies by shift index:")
+    print(e_toprint)
+    print(f"Index(es) with minimum energy: {idx}, spacing (direct): {lc_star}, energy: {'%.3lf'%e} eV")
     if plot:
         plt.clf(); fig, ax = plt.subplots()
         plt.title("Energy vs. lattice constant")
