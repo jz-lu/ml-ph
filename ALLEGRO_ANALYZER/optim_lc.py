@@ -21,7 +21,7 @@ def optim_lc(ROOT, plot=True):
     nshifts = len(findDirsinDir(ROOT, CONFIG_SUBDIR_NAME, searchType='start'))
     print(f"Sample size: {nshifts}")
     print("Retrieving lattice constants...")
-    lcs = [0]*nshifts
+    lcs = np.zeros(nshifts)
     for i in range(nshifts):
         relax_dir = ROOT + checkPath(CONFIG_SUBDIR_NAME + str(i)) + checkPath(RELAXATION_DIR_NAME)
         lcs[i] = LA.norm(Poscar.from_file(relax_dir + POSCAR_NAME).structure.lattice.matrix[0])
@@ -48,7 +48,7 @@ def optim_lc(ROOT, plot=True):
         plt.xlabel(r"Lattice constants ($\AA$)"); plt.ylabel("Energy (eV)")
         ax.scatter(lcs, energies, c='black')
         ax.plot(lcs, energies, c='royalblue')
-        fig.savefig(ROOT + "e_vs_lc.png")
+        fig.savefig(data_dir + "e_vs_lc.png")
         plt.close(fig)
     return idx, lc_star, e
 
