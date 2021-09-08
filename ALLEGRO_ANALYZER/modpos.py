@@ -33,7 +33,7 @@ def update_vacspc(p, z, out=None):
     old_z = p.structure.lattice.matrix[-1,-1]
     p = p.as_dict()
     for i in range(n_at):
-        p['structure']['sites'][i]['abc'][-1] *= z/old_z
+        p['structure']['sites'][i]['abc'][-1] *= old_z/z
     p['structure']['lattice']['matrix'][-1][-1] = z
     p = Poscar.from_dict(p)
     if out is not None:
@@ -55,7 +55,7 @@ def rotate_atoms(theta, p, out=None): # theta in rad
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Adjust POSCARs, such as rotating atoms or changing constants")
-    parser.add_argument("type", choices=['lc', 'z', 'rot'])
+    parser.add_argument("type", help="modification type", choices=['lc', 'z', 'rot'])
     parser.add_argument("param", type=float, help="parameter (e.g. angle for rotation, lattie constant, etc.", default=None)
     parser.add_argument("-d", "--dir", type=str, help="directory containing POSCAR", default='.')
     parser.add_argument("-p", "--pos", type=str, help="POSCAR name", default=POSCAR_NAME)
