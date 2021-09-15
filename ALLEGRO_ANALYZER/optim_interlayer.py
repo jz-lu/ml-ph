@@ -21,7 +21,7 @@ def optim_interlayer_spacing(ROOT, plot=True):
     nshifts = len(findDirsinDir(ROOT, CONFIG_SUBDIR_NAME, searchType='start'))
     print(f"Sample size: {nshifts}")
     print("Retrieving z-spacings...")
-    zspaces = [0]*nshifts
+    zspaces = np.zeros(nshifts)
     for i in range(nshifts):
         relax_dir = ROOT + checkPath(CONFIG_SUBDIR_NAME + str(i)) + checkPath(RELAXATION_DIR_NAME)
         zspaces[i] = CarCollector.get_interlayer_spacing(lidxs, DIR_RELAXATION=relax_dir)
@@ -29,15 +29,18 @@ def optim_interlayer_spacing(ROOT, plot=True):
 
     # Collect energies
     print("Retrieving energies...")
-    energies = [0]*nshifts
+    energies = np.zeros(nshifts)
     for i in range(nshifts):
         with open(ROOT + checkPath(CONFIG_SUBDIR_NAME + str(i)) 
                     + checkPath(ANALYSIS_DIR_NAME) + checkPath(TOTAL_ENER_DIR_NAME) + TOT_ENERGIES_NAME) as f:
             energies[i] = float(f.readline().split(' ')[-1])
     print(f"Energies retrieved.")
     e = min(energies)
-    idx = energies.index(min(energies))
+    idx = np.where(energies == e)[0]
     z = zspaces[idx]
+    print("Cfg idx | nterlayer spacings | energy:")
+    print(np.vstack((np.arange(nshifts)+1, zspaces, (energies - e)*1000)))
+    
     print(f"Index with minimum energy: {idx}, spacing (direct): {z}, energy: {'%.3lf'%e} eV")
     if plot:
         plt.clf(); fig, ax = plt.subplots()
