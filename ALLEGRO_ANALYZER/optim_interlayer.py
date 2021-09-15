@@ -38,7 +38,7 @@ def optim_interlayer_spacing(ROOT, plot=True):
     e = min(energies)
     idx = np.where(energies == e)[0]
     z = zspaces[idx]
-    print("Cfg idx | nterlayer spacings | energy:")
+    print("Cfg idx | interlayer spacings | energy:")
     print(np.vstack((np.arange(nshifts)+1, zspaces, (energies - e)*1000)))
     
     print(f"Index with minimum energy: {idx}, spacing (direct): {z}, energy: {'%.3lf'%e} eV")

@@ -12,11 +12,11 @@ USE_SCAN_VDW = False # change to false if using DFT-D3
 # Z_LAYER_SEP = 0.376723775 # Layer separation in terms of the z-basis vector
 Z_LATTICE_SIZE = 35.0
 Z_LAYER_SEP = {
-  'WSe2': 0.203525265,
+  'WSe2': 0.2045,
   'MoS2_0': 0.19405515, 
   'MoS2_180': 0.19403429
 } # Layer separation in terms of the z-basis vector
-Z_LAYER_SEP = Z_LAYER_SEP['MoS2_0']
+Z_LAYER_SEP = Z_LAYER_SEP['WSe2']
 # Precision of POSCAR lattice and atoms, in number of decimal places
 POSCAR_PRECISION = 6
 POSCAR_PREC_COMP_THRESHOLD = 0.0001
