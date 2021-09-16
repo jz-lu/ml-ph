@@ -176,7 +176,6 @@ if __name__ == '__main__':
             b_set[i] = np.array(list(map(float, f.read().splitlines()))[:2]) # shifts must be 2-dimensional
     b_set = np.array(b_set)
     b_set = b_set @ A0.T
-    breakpoint()
     print("Shift vectors imported.")
         
     print("Getting interlayer phonopy objects from API...")
@@ -206,7 +205,8 @@ if __name__ == '__main__':
                 relaxed_ph_list[i].force_constants = relaxed_forces[i]
 
             bl_M = ph_api.bl_masses()
-            print(f"Bilayer masses: {bl_M}")
+            if i == 0:
+                print(f"Bilayer masses: {bl_M}")
             ILDM =  InterlayerDM(per_layer_at_idxs, bl_M, 
                                  b_relaxed, k_set, 
                                  GM_set, G0_set, 
@@ -246,12 +246,11 @@ if __name__ == '__main__':
             relaxed_forces = np.transpose(relaxed_forces, axes=(4,0,1,2,3))
             print(f"Transposed to shape: {relaxed_forces.shape}")
             b_set = b_relaxed # update b_set to correspond to new relaxed set
+            for i in range(len(config_ph_list)):
+                config_ph_list[i]._force_constants = relaxed_forces[i]
 
         print("Note: Using GM sampling set from intralayer calculations.")
         print("Constructing interlayer dynamical matrix objects...")
-        ILDM = None
-        for i in range(len(config_ph_list)):
-            config_ph_list[i]._force_constants = relaxed_forces[i]
         bl_M = ph_api.bl_masses()
         print(f"Bilayer masses: {list(bl_M)}")
         ILDM =  InterlayerDM(per_layer_at_idxs, bl_M, 

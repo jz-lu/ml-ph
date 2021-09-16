@@ -46,12 +46,12 @@ CFG_STRS = [CFG_GRID, CFG_DIAG, CFG_Z, CFG_LC]
 TYPE_STRS = ['basic', 'twist', 'norelax'] + CFG_STRS
 
 # Directory and batch names
+MLPH_DIR = '/n/home04/jzlu/codes/ml-ph/'
 START_BATCH_NAME = 'EXECUTABLE_BAT_DNE'
 CONFIG_BATCH_NAME = 'SHIFT_BAT_DNE_'
-START_BATCH_PATH = '/n/home04/jzlu/codes/ml-ph/start_job_batch/' + START_BATCH_NAME
+START_BATCH_PATH = MLPH_DIR + 'start_job_batch/' + START_BATCH_NAME
 START_BATCH_OUTFILE_START = 'job_'
 BATCH_FILE_NAME = 'STATIC_BAT_DNE'
-MLPH_DIR = '/n/home04/jzlu/codes/ml-ph/'
 CODE_DIR = MLPH_DIR + 'ALLEGRO_ANALYZER/'
 RELAX_CODE_PATH = MLPH_DIR + 'CRELAX/relaxer.jl'
 RELAX_CODE_OUT = 'bprime_cart.npz' # must end in .npz
