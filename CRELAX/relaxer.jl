@@ -38,7 +38,7 @@ function main()
     println("Using twist angle $(theta) rad or $(rad2deg(theta)) deg")
 
     N = parsed_args["N"]
-    println("Using grid size $(N)")
+    println("Using $(N) x $(N) grid")
     hN = div(N,2)
     blg = Bilayer(l, theta, K, G)
     hull = Hull(blg, N);

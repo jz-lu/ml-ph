@@ -49,6 +49,7 @@ if __name__ == '__main__':
     args = sys.argv[1:]; i = 0; n = len(args)
     indir = '.'; outdir = '.'; theta = None; name = None; outname = DEFAULT_PH_BAND_PLOT_NAME; cutoff = None
     plot_intra = False; relax = False; realspace = False; force_sum = False; multirelax = False
+    do_sum_rule = True
     while i < n:
         if not is_flag(args[i]):
             warn(f'Warning: token "{args[i]}" is out of place and will be ignored')
@@ -60,6 +61,8 @@ if __name__ == '__main__':
         elif args[i] == '-deg':
             i += 1; check_not_flag(args[i]); theta = np.deg2rad(float(args[i])); i += 1
             print(f"theta: {np.rad2deg(theta)}")
+        elif args[i] == '--ns':
+            i += 1; do_sum_rule = False; print("NOT using sum rule...")
         elif args[i] == '-name':
             i += 1; check_not_flag(args[i]); name = args[i]; i += 1
         elif args[i] == '-cut':
@@ -271,7 +274,8 @@ if __name__ == '__main__':
         print("Combining into a single twisted dynamical matrix object...")
         TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc], Gamma_idx)
         TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, filename="nosum"+outname, cutoff=cutoff)
-        TDM.apply_sum_rule()
+        if do_sum_rule:
+            TDM.apply_sum_rule()
         TDM.modes_built = False # re-diagonalize matrix after applying sum rule
         print("Twisted dynamical matrix object constructed.")
 
