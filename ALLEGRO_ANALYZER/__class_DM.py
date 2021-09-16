@@ -104,7 +104,6 @@ class MonolayerDM:
             self.__block_intra_l1()
         print(f"Retrieved monolayer dynamical matrix of shape {self.DM_set[0].shape} for solid {self.name}")
         print(f"Frobenius norm of pristine intralayer piece at Gamma: {LA.norm(self.DM_set[self.Gamma_idx])}")
-        np.save("/Users/jonathanlu/Documents/tmos2_2/pristine/pristine.npy", self.DM_set[self.Gamma_idx]) #! delete later
         return self.DM_set
     
     def get_corr_mat(self):
@@ -361,7 +360,6 @@ class InterlayerDM:
             self.__block_inter_l1()
         print(f"Retrieved interlayer dynamical matrix of shape {self.DM.shape}")
         assert self.DM_intra[0].shape == self.DM_intra[1].shape == self.DM.shape
-        np.save("/Users/jonathanlu/Documents/tmos2_2/pristine/cfg.npy", self.DM_intra[0]) #! delete later
         return self.DM_intra
 
     def get_GM_set(self):
