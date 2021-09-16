@@ -394,7 +394,6 @@ class TwistedDM:
              DMs_layer2[i] + DM_cfgintra[1]], DM_inter) for i in range(self.n_k)]
         self.corr_mat = self.__block_l2([l1.get_corr_mat() + DM_cfgintra[0], \
              l2.get_corr_mat() + DM_cfgintra[1]], DM_inter)
-        np.save("/Users/jonathanlu/Documents/lukas/my_korr.npy", self.corr_mat)
 
     # Create level-2 (final level--full matrix) block matrix with intralayer and interlayer terms
     def __block_l2(self, DM_intras, DM_inter):
@@ -501,7 +500,6 @@ class TwistedDM:
     
     # Plot phonon modes as a function of k
     def plot_band(self, corner_kmags, angle, outdir='./', filename=DEFAULT_PH_BAND_PLOT_NAME, name=None, cutoff=None):
-        np.save("/Users/jonathanlu/Documents/tmos2_2/mydm.npy", self.DMs[self.Gamma_idx])
         outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Invalid directory {outdir}"
         if not self.modes_built:
             print("Modes not built yet, building...")
