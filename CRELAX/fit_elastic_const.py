@@ -12,7 +12,7 @@ from math import sqrt
 
 parser = argparse.ArgumentParser(description="Output analyzer for elastic moduli calculations")
 parser.add_argument("-d", "--dir", type=str, help="main working directory", default='.')
-parser.add_argument("lconst", type=str, help="lattice constant")
+parser.add_argument("lconst", type=float, help="lattice constant")
 args = parser.parse_args()
 a0 = args.lconst
 A0 = sqrt(3)/2 * a0**2

@@ -20,6 +20,7 @@ main_dir = pathify(arg.dir)
 
 for folder in folder_names:
     fpath = main_dir + folder
+    assert os.path.isdir(fpath)
     ind = 0; E0 = []; a1x = []; a1y = []; a2x = []; a2y = []; xf = []; yf = []
     while os.path.isfile(fpath + '/def' + str(ind) + '/POSCAR'):
         # read poscar
