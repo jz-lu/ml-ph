@@ -127,7 +127,7 @@ if __name__ == '__main__':
     xscale = [round(X/x) for x, X in zip(xcol, Xcol) if not np.isclose(x, 0)][0]
     yscale = [round(Y/y) for y, Y in zip(ycol, Ycol) if not np.isclose(y, 0)][0]
     super_dim = (xscale, yscale)
-    print(f"Found supercell dimensions to be {super_dim}")
+    print(f"Found monolayer supercell dimensions to be {super_dim}")
 
     update("Retrieving per-layer atomic indices...")
     per_layer_at_idxs = Configuration.load_at_idxs(build_dir([indir, CONFIG_DIR_NAME]))
@@ -194,6 +194,7 @@ if __name__ == '__main__':
         thetas = np.linspace(np.deg2rad(thetas[0]), np.deg2rad(thetas[1]), ntheta)
         dmat_dim = 3 * len(GM_set) * sum(n_at); print(f"Moire dynamical matrix size = {dmat_dim}")
         dmat_tnsr = np.zeros((ntheta, len(k_set), dmat_dim, dmat_dim))
+        # TODO wrong rn!! Need to resample k for each theta!!
         for i, theta in enumerate(thetas):
             # See non-multirelax case for comments
             relax_api = RelaxerAPI(np.rad2deg(theta), gridsz, outdir, s0.T)

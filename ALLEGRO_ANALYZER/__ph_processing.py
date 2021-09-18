@@ -32,7 +32,7 @@ def compute_displacements(ROOT, user_input_settings, ndisp):
     kpts = 'GAMMA' if user_input_settings.kpoints_is_gamma_centered else 'MP'
     exepath = build_bash_exe(calc_type='norelax', outdir=ROOT, wdir=ROOT+PHDISP_STATIC_NAME, 
                    calc_list=[ENERGIES], compute_jobname=PHONON_JOBNAME+subname, vdw=vdw, kpts=kpts, compute_time='16:00:00', 
-                   as_arr=True, compute_ncpu='16')
+                   as_arr=True, compute_ncpu='72' if user_input_settings.get_super_dim() > 3 else '16')
     print('Executable built.')
     runcmd = 'sbatch --array=1-%d'%(ndisp) + ' ' + exepath
     print('Running %s...'%runcmd)

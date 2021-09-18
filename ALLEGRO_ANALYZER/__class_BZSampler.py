@@ -273,17 +273,19 @@ class BZSampler:
         return self.k_set, self.kmags
     
     def get_kpts0(self):
-        assert self.k0_sampled, "Must run k-sampler before retrieving k-set"
+        assert self.k0_sampled, "Must run k0-sampler before retrieving k0-set"
         return self.k0_set, self.k0mags
     
     def get_Gamma_idx(self):
-        assert self.k_sampled, "Must run k-sampler before retrieving k-set"
+        assert self.k_sampled, "Must run k-sampler before retrieving Gamma idx"
         return self.Gamma_idx
 
     def get_corner_kmags(self):
+        assert self.k_sampled, "Must run k-sampler before retrieving corner k-mags"
         return self.corner_kmags
 
     def get_corner_kmags0(self):
+        assert self.k0_sampled, "Must run k0-sampler before retrieving corner k0-mags"
         return self.corner_kmags0
     
     def sampled(self):
