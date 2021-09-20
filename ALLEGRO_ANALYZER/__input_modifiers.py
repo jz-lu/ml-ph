@@ -22,7 +22,7 @@ def modifyIncar(incar, addArr=None, delArr=None): # Add any elements and remove 
     if delArr != None:
         for i in delArr:
             if i in list(incar.keys()):
-                incar.pop(delArr)
+                incar.pop(i)
             else:
                 print('Attempted deletion of %s failed as incar did not have that entry to begin with.'%(i))
     return incar
