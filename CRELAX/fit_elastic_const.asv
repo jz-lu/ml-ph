@@ -50,7 +50,7 @@ plot(eta, p3(1).*eta.^2 + p3(2).*eta + p3(3));
 gamma11 = p1(1)/A0*2;
 gamma12 = p2(1)/A0-gamma11;
 gamma66 = p3(1)/A0/2;
-disp(['Coeffs: ' num2str(p1(1)) ' ' num2str(p2(1)) ' ' num2str(p3(1))]);
+disp(['Coeffs: ' p1(1]);
 
 % in eV per cell 
 G = gamma66*A0;

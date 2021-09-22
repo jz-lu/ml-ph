@@ -39,23 +39,23 @@ for i, E in enumerate(Es):
 print("Successfully implemented quadratic fit")
 
 # Plot the energies and fit as a function of displacement
-fig, axes = plt.subplots(1, 3)
 eta_smooth = np.linspace(-bound, bound, 101)
 for i, (E, name) in enumerate(zip(Es, folder_names)):
-    axes[i].scatter(eta, E, c='royalblue')
-    axes[i].plot(eta_smooth, fits[i](eta_smooth), c='black')
-    axes[i].set_title(name)
-fig.savefig(d + "elastic_plots.png")
+    plt.scatter(eta, E)
+    plt.plot(eta_smooth, fits[i](eta_smooth), label=name)
+plt.legend()
+plt.savefig(d + "elastic_plots.png")
 print(f"Saved plots to {d}")
 
 # Compute moduli
 gamma11 = c2[0]/A0 * 2
 gamma12 = c2[1]/A0 - gamma11
 gamma66 = c2[2]/A0 / 2
+print(f"Coeffs: {c2}")
 
 # in eV per cell 
 G = gamma66 * A0
 K = (gamma11 + gamma12)/2 * A0
-print(f'G = {G} eV/cell')
-print(f'K = {K} eV/cell')
+print(f'G = {round(G, 4)} eV/cell')
+print(f'K = {round(K, 4)} eV/cell')
 

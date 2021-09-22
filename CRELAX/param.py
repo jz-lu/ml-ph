@@ -7,7 +7,7 @@ import os, sys
 from gen_poscar_elastic import get_poscar_elastic, pathify
 CODE_DIR = '/n/home04/jzlu/codes/ml-ph/CRELAX/'
 
-folder_names = ['shear', 'stretch1', 'stretch2']
+folder_names = ['stretch1', 'stretch2', 'shear']
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Obtain energy calculations for elastic moduli fitting')
