@@ -2,9 +2,8 @@
 l = 3.1/sqrt(3)
 
 # MoS2 elastic constants
-K = 2.0*24.933  # Bulk modulus
-G = 2.0*15.774  # Shear modulus
-
+K = 78.4478  # Bulk modulus
+G = 63.0955  # Shear modulus
 
 ## OLD COEFFs
 # c0 = 4.196885686406216109e+01
