@@ -1,7 +1,7 @@
 import numpy as np
 import os
 from ___constants_names import (
-    RELAX_CODE_PATH, 
+    RELAX_CODE_PATH, RELAX_CODE_SUBPATH, 
     RELAX_CODE_OUT, RELAXED_DELTA_OUT, UNRELAXED_CONFIGS_OUT, 
     RELAXED_CONFIGS_NPY
 )
@@ -14,6 +14,8 @@ import argparse
 from ___helpers_parsing import succ
 from time import time
 
+# RELAX_CODE_PATH = "/Users/jonathanlu/Documents/ml-ph/" + RELAX_CODE_SUBPATH
+
 class RelaxerAPI:
     def __init__(self, theta, gridsz, outdir, cob):
         assert isinstance(gridsz, int) and gridsz > 1, f"Invalid grid size {gridsz}: must be positive integer"
@@ -24,7 +26,7 @@ class RelaxerAPI:
         self.gridsz = gridsz; self.cob = cob; self.theta = theta
         self.langle = Configuration.lattice_angle_from_cob(self.cob)
         assert np.isclose(self.langle, 60) or np.isclose(self.langle, 120), f"Lattice angle must be 60 or 120, but is {self.langle}"
-        print("Starting relaxer program in Julia...")
+        print(f"Starting relaxer program ({RELAX_CODE_PATH} in Julia...")
         stream = os.popen(f"julia {RELAX_CODE_PATH} -d {theta} -N {gridsz} -o {self.outdir}")
         print(stream.read())
         self.outpath = self.outdir + RELAX_CODE_OUT

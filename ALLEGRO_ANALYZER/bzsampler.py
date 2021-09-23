@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from ___constants_names import DIR_SHORTCUTS
 from ___constants_sampling import *
 from __class_BZSampler import BZSampler
-from ___helpers_parsing import greet, succ, warn, err, is_flag, check_not_flag
+from ___helpers_parsing import greet, succ, warn, err, is_flag, check_not_flag, update
 from __directory_searchers import checkPath
 from ___constants_phonopy import SUPER_DIM
 from ____exit_with_error import exit_with_error
@@ -107,7 +107,8 @@ if __name__ == '__main__':
     theta_data[-1] = int(theta_data[-1])
     thetas = np.linspace(*theta_data); print(f"Angles: {thetas}")
     for i, theta_here in enumerate(thetas):
-        name = int(theta_here)
+        name = int(theta_here) if theta_here == int(theta_here) else round(theta_here, 1)
+        update(f"SAVED TO: {name}")
         s = get_bz_sample(np.deg2rad(theta_here), indir + pname, outdir, 
                   max_shell=max_shell, gridsz=gridsz, nk=nk, 
                   log=True if i == 0 else False, make_plot=True if i == 0 else False)

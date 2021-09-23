@@ -229,7 +229,7 @@ if __name__ == '__main__':
         update(f"Saved all multirelax output files to {outdir}")
 
     else:
-        relaxed_forces = None
+        relaxed_forces = None; b_relaxed = None
         if relax:
             print("Non-uniformizing configurations via relaxation...")
             relax_api = RelaxerAPI(np.rad2deg(theta), gridsz, outdir, s0.T)
@@ -249,21 +249,23 @@ if __name__ == '__main__':
             # Relaxed forces tensor has index (nS,nS,3,3,bidx), but needs to be of form (bidx,nS,nS,3,3)
             relaxed_forces = np.transpose(relaxed_forces, axes=(4,0,1,2,3))
             print(f"Transposed to shape: {relaxed_forces.shape}")
-            b_set = b_relaxed # update b_set to correspond to new relaxed set
-            for i in range(len(config_ph_list)):
-                config_ph_list[i]._force_constants = relaxed_forces[i]
+            # b_set = b_relaxed # update b_set to correspond to new relaxed set
+            
+            # TODO uncomment when testing our model
+            # for i in range(len(config_ph_list)):
+            #     config_ph_list[i]._force_constants = relaxed_forces[i]
 
         print("Note: Using GM sampling set from intralayer calculations.")
         print("Constructing interlayer dynamical matrix objects...")
         bl_M = ph_api.bl_masses()
         print(f"Bilayer masses: {list(bl_M)}")
-        ILDM =  InterlayerDM(per_layer_at_idxs, bl_M, 
+        ILDM = InterlayerDM(per_layer_at_idxs, bl_M, 
                              b_set, 
                              bzsamples.get_kpts0()[0], 
                              GM_set, G0_set, 
                              [p.structure.species for p in poscars_uc], 
                              ph_list=config_ph_list, 
-                             force_matrices=None)
+                             force_matrices=None, br_set=b_relaxed)
         # ILDM.plot_pristine_band(2*pi*LA.inv(poscars_uc[0].structure.lattice.matrix[:2,:2].T).T, 
         #                         k0_set, k0_mags, corner_k0mags, outdir=outdir)
         # evals = LA.eigvals(ILDM.get_DM())

@@ -211,10 +211,13 @@ class InterlayerDM:
                  GM_set, G0_set, 
                  species_per_layer, 
                  ph_list=None, 
-                 force_matrices=None, G0=None):
+                 force_matrices=None, G0=None, br_set=None):
         self.M = np.array([[species.atomic_mass for species in layer] for layer in species_per_layer])
         self.bl_M = bl_M; self.bl_n_at = len(bl_M)
         self.ph_list = ph_list
+        self.br_set = br_set # relaxed b vector set
+        if br_set is not None:
+            update("CONFIGURATION DM: Using RELAXED configs")
         print(f"Interlayer DM uses bilayer with {self.bl_n_at} atoms of masses {self.bl_M}")
 
         assert (ph_list is not None) ^ (force_matrices is not None), "Must give exactly one of: phonopy obj list, force matrix list"
@@ -252,7 +255,13 @@ class InterlayerDM:
         succ("ILDM DONE")
 
     def __block_inter_l0(self, G0, k=np.array([0,0])):
-        D = sum([force_matrix * np.exp(-1j * np.dot(G0 + k, b)) for force_matrix, b in zip(self.force_matrices, self.b_set)])
+        D = None
+        if self.br_set is None:
+            D = sum([force_matrix * np.exp(-1j * np.dot(G0 + k, b)) \
+                         for force_matrix, b in zip(self.force_matrices, self.b_set)])
+        else:
+            D = sum([force_matrix * np.exp(-1j * np.dot(G0 + k, br)) \
+                         for force_matrix, br in zip(self.force_matrices, self.br_set)])
         # Extract a submatrix with rows of atoms from layer 1 
         # and columns of atoms from layer 2, which is the interlayer 1-2 interactions.
         D_inter = D[np.ix_(self.per_layer_at_idxs[0], self.per_layer_at_idxs[1])] / self.nshift
