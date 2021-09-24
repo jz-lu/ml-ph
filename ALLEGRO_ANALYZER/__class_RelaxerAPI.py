@@ -26,7 +26,7 @@ class RelaxerAPI:
         self.gridsz = gridsz; self.cob = cob; self.theta = theta
         self.langle = Configuration.lattice_angle_from_cob(self.cob)
         assert np.isclose(self.langle, 60) or np.isclose(self.langle, 120), f"Lattice angle must be 60 or 120, but is {self.langle}"
-        print(f"Starting relaxer program ({RELAX_CODE_PATH} in Julia...")
+        print(f"Starting relaxer program {RELAX_CODE_PATH} in Julia...")
         stream = os.popen(f"julia {RELAX_CODE_PATH} -d {theta} -N {gridsz} -o {self.outdir}")
         print(stream.read())
         self.outpath = self.outdir + RELAX_CODE_OUT
@@ -34,7 +34,12 @@ class RelaxerAPI:
         print("Relaxer code finished.")
         self.u = np.load(self.outdir + RELAXED_DELTA_OUT)
         self.b = np.load(self.outdir + UNRELAXED_CONFIGS_OUT)
-        bprime_cart = np.load(self.outdir + RELAX_CODE_OUT); self.bprime_cart = bprime_cart
+        bprime_cart = np.load(self.outdir + RELAX_CODE_OUT)
+        # Relaxer uses y-major order, we use x-major order, so convert
+        bprime_cart = np.transpose(\
+            bprime_cart.reshape((self.gridsz,self.gridsz,2)),\
+                 axes=(1,0,2)).reshape((self.gridsz**2,2))
+        self.bprime_cart = bprime_cart
         assert bprime_cart.shape == (self.gridsz**2, 2), f"Invalid relaxation matrix shape (expected {(self.gridsz**2, 2)}):\n {bprime_cart}"
         self.bprime_dir_raw = (LA.inv(self.cob) @ bprime_cart.T).T
         bprime = np.round((self.bprime_dir_raw + 1.0000001) % 1, 7) # mod unit cell torus

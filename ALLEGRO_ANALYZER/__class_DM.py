@@ -212,6 +212,7 @@ class InterlayerDM:
                  species_per_layer, 
                  ph_list=None, 
                  force_matrices=None, G0=None, br_set=None):
+        self.DM_G_blks = None
         self.M = np.array([[species.atomic_mass for species in layer] for layer in species_per_layer])
         self.bl_M = bl_M; self.bl_n_at = len(bl_M)
         self.ph_list = ph_list
@@ -255,13 +256,8 @@ class InterlayerDM:
         succ("ILDM DONE")
 
     def __block_inter_l0(self, G0, k=np.array([0,0])):
-        D = None
-        if self.br_set is None:
-            D = sum([force_matrix * np.exp(-1j * np.dot(G0 + k, b)) \
-                         for force_matrix, b in zip(self.force_matrices, self.b_set)])
-        else:
-            D = sum([force_matrix * np.exp(-1j * np.dot(G0 + k, br)) \
-                         for force_matrix, br in zip(self.force_matrices, self.br_set)])
+        D = sum([force_matrix * np.exp(1j * np.dot(G0 + k, b)) \
+                        for force_matrix, b in zip(self.force_matrices, self.b_set)])
         # Extract a submatrix with rows of atoms from layer 1 
         # and columns of atoms from layer 2, which is the interlayer 1-2 interactions.
         D_inter = D[np.ix_(self.per_layer_at_idxs[0], self.per_layer_at_idxs[1])] / self.nshift
@@ -272,6 +268,19 @@ class InterlayerDM:
         assert len(D_inter.shape) == 2 and D_inter.shape[0] == D_inter.shape[1], f"D_inter with shape {D_inter.shape} not square matrix"
         assert 2*D_inter.shape[0] == D.shape[0] and 2*D_inter.shape[1] == D.shape[1], f"D_inter shape {D_inter.shape} should be half of D shape {D.shape}"
         return D_inter, D_intra1, D_intra2
+    
+    def __inverse_block_inter_l0(self, br):
+        if self.DM_G_blks is None:
+            # Get the blocks over all G0
+            self.DM_G_blks = [sum([force_matrix * np.exp(1j * np.dot(G0, b)) \
+                        for force_matrix, b in zip(self.force_matrices, self.b_set)]) \
+                        for G0 in self.G0_set]
+        # Fourier transform into the given br
+        br = br[:2]; assert br.shape == (2,), f"Invalid relaxed b shape {br.shape}"
+        assert len(self.DM_G_blks) == len(self.G0_set), \
+            f"len(self.DM_G_blks) = {len(self.DM_G_blks)} != len(self.G0_set) = {len(self.G0_set)}"
+        return sum([dm_G * np.exp(-1j * np.dot(G0, br)) \
+                        for dm_G, G0 in zip(self.DM_G_blks, self.G0_set)])
 
     def __block_inter_l1(self):
         n_GM = self.n_GM; assert len(self.G0_set) == n_GM, f"|G0_set| {len(self.G0_set)} != |GM_set| = {n_GM}"
