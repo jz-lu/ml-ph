@@ -217,8 +217,7 @@ class InterlayerDM:
         self.bl_M = bl_M; self.bl_n_at = len(bl_M)
         self.ph_list = ph_list
         self.br_set = br_set # relaxed b vector set
-        if br_set is not None:
-            update("CONFIGURATION DM: Using RELAXED configs")
+
         print(f"Interlayer DM uses bilayer with {self.bl_n_at} atoms of masses {self.bl_M}")
 
         assert (ph_list is not None) ^ (force_matrices is not None), "Must give exactly one of: phonopy obj list, force matrix list"
@@ -235,6 +234,10 @@ class InterlayerDM:
             self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0]) for ph in ph_list] # DM(Gamma) ~= FC (mass-scaled)
         else:
             self.force_matrices = force_matrices
+        if br_set is not None:
+            update("CONFIGURATION DM: Using RELAXED configs")
+            relaxed_forces = [self.__inverse_block_inter_l0(br) for br in self.br_set]
+            self.force_matrices = relaxed_forces
        
         assert self.force_matrices[0].shape[0] == self.force_matrices[0].shape[1], f"Force matrix is not square: shape {self.force_matrices[0].shape}"
         assert self.force_matrices[0].shape[0] % 2 == 0, f"Force matrix size is odd: shape {self.force_matrices[0].shape}"
@@ -273,7 +276,7 @@ class InterlayerDM:
         if self.DM_G_blks is None:
             # Get the blocks over all G0
             self.DM_G_blks = [sum([force_matrix * np.exp(1j * np.dot(G0, b)) \
-                        for force_matrix, b in zip(self.force_matrices, self.b_set)]) \
+                        for force_matrix, b in zip(self.force_matrices, self.b_set)]) / self.nshift \
                         for G0 in self.G0_set]
         # Fourier transform into the given br
         br = br[:2]; assert br.shape == (2,), f"Invalid relaxed b shape {br.shape}"
