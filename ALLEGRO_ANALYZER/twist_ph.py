@@ -249,7 +249,6 @@ if __name__ == '__main__':
             # Relaxed forces tensor has index (nS,nS,3,3,bidx), but needs to be of form (bidx,nS,nS,3,3)
             relaxed_forces = np.transpose(relaxed_forces, axes=(4,0,1,2,3))
             print(f"Transposed to shape: {relaxed_forces.shape}")
-            # b_set = b_relaxed # update b_set to correspond to new relaxed set
             
             # TODO uncomment when testing our model
             # for i in range(len(config_ph_list)):

@@ -1,5 +1,5 @@
 ### Implementation of GSFE for MoS2 0º homo-bilayers.
-l = 3.1/sqrt(3)
+l = 3.122/sqrt(3)
 
 # MoS2 elastic constants
 K = 78.4478  # Bulk modulus
