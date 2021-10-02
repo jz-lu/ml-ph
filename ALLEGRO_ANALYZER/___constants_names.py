@@ -122,6 +122,7 @@ COMBINED_ELE_OUTPUTS_NAME = 'additional_outputs'
 TOT_ENERGIES_NAME = 'total_energies.txt'
 
 PH_FORCE_SETS_NAME = 'FORCE_SETS'
+PH_FORCE_CONSTANTS_NAME = 'FORCE_CONSTANTS'
 PH_BASIC_INFO_FILENAME = 'phonopy_basic_structure_input.txt'
 PH_MESH_CONF_NAME = 'mesh.conf'
 PH_BAND_CONF_NAME = 'band.conf'

@@ -1,17 +1,23 @@
 from ___constants_names import (
-    SPOSCAR_NAME, PH_FORCE_SETS_NAME, 
+    SPOSCAR_NAME, PH_FORCE_SETS_NAME, PH_FORCE_CONSTANTS_NAME, 
     ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME, 
     MONOLAYER_DIR_NAME, CONFIG_DIR_NAME, CONFIG_SUBDIR_NAME,
     POSCAR_NAME
 )
 from ___constants_phonopy import POSCAR_UNIT_NAME
-from ___constants_misc import ERR_PH_FORCE_SETS_NOT_MADE
-from ___helpers_parsing import greet, succ, warn, err
+from ___constants_misc import ERR_PH_FORCE_SETS_NOT_MADE, ERR_PH_FORCE_CONSTS_NOT_MADE
+from ___helpers_parsing import greet, succ, warn, err, update
 from __directory_searchers import checkPath, findDirsinDir
 from __dirModifications import build_dir
 from pymatgen.io.vasp.inputs import Poscar
 import os, phonopy, sys
 import numpy as np; import numpy.linalg as LA
+from hiphive import ForceConstants, ClusterSpace, ForceConstantPotential
+from hiphive import enforce_rotational_sum_rules
+from hiphive.utilities import extract_parameters
+from ase.io import read
+from phonopy import Phonopy
+from phonopy.structure.atoms import PhonopyAtoms
 
 class PhonopyAPI:
     def __init__(self, ROOT, spname=SPOSCAR_NAME, pname=POSCAR_UNIT_NAME, ctype='twist'):
@@ -27,6 +33,7 @@ class PhonopyAPI:
         d = build_dir([d, ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME])
         A0 = Poscar.from_file(d+pname).structure.lattice.matrix
         A1 = Poscar.from_file(d+spname).structure.lattice.matrix
+
         self.intra_sp_mat = np.round(A1 @ LA.inv(A0)) # diagonal matrix, diagonal is supercell dim
         d = checkPath(findDirsinDir(checkPath(self.ROOT + CONFIG_DIR_NAME), CONFIG_SUBDIR_NAME, searchType='start')[0])
         d = build_dir([d, ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME])
@@ -42,8 +49,7 @@ class PhonopyAPI:
         self.nconfig, self.inter_list = self.__load_inter_ph_list(ROOT, pname)
         succ("Successfully loaded interlayer objects")
 
-
-    # Load monolayer phonopy objects
+    # Load monolayer phonopy objects and apply rotational sum rule
     def __load_intra_ph_list(self, ROOT, pname=POSCAR_UNIT_NAME):
         ROOT = checkPath(ROOT); ph_list = []
         layers = sorted(findDirsinDir(ROOT, MONOLAYER_DIR_NAME, searchType='start'))
@@ -55,12 +61,18 @@ class PhonopyAPI:
             assert os.path.isdir(ph_dir), f"Directory {ph_dir} not found"
             os.chdir(ph_dir)
             assert os.path.isfile(pname), self.POSCAR_ERR_MSG
-            assert os.path.isfile(PH_FORCE_SETS_NAME), ERR_PH_FORCE_SETS_NOT_MADE
-            ph_list.append(phonopy.load(unitcell_filename=pname, 
-                                        supercell_matrix=np.diag(self.intra_sp_mat).astype(int), 
-                                        primitive_matrix=np.eye(3),
-                                        log_level=1)) # `log_level` is just the debug-paranoia level
-            print("Loaded phonopy object from {ph_dir}")
+            assert os.path.isfile(PH_FORCE_CONSTANTS_NAME), ERR_PH_FORCE_CONSTS_NOT_MADE
+
+            ph = phonopy.load(unitcell_filename=pname, 
+                              supercell_matrix=np.diag(self.intra_sp_mat).astype(int), 
+                              primitive_matrix=np.eye(3),
+                              force_constants_filename=PH_FORCE_CONSTANTS_NAME, 
+                              log_level=1) # `log_level` is just the debug-paranoia level
+            # TODO hiphive
+            print(f"Loaded phonopy object from {ph_dir}")
+
+
+
             ph_list[-1]._log_level = 0
         return len(layers), ph_list
 

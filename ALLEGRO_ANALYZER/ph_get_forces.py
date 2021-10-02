@@ -6,14 +6,21 @@ Modes: configuration, twisted cell.
 import os, sys, copy
 from ___helpers_parsing import update, succ, warn, err, is_flag, check_not_flag
 from ___constants_names import (
-    PHDISP_STATIC_NAME, PH_FORCE_SETS_NAME, 
+    PHDISP_STATIC_NAME, PH_FORCE_SETS_NAME, PH_FORCE_CONSTANTS_NAME, 
     MONOLAYER_DIR_NAME, CONFIG_DIR_NAME, 
     ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME, CONFIG_SUBDIR_NAME
 )
+from ___constants_phonopy import FC_CONF_NAME
 from __directory_searchers import findDirsinDir, checkPath
 from __dirModifications import build_dir
 from __ph_processing import ph_generate_forcesets
 from __dirModifications import move
+
+def generate_fc_conf(ROOT):
+    fccf_path = checkPath(ROOT) + FC_CONF_NAME
+    with open(fccf_path, 'w') as f:
+        f.write("FORCE_CONSTANTS = WRITE")
+        f.write("FULL_FORCE_CONSTANTS = .TRUE.")
 
 def get_many_forces(indir, twist=False):
     indir = checkPath(indir)
@@ -28,13 +35,20 @@ def get_many_forces(indir, twist=False):
         configs = findDirsinDir(indir, CONFIG_SUBDIR_NAME, searchType='start')
         configs = [build_dir([indir, config, ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME]) for config in configs]
     paths = layers + configs # concatenate all paths together
-    for path in paths: # intralayer terms
+    for path in paths:
         print(f"Generating {PH_FORCE_SETS_NAME} in {path}...")
         assert os.path.isdir(path), f"Directory {path} does not exist"
         disps = findDirsinDir(path, PHDISP_STATIC_NAME, searchType='start')
         ph_generate_forcesets(path, len(disps), path_pad=ANALYSIS_DIR_NAME)
         if not os.path.isfile(path + PH_FORCE_SETS_NAME):
             err(f"Error: could not find {PH_FORCE_SETS_NAME} in {path}. Check phonopy output for log.")
+    for layer in layers:
+        generate_fc_conf(layer)
+        print(f"Generating {PH_FORCE_CONSTANTS_NAME} in {layer}...")
+        os.chdir(layer)
+        assert os.path.isdir(layer), f"Directory {layer} does not exist"
+        os.popen(f"phonopy {FC_CONF_NAME}")
+        assert os.path.isfile(layer + PH_FORCE_CONSTANTS_NAME), f"{PH_FORCE_CONSTANTS_NAME} not found in {layer}"
     return
 
 if __name__ == '__main__':
