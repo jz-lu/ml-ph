@@ -8,7 +8,7 @@ from itertools import product as prod
 from bzsampler import BZSampler
 import matplotlib.pyplot as plt
 from __directory_searchers import checkPath
-from ___constants_sampling import DEFAULT_KDIM
+from ___constants_sampling import DEFAULT_KDIM, DEFAULT_PARTITION_DENSITY
 from ___constants_phonopy import SUPER_DIM
 from ___constants_names import DEFAULT_PH_BAND_PLOT_NAME
 from ___constants_vasp import VASP_FREQ_TO_INVCM_UNITS
@@ -416,6 +416,7 @@ class TwistedDM:
              DMs_layer2[i] + DM_cfgintra[1]], DM_inter) for i in range(self.n_k)]
         self.corr_mat = self.__block_l2([l1.get_corr_mat() + DM_cfgintra[0], \
              l2.get_corr_mat() + DM_cfgintra[1]], DM_inter)
+        self.sum_rule_applied = False
 
     # Create level-2 (final level--full matrix) block matrix with intralayer and interlayer terms
     def __block_l2(self, DM_intras, DM_inter):
@@ -425,7 +426,12 @@ class TwistedDM:
         return DM
 
     def apply_sum_rule(self):
-        update("ENFORCING: Lukas sum rule")
+        update("ENFORCING: acoustic sum rule")
+        if self.sum_rule_applied:
+            update("Already applied sum rule!")
+            return
+        else:
+            self.sum_rule_applied = True
         dm = self.corr_mat # similar to D(Gamma) but intralayer terms are all at Gamma instead of GM
         blkshp = len(dm)//3
         corr = np.zeros_like(dm, dtype=complex)
@@ -549,7 +555,8 @@ class TwistedDM:
         return
 
 class TwistedDOS:
-    def __init__(self, TDMs, n_G, kdim=DEFAULT_KDIM):
+    def __init__(self, TDMs, n_G, width=0.05, 
+                 partition_density=DEFAULT_PARTITION_DENSITY, kdim=DEFAULT_KDIM):
         assert TDMs[0].shape[0] % (n_G * 2) == 0
         # Eigensort the eigenbasis, then slice off everything but the G0 component
         def sorted_sliced_eigsys(A):
@@ -561,6 +568,10 @@ class TwistedDOS:
             assert vecs.shape == (n_G*2, vals.shape[0])
             return vals, vecs
         self.eigsys = [sorted_sliced_eigsys(TDM) for TDM in TDMs]
-        self.evals = np.array([evals for evals,_ in self.eigsys])
-        self.evecs = np.array([evecs for _,evecs in self.eigsys])
+        self.modes = np.array([(-1*(evals < 0) + 1*(evals > 0)) \
+            * np.sqrt(np.abs(evals)) for evals,_ in self.eigsys])
+        self.weights = np.array([np.square(LA.norm(evecs, axis=0)) for _,evecs in self.eigsys])
+        assert self.modes.shape == self.weights.shape == (kdim**2, TDMs[0].shape[0])
+        self.bin_sz = (np.max(self.modes) - np.min(self.modes)) / partition_density
+        self.Gaussian_width = width
 
