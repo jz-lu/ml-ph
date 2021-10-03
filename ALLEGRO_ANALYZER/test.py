@@ -38,8 +38,8 @@ SP_PATH = ROOT+"SPOSCAR"
 PU_PATH = ROOT+"POSCAR_unit"
 FC_PATH = ROOT+"FORCE_CONSTANTS"
 
-ph = phonopy.load(supercell_filename=SP_PATH,
-                  force_constants_filename=FC_PATH)
+# ph = phonopy.load(supercell_filename=SP_PATH,
+#                   force_constants_filename=FC_PATH)
 supercell = read(SP_PATH)
 prim = read(PU_PATH)
 fcs_phonopy = ForceConstants.read_phonopy(supercell, FC_PATH)
