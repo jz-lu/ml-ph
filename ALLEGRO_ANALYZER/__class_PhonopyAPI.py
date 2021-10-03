@@ -63,12 +63,7 @@ class PhonopyAPI:
             os.chdir(ph_dir)
             assert os.path.isfile(pname), self.POSCAR_ERR_MSG
             assert os.path.isfile(PH_FORCE_CONSTANTS_NAME), ERR_PH_FORCE_CONSTS_NOT_MADE
-
-            # ph = phonopy.load(unitcell_filename=pname, 
-            #                   supercell_matrix=np.diag(self.intra_sp_mat).astype(int), 
-            #                   primitive_matrix=np.eye(3),
-            #                   force_constants_filename=PH_FORCE_CONSTANTS_NAME, 
-            #                   log_level=1) # `log_level` is just the debug-paranoia level
+            
             supercell = read(SPOSCAR_NAME); prim = read(pname)
             fcs_phonopy = ForceConstants.read_phonopy(supercell, PH_FORCE_CONSTANTS_NAME)
             cs = ClusterSpace(prim, [cutoff])

@@ -8,6 +8,7 @@ from itertools import product as prod
 from bzsampler import BZSampler
 import matplotlib.pyplot as plt
 from __directory_searchers import checkPath
+from ___constants_sampling import DEFAULT_KDIM
 from ___constants_phonopy import SUPER_DIM
 from ___constants_names import DEFAULT_PH_BAND_PLOT_NAME
 from ___constants_vasp import VASP_FREQ_TO_INVCM_UNITS
@@ -547,4 +548,19 @@ class TwistedDM:
         print(f"Plot written to {outdir+filename}")
         return
 
+class TwistedDOS:
+    def __init__(self, TDMs, n_G, kdim=DEFAULT_KDIM):
+        assert TDMs[0].shape[0] % (n_G * 2) == 0
+        # Eigensort the eigenbasis, then slice off everything but the G0 component
+        def sorted_sliced_eigsys(A):
+            vals, vecs = LA.eig(A); idxs = vals.argsort()   
+            vals = vals[idxs]; vecs = vecs[:,idxs]
+            mid = vecs.shape[0] // 2; glen = vecs.shape[0] // (n_G * 2)
+            # Cut matrix in half (split by layer), then split by G
+            vecs = np.vstack((vecs[0 : 0+glen], vecs[mid : mid+glen]))
+            assert vecs.shape == (n_G*2, vals.shape[0])
+            return vals, vecs
+        self.eigsys = [sorted_sliced_eigsys(TDM) for TDM in TDMs]
+        self.evals = np.array([evals for evals,_ in self.eigsys])
+        self.evecs = np.array([evecs for _,evecs in self.eigsys])
 

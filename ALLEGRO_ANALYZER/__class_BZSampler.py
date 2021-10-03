@@ -139,6 +139,11 @@ class BZSampler:
             print(f"k at Gamma index {self.Gamma_idx}: {k_set[self.Gamma_idx]}")
         self.corner_kmags = corner_kmags
         return (k_set, k_mags)
+
+    def sample_mesh_k(self, kdim=DEFAULT_KDIM):
+        a = np.linspace(0, 1, kdim, endpoint=False)
+        grid_dir = np.array(list(prod(a,a)))
+        return grid_dir @ self.GM.T
     
     # Sample nk points along each IBZ boundary line
     def sample_k0(self, nk=DEFAULT_NK, log=False):
