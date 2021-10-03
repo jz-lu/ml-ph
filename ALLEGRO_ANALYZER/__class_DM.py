@@ -15,7 +15,7 @@ from ___constants_vasp import VASP_FREQ_TO_INVCM_UNITS
 from ___helpers_parsing import update, succ
 from scipy.linalg import block_diag
 from scipy.sparse import bmat # block matrix
-from math import sqrt, pi
+from math import sqrt, pi, log
 import sys
 from __class_PhonopyAPI import PhonopyAPI
 
@@ -555,9 +555,11 @@ class TwistedDM:
         return
 
 class TwistedDOS:
-    def __init__(self, TDMs, n_G, width=0.05, 
+    def __init__(self, TDMs, n_G, theta, width=0.05, 
                  partition_density=DEFAULT_PARTITION_DENSITY, kdim=DEFAULT_KDIM):
         assert TDMs[0].shape[0] % (n_G * 2) == 0
+        self.theta = theta
+
         # Eigensort the eigenbasis, then slice off everything but the G0 component
         def sorted_sliced_eigsys(A):
             vals, vecs = LA.eig(A); idxs = vals.argsort()   
@@ -567,11 +569,55 @@ class TwistedDOS:
             vecs = np.vstack((vecs[0 : 0+glen], vecs[mid : mid+glen]))
             assert vecs.shape == (n_G*2, vals.shape[0])
             return vals, vecs
+
         self.eigsys = [sorted_sliced_eigsys(TDM) for TDM in TDMs]
         self.modes = np.array([(-1*(evals < 0) + 1*(evals > 0)) \
             * np.sqrt(np.abs(evals)) for evals,_ in self.eigsys])
         self.weights = np.array([np.square(LA.norm(evecs, axis=0)) for _,evecs in self.eigsys])
         assert self.modes.shape == self.weights.shape == (kdim**2, TDMs[0].shape[0])
-        self.bin_sz = (np.max(self.modes) - np.min(self.modes)) / partition_density
-        self.Gaussian_width = width
+        self.modes = self.modes.flatten(); self.weights = self.weights.flatten()
+        self.mode_extrema = [np.min(self.modes), np.max(self.modes)]
+        self.__set_parameters(theta, width, partition_density)
+        self.DOS = None
+        
+    def __set_parameters(self, theta, width, partition_density):
+        # Gaussian is f(x) = A e^(x^2/2 sigma)
+        # Width parameter converts to sigma via http://hyperphysics.phy-astr.gsu.edu/hbase/Math/gaufcn2.html 
+        self.bin_sz = (self.mode_extrema[1] - self.mode_extrema[0]) / partition_density
+        self.omegas = np.linspace(self.mode_extrema[0], self.mode_extrema[1], num=partition_density)
+        self.width = width
+        self.sigma = width / (2 * sqrt(2 * log(2))) 
+        self.A = 1
+        # TODO do adjustments of parameters based ONLY on theta (get rid of width param in function input)
+    
+    # Compute DOS at some list of omegas
+    def __DOS_at_omegas(self, omegas):
+        return [sum([weight * self.A * np.exp(-np.power(omega - omega_k, 2.) / (2 * np.power(self.sigma, 2.))) \
+            for omega_k, weight in zip(self.modes, self.weights) \
+            if abs(omega_k - omega) <= self.bin_sz / 2]) \
+                for omega in omegas]
 
+    # Obtain DOS for plotting / any other use
+    def get_DOS(self):
+        if self.DOS is None:
+            self.DOS = self.__DOS_at_omegas(self.omegas)
+        return self.DOS
+    
+    def plot_DOS(self, vertical=True, outdir='.'):
+        assert os.path.isdir(outdir), f"Invalid directory '{outdir}'"
+        outpath = checkPath(os.path.abspath(outdir)) + f"dos{self.theta}.pdf"
+        plt.clf(); fig, ax = plt.subplots()
+        self.get_DOS()
+        if vertical:
+            ax.plot(self.DOS, self.omegas, c='black')
+            ax.set_xlabel("DOS")
+            ax.set_ylabel(r"$\omega (cm^{-1})$")
+        else:
+            ax.plot(self.omegas, self.DOS, c='black')
+            ax.set_ylabel("DOS")
+            ax.set_xlabel(r"$\omega (cm^{-1})$")
+        fig.title(r"DOS ($\theta = $" + f"{self.theta}" \
+            + r"$^\circ, width = $" + f"{self.width})")
+        fig.savefig(outpath)
+        succ(f"Successfully outputted DOS-{self.theta} to {outpath}")
+        return self.omegas, self.DOS, ax
