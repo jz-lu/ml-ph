@@ -86,10 +86,12 @@ some reason it is useful for different numbers of atoms, simply adjust layer sli
 of `phtnsr` to slice proportional to ratio of atoms, instead of in half.
 """
 class TwistedRealspacePhonon:
-    def __init__(self, theta, GM_set, DM_at_Gamma, n_at, poscars_uc, gridsz=11, outdir='.', cut=6):
-        self.GM_set = GM_set; self.n_G = len(GM_set)
-        self.cut = cut; self.n_at = n_at
-        self.DM_at_Gamma = DM_at_Gamma
+    def __init__(self, theta, k, GM_set, DM_at_k, n_at, 
+                 poscars_uc, gridsz=11, outdir='.', modeidxs=np.linspace(0,6,6)):
+        self.GM_set = GM_set; self.n_G = len(GM_set); self.k = k
+        self.modeidxs = modeidxs; self.nmodes = len(modeidxs); assert self.nmodes >= 1
+        self.n_at = n_at
+        self.DM_at_k = DM_at_k
         angle = np.deg2rad(theta)
         A_delta2inv = LA.inv(np.array([[1-np.cos(angle), np.sin(angle)],[-np.sin(angle), 1-np.cos(angle)]]))
         A0 = poscars_uc[0].structure.lattice.matrix[:2,:2].T
@@ -105,33 +107,33 @@ class TwistedRealspacePhonon:
         self.r_matrix = (self.sc_lattice @ self.r_matrix.T).T # make Cartesian
         self.outdir = checkPath(os.path.abspath(outdir))
         self.phtnsr = None; self.rphtnsr = None # Fourier and real space phonons
-        self.old_rphtnsr_shape = (self.n_r, self.n_at, self.cut, self.d) # realspace phonons
-        self.phtnsr_shape = (self.n_G, self.n_at, self.cut, self.d)
+        self.old_rphtnsr_shape = (self.n_r, self.n_at, self.nmodes, self.d) # realspace phonons
+        self.phtnsr_shape = (self.n_G, self.n_at, self.nmodes, self.d)
         print("Initializing twisted realspace phonon object...")
         self.__phonon_inverse_fourier()
-        print(f"Twisted realspace phonon object initialized. Cut={cut}")
+        print(f"Twisted realspace phonon object initialized. Mode indices={self.modeidxs}")
 
     def __DM_to_phtnsr(self):
         print("Diagonalizing and sorting dynamical matrix at Gamma...")
-        def sorted_eigsys(A):
+        def sorted_filtered_eigsys(A):
             vals, vecs = LA.eig(A); idxs = vals.argsort()   
             vals = vals[idxs]; vecs = vecs[:,idxs]
             return vals, vecs
-        evals, evecs = sorted_eigsys(self.DM_at_Gamma)
+        evals, evecs = sorted_filtered_eigsys(self.DM_at_k)
         print("Diagonalized.")
         print("Transforming eigenmatrix into truncated Fourier phonon tensor...")
         # In this case n_at refers to number of atoms in entire bilayer unit cell
-        evecs = np.array(evecs[:,:self.cut]).T # shape: (C, n_G x n_at x d) [c := cut = num evecs]
+        evecs = np.array(evecs[:,self.modeidxs]).T # shape: (C, n_G x n_at x d) [c := cut = num evecs]
         evecs_by_layer = np.split(evecs, 2, axis=1) # layer slice must be first
         for li in range(2): # each layer has shape: (C, n_G x n_at/2 x d)
             evecs_by_layer[li] = np.array(np.split(evecs_by_layer[li], self.n_G, axis=1)) # shape: (n_G, C, n_at/2 x d)
             evecs_by_layer[li] = np.array(np.split(evecs_by_layer[li], self.n_at//2, axis=2)) # shape: (n_at/2, n_G, C, d)
             print(f"Final evec shape for layer {li}: {evecs_by_layer[li].shape}")
         evecs = np.concatenate(evecs_by_layer, axis=0) # bring them together, so shape: (n_at, n_G, C, d)
-        assert evecs.shape == (self.n_at, self.n_G, self.cut, self.d), f"Incorrect shape {evecs.shape}"
+        assert evecs.shape == (self.n_at, self.n_G, self.nmodes, self.d), f"Incorrect shape {evecs.shape}"
         self.phtnsr = np.transpose(evecs, axes=(1,0,2,3)) # shape: (n_G, n_at, C, d)
         assert self.phtnsr.shape == self.phtnsr_shape, f"Unexpected phonon tensor shape {self.phtnsr.shape}, expected {self.phtnsr_shape}"
-        self.evals_real = np.real(np.array(evals)[:self.cut])
+        self.evals_real = np.real(np.array(evals)[self.nmodes])
         print(f"Fourier phonon tensor constructed: shape {self.phtnsr.shape}")
 
     def __build_modes(self):
@@ -143,10 +145,13 @@ class TwistedRealspacePhonon:
     def __phonon_inverse_fourier(self):
         self.__build_modes()
         print("Building realspace phonon tensor...")
-        self.rphtnsr = np.array([sum([G_blk * np.exp(1j * np.dot(GM, r)) for G_blk, GM in zip(self.phtnsr, self.GM_set)]) for r in self.r_matrix])
-        assert self.rphtnsr.shape == self.old_rphtnsr_shape, f"Unexpected phonon tensor shape {self.rphtnsr.shape}, expected {self.old_rphtnsr_shape}"
+        # TODO does phase sign matter?
+        self.rphtnsr = np.array([sum([G_blk * np.exp(-1j * np.dot(GM, r)) 
+            for G_blk, GM in zip(self.phtnsr, self.GM_set)]) for r in self.r_matrix])
+        assert self.rphtnsr.shape == self.old_rphtnsr_shape, \
+            f"Unexpected phonon tensor shape {self.rphtnsr.shape}, expected {self.old_rphtnsr_shape}"
         self.rphtnsr = np.transpose(self.rphtnsr, axes=(1,2,0,3)) # shape: (n_at, C, n_r, d)
-        assert self.rphtnsr.shape == (self.n_at, self.cut, self.n_r, self.d)
+        assert self.rphtnsr.shape == (self.n_at, self.nmodes, self.n_r, self.d)
         print(f"Realspace phonon tensor built: shape {self.rphtnsr.shape}")
     
     def plot_spatial_avgs(self, outname='spavg.png'):
@@ -178,8 +183,8 @@ class TwistedRealspacePhonon:
                 ax.set_ylim(lim)
                 ax.set_xlim(lim)
                 ax.set_aspect('equal')
-            plt.suptitle(f"Mean field phonons from continuum (mode {m_j})")
-            this_outname = outname[:outname.index('.')] + f'_{m_j}' + outname[outname.index('.'):]
+            plt.suptitle(f"Mean field phonons from continuum (mode {self.modeidxs[m_j]})")
+            this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}' + outname[outname.index('.'):]
             fig.savefig(self.outdir + this_outname)
             plt.close(fig)
         succ("Successfully outputted spatial-average phonon plots")
@@ -201,8 +206,8 @@ class TwistedRealspacePhonon:
             axes[1].set_title('xz')
             for ax in axes:
                 ax.set_aspect('equal')
-            plt.suptitle(f"Mean atom phonons in diagonal cut (mode {m_j})")
-            this_outname = outname[:outname.index('.')] + f'_{m_j}' + outname[outname.index('.'):]
+            plt.suptitle(f"Mean atom phonons in diagonal cut (mode {self.modeidxs[m_j]})")
+            this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}' + outname[outname.index('.'):]
             fig.savefig(self.outdir + this_outname)
             plt.close(fig)
         succ("Successfully outputted atomic-average phonon plots")
@@ -218,11 +223,11 @@ class TwistedRealspacePhonon:
                             phonons[:,0], phonons[:,1], phonons[:,2], length=0.5)
                 plt.xlabel("x"); plt.ylabel("y")
                 ax.scatter(coords[:,0], coords[:,1], np.zeros(self.n_r), c='black')
-                this_outname = outname[:outname.index('.')] + f'_{m_j}_{at_i}' + outname[outname.index('.'):]
+                this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{at_i}' + outname[outname.index('.'):]
                 plt.title(f"Phonon directions (" + r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" mode {m_j}, atom {at_i}) in moire cell")
                 ax.view_init(elev=90, azim=-90); ax.set_zlim(-0.25,0.25)
                 fig.savefig(self.outdir + this_outname)
                 plt.close(fig)
                 update(f"Wrote twisted phonons in realspace to {self.outdir + this_outname}")
-        succ(f"Successfully generated {self.cut * self.n_at} realspace twisted phonon plots")
+        succ(f"Successfully generated {self.nmodes * self.n_at} realspace twisted phonon plots")
 

@@ -232,24 +232,6 @@ if __name__ == '__main__':
             relax_api = RelaxerAPI(np.rad2deg(theta), gridsz, outdir, s0.T)
             b_relaxed = relax_api.get_configs(cartesian=True)
             relax_api.plot_relaxation()
-            if relax == RELAX_SPLINE_INTERP:
-                print("Using spline interpolation...")
-                interp = ForceInterp(config_ph_list, np.array(b_set))
-                relaxed_forces = interp.fc_tnsr_at(b_relaxed)
-            else:
-                print("Using Fourier interpolation...")
-                interp = FourierForceInterp(config_ph_list, np.array(b_set), s0.T)
-                relaxed_forces = interp.predict(b_relaxed)
-                assert relaxed_forces.shape[-1] == b_relaxed.shape[0], \
-                    f"Inconsistent force index {relaxed_forces.shape[-1]}, b index {b_relaxed.shape[0]}"
-            print(f"Relaxed interpolation force tensor is of shape: {relaxed_forces.shape}")
-            # Relaxed forces tensor has index (nS,nS,3,3,bidx), but needs to be of form (bidx,nS,nS,3,3)
-            relaxed_forces = np.transpose(relaxed_forces, axes=(4,0,1,2,3))
-            print(f"Transposed to shape: {relaxed_forces.shape}")
-            
-            # TODO uncomment when testing our model
-            # for i in range(len(config_ph_list)):
-            #     config_ph_list[i]._force_constants = relaxed_forces[i]
 
         print("Note: Using GM sampling set from intralayer calculations.")
         print("Constructing interlayer dynamical matrix objects...")
@@ -283,10 +265,11 @@ if __name__ == '__main__':
             TDM.print_force_sum()
 
         if realspace:
-            print("Analyzing phonons in realspace...")
+            print("Analyzing phonons in realspace at Gamma point...")
             n_at = sum([sum(p.natoms) for p in poscars_uc])
             print(f"Number of atoms in bilayer configuration cell: {n_at}")
-            twrph = TwistedRealspacePhonon(np.rad2deg(theta), GM_set, TDM.get_DM_at_Gamma(), n_at, poscars_uc, outdir=outdir)
+            twrph = TwistedRealspacePhonon(np.rad2deg(theta), np.array([0,0]), GM_set, 
+                    TDM.get_DM_at_Gamma(), n_at, poscars_uc, outdir=outdir)
             print("Phonons in realspace analyzed.")
             # twrph.plot_phonons()
             twrph.plot_spatial_avgs()
