@@ -21,7 +21,7 @@ from ___constants_names import (
     POSCAR_CONFIG_NAMEPRE, 
     SHIFT_NAME, SHIFTS_NPY_NAME, 
     DEFAULT_PH_BAND_PLOT_NAME, 
-    ANGLE_SAMPLE_INAME, 
+    ANGLE_SAMPLE_INAME, RSPC_LIST_INAME, 
     MODE_TNSR_ONAME, ANGLE_SAMPLE_ONAME, GAMMA_IDX_ONAME, 
     K_MAGS_ONAME, K_SET_ONAME, DM_TNSR_ONAME
 )
@@ -33,7 +33,7 @@ from __class_RelaxerAPI import RelaxerAPI
 from __class_ForceInterp import ForceInterp, FourierForceInterp
 from __class_PhononConfig import TwistedRealspacePhonon
 from ___helpers_parsing import greet, update, succ, warn, err, is_flag, check_not_flag
-import os, sys, copy
+import os, sys, copy, argparse
 from math import pi
 
 #* deprecated
@@ -42,49 +42,26 @@ RELAX_SPLINE_INTERP = 2
     
 if __name__ == '__main__':
     start = time()
-    USAGE_MSG = f"Usage: python3 {sys.argv[0]} -deg <twist angle (deg)> -name <solid name> -cut <frequency cutoff> -dir <base I/O dir> -o <output dir>"
-    args = sys.argv[1:]; i = 0; n = len(args)
-    indir = '.'; outdir = '.'; theta = None; name = None; outname = DEFAULT_PH_BAND_PLOT_NAME; cutoff = None
-    plot_intra = False; relax = False; realspace = False; force_sum = False; multirelax = False
-    do_sum_rule = True
-    while i < n:
-        if not is_flag(args[i]):
-            warn(f'Warning: token "{args[i]}" is out of place and will be ignored')
-            i += 1; continue
-        if args[i] == '-dir':
-            i += 1; check_not_flag(args[i]); indir = args[i]; i += 1
-        elif args[i] == '-o':
-            i += 1; check_not_flag(args[i]); outdir = args[i]; i += 1
-        elif args[i] == '-deg':
-            i += 1; check_not_flag(args[i]); theta = np.deg2rad(float(args[i])); i += 1
-            print(f"theta: {np.rad2deg(theta)}")
-        elif args[i] == '--ns':
-            i += 1; do_sum_rule = False; print("NOT using sum rule...")
-        elif args[i] == '-name':
-            i += 1; check_not_flag(args[i]); name = args[i]; i += 1
-        elif args[i] == '-cut':
-            i += 1; check_not_flag(args[i]); cutoff = float(args[i]); i += 1
-        elif args[i] == '-fout':
-            i += 1; check_not_flag(args[i]); outname = args[i]; i += 1
-        elif args[i] == '--intra':
-            i += 1; plot_intra = True
-        elif args[i] == '--relax' or args[i] == '-r':
-            i += 1
-            relax = RELAX_SPLINE_INTERP if args[i] in ['r', 'real', 'R', 'REAL'] else RELAX_FOURIER_INTERP
-            i += 1 
-        elif args[i] == '--mr':
-            i += 1
-            multirelax = True
-        elif args[i] == '--real':
-            i += 1; realspace = True
-        elif args[i] == '--fsum':
-            i += 1; force_sum = True
-        elif args[i] in ['--usage', '--help', '-h']:
-            print(USAGE_MSG)
-            sys.exit(0)
-        else:
-            warn(f'Warning: unknown flag "{args[i]}" ignored')
-            i += 1
+    parser = argparse.ArgumentParser(description="Moire phonon analysis machine")
+    parser.add_argument("theta", type=float, help='twist angle')
+    parser.add_argument("-d", "--dir", type=str, help='main directory path', default=".")
+    parser.add_argument("-o", "--out", type=str, help='output path', default=".")
+    parser.add_argument("--ns", action="store_true", help='do not apply sum rule')
+    parser.add_argument("-n", "--name", type=str, help='material name')
+    parser.add_argument("-c", "--cut", type=int, help='band range cutoff')
+    parser.add_argument("--oname", type=str, help='material name', default=DEFAULT_PH_BAND_PLOT_NAME)
+    parser.add_argument("--intra", action="store_true", help='do intralayer analysis')
+    parser.add_argument("-r", "--relax", action="store_true", help='do theta-relaxation')
+    parser.add_argument("--mr", action="store_true", help=f'multirelax (req parameter file \'{ANGLE_SAMPLE_INAME}\')')
+    parser.add_argument("--rs", action="store_true", help='do realspace analysis')
+    parser.add_argument("-f", "--fsum", action="store_true", help='output force sums (only useful for debugging)')
+    args = parser.parse_args()
+    
+    # Legacy compatibility
+    theta = args.theta; indir = args.dir; outdir = args.out; multirelax = args.mr
+    relax = args.relax; plot_intra = args.intra; force_sum = args.fsum; name = args.name
+    cutoff = args.cut; realspace = args.rs; do_sum_rule = not args.ns
+
     if not theta:
         err(f"Error: must supply twist angle. Run `python3 {sys.argv[0]} --usage` for help.")
     indir = checkPath(os.path.abspath(indir)); outdir = checkPath(os.path.abspath(outdir))
@@ -93,6 +70,8 @@ if __name__ == '__main__':
     if multirelax:
         assert not relax, f"`multirelax` and `relax` are incompatible options"
         assert os.path.isfile(indir + ANGLE_SAMPLE_INAME), f"Must provide input file {ANGLE_SAMPLE_INAME}"
+    if realspace:
+        assert os.path.isfile(indir + RSPC_LIST_INAME), f"Must provide input file {RS_LIST_INAME}"
     print(f"WD: {indir}, Output to: {outdir}")
     outname = 'd' + str(round(np.rad2deg(theta))) + "_" + outname
     print("Building twisted crystal phonon modes...")
@@ -244,12 +223,6 @@ if __name__ == '__main__':
                              [p.structure.species for p in poscars_uc], 
                              ph_list=config_ph_list, 
                              force_matrices=None, br_set=b_relaxed)
-        # ILDM.plot_pristine_band(2*pi*LA.inv(poscars_uc[0].structure.lattice.matrix[:2,:2].T).T, 
-        #                         k0_set, k0_mags, corner_k0mags, outdir=outdir)
-        # evals = LA.eigvals(ILDM.get_DM())
-        # signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
-        # modes_k = signs * np.sqrt(np.abs(evals)) * (15.633302*33.356) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
-        # print("Interlayer modes (k-independent):", modes_k[modes_k != 0])
         print("Interlayer DM objects constructed.")
 
         print("Combining into a single twisted dynamical matrix object...")
@@ -269,9 +242,10 @@ if __name__ == '__main__':
             n_at = sum([sum(p.natoms) for p in poscars_uc])
             print(f"Number of atoms in bilayer configuration cell: {n_at}")
             twrph = TwistedRealspacePhonon(np.rad2deg(theta), np.array([0,0]), GM_set, 
-                    TDM.get_DM_at_Gamma(), n_at, poscars_uc, outdir=outdir)
+                    TDM.get_DM_at_Gamma(), n_at, poscars_uc, 
+                    outdir=outdir, modeidxs=np.loadtxt(indir + RSPC_LIST_INAME))
             print("Phonons in realspace analyzed.")
-            # twrph.plot_phonons()
+            twrph.plot_phonons()
             twrph.plot_spatial_avgs()
             twrph.plot_atomic_avgs()
 

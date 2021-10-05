@@ -213,16 +213,17 @@ class TwistedRealspacePhonon:
         succ("Successfully outputted atomic-average phonon plots")
 
     def plot_phonons(self, outname='phreal.png'):
-        coords = self.r_matrix; coords[:,:1] /= 50
+        coords = self.r_matrix
         np.save(self.outdir + "rphtnsr.npy", self.rphtnsr)
         for at_i, atomic_blk in enumerate(self.rphtnsr):
             for m_j, phonons in enumerate(atomic_blk):
                 # phonons = np.array([wf/LA.norm(wf) for wf in phonons])
-                plt.clf(); fig = plt.figure(); ax = fig.gca(projection='3d')
-                plt.quiver(coords[:,0], coords[:,1], np.zeros(self.n_r), 
-                            phonons[:,0], phonons[:,1], phonons[:,2], length=0.5)
+                plt.clf(); fig, ax = plt.subplots()
+                plt.quiver(coords[:,0], coords[:,1],    # positions
+                           phonons[:,0], phonons[:,1],  # arrows
+                           phonons[:,2])                # arrow colors
                 plt.xlabel("x"); plt.ylabel("y")
-                ax.scatter(coords[:,0], coords[:,1], np.zeros(self.n_r), c='black')
+                ax.scatter(coords[:,0], coords[:,1], c='black')
                 this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{at_i}' + outname[outname.index('.'):]
                 plt.title(f"Phonon directions (" + r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" mode {m_j}, atom {at_i}) in moire cell")
                 ax.view_init(elev=90, azim=-90); ax.set_zlim(-0.25,0.25)

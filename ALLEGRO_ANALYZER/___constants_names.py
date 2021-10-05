@@ -24,6 +24,7 @@ CMD_LINE_ARG_LIST = [ELEDOS, ELEBAND, PHDOS, PHBAND, ENERGIES, PH]
 
 # Input files for sampling
 ANGLE_SAMPLE_INAME = 'theta.txt'
+RSPC_LIST_INAME = 'rs.txt'
 ISPC_SAMPLE_INAME = 'ispc.txt'
 LC_SAMPLE_INAME = 'lc.txt'
 
