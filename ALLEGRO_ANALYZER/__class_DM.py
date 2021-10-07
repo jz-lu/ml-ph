@@ -10,12 +10,13 @@ import matplotlib.pyplot as plt
 from __directory_searchers import checkPath
 from ___constants_sampling import DEFAULT_KDIM, DEFAULT_PARTITION_DENSITY
 from ___constants_phonopy import SUPER_DIM
-from ___constants_names import DEFAULT_PH_BAND_PLOT_NAME
+from ___constants_names import DEFAULT_PH_BAND_PLOT_NAME, DEFAULT_PH_BANDDOS_PLOT_NAME
 from ___constants_vasp import VASP_FREQ_TO_INVCM_UNITS
 from ___helpers_parsing import update, succ
 from scipy.linalg import block_diag
 from scipy.sparse import bmat # block matrix
 from math import sqrt, pi, log
+from multiprocessing import Pool
 import sys
 from __class_PhonopyAPI import PhonopyAPI
 
@@ -417,6 +418,12 @@ class TwistedDM:
         self.corr_mat = self.__block_l2([l1.get_corr_mat() + DM_cfgintra[0], \
              l2.get_corr_mat() + DM_cfgintra[1]], DM_inter)
         self.sum_rule_applied = False
+        self.intra_set = [block_diag(DMs_layer1[i], DMs_layer2[i]) for i in range(self.n_k)]
+        assert self.intra_set[0].shape == self.DMs[0].shape
+    
+    # Dynamical matrix without any interlayer coupling
+    def get_intra_set(self): 
+        return self.intra_set
 
     # Create level-2 (final level--full matrix) block matrix with intralayer and interlayer terms
     def __block_l2(self, DM_intras, DM_inter):
@@ -553,26 +560,42 @@ class TwistedDM:
         plt.savefig(outdir + filename, format='pdf')
         print(f"Plot written to {outdir+filename}")
         return
+    
+def DOS_at_omega(enum, A, sigma, modes, weights, bin_sz):
+    idx, omega = enum
+    if idx % 100 == 0:
+        print(".", end="", flush=True)
+    return sum([weight * A * np.exp(-np.power(omega - omega_k, 2.) / (2 * np.power(sigma, 2.))) \
+        for omega_k, weight in zip(modes, weights) \
+        if abs(omega_k - omega) <= bin_sz / 2]) 
+
+# Eigensort the eigenbasis, then slice off everything but the G0 component
+def sorted_sliced_eigsys(A, idx, n_G):
+    vals, vecs = LA.eig(A); idxs = vals.argsort()   
+    vals = vals[idxs]; vecs = vecs[:,idxs]
+    mid = vecs.shape[0] // 2; glen = vecs.shape[0] // (n_G * 2)
+    # Cut matrix in half (split by layer), then split by G
+    vecs = np.vstack((vecs[0 : 0+glen], vecs[mid : mid+glen]))
+    assert vecs.shape == (glen*2, vals.shape[0])
+    if idx % 100 == 0:
+        print(".", end='', flush=True)
+    return vals, vecs
 
 class TwistedDOS:
-    def __init__(self, TDMs, n_G, theta, width=0.05, 
+    def __init__(self, TDMs, TDMs_intra, n_G, theta, width=0.05, 
                  partition_density=DEFAULT_PARTITION_DENSITY, kdim=DEFAULT_KDIM):
         assert TDMs[0].shape[0] % (n_G * 2) == 0
+        assert TDMs_intra[0].shape[0] % (n_G * 2) == 0
         self.theta = theta
 
-        # Eigensort the eigenbasis, then slice off everything but the G0 component
-        def sorted_sliced_eigsys(A):
-            vals, vecs = LA.eig(A); idxs = vals.argsort()   
-            vals = vals[idxs]; vecs = vecs[:,idxs]
-            mid = vecs.shape[0] // 2; glen = vecs.shape[0] // (n_G * 2)
-            # Cut matrix in half (split by layer), then split by G
-            vecs = np.vstack((vecs[0 : 0+glen], vecs[mid : mid+glen]))
-            assert vecs.shape == (n_G*2, vals.shape[0])
-            return vals, vecs
-
-        self.eigsys = [sorted_sliced_eigsys(TDM) for TDM in TDMs]
+        print("Diagonalizing Moire dynamical matrices", end='', flush=True)
+        # from itertools import repeat
+        # with Pool() as p:
+        #     self.eigsys = p.starmap(sorted_sliced_eigsys, zip(TDMs, range(len(TDMs)), repeat(n_G)))
+        self.eigsys = [sorted_sliced_eigsys(TDM, i, n_G) for i, TDM in enumerate(TDMs)]
+        print(" done", flush=True)
         self.modes = np.array([(-1*(evals < 0) + 1*(evals > 0)) \
-            * np.sqrt(np.abs(evals)) for evals,_ in self.eigsys])
+            * np.sqrt(np.abs(evals)) * VASP_FREQ_TO_INVCM_UNITS for evals,_ in self.eigsys])
         self.weights = np.array([np.square(LA.norm(evecs, axis=0)) for _,evecs in self.eigsys])
         assert self.modes.shape == self.weights.shape == (kdim**2, TDMs[0].shape[0])
         self.modes = self.modes.flatten(); self.weights = self.weights.flatten()
@@ -589,23 +612,28 @@ class TwistedDOS:
         self.sigma = width / (2 * sqrt(2 * log(2))) 
         self.A = 1
         # TODO do adjustments of parameters based ONLY on theta (get rid of width param in function input)
-    
+
     # Compute DOS at some list of omegas
     def __DOS_at_omegas(self, omegas):
-        return [sum([weight * self.A * np.exp(-np.power(omega - omega_k, 2.) / (2 * np.power(self.sigma, 2.))) \
-            for omega_k, weight in zip(self.modes, self.weights) \
-            if abs(omega_k - omega) <= self.bin_sz / 2]) \
-                for omega in omegas]
+        print("Getting DOS at omegas", end="", flush=True)
+        # from functools import partial
+        # with Pool(5) as p:
+        #     DOSs = p.map(partial(DOS_at_omega, 
+        #                 A=self.A, sigma=self.sigma, modes=self.modes, weights=self.weights, bin_sz=self.bin_sz), 
+        #                 enumerate(omegas)) 
+        DOSs = [DOS_at_omega(enum, self.A, self.sigma, self.modes, self.weights, self.bin_sz) for enum in enumerate(omegas)]
+        print(" done", flush=True)
+        return DOSs
 
     # Obtain DOS for plotting / any other use
     def get_DOS(self):
         if self.DOS is None:
             self.DOS = self.__DOS_at_omegas(self.omegas)
-        return self.DOS
+        return self.omegas, self.DOS
     
     def plot_DOS(self, vertical=True, outdir='.'):
         assert os.path.isdir(outdir), f"Invalid directory '{outdir}'"
-        outpath = checkPath(os.path.abspath(outdir)) + f"dos{self.theta}.pdf"
+        outpath = checkPath(os.path.abspath(outdir)) + f"dos{self.theta}_{self.width}.pdf"
         plt.clf(); fig, ax = plt.subplots()
         self.get_DOS()
         if vertical:
@@ -615,9 +643,51 @@ class TwistedDOS:
         else:
             ax.plot(self.omegas, self.DOS, c='black')
             ax.set_ylabel("DOS")
-            ax.set_xlabel(r"$\omega (cm^{-1})$")
-        fig.title(r"DOS ($\theta = $" + f"{self.theta}" \
+            ax.set_xlabel(r"$\omega$ $(cm^{-1})$")
+        ax.set_title(rf"DOS ($\theta = {self.theta}$" \
             + r"$^\circ, width = $" + f"{self.width})")
         fig.savefig(outpath)
         succ(f"Successfully outputted DOS-{self.theta} to {outpath}")
         return self.omegas, self.DOS, ax
+    
+
+class TwistedPlotter:
+    def __init__(self, theta, omegas, DOS, mode_set, corner_kmags, cutoff=None):
+        self.theta = theta
+        self.omegas = omegas
+        self.DOS = DOS
+        self.mode_set = mode_set
+        self.corner_kmags = corner_kmags
+        self.cutoff = cutoff
+        print("Initialized TwistedPlotter object")
+    
+    def make_plot(self, outdir='./', filename=DEFAULT_PH_BANDDOS_PLOT_NAME, name=None):
+        outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Invalid directory {outdir}"
+        plt.clf(); _, [axband, axdos] = plt.subplots(nrows=1, ncols=2, sharey=True)
+        lims = [0,0]
+        for k_mag, modes in self.mode_set:
+            if self.cutoff is not None:
+                modes = modes[modes <= self.cutoff]
+            lims[0] = min(0, lims[0], min(modes))
+            lims[1] = max(lims[1], max(modes))
+            axband.scatter([k_mag] * len(modes), modes, c='black', s=0.07)
+        lims[1] += 30; plt.ylim(lims)
+        xlabs = (r'K', r'$\Gamma$', r'M', r'K')
+        axband.set_xticks(self.corner_kmags, xlabs)
+        axband.set_ylabel(r'$\omega\,(\mathrm{cm}^{-1})$')
+        title = r"Phonon modes"
+        if name is not None:
+            title += f" of {name} bilayer"
+        title += r" at " + '%.1lf'%self.theta + r"$^\circ$"
+        axband.set_title(title)
+
+        if self.cutoff is not None:
+            self.DOS = self.DOS[self.omegas <= self.cutoff]
+            self.omegas = self.omegas[self.omegas <= self.cutoff]
+        axdos.plot(self.DOS, self.omegas, c='black')
+        plt.ylim(lims)
+
+        plt.savefig(outdir + filename, format='pdf')
+        print(f"Plot written to {outdir+filename}")
+
+        

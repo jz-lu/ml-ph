@@ -11,7 +11,7 @@ from phonopy import Phonopy
 import phonopy
 import pymatgen.core.structure as struct
 from pymatgen.io.vasp.inputs import Poscar
-from __class_DM import TwistedDM, InterlayerDM, MonolayerDM
+from __class_DM import TwistedDM, InterlayerDM, MonolayerDM, TwistedDOS, TwistedPlotter
 from __class_PhonopyAPI import PhonopyAPI
 from bzsampler import get_bz_sample
 from ___constants_names import (
@@ -20,7 +20,7 @@ from ___constants_names import (
     MONOLAYER_DIR_NAME, CONFIG_DIR_NAME, CONFIG_SUBDIR_NAME, 
     POSCAR_CONFIG_NAMEPRE, 
     SHIFT_NAME, SHIFTS_NPY_NAME, 
-    DEFAULT_PH_BAND_PLOT_NAME, 
+    DEFAULT_PH_BAND_PLOT_NAME, DEFAULT_PH_BANDDOS_PLOT_NAME, 
     ANGLE_SAMPLE_INAME, RSPC_LIST_INAME, 
     MODE_TNSR_ONAME, ANGLE_SAMPLE_ONAME, GAMMA_IDX_ONAME, 
     K_MAGS_ONAME, K_SET_ONAME, DM_TNSR_ONAME
@@ -49,18 +49,21 @@ if __name__ == '__main__':
     parser.add_argument("--ns", action="store_true", help='do not apply sum rule')
     parser.add_argument("-n", "--name", type=str, help='material name')
     parser.add_argument("-c", "--cut", type=int, help='band range cutoff')
-    parser.add_argument("--oname", type=str, help='material name', default=DEFAULT_PH_BAND_PLOT_NAME)
+    parser.add_argument("--oname", type=str, help='output filename', default=DEFAULT_PH_BAND_PLOT_NAME)
     parser.add_argument("--intra", action="store_true", help='do intralayer analysis')
     parser.add_argument("-r", "--relax", action="store_true", help='do theta-relaxation')
     parser.add_argument("--mr", action="store_true", help=f'multirelax (req parameter file \'{ANGLE_SAMPLE_INAME}\')')
     parser.add_argument("--rs", action="store_true", help='do realspace analysis')
+    parser.add_argument("--dos", type=int, help='DOS k-mesh size')
     parser.add_argument("-f", "--fsum", action="store_true", help='output force sums (only useful for debugging)')
     args = parser.parse_args()
     
     # Legacy compatibility
-    theta = args.theta; indir = args.dir; outdir = args.out; multirelax = args.mr
+    theta = np.deg2rad(args.theta); indir = args.dir; outdir = args.out; multirelax = args.mr
     relax = args.relax; plot_intra = args.intra; force_sum = args.fsum; name = args.name
-    cutoff = args.cut; realspace = args.rs; do_sum_rule = not args.ns
+    cutoff = args.cut; realspace = args.rs; do_sum_rule = not args.ns; outname = args.oname
+    if (args.dos is not None) and outname == DEFAULT_PH_BAND_PLOT_NAME:
+        outname = DEFAULT_PH_BANDDOS_PLOT_NAME
 
     if not theta:
         err(f"Error: must supply twist angle. Run `python3 {sys.argv[0]} --usage` for help.")
@@ -71,7 +74,7 @@ if __name__ == '__main__':
         assert not relax, f"`multirelax` and `relax` are incompatible options"
         assert os.path.isfile(indir + ANGLE_SAMPLE_INAME), f"Must provide input file {ANGLE_SAMPLE_INAME}"
     if realspace:
-        assert os.path.isfile(indir + RSPC_LIST_INAME), f"Must provide input file {RS_LIST_INAME}"
+        assert os.path.isfile(indir + RSPC_LIST_INAME), f"Must provide input file {RSPC_LIST_INAME}"
     print(f"WD: {indir}, Output to: {outdir}")
     outname = 'd' + str(round(np.rad2deg(theta))) + "_" + outname
     print("Building twisted crystal phonon modes...")
@@ -83,6 +86,7 @@ if __name__ == '__main__':
     poscars_uc = [Poscar.from_file(indir + pname) for pname in poscars_uc]
     assert npos > 1, "Must give at least 2 POSCARs, 1 per layer, for twist calculations"
     assert npos == DEFAULT_NUM_LAYERS, "Twist calculations for more than 2 layers not supported (yet)"
+    assert (args.dos is None) or (args.dos >= 21), f"k-mesh size must be at least 21"
     s0 = poscars_uc[0].structure.lattice.matrix[0:2, 0:2]
     s1 = poscars_uc[1].structure.lattice.matrix[0:2, 0:2]
     n_at = [len(posc.structure.species) for posc in poscars_uc]
@@ -227,10 +231,10 @@ if __name__ == '__main__':
 
         print("Combining into a single twisted dynamical matrix object...")
         TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc], Gamma_idx)
-        TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, filename="nosum"+outname, cutoff=cutoff)
+        # TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, filename="nosum"+outname, cutoff=cutoff)
         if do_sum_rule:
             TDM.apply_sum_rule()
-        TDM.modes_built = False # re-diagonalize matrix after applying sum rule
+        # TDM.modes_built = False # re-diagonalize matrix after applying sum rule
         print("Twisted dynamical matrix object constructed.")
 
         if force_sum:
@@ -248,9 +252,19 @@ if __name__ == '__main__':
             twrph.plot_phonons()
             twrph.plot_spatial_avgs()
             twrph.plot_atomic_avgs()
-
+        
         print(f"Diagonalizing and outputting modes with corners {corner_kmags}...")
-        TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, filename=outname, cutoff=cutoff)
+        if args.dos is not None:
+            print("Including DOS...")
+            TDMs = TDM.get_DM_set()
+            TDMs_intra = TDM.get_intra_set()
+            mode_set = TDM.build_modes()
+            TDOS = TwistedDOS(TDMs, TDMs_intra, len(GM_set), np.rad2deg(theta), width=0.05, kdim=args.dos)
+            omegas, DOS = TDOS.get_DOS()
+            TPLT = TwistedPlotter(np.rad2deg(theta), omegas, DOS, mode_set, corner_kmags, cutoff=cutoff)
+            TPLT.make_plot(outdir=outdir, name=name, filename=outname)
+        else:
+            TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, filename=outname, cutoff=cutoff)
         print("Modes outputted.")
 
     succ("Successfully completed phonon mode analysis (Took %.3lfs)."%(time()-start))

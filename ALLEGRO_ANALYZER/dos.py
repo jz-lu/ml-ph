@@ -193,13 +193,15 @@ if __name__ == '__main__':
         print("Interlayer DM objects constructed.")
 
         print("Combining into a single twisted dynamical matrix object...")
-        TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, None, [p.structure.species for p in poscars_uc], 0)
+        TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, np.zeros(len(k_mesh)), 
+                        [p.structure.species for p in poscars_uc], 0)
         if do_sum_rule:
             TDM.apply_sum_rule()
         print("Twisted dynamical matrix object constructed.")
 
         TDMs = TDM.get_DM_set()
-        dos = TwistedDOS(TDMs, len(GM_set), np.rad2deg(theta), width=width, kdim=kdim)
+        TDMs_intra = TDM.get_intra_set()
+        dos = TwistedDOS(TDMs, TDMs_intra, len(GM_set), np.rad2deg(theta), width=width, kdim=kdim)
         print("DOS object constructed")
         dos.plot_DOS(vertical=False, outdir=outdir)
 
