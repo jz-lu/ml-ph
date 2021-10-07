@@ -89,7 +89,8 @@ class TwistedRealspacePhonon:
     def __init__(self, theta, k, GM_set, DM_at_k, n_at, 
                  poscars_uc, gridsz=11, outdir='.', modeidxs=np.linspace(0,6,6)):
         self.GM_set = GM_set; self.n_G = len(GM_set); self.k = k
-        self.modeidxs = modeidxs; self.nmodes = len(modeidxs); assert self.nmodes >= 1
+        self.modeidxs = np.array(modeidxs).astype(int)
+        self.nmodes = len(modeidxs); assert self.nmodes >= 1
         self.n_at = n_at
         self.DM_at_k = DM_at_k
         angle = np.deg2rad(theta)
@@ -120,10 +121,11 @@ class TwistedRealspacePhonon:
             vals = vals[idxs]; vecs = vecs[:,idxs]
             return vals, vecs
         evals, evecs = sorted_filtered_eigsys(self.DM_at_k)
+        breakpoint()
         print("Diagonalized.")
         print("Transforming eigenmatrix into truncated Fourier phonon tensor...")
         # In this case n_at refers to number of atoms in entire bilayer unit cell
-        evecs = np.array(evecs[:,self.modeidxs]).T # shape: (C, n_G x n_at x d) [c := cut = num evecs]
+        evecs = np.array(evecs[:,self.modeidxs]).T # shape: (C, n_G x n_at x d) [C := num evecs]
         evecs_by_layer = np.split(evecs, 2, axis=1) # layer slice must be first
         for li in range(2): # each layer has shape: (C, n_G x n_at/2 x d)
             evecs_by_layer[li] = np.array(np.split(evecs_by_layer[li], self.n_G, axis=1)) # shape: (n_G, C, n_at/2 x d)
@@ -146,7 +148,7 @@ class TwistedRealspacePhonon:
         self.__build_modes()
         print("Building realspace phonon tensor...")
         # TODO does phase sign matter?
-        self.rphtnsr = np.array([sum([G_blk * np.exp(-1j * np.dot(GM, r)) 
+        self.rphtnsr = np.array([sum([G_blk * np.exp(1j * np.dot(GM, r)) 
             for G_blk, GM in zip(self.phtnsr, self.GM_set)]) for r in self.r_matrix])
         assert self.rphtnsr.shape == self.old_rphtnsr_shape, \
             f"Unexpected phonon tensor shape {self.rphtnsr.shape}, expected {self.old_rphtnsr_shape}"
@@ -220,13 +222,13 @@ class TwistedRealspacePhonon:
                 # phonons = np.array([wf/LA.norm(wf) for wf in phonons])
                 plt.clf(); fig, ax = plt.subplots()
                 plt.quiver(coords[:,0], coords[:,1],    # positions
-                           phonons[:,0], phonons[:,1],  # arrows
-                           phonons[:,2])                # arrow colors
+                           phonons[:,0], phonons[:,1])  # arrows
+                        #    phonons[:,2])                # arrow colors
                 plt.xlabel("x"); plt.ylabel("y")
                 ax.scatter(coords[:,0], coords[:,1], c='black')
                 this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{at_i}' + outname[outname.index('.'):]
                 plt.title(f"Phonon directions (" + r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" mode {m_j}, atom {at_i}) in moire cell")
-                ax.view_init(elev=90, azim=-90); ax.set_zlim(-0.25,0.25)
+                breakpoint()
                 fig.savefig(self.outdir + this_outname)
                 plt.close(fig)
                 update(f"Wrote twisted phonons in realspace to {self.outdir + this_outname}")
