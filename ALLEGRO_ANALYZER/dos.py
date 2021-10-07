@@ -136,6 +136,7 @@ if __name__ == '__main__':
     bzsamples = get_bz_sample(theta, poscars_uc[0], outdir, make_plot=True, super_dim=super_dim)
     _, GM_set = bzsamples.get_GM_set(); _, G0_set = bzsamples.get_G0_set()
     k_mesh = bzsamples.sample_mesh_k(kdim=kdim)
+    bzsamples.plot_mesh_sampling()
     print("Sampling complete.")
     os.chdir(outdir)
 

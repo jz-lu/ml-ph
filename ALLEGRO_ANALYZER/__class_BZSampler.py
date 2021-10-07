@@ -41,6 +41,7 @@ class BZSampler:
             print("Moire A-basis:\n", self.AM)
         self.g_idxs = None; self.GM_set = None; self.G0_set = None
         self.k_set = None; self.kmags = None; self.corners = None
+        self.k_mesh = None
         self.ltype = lattice_type
         self.GM_sampled = False; self.k_sampled = False; self.k0_sampled = False
         self.nsh = None
@@ -143,7 +144,8 @@ class BZSampler:
     def sample_mesh_k(self, kdim=DEFAULT_KDIM):
         a = np.linspace(0, 1, kdim, endpoint=False)
         grid_dir = np.array(list(prod(a,a)))
-        return grid_dir @ self.GM.T
+        self.k_mesh = grid_dir @ self.GM.T
+        return self.k_mesh
     
     # Sample nk points along each IBZ boundary line
     def sample_k0(self, nk=DEFAULT_NK, log=False):
@@ -264,6 +266,36 @@ class BZSampler:
         ax.set_xlabel(r'$k_x$'); ax.set_ylabel(r'$k_y$')
         outname = self.outdir + filename
         plt.savefig(outname); succ("Successfully wrote sampling plot out to " + outname)
+    
+    def plot_mesh_sampling(self, filename='mesh.png'):
+        assert self.k_mesh is not None, "Cannot plot mesh sampling until k-mesh has been sampled"
+        plt.clf()
+        _, ax = plt.subplots()
+        cols = list(mcolors.TABLEAU_COLORS.keys()); ncol = len(cols)
+        random.shuffle(cols)
+        GM1 = self.GM_set[:,0]; GM2 = self.GM_set[:,1]
+        last_cut = 0
+        for i in range(1, self.nsh+1):
+            g_cutoff = (i + self.tol) * LA.norm(self.GM[:,0])
+            cut_makers = np.logical_and(np.sqrt(GM1**2 + GM2**2) >= last_cut, np.sqrt(GM1**2 + GM2**2) <= g_cutoff)
+            last_cut = g_cutoff
+            plt.scatter(GM1[cut_makers], GM2[cut_makers], 
+                        c=cols[i%ncol], 
+                        label=r'$\widetilde{\mathbf{G}}_{mn}$ in shell %d'%i)
+        for idx, GM in zip(self.g_idxs, self.GM_set):
+            plt.annotate(str(tuple(idx)), GM, # this is the point to label
+                 textcoords="offset points", # how to position the text
+                 xytext=(np.sign(GM[0])*10, -np.sign(GM[1])*10), # distance from text to points (x,y)
+                 ha='center', fontsize=9.5) # horizontal alignment can be left, right or center
+        plt.scatter(self.k_mesh[:,0], self.k_mesh[:,1], 
+                 c='teal', s=0.07, 
+                 label=r'$\mathbf{k}$-mesh (%d pts)'%len(self.k_set))
+        ax.set_aspect('equal') # prevent stretching of space in plot
+        # plt.legend()
+        plt.title("Moire Mesh")
+        ax.set_xlabel(r'$k_x$'); ax.set_ylabel(r'$k_y$')
+        outname = self.outdir + filename
+        plt.savefig(outname); succ("Successfully wrote MESH plot out to " + outname)
 
     def get_GM_set(self):
         assert self.GM_sampled, "Must run GM-sampler before retrieving GM-set"

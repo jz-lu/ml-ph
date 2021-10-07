@@ -256,10 +256,18 @@ if __name__ == '__main__':
         print(f"Diagonalizing and outputting modes with corners {corner_kmags}...")
         if args.dos is not None:
             print("Including DOS...")
-            TDMs = TDM.get_DM_set()
-            TDMs_intra = TDM.get_intra_set()
-            mode_set = TDM.build_modes()
-            TDOS = TwistedDOS(TDMs, TDMs_intra, len(GM_set), np.rad2deg(theta), width=0.05, kdim=args.dos)
+            k_mesh = bzsamples.sample_mesh_k(kdim=args.dos)
+            bzsamples.plot_mesh_sampling()
+            mesh_MLDMs = [MonolayerDM(uc, sc, ph, GM_set, G0_set, k_mesh, 0) \
+                         for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
+            mesh_TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, np.zeros(len(k_mesh)), 
+                        [p.structure.species for p in poscars_uc], 0)
+            if do_sum_rule:
+                mesh_TDM.apply_sum_rule()
+            mesh_TDMs = mesh_TDM.get_DM_set()
+            mesh_TDMs_intra = mesh_TDM.get_intra_set()
+            mode_set = mesh_TDM.build_modes()
+            TDOS = TwistedDOS(mesh_TDMs, mesh_TDMs_intra, len(GM_set), np.rad2deg(theta), width=0.05, kdim=args.dos)
             omegas, DOS = TDOS.get_DOS()
             TPLT = TwistedPlotter(np.rad2deg(theta), omegas, DOS, mode_set, corner_kmags, cutoff=cutoff)
             TPLT.make_plot(outdir=outdir, name=name, filename=outname)
