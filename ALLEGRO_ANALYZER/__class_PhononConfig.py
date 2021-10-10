@@ -1,7 +1,7 @@
 import phonopy
 import numpy as np
 import numpy.linalg as LA
-from math import floor, log10
+from math import floor, log10, sqrt
 import matplotlib.pyplot as plt
 import os
 from itertools import product as prod
@@ -86,8 +86,11 @@ some reason it is useful for different numbers of atoms, simply adjust layer sli
 of `phtnsr` to slice proportional to ratio of atoms, instead of in half.
 """
 class TwistedRealspacePhonon:
-    def __init__(self, theta, k, GM_set, DM_at_k, n_at, 
-                 poscars_uc, gridsz=11, outdir='.', modeidxs=np.linspace(0,6,6)):
+    def __init__(self, theta, k, GM_set, DM_at_k, n_at, bl_masses, 
+                 poscars_uc, gridsz=11, outdir='.', modeidxs=np.linspace(0,6,6), kpt=r'$\Gamma$'):
+        assert len(bl_masses) == n_at
+        self.kpt = kpt
+        self.bl_masses = bl_masses
         self.GM_set = GM_set; self.n_G = len(GM_set); self.k = k
         self.modeidxs = np.array(modeidxs).astype(int)
         self.nmodes = len(modeidxs); assert self.nmodes >= 1
@@ -121,7 +124,6 @@ class TwistedRealspacePhonon:
             vals = vals[idxs]; vecs = vecs[:,idxs]
             return vals, vecs
         evals, evecs = sorted_filtered_eigsys(self.DM_at_k)
-        breakpoint()
         print("Diagonalized.")
         print("Transforming eigenmatrix into truncated Fourier phonon tensor...")
         # In this case n_at refers to number of atoms in entire bilayer unit cell
@@ -148,7 +150,7 @@ class TwistedRealspacePhonon:
         self.__build_modes()
         print("Building realspace phonon tensor...")
         # TODO does phase sign matter?
-        self.rphtnsr = np.array([sum([G_blk * np.exp(1j * np.dot(GM, r)) 
+        self.rphtnsr = np.array([sum([G_blk * np.exp(-1j * np.dot(GM, r)) 
             for G_blk, GM in zip(self.phtnsr, self.GM_set)]) for r in self.r_matrix])
         assert self.rphtnsr.shape == self.old_rphtnsr_shape, \
             f"Unexpected phonon tensor shape {self.rphtnsr.shape}, expected {self.old_rphtnsr_shape}"
@@ -214,21 +216,34 @@ class TwistedRealspacePhonon:
             plt.close(fig)
         succ("Successfully outputted atomic-average phonon plots")
 
+    # Generate a plot of the phonons averaged over each layer;
+    # there is one plot per mode, per layer
     def plot_phonons(self, outname='phreal.png'):
         coords = self.r_matrix
         np.save(self.outdir + "rphtnsr.npy", self.rphtnsr)
-        for at_i, atomic_blk in enumerate(self.rphtnsr):
-            for m_j, phonons in enumerate(atomic_blk):
-                # phonons = np.array([wf/LA.norm(wf) for wf in phonons])
+
+        mnormed_tnsr = np.array([y/sqrt(x) for x, y in zip(self.bl_masses, self.rphtnsr)])
+        layer_blks = np.split(mnormed_tnsr, 2, axis=0) # split back by layer, then avg it
+        layer_blks = list(map(lambda x: np.mean(x, axis=0), layer_blks))
+        assert layer_blks[0].shape == (self.nmodes, self.n_r, self.d)
+        assert len(layer_blks) == 2
+        for l_i, layer_blk in enumerate(layer_blks):
+            l_i += 1 # index layers by 1
+            for m_j, phonons in enumerate(layer_blk):
+                phonons = np.real(phonons) # just take the real component
+                z = phonons[:,2]
                 plt.clf(); fig, ax = plt.subplots()
                 plt.quiver(coords[:,0], coords[:,1],    # positions
-                           phonons[:,0], phonons[:,1])  # arrows
-                        #    phonons[:,2])                # arrow colors
+                            phonons[:,0], phonons[:,1], # arrows
+                            z,                          # arrow colors
+                            cmap='winter')
                 plt.xlabel("x"); plt.ylabel("y")
                 ax.scatter(coords[:,0], coords[:,1], c='black')
-                this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{at_i}' + outname[outname.index('.'):]
-                plt.title(f"Phonon directions (" + r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" mode {m_j}, atom {at_i}) in moire cell")
-                breakpoint()
+                this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}' + outname[outname.index('.'):]
+                plt.title(r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" Mode {m_j}, Layer {l_i} at " + self.kpt)
+                v1 = np.linspace(z.min(), z.max(), 8, endpoint=True)
+                cb = plt.colorbar(ticks=v1)
+                cb.ax.set_yticklabels(["{:4.2f}".format(i) for i in v1])
                 fig.savefig(self.outdir + this_outname)
                 plt.close(fig)
                 update(f"Wrote twisted phonons in realspace to {self.outdir + this_outname}")
