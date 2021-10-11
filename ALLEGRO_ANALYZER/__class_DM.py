@@ -37,6 +37,48 @@ There is one level-2 matrix for every k, which are the twisted Fourier dynamical
 yields the phonon modes as a function of k.
 """
 
+def sc_idx(sc, uc):
+    uc_coords = uc.cart_coords; sc_coords = sc.cart_coords
+    sc_nat = len(sc_coords); uc_nat = len(uc_coords) # num sc/uc atoms
+    pos_sc_id = []; n_uc = int(sc_nat/uc_nat) # num unit cells
+
+    # SPOSCAR arranges all atoms of each type contiguously, so the indices must
+    # be the same for each contiguous region of `n_uc`.
+    for i in range(uc_nat):
+        pos_sc_id += [i]*n_uc
+    pos_sc_id = np.array(pos_sc_id)
+    return pos_sc_id
+
+def dm_calc(q, ph, poscar_sc, poscar_uc, pos_sc_idx): 
+    smallest_vectors,multiplicity=ph.primitive.get_smallest_vectors()
+    species = poscar_uc.species
+    A0 = poscar_uc.lattice.matrix[:2,:2].T
+    natom = len(species)
+    fc = ph.force_constants
+    if fc.shape[0] != fc.shape[1]:
+        ph.produce_force_constants()
+        fc = ph.force_constants
+        assert fc.shape[0] == fc.shape[1]
+    d_matrix = np.zeros([natom*3, natom*3], dtype = complex)
+    for x in range(natom):
+        for y in range(natom):
+            idx_x = pos_sc_idx[pos_sc_idx==x]
+            idx_y = pos_sc_idx[pos_sc_idx==y]
+            id1 = 3*x
+            id2 = 3*y
+            m1 = species[x].atomic_mass
+            m2 = species[y].atomic_mass
+            for a in range(len(idx_y)): # iterate over all the sublattice y in the supercell
+                fc_here = fc[x*len(idx_x),y*len(idx_y)+a]
+                multi = multiplicity[y*len(idx_y)+a][x]
+                for b in range(multi):
+                    vec = smallest_vectors[y*len(idx_y)+a][x][b]
+                    vec = vec[0] * A0[:,0] + vec[1] * A0[:,1]
+                    exp_here = np.exp(1j * np.dot(q, vec[0:2]))
+                    d_matrix[id1:id1+3, id2:id2+3] += fc_here * exp_here / np.sqrt(m1) / np.sqrt(m2) / multi
+    d_matrix = (d_matrix + d_matrix.conj().transpose()) / 2 # impose Hermiticity
+    return d_matrix
+
 # Monolayer dynamical matrix
 class MonolayerDM:
     def __init__(self, poscar_uc : Poscar, poscar_sc : Poscar, ph, 
@@ -64,8 +106,9 @@ class MonolayerDM:
     
     # Compute intralayer dynamical matrix block element for given some (direct) center `q` and phonopy object `ph`
     def __block_intra_l0(self, q, ph):
-        q = LA.inv(self.G0) @ q
-        dm = ph.get_dynamical_matrix_at_q(q)
+        # q = LA.inv(self.G0) @ q
+        # dm = ph.get_dynamical_matrix_at_q(q)
+        dm = dm_calc(q, ph, self.sc, self.uc, sc_idx(self.sc, self.uc))
         if self.dbgprint:
             print(f"Intralayer Level-0 shape: {dm.shape}")
             self.dbgprint = False
@@ -211,12 +254,13 @@ class InterlayerDM:
     def __init__(self, per_layer_at_idxs, bl_M, 
                  b_set, k_set, 
                  GM_set, G0_set, 
-                 species_per_layer, 
+                 species_per_layer, sc, uc, 
                  ph_list=None, 
                  force_matrices=None, G0=None, br_set=None):
         self.DM_G_blks = None
         self.M = np.array([[species.atomic_mass for species in layer] for layer in species_per_layer])
         self.bl_M = bl_M; self.bl_n_at = len(bl_M)
+        assert self.bl_n_at == len(uc.species)
         self.ph_list = ph_list
         self.br_set = br_set # relaxed b vector set
 
@@ -233,7 +277,9 @@ class InterlayerDM:
         self.modes_built = False
         self.n_GM = len(GM_set)
         if ph_list is not None:
-            self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0]) for ph in ph_list] # DM(Gamma) ~= FC (mass-scaled)
+            pos_sc_idx = sc_idx(sc, uc)
+            self.force_matrices = [dm_calc([0,0], ph, sc, uc, pos_sc_idx) for ph in ph_list]
+            # self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0]) for ph in ph_list] # DM(Gamma) ~= FC (mass-scaled)
         else:
             self.force_matrices = force_matrices
         if br_set is not None:
@@ -528,6 +574,11 @@ class TwistedDM:
         self.modetnsr = np.array(self.modetnsr)
         return self.mode_set
     
+    def get_mode_set(self):
+        if not self.modes_built:
+            self.build_modes()
+        return self.mode_set
+    
     def k_mode_tensor(self):
         if not self.modes_built:
             self.build_modes()
@@ -558,35 +609,29 @@ class TwistedDM:
         title += r" at " + '%.1lf'%angle + r"$^\circ$"
         plt.title(title)
         plt.savefig(outdir + filename, format='pdf')
-        print(f"Plot written to {outdir+filename}")
+        print(f"Band plot written to {outdir+filename}")
         return
-    
-def DOS_at_omega(enum, A, sigma, modes, weights, bin_sz):
-    idx, omega = enum
-    if idx % 100 == 0:
-        print(".", end="", flush=True)
-    return sum([weight * A * np.exp(-np.power(omega - omega_k, 2.) / (2 * np.power(sigma, 2.))) \
-        for omega_k, weight in zip(modes, weights) \
-        if abs(omega_k - omega) <= bin_sz / 2]) 
 
-# Eigensort the eigenbasis, then slice off everything but the G0 component
-def sorted_sliced_eigsys(A, idx, n_G):
-    vals, vecs = LA.eig(A); idxs = vals.argsort()   
-    vals = vals[idxs]; vecs = vecs[:,idxs]
-    mid = vecs.shape[0] // 2; glen = vecs.shape[0] // (n_G * 2)
-    # Cut matrix in half (split by layer), then split by G
-    vecs = np.vstack((vecs[0 : 0+glen], vecs[mid : mid+glen]))
-    assert vecs.shape == (glen*2, vals.shape[0])
-    if idx % 100 == 0:
-        print(".", end='', flush=True)
-    return vals, vecs
 
 class TwistedDOS:
-    def __init__(self, TDMs, TDMs_intra, n_G, theta, width=0.05, 
+    def __init__(self, TDMs, TDMs_intra, n_G, theta, width=0.2, 
                  partition_density=DEFAULT_PARTITION_DENSITY, kdim=DEFAULT_KDIM):
+        # Eigensort the eigenbasis, then slice off everything but the G0 component
+        def sorted_sliced_eigsys(A, idx, n_G):
+            vals, vecs = LA.eig(A); idxs = vals.argsort()   
+            vals = vals[idxs]; vecs = vecs[:,idxs]
+            mid = vecs.shape[0] // 2; glen = vecs.shape[0] // (n_G * 2)
+            # Cut matrix in half (split by layer), then split by G
+            vecs = np.vstack((vecs[0 : 0+glen], vecs[mid : mid+glen]))
+            assert vecs.shape == (glen*2, vals.shape[0])
+            if idx % 100 == 0:
+                print(".", end='', flush=True)
+            return vals, vecs
+
         assert TDMs[0].shape[0] % (n_G * 2) == 0
         assert TDMs_intra[0].shape[0] % (n_G * 2) == 0
         self.theta = theta
+        print(f"Initialized Twisted DOS for theta={self.theta}")
 
         print("Diagonalizing Moire dynamical matrices", end='', flush=True)
         # from itertools import repeat
@@ -611,18 +656,29 @@ class TwistedDOS:
         self.width = width
         self.sigma = width / (2 * sqrt(2 * log(2))) 
         self.A = 1
+        print(f"DOS PARAMETERS:\n\tA: {self.A}\n\tdE: {self.bin_sz}\n\tWidth: {self.width}\n\tsigma: {self.sigma}")
         # TODO do adjustments of parameters based ONLY on theta (get rid of width param in function input)
 
     # Compute DOS at some list of omegas
     def __DOS_at_omegas(self, omegas):
+        def DOS_at_omega(enum, A, sigma, modes, weights, bin_sz):
+            idx, omega = enum
+            if idx % 100 == 0:
+                print(".", end="", flush=True)
+            return sum([weight * A * np.exp(-np.power(omega - omega_k, 2.) / (2 * np.power(sigma, 2.))) \
+                for omega_k, weight in zip(modes, weights) \
+                if abs(omega_k - omega) <= bin_sz / 2]) 
+
         print("Getting DOS at omegas", end="", flush=True)
         # from functools import partial
         # with Pool(5) as p:
         #     DOSs = p.map(partial(DOS_at_omega, 
         #                 A=self.A, sigma=self.sigma, modes=self.modes, weights=self.weights, bin_sz=self.bin_sz), 
         #                 enumerate(omegas)) 
-        DOSs = [DOS_at_omega(enum, self.A, self.sigma, self.modes, self.weights, self.bin_sz) for enum in enumerate(omegas)]
+        DOSs = np.array([DOS_at_omega(enum, self.A, self.sigma, \
+            self.modes, self.weights, self.bin_sz) for enum in enumerate(omegas)])
         print(" done", flush=True)
+        np.save("/Users/jonathanlu/Documents/tmos2_2/dos10/dos.npy", DOSs)
         return DOSs
 
     # Obtain DOS for plotting / any other use
@@ -637,11 +693,11 @@ class TwistedDOS:
         plt.clf(); fig, ax = plt.subplots()
         self.get_DOS()
         if vertical:
-            ax.plot(self.DOS, self.omegas, c='black')
+            ax.plot(self.DOS, self.omegas, c='black', linewidth=0.9)
             ax.set_xlabel("DOS")
             ax.set_ylabel(r"$\omega (cm^{-1})$")
         else:
-            ax.plot(self.omegas, self.DOS, c='black')
+            ax.plot(self.omegas, self.DOS, c='black', linewidth=0.9)
             ax.set_ylabel("DOS")
             ax.set_xlabel(r"$\omega$ $(cm^{-1})$")
         ax.set_title(rf"DOS ($\theta = {self.theta}$" \
@@ -673,21 +729,21 @@ class TwistedPlotter:
             axband.scatter([k_mag] * len(modes), modes, c='black', s=0.07)
         lims[1] += 30; plt.ylim(lims)
         xlabs = (r'K', r'$\Gamma$', r'M', r'K')
-        axband.set_xticks(self.corner_kmags, xlabs)
+        axband.set_xticks(self.corner_kmags)
+        axband.set_xticklabels(xlabs)
         axband.set_ylabel(r'$\omega\,(\mathrm{cm}^{-1})$')
-        title = r"Phonon modes"
-        if name is not None:
-            title += f" of {name} bilayer"
-        title += r" at " + '%.1lf'%self.theta + r"$^\circ$"
+        title = name + " b" if name is not None else "B"
+        title += "and " + '(%.1lf'%self.theta + r"$^\circ$)"
         axband.set_title(title)
 
         if self.cutoff is not None:
             self.DOS = self.DOS[self.omegas <= self.cutoff]
             self.omegas = self.omegas[self.omegas <= self.cutoff]
-        axdos.plot(self.DOS, self.omegas, c='black')
+        axdos.plot(self.DOS, self.omegas, c='black', linewidth=0.75)
+        axdos.set_title("DOS")
         plt.ylim(lims)
 
         plt.savefig(outdir + filename, format='pdf')
-        print(f"Plot written to {outdir+filename}")
+        print(f"Band-DOS plot written to {outdir+filename}")
 
         

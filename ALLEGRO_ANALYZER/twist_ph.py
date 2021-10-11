@@ -25,6 +25,7 @@ from ___constants_names import (
     MODE_TNSR_ONAME, ANGLE_SAMPLE_ONAME, GAMMA_IDX_ONAME, 
     K_MAGS_ONAME, K_SET_ONAME, DM_TNSR_ONAME
 )
+from ___constants_phonopy import POSCAR_UNIT_NAME
 from ___constants_compute import DEFAULT_NUM_LAYERS
 from __directory_searchers import checkPath, findDirsinDir, findFilesInDir
 from __dirModifications import build_dir
@@ -49,7 +50,7 @@ if __name__ == '__main__':
     parser.add_argument("--ns", action="store_true", help='do not apply sum rule')
     parser.add_argument("-n", "--name", type=str, help='material name')
     parser.add_argument("-c", "--cut", type=int, help='band range cutoff')
-    parser.add_argument("--oname", type=str, help='output filename', default=DEFAULT_PH_BAND_PLOT_NAME)
+    parser.add_argument("--oname", type=str, help='output filename', default=DEFAULT_PH_BANDDOS_PLOT_NAME)
     parser.add_argument("--intra", action="store_true", help='do intralayer analysis')
     parser.add_argument("-r", "--relax", action="store_true", help='do theta-relaxation')
     parser.add_argument("--mr", action="store_true", help=f'multirelax (req parameter file \'{ANGLE_SAMPLE_INAME}\')')
@@ -62,8 +63,7 @@ if __name__ == '__main__':
     theta = np.deg2rad(args.theta); indir = args.dir; outdir = args.out; multirelax = args.mr
     relax = args.relax; plot_intra = args.intra; force_sum = args.fsum; name = args.name
     cutoff = args.cut; realspace = args.rs; do_sum_rule = not args.ns; outname = args.oname
-    if (args.dos is not None) and outname == DEFAULT_PH_BAND_PLOT_NAME:
-        outname = DEFAULT_PH_BANDDOS_PLOT_NAME
+    print(f"Twist angle: {np.rad2deg(theta)} deg")
 
     if not theta:
         err(f"Error: must supply twist angle. Run `python3 {sys.argv[0]} --usage` for help.")
@@ -101,6 +101,13 @@ if __name__ == '__main__':
         assert os.path.isfile(sposcar_path), f"SPOSCAR not found at {sposcar_path}"
         poscars_sc[i] = Poscar.from_file(sposcar_path)
     print("SPOSCAR inputs found.")
+
+    print("Searching for config (S)POSCAR inputs...")
+    cfgpath = build_dir([indir, CONFIG_DIR_NAME, CONFIG_SUBDIR_NAME+"0", \
+        ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME])
+    cfg_sc = Poscar.from_file(cfgpath + SPOSCAR_NAME).structure
+    cfg_uc = Poscar.from_file(cfgpath + POSCAR_UNIT_NAME).structure
+    print("Config (S)POSCAR inputs found.")
     
     S0 = poscars_sc[0].structure.lattice.matrix[:2,:2]
     Xcol = S0[:,0]; Ycol = S0[:,1]; xcol = s0[:,0]; ycol = s0[:,1]
@@ -139,7 +146,7 @@ if __name__ == '__main__':
         print("Plotting one intralayer component...")
         print("Plotting in pristine space...")
         MLDMs[0].plot_pristine_band(k0_set, k0_mags, corner_k0mags, outdir=outdir)
-        print("Plotting in moire space..."); MLDMs[0].plot_sampled_l0()
+        print("Plotting in moire space...") # ; MLDMs[0].plot_sampled_l0()
         MLDMs[0].plot_band(k_mags, corner_kmags, name=name, outdir=outdir, filename='intra_'+outname, cutoff=cutoff)
     if force_sum:
         for i, MLDM in enumerate(MLDMs):
@@ -194,7 +201,7 @@ if __name__ == '__main__':
             ILDM =  InterlayerDM(per_layer_at_idxs, bl_M, 
                                  b_relaxed, k_set, 
                                  GM_set, G0_set, 
-                                 [p.structure.species for p in poscars_uc], 
+                                 [p.structure.species for p in poscars_uc], cfg_sc, cfg_uc, 
                                  ph_list=relaxed_ph_list, 
                                  force_matrices=None)
             TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc], Gamma_idx)
@@ -224,18 +231,19 @@ if __name__ == '__main__':
                              b_set, 
                              bzsamples.get_kpts0()[0], 
                              GM_set, G0_set, 
-                             [p.structure.species for p in poscars_uc], 
+                             [p.structure.species for p in poscars_uc], cfg_sc, cfg_uc, 
                              ph_list=config_ph_list, 
                              force_matrices=None, br_set=b_relaxed)
         print("Interlayer DM objects constructed.")
 
         print("Combining into a single twisted dynamical matrix object...")
         TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc], Gamma_idx)
-        # TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, filename="nosum"+outname, cutoff=cutoff)
+        print("Twisted dynamical matrix object constructed.") 
         if do_sum_rule:
             TDM.apply_sum_rule()
-        # TDM.modes_built = False # re-diagonalize matrix after applying sum rule
-        print("Twisted dynamical matrix object constructed.")
+        mode_set = TDM.get_mode_set()
+        TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, \
+            filename='band_'+outname, cutoff=cutoff)
 
         if force_sum:
             print("\nAnalyzing sum of forces in twisted bilayer (G0 only)...")
@@ -261,19 +269,17 @@ if __name__ == '__main__':
             bzsamples.plot_mesh_sampling()
             mesh_MLDMs = [MonolayerDM(uc, sc, ph, GM_set, G0_set, k_mesh, 0) \
                          for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
-            mesh_TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, np.zeros(len(k_mesh)), 
+            mesh_TDM = TwistedDM(mesh_MLDMs[0], mesh_MLDMs[1], ILDM, np.zeros(len(k_mesh)), 
                         [p.structure.species for p in poscars_uc], 0)
             if do_sum_rule:
                 mesh_TDM.apply_sum_rule()
             mesh_TDMs = mesh_TDM.get_DM_set()
             mesh_TDMs_intra = mesh_TDM.get_intra_set()
-            mode_set = mesh_TDM.build_modes()
-            TDOS = TwistedDOS(mesh_TDMs, mesh_TDMs_intra, len(GM_set), np.rad2deg(theta), width=0.05, kdim=args.dos)
+            TDOS = TwistedDOS(mesh_TDMs, mesh_TDMs_intra, len(GM_set), np.rad2deg(theta), width=0.2, kdim=args.dos)
             omegas, DOS = TDOS.get_DOS()
+            # TDOS.plot_DOS(outdir=outdir)
             TPLT = TwistedPlotter(np.rad2deg(theta), omegas, DOS, mode_set, corner_kmags, cutoff=cutoff)
             TPLT.make_plot(outdir=outdir, name=name, filename=outname)
-        else:
-            TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, filename=outname, cutoff=cutoff)
         print("Modes outputted.")
 
     succ("Successfully completed phonon mode analysis (Took %.3lfs)."%(time()-start))

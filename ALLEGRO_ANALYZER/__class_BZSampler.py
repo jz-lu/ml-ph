@@ -262,7 +262,7 @@ class BZSampler:
                  xytext=(-10,0), # distance from text to points (x,y)
                  ha='center') # horizontal alignment can be left, right or center
         # plt.legend()
-        plt.title("Sampling Space")
+        plt.title("Moire Sampling Space")
         ax.set_xlabel(r'$k_x$'); ax.set_ylabel(r'$k_y$')
         outname = self.outdir + filename
         plt.savefig(outname); succ("Successfully wrote sampling plot out to " + outname)
@@ -288,7 +288,7 @@ class BZSampler:
                  xytext=(np.sign(GM[0])*10, -np.sign(GM[1])*10), # distance from text to points (x,y)
                  ha='center', fontsize=9.5) # horizontal alignment can be left, right or center
         plt.scatter(self.k_mesh[:,0], self.k_mesh[:,1], 
-                 c='teal', s=0.07, 
+                 c='teal', s=0.14, 
                  label=r'$\mathbf{k}$-mesh (%d pts)'%len(self.k_set))
         ax.set_aspect('equal') # prevent stretching of space in plot
         # plt.legend()

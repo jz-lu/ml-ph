@@ -238,7 +238,7 @@ class TwistedRealspacePhonon:
                             z,                          # arrow colors
                             cmap='winter')
                 plt.xlabel("x"); plt.ylabel("y")
-                ax.scatter(coords[:,0], coords[:,1], c='black')
+                ax.scatter(coords[:,0], coords[:,1], c='black', s=0.2)
                 this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}' + outname[outname.index('.'):]
                 plt.title(r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" Mode {m_j}, Layer {l_i} at " + self.kpt)
                 v1 = np.linspace(z.min(), z.max(), 8, endpoint=True)
