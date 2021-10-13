@@ -671,7 +671,6 @@ class TwistedDOS:
         DOSs = np.array([DOS_at_omega(enum, self.A, self.sigma, \
             self.modes, self.weights, self.bin_sz) for enum in enumerate(omegas)])
         print(" done", flush=True)
-        np.save("/Users/jonathanlu/Documents/tmos2_2/dos10/dos.npy", DOSs)
         return DOSs
 
     # Obtain DOS for plotting / any other use

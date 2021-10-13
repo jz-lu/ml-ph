@@ -132,9 +132,9 @@ if __name__ == '__main__':
     Gamma_idx = bzsamples.get_Gamma_idx()
     k_set, k_mags = bzsamples.get_kpts(); corner_kmags = bzsamples.get_corner_kmags()
     k0_set, k0_mags = bzsamples.get_kpts0(); corner_k0mags = bzsamples.get_corner_kmags0()
-    np.save(outdir + "km.npy", k_mags)
-    np.save(outdir + "k.npy", k_set)
-    np.save(outdir + "ck.npy", corner_kmags)
+    # np.save(outdir + "km.npy", k_mags)
+    # np.save(outdir + "k.npy", k_set)
+    # np.save(outdir + "ck.npy", corner_kmags)
     print("Sampling complete.")
     os.chdir(outdir)
 
