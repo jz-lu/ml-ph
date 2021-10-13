@@ -275,11 +275,13 @@ if __name__ == '__main__':
                 mesh_TDM.apply_sum_rule()
             mesh_TDMs = mesh_TDM.get_DM_set()
             mesh_TDMs_intra = mesh_TDM.get_intra_set()
-            TDOS = TwistedDOS(mesh_TDMs, mesh_TDMs_intra, len(GM_set), np.rad2deg(theta), width=0.2, kdim=args.dos)
-            omegas, DOS = TDOS.get_DOS()
-            # TDOS.plot_DOS(outdir=outdir)
-            TPLT = TwistedPlotter(np.rad2deg(theta), omegas, DOS, mode_set, corner_kmags, cutoff=cutoff)
-            TPLT.make_plot(outdir=outdir, name=name, filename=outname)
+            widths = np.linspace(0.01, 3.01, 51)
+            for WIDTH in widths:
+            # WIDTH = 0.05
+                TDOS = TwistedDOS(mesh_TDMs, mesh_TDMs_intra, len(GM_set), np.rad2deg(theta), width=WIDTH, kdim=args.dos)
+                omegas, DOS = TDOS.get_DOS()
+                TPLT = TwistedPlotter(np.rad2deg(theta), omegas, DOS, mode_set, corner_kmags, cutoff=cutoff)
+                TPLT.make_plot(outdir=outdir, name=name, filename=outname, width=WIDTH)
         print("Modes outputted.")
 
     succ("Successfully completed phonon mode analysis (Took %.3lfs)."%(time()-start))

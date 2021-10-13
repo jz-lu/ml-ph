@@ -16,7 +16,6 @@ from ___helpers_parsing import update, succ
 from scipy.linalg import block_diag
 from scipy.sparse import bmat # block matrix
 from math import sqrt, pi, log
-from multiprocessing import Pool
 import sys
 from __class_PhonopyAPI import PhonopyAPI
 
@@ -153,7 +152,7 @@ class MonolayerDM:
     
     def get_corr_mat(self):
         if self.corr_mat is None:
-            blks = [self.ph.get_dynamical_matrix_at_q([0,0]) for _ in self.G0_set]
+            blks = [dm_calc([0,0], self.ph, self.sc, self.uc, sc_idx(self.sc, self.uc)) for _ in self.G0_set]
             self.corr_mat = block_diag(*blks)
         return self.corr_mat
     
@@ -224,13 +223,15 @@ class MonolayerDM:
             print("Intralayer modes not built yet, building...")
             self.build_modes(k_mags, dump=False, outdir=outdir)
             print("Intralayer modes built.")
-        plt.clf()
+        plt.clf(); bot = 100
         for k_mag, modes in self.mode_set:
             if cutoff is not None:
                 modes = modes[modes <= cutoff]
+            bot = min(bot, min(modes))
             plt.scatter([k_mag] * len(modes), modes, c='royalblue', s=0.07)
         xlabs = (r'K', r'$\Gamma$', r'M', r'K')
         plt.xticks(corner_kmags, xlabs)
+        plt.ylim(bottom=bot)
         plt.ylabel(r'$\omega\,(\mathrm{cm}^{-1})$')
         title = "Moire intralayer phonon modes"
         if name is not None:
@@ -634,9 +635,6 @@ class TwistedDOS:
         print(f"Initialized Twisted DOS for theta={self.theta}")
 
         print("Diagonalizing Moire dynamical matrices", end='', flush=True)
-        # from itertools import repeat
-        # with Pool() as p:
-        #     self.eigsys = p.starmap(sorted_sliced_eigsys, zip(TDMs, range(len(TDMs)), repeat(n_G)))
         self.eigsys = [sorted_sliced_eigsys(TDM, i, n_G) for i, TDM in enumerate(TDMs)]
         print(" done", flush=True)
         self.modes = np.array([(-1*(evals < 0) + 1*(evals > 0)) \
@@ -670,11 +668,6 @@ class TwistedDOS:
                 if abs(omega_k - omega) <= bin_sz / 2]) 
 
         print("Getting DOS at omegas", end="", flush=True)
-        # from functools import partial
-        # with Pool(5) as p:
-        #     DOSs = p.map(partial(DOS_at_omega, 
-        #                 A=self.A, sigma=self.sigma, modes=self.modes, weights=self.weights, bin_sz=self.bin_sz), 
-        #                 enumerate(omegas)) 
         DOSs = np.array([DOS_at_omega(enum, self.A, self.sigma, \
             self.modes, self.weights, self.bin_sz) for enum in enumerate(omegas)])
         print(" done", flush=True)
@@ -717,7 +710,9 @@ class TwistedPlotter:
         self.cutoff = cutoff
         print("Initialized TwistedPlotter object")
     
-    def make_plot(self, outdir='./', filename=DEFAULT_PH_BANDDOS_PLOT_NAME, name=None):
+    def make_plot(self, outdir='./', filename=DEFAULT_PH_BANDDOS_PLOT_NAME, name=None, width=None):
+        if width is not None:
+            filename = "w%f_"%(round(width, 3)) + filename
         outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Invalid directory {outdir}"
         plt.clf(); _, [axband, axdos] = plt.subplots(nrows=1, ncols=2, sharey=True)
         lims = [0,0]
@@ -739,7 +734,7 @@ class TwistedPlotter:
         if self.cutoff is not None:
             self.DOS = self.DOS[self.omegas <= self.cutoff]
             self.omegas = self.omegas[self.omegas <= self.cutoff]
-        axdos.plot(self.DOS, self.omegas, c='black', linewidth=0.75)
+        axdos.plot(self.DOS, self.omegas, c='black', linewidth=0.6)
         axdos.set_title("DOS")
         plt.ylim(lims)
 
