@@ -615,8 +615,9 @@ class TwistedDM:
 
 
 class TwistedDOS:
-    def __init__(self, TDMs, TDMs_intra, n_G, theta, width=0.2, 
-                 partition_density=DEFAULT_PARTITION_DENSITY, kdim=DEFAULT_KDIM):
+    def __init__(self, TDMs, n_G, theta, width=0.2, 
+                 partition_density=DEFAULT_PARTITION_DENSITY, 
+                 kdim=DEFAULT_KDIM, normalizer=1, eigsys=None):
         # Eigensort the eigenbasis, then slice off everything but the G0 component
         def sorted_sliced_eigsys(A, idx, n_G):
             vals, vecs = LA.eig(A); idxs = vals.argsort()   
@@ -630,30 +631,34 @@ class TwistedDOS:
             return vals, vecs
 
         assert TDMs[0].shape[0] % (n_G * 2) == 0
-        assert TDMs_intra[0].shape[0] % (n_G * 2) == 0
         self.theta = theta
         print(f"Initialized Twisted DOS for theta={self.theta}")
 
-        print("Diagonalizing Moire dynamical matrices", end='', flush=True)
-        self.eigsys = [sorted_sliced_eigsys(TDM, i, n_G) for i, TDM in enumerate(TDMs)]
-        print(" done", flush=True)
+        self.eigsys = eigsys
+        if self.eigsys is None:
+            print("Diagonalizing Moire dynamical matrices", end='', flush=True)
+            self.eigsys = [sorted_sliced_eigsys(TDM, i, n_G) for i, TDM in enumerate(TDMs)]
+            print(" done", flush=True)
         self.modes = np.array([(-1*(evals < 0) + 1*(evals > 0)) \
             * np.sqrt(np.abs(evals)) * VASP_FREQ_TO_INVCM_UNITS for evals,_ in self.eigsys])
         self.weights = np.array([np.square(LA.norm(evecs, axis=0)) for _,evecs in self.eigsys])
         assert self.modes.shape == self.weights.shape == (kdim**2, TDMs[0].shape[0])
         self.modes = self.modes.flatten(); self.weights = self.weights.flatten()
         self.mode_extrema = [np.min(self.modes), np.max(self.modes)]
-        self.__set_parameters(theta, width, partition_density)
+        self.__set_parameters(theta, width, partition_density, normalizer)
         self.DOS = None
+    
+    def get_eigsys(self):
+        return self.eigsys
         
-    def __set_parameters(self, theta, width, partition_density):
+    def __set_parameters(self, theta, width, partition_density, normalizer):
         # Gaussian is f(x) = A e^(x^2/2 sigma)
         # Width parameter converts to sigma via http://hyperphysics.phy-astr.gsu.edu/hbase/Math/gaufcn2.html 
         self.bin_sz = (self.mode_extrema[1] - self.mode_extrema[0]) / partition_density
         self.omegas = np.linspace(self.mode_extrema[0], self.mode_extrema[1], num=partition_density)
         self.width = width
         self.sigma = width / (2 * sqrt(2 * log(2))) 
-        self.A = 1
+        self.A = normalizer
         print(f"DOS PARAMETERS:\n\tA: {self.A}\n\tdE: {self.bin_sz}\n\tWidth: {self.width}\n\tsigma: {self.sigma}")
         # TODO do adjustments of parameters based ONLY on theta (get rid of width param in function input)
 

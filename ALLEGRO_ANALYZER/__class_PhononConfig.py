@@ -224,9 +224,9 @@ class TwistedRealspacePhonon:
 
         mnormed_tnsr = np.array([y/sqrt(x) for x, y in zip(self.bl_masses, self.rphtnsr)])
         layer_blks = np.split(mnormed_tnsr, 2, axis=0) # split back by layer, then avg it
-        layer_blks = list(map(lambda x: np.mean(x, axis=0), layer_blks))
-        assert layer_blks[0].shape == (self.nmodes, self.n_r, self.d)
-        assert len(layer_blks) == 2
+        layer_blks = np.real(list(map(lambda x: np.mean(x, axis=0), layer_blks)))
+        assert layer_blks.shape == (2, self.nmodes, self.n_r, self.d)
+        zmin, zmax = np.min(layer_blks[:,:,:,2]), np.max(layer_blks[:,:,:,2])
         for l_i, layer_blk in enumerate(layer_blks):
             l_i += 1 # index layers by 1
             for m_j, phonons in enumerate(layer_blk):
@@ -236,14 +236,17 @@ class TwistedRealspacePhonon:
                 plt.quiver(coords[:,0], coords[:,1],    # positions
                             phonons[:,0], phonons[:,1], # arrows
                             z,                          # arrow colors
-                            cmap='winter')
+                            cmap='cool')
                 plt.xlabel("x"); plt.ylabel("y")
-                ax.scatter(coords[:,0], coords[:,1], c='black', s=1)
+                ax.scatter(coords[:,0], coords[:,1], c='black', s=2)
+                ax.set_aspect('equal')
                 this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}' + outname[outname.index('.'):]
                 plt.title(r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" Mode {m_j}, Layer {l_i} at " + self.kpt)
-                v1 = np.linspace(z.min(), z.max(), 8, endpoint=True)
-                cb = plt.colorbar(ticks=v1)
-                cb.ax.set_yticklabels(["{:6.4f}".format(i) for i in v1])
+                # v1 = np.linspace(z.min(), z.max(), 8, endpoint=True)
+                # cb = plt.colorbar(ticks=v1)
+                # cb.ax.set_yticklabels(["{:6.4f}".format(i) for i in v1])
+                plt.colorbar()
+                plt.clim(zmin, zmax)
                 fig.savefig(self.outdir + this_outname)
                 plt.close(fig)
                 update(f"Wrote twisted phonons in realspace to {self.outdir + this_outname}")

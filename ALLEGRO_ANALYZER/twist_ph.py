@@ -79,7 +79,7 @@ if __name__ == '__main__':
     if realspace:
         assert os.path.isfile(indir + RSPC_LIST_INAME), f"Must provide input file {RSPC_LIST_INAME}"
     print(f"WD: {indir}, Output to: {outdir}")
-    outname = 'd' + str(round(np.rad2deg(theta))) + "_" + outname
+    outname = 'd' + str(round(np.rad2deg(theta), 3)) + "_" + outname
     print("Building twisted crystal phonon modes...")
     warn("Note: you must have already ran twisted calculation in given directory and retrieved forces from phonopy")
 
@@ -278,10 +278,17 @@ if __name__ == '__main__':
                 mesh_TDM.apply_sum_rule()
             mesh_TDMs = mesh_TDM.get_DM_set()
             mesh_TDMs_intra = mesh_TDM.get_intra_set()
-            widths = np.linspace(0.01, 3.01, 51)
+            widths = np.linspace(0.01, 6.01, 101)
+            eigsys = None
             for WIDTH in widths:
             # WIDTH = 0.05
-                TDOS = TwistedDOS(mesh_TDMs, mesh_TDMs_intra, len(GM_set), np.rad2deg(theta), width=WIDTH, kdim=args.dos)
+                # iDOS = TwistedDOS(mesh_TDMs_intra, len(GM_set), np.rad2deg(theta), width=WIDTH, kdim=args.dos)
+                # normalizer = np.max(iDOS.get_DOS()[1])
+                normalizer = 1 #! delete
+                TDOS = TwistedDOS(mesh_TDMs, len(GM_set), np.rad2deg(theta), 
+                                  width=WIDTH, kdim=args.dos, normalizer=normalizer, eigsys=eigsys)
+                if eigsys is None:
+                    eigsys = TDOS.get_eigsys()
                 omegas, DOS = TDOS.get_DOS()
                 TPLT = TwistedPlotter(np.rad2deg(theta), omegas, DOS, mode_set, corner_kmags, cutoff=cutoff)
                 TPLT.make_plot(outdir=outdir, name=name, filename=outname, width=WIDTH)
