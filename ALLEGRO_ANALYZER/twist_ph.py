@@ -278,7 +278,7 @@ if __name__ == '__main__':
                 mesh_TDM.apply_sum_rule()
             mesh_TDMs = mesh_TDM.get_DM_set()
             mesh_TDMs_intra = mesh_TDM.get_intra_set()
-            widths = np.linspace(0.01, 6.01, 101)
+            widths = np.linspace(0.01, 6.01, 51)
             eigsys = None
             for WIDTH in widths:
             # WIDTH = 0.05
