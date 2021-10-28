@@ -63,7 +63,7 @@ if __name__ == '__main__':
     theta = np.deg2rad(args.theta); indir = args.dir; outdir = args.out; multirelax = args.mr
     relax = args.relax; plot_intra = args.intra; force_sum = args.fsum; name = args.name
     cutoff = args.cut; realspace = args.rs; do_sum_rule = not args.ns; outname = args.oname
-    print(f"Twist angle: {np.rad2deg(theta)} deg")
+    print(f"Twist angle: {round(np.rad2deg(theta), 6)} deg")
 
     #! delete soon
     cutoff = int(40 * ((args.theta)**0.85))
@@ -79,7 +79,7 @@ if __name__ == '__main__':
     if realspace:
         assert os.path.isfile(indir + RSPC_LIST_INAME), f"Must provide input file {RSPC_LIST_INAME}"
     print(f"WD: {indir}, Output to: {outdir}")
-    outname = 'd' + str(round(np.rad2deg(theta), 3)) + "_" + outname
+    outname = 'd' + str(round(np.rad2deg(theta), 6)) + "_" + outname
     print("Building twisted crystal phonon modes...")
     warn("Note: you must have already ran twisted calculation in given directory and retrieved forces from phonopy")
 
@@ -187,7 +187,7 @@ if __name__ == '__main__':
         # TODO wrong rn!! Need to resample k for each theta!!
         for i, theta in enumerate(thetas):
             # See non-multirelax case for comments
-            relax_api = RelaxerAPI(np.rad2deg(theta), gridsz, outdir, s0.T)
+            relax_api = RelaxerAPI(round(np.rad2deg(theta), 6), gridsz, outdir, s0.T)
             b_relaxed = relax_api.get_configs(cartesian=True)
 
             interp = FourierForceInterp(config_ph_list, np.array(b_set), s0.T)
@@ -222,7 +222,7 @@ if __name__ == '__main__':
         relaxed_forces = None; b_relaxed = None
         if relax:
             print("Non-uniformizing configurations via relaxation...")
-            relax_api = RelaxerAPI(np.rad2deg(theta), gridsz, outdir, s0.T)
+            relax_api = RelaxerAPI(round(np.rad2deg(theta), 6), gridsz, outdir, s0.T)
             b_relaxed = relax_api.get_configs(cartesian=True)
             relax_api.plot_relaxation()
 
@@ -245,7 +245,7 @@ if __name__ == '__main__':
         if do_sum_rule:
             TDM.apply_sum_rule()
         mode_set = TDM.get_mode_set()
-        TDM.plot_band(corner_kmags, np.rad2deg(theta), outdir=outdir, name=name, \
+        TDM.plot_band(corner_kmags, round(np.rad2deg(theta), 6), outdir=outdir, name=name, \
             filename='band_'+outname, cutoff=cutoff)
 
         if force_sum:
@@ -256,7 +256,7 @@ if __name__ == '__main__':
             print("Analyzing phonons in realspace at Gamma point...")
             n_at = sum([sum(p.natoms) for p in poscars_uc])
             print(f"Number of atoms in bilayer configuration cell: {n_at}")
-            twrph = TwistedRealspacePhonon(np.rad2deg(theta), np.array([0,0]), GM_set, 
+            twrph = TwistedRealspacePhonon(round(np.rad2deg(theta), 6), np.array([0,0]), GM_set, 
                     TDM.get_DM_at_Gamma(), n_at, bl_M, poscars_uc, 
                     outdir=outdir, modeidxs=np.loadtxt(indir + RSPC_LIST_INAME), 
                     kpt=r'$\Gamma$')
@@ -285,12 +285,12 @@ if __name__ == '__main__':
                 # iDOS = TwistedDOS(mesh_TDMs_intra, len(GM_set), np.rad2deg(theta), width=WIDTH, kdim=args.dos)
                 # normalizer = np.max(iDOS.get_DOS()[1])
                 normalizer = 1 #! delete
-                TDOS = TwistedDOS(mesh_TDMs, len(GM_set), np.rad2deg(theta), 
+                TDOS = TwistedDOS(mesh_TDMs, len(GM_set), round(np.rad2deg(theta), 6), 
                                   width=WIDTH, kdim=args.dos, normalizer=normalizer, eigsys=eigsys)
                 if eigsys is None:
                     eigsys = TDOS.get_eigsys()
                 omegas, DOS = TDOS.get_DOS()
-                TPLT = TwistedPlotter(np.rad2deg(theta), omegas, DOS, mode_set, corner_kmags, cutoff=cutoff)
+                TPLT = TwistedPlotter(round(np.rad2deg(theta), 6), omegas, DOS, mode_set, corner_kmags, cutoff=cutoff)
                 TPLT.make_plot(outdir=outdir, name=name, filename=outname, width=WIDTH)
         print("Modes outputted.")
 
