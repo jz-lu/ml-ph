@@ -60,13 +60,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # Legacy compatibility
-    theta = np.deg2rad(args.theta/2); indir = args.dir; outdir = args.out; multirelax = args.mr
+    theta = np.deg2rad(args.theta); indir = args.dir; outdir = args.out; multirelax = args.mr
     relax = args.relax; plot_intra = args.intra; force_sum = args.fsum; name = args.name
     cutoff = args.cut; realspace = args.rs; do_sum_rule = not args.ns; outname = args.oname
     print(f"Twist angle: {np.rad2deg(theta)} deg")
 
     #! delete soon
-    cutoff = int(40 * ((args.theta/2)**0.85))
+    cutoff = int(40 * ((args.theta)**0.85))
 
     if not theta:
         err(f"Error: must supply twist angle. Run `python3 {sys.argv[0]} --usage` for help.")

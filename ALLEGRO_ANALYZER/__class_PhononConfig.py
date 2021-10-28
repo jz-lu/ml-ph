@@ -149,7 +149,6 @@ class TwistedRealspacePhonon:
     def __phonon_inverse_fourier(self):
         self.__build_modes()
         print("Building realspace phonon tensor...")
-        # TODO does phase sign matter?
         self.rphtnsr = np.array([sum([G_blk * np.exp(-1j * np.dot(GM, r)) 
             for G_blk, GM in zip(self.phtnsr, self.GM_set)]) for r in self.r_matrix])
         assert self.rphtnsr.shape == self.old_rphtnsr_shape, \
@@ -226,7 +225,8 @@ class TwistedRealspacePhonon:
         layer_blks = np.split(mnormed_tnsr, 2, axis=0) # split back by layer, then avg it
         layer_blks = np.real(list(map(lambda x: np.mean(x, axis=0), layer_blks)))
         assert layer_blks.shape == (2, self.nmodes, self.n_r, self.d)
-        zmin, zmax = np.min(layer_blks[:,:,:,2]), np.max(layer_blks[:,:,:,2])
+        # zmin, zmax = np.min(layer_blks[:,:,:,2]), np.max(layer_blks[:,:,:,2])
+        zbound = np.max(np.abs(layer_blks[:,:,:,2]))
         for l_i, layer_blk in enumerate(layer_blks):
             l_i += 1 # index layers by 1
             for m_j, phonons in enumerate(layer_blk):
@@ -246,7 +246,7 @@ class TwistedRealspacePhonon:
                 # cb = plt.colorbar(ticks=v1)
                 # cb.ax.set_yticklabels(["{:6.4f}".format(i) for i in v1])
                 plt.colorbar()
-                plt.clim(zmin, zmax)
+                plt.clim(-zbound, zbound)
                 fig.savefig(self.outdir + this_outname)
                 plt.close(fig)
                 update(f"Wrote twisted phonons in realspace to {self.outdir + this_outname}")

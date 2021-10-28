@@ -23,7 +23,7 @@ class RelaxerAPI:
         assert os.path.isdir(outdir), f"Invalid directory {outdir}"
         self.pfx = f'_%.3lf'%theta
         self.outdir = checkPath(os.path.abspath(outdir))
-        self.gridsz = gridsz; self.cob = cob; self.theta = theta
+        self.gridsz = gridsz; self.cob = cob; self.theta = round(theta, 6)
         self.langle = Configuration.lattice_angle_from_cob(self.cob)
         assert np.isclose(self.langle, 60) or np.isclose(self.langle, 120), f"Lattice angle must be 60 or 120, but is {self.langle}"
         print(f"Starting relaxer program {RELAX_CODE_PATH} in Julia...")

@@ -726,7 +726,7 @@ class TwistedPlotter:
             lims[0] = min(0, lims[0], min(modes))
             lims[1] = max(lims[1], max(modes))
             axband.scatter([k_mag] * len(modes), modes, c='black', s=0.07)
-        lims[1] += 5; plt.ylim(lims)
+        lims[1] += 0.05*lims[1]; plt.ylim(lims)
         xlabs = (r'K', r'$\Gamma$', r'M', r'K')
         axband.set_xticks(self.corner_kmags)
         axband.set_xticklabels(xlabs)
