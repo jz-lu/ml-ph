@@ -127,6 +127,7 @@ def begin_computation(user_input_settings):
             mkdir(MONOLAYER_DIR_NAME + i, BASE_ROOT)
             copy(p, BASE_ROOT, newPath=intra_path, newName=POSCAR_NAME)
             copy(p, BASE_ROOT, newPath=BASE_ROOT+CONFIG_DIR_NAME)
+            sup = int(user_input_settings.super_dim)
             exepath = build_bash_exe(calc_type='basic', 
                                      calc_list=clist, outdir=intra_path,
                                      compute_jobname=user_input_settings.passname()+MONOLAYER_JOBNAME+i, 
@@ -135,7 +136,7 @@ def begin_computation(user_input_settings):
                                      ediff0=user_input_settings.ediff0, 
                                      fcut=user_input_settings.fcut, 
                                      passname=user_input_settings.passname(), 
-                                     super_dim=LARGE_SUPER_DIM[0])
+                                     super_dim=min(sup, LARGE_SUPER_DIM[0]))
             if not DEBUGGING:
                 os.chdir(intra_path)
                 print("Submitting monolayer job for layer " + i + "...")

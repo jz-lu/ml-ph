@@ -20,7 +20,7 @@ parser.add_argument("-t", "--type", type=str, help="basic, config, diag, norelax
                     default='basic', choices=TYPE_STRS)
 parser.add_argument("-s", "--sampling", type=str, help='low or high', default='high', choices=['low', 'high'])
 parser.add_argument("-e", "--edinit", type=float, help="initial EDIFF for TLT algorithm", default=None)
-parser.add_argument("--twist", type=float, help="give a twist angle", default=None)
+parser.add_argument("--twist", type=float, help="give a twist angle (put arbitrary number if not using -r)", default=None)
 parser.add_argument("-d", "--dir", type=str, help="directory containing desired VASP input files", default='.')
 parser.add_argument("-v", "--vdw", action="store_true", help="use van der Waals corrections")
 parser.add_argument("-f", "--fcut", action="store_true", help="use force cutoff instead of energy for EDIFFG")
