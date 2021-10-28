@@ -66,7 +66,7 @@ if __name__ == "__main__":
     ppath = args.dir + args.pos; outpath = args.dir+args.out
     assert os.path.isfile(ppath), f"Invalid path {ppath}"
     p = Poscar.from_file(ppath)
-    if args.type == 'rotate':
+    if args.type == 'rot':
         rotate_atoms(np.deg2rad(args.param), p, out=outpath)
     elif args.type == 'lc':
         update_lc(p, args.param, out=outpath)
