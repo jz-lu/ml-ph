@@ -53,9 +53,20 @@ def rotate_atoms(theta, p, out=None): # theta in rad
         succ(f"Wrote updated POSCAR with rotation {np.rad2deg(theta)} to {out}")
     return struct
 
+def shift_xy(delta, p, out=None):
+    pos = p.structure.frac_coords + delta
+    pos = pos.T; pos[-1] -= delta; pos = pos.T
+    A0 = p.structure.lattice.matrix
+    species = [s.name for s in p.structure.species]
+    struct = Structure(A0, species, pos, coords_are_cartesian=False)
+    if out is not None:
+        struct.to(fmt='poscar', filename=out) # write unstreched POSCAR to file 
+        succ(f"Wrote updated POSCAR with shift {delta} to {out}")
+    return struct
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Adjust POSCARs, such as rotating atoms or changing constants")
-    parser.add_argument("type", help="modification type", choices=['lc', 'z', 'rot'])
+    parser.add_argument("type", help="modification type", choices=['lc', 'z', 'rot', 'sh'])
     parser.add_argument("param", type=float, help="parameter (e.g. angle for rotation, lattie constant, etc.", default=None)
     parser.add_argument("-d", "--dir", type=str, help="directory containing POSCAR", default='.')
     parser.add_argument("-p", "--pos", type=str, help="POSCAR name", default=POSCAR_NAME)
@@ -68,6 +79,8 @@ if __name__ == "__main__":
     p = Poscar.from_file(ppath)
     if args.type == 'rot':
         rotate_atoms(np.deg2rad(args.param), p, out=outpath)
+    elif args.type == 'sh':
+        shift_xy(args.param, p, out=outpath)
     elif args.type == 'lc':
         update_lc(p, args.param, out=outpath)
     elif args.type == 'z':
