@@ -65,8 +65,8 @@ if __name__ == '__main__':
     cutoff = args.cut; realspace = args.rs; do_sum_rule = not args.ns; outname = args.oname
     print(f"Twist angle: {round(np.rad2deg(theta), 6)} deg")
 
-    #! delete soon
-    cutoff = int(40 * ((args.theta)**0.85))
+    if cutoff is None:
+        cutoff = int(40 * ((args.theta)**0.85))
 
     if not theta:
         err(f"Error: must supply twist angle. Run `python3 {sys.argv[0]} --usage` for help.")
@@ -262,8 +262,8 @@ if __name__ == '__main__':
                     kpt=r'$\Gamma$')
             print("Phonons in realspace analyzed.")
             twrph.plot_phonons()
-            twrph.plot_spatial_avgs()
-            twrph.plot_atomic_avgs()
+            # twrph.plot_spatial_avgs()
+            # twrph.plot_atomic_avgs()
         
         print(f"Diagonalizing and outputting modes with corners {corner_kmags}...")
         if args.dos is not None:

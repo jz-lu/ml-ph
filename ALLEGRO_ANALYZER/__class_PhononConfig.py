@@ -236,7 +236,10 @@ class TwistedRealspacePhonon:
                 plt.quiver(coords[:,0], coords[:,1],    # positions
                             phonons[:,0], phonons[:,1], # arrows
                             z,                          # arrow colors
-                            cmap='cool')
+                            cmap='CMRmap')
+                (xm, xp), (ym, yp) = plt.xlim(), plt.ylim()
+                max_norm = np.max([LA.norm(phonon[:-1]) for phonon in phonons])
+                ax.text(0.02*(xp-xm)+xm, 0.02*(yp-ym)+ym, r'$\lambda = %.3E$'%max_norm)
                 plt.xlabel("x"); plt.ylabel("y")
                 ax.scatter(coords[:,0], coords[:,1], c='black', s=2)
                 ax.set_aspect('equal')

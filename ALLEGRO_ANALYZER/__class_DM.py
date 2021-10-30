@@ -606,8 +606,8 @@ class TwistedDM:
         plt.ylabel(r'$\omega\,(\mathrm{cm}^{-1})$')
         title = r"Phonon modes"
         if name is not None:
-            title += f" of {name} bilayer"
-        title += r" at " + '%.1lf'%angle + r"$^\circ$"
+            title += f" of {name}"
+        title += r" at " + '%.3lf'%angle + r"$^\circ$"
         plt.title(title)
         plt.savefig(outdir + filename, format='pdf')
         print(f"Band plot written to {outdir+filename}")
@@ -645,6 +645,7 @@ class TwistedDOS:
         assert self.modes.shape == self.weights.shape == (kdim**2, TDMs[0].shape[0])
         self.modes = self.modes.flatten(); self.weights = self.weights.flatten()
         self.mode_extrema = [np.min(self.modes), np.max(self.modes)]
+        breakpoint()
         self.__set_parameters(theta, width, partition_density, normalizer)
         self.DOS = None
     
