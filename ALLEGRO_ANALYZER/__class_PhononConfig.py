@@ -85,6 +85,8 @@ anyway, since the lattice constants will be too far apart to form a stable bilay
 some reason it is useful for different numbers of atoms, simply adjust layer slicing in formation 
 of `phtnsr` to slice proportional to ratio of atoms, instead of in half.
 """
+RSPC_SUPERCElL_SIZE = 12 # make grid of (RSPC_SUPERCElL_SIZE) x (RSPC_SUPERCElL_SIZE) moire realspace cells
+assert RSPC_SUPERCElL_SIZE % 2 == 0, f"Realspace supercell size should be even, but is {RSPC_SUPERCElL_SIZE}"
 class TwistedRealspacePhonon:
     def __init__(self, theta, k, GM_set, DM_at_k, n_at, bl_masses, 
                  poscars_uc, gridsz=11, outdir='.', modeidxs=np.linspace(0,6,6), kpt=r'$\Gamma$'):
@@ -102,13 +104,13 @@ class TwistedRealspacePhonon:
         self.sc_lattice = A_delta2inv @ A0
         self.at_pos = np.concatenate([p.structure.cart_coords for p in poscars_uc], axis=0)
         self.at_pos[self.n_at//2:,2] += Z_LAYER_SEP*poscars_uc[0].structure.lattice.matrix[-1,-1] # make interlayer space
-        x = np.linspace(0, 1, num=gridsz, endpoint=False)
+        x = np.linspace(-RSPC_SUPERCElL_SIZE//2, RSPC_SUPERCElL_SIZE//2, num=gridsz*RSPC_SUPERCElL_SIZE, endpoint=False)
         self.d = 3; self.theta = theta
-        self.gridsz = gridsz; self.n_r = gridsz**2
+        self.gridsz = gridsz; self.n_r = (gridsz * RSPC_SUPERCElL_SIZE)**2
         self.r_matrix = np.array(list(prod(x, x))); assert self.r_matrix.shape == (self.n_r, 2)
         self.diagidxs = self.r_matrix[:,0] == self.r_matrix[:,1]
         self.r_linecut_direct = self.r_matrix[self.diagidxs]
-        self.r_matrix = (self.sc_lattice @ self.r_matrix.T).T # make Cartesian
+        self.r_matrix = self.r_matrix @ self.sc_lattice.T # make Cartesian
         self.outdir = checkPath(os.path.abspath(outdir))
         self.phtnsr = None; self.rphtnsr = None # Fourier and real space phonons
         self.old_rphtnsr_shape = (self.n_r, self.n_at, self.nmodes, self.d) # realspace phonons
