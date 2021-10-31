@@ -1,10 +1,11 @@
 import numpy as np
 import os
 from ___constants_names import (
-    RELAX_CODE_PATH, RELAX_CODE_SUBPATH, 
-    RELAX_CODE_OUT, RELAXED_DELTA_OUT, UNRELAXED_CONFIGS_OUT, 
+    RELAX_CODE_PATH, RELAX_CODE_SUBPATH,
+    RELAX_CODE_OUT, RELAXED_DELTA_OUT, UNRELAXED_CONFIGS_OUT,
     RELAXED_CONFIGS_NPY
 )
+from ___constants_sampling import DENSITY_SCALE
 from __directory_searchers import checkPath
 from __class_Configuration import Configuration
 import numpy.linalg as LA
@@ -14,41 +15,57 @@ import argparse
 from ___helpers_parsing import succ
 from time import time
 
-RELAX_CODE_PATH = "/Users/jonathanlu/Documents/ml-ph/" + RELAX_CODE_SUBPATH
+# RELAX_CODE_PATH = "/Users/jonathanlu/Documents/ml-ph/" + RELAX_CODE_SUBPATH
 
 class RelaxerAPI:
     def __init__(self, theta, gridsz, outdir, cob):
         assert isinstance(gridsz, int) and gridsz > 1, f"Invalid grid size {gridsz}: must be positive integer"
         assert theta > 0 and theta < 180, f"Invalid twist angle {theta}"
         assert os.path.isdir(outdir), f"Invalid directory {outdir}"
-        self.pfx = f'_%.3lf'%theta
+        self.pfx = '_%.3lf'%theta
         self.outdir = checkPath(os.path.abspath(outdir))
         self.gridsz = gridsz; self.cob = cob; self.theta = round(theta, 6)
         self.langle = Configuration.lattice_angle_from_cob(self.cob)
-        assert np.isclose(self.langle, 60) or np.isclose(self.langle, 120), f"Lattice angle must be 60 or 120, but is {self.langle}"
+        assert np.isclose(self.langle, 60), f"Lattice angle must be 60, but is {self.langle}"
         print(f"Starting relaxer program {RELAX_CODE_PATH} in Julia...")
-        stream = os.popen(f"julia {RELAX_CODE_PATH} -d {theta} -N {gridsz} -o {self.outdir}")
-        print(stream.read())
+        stream = os.popen(f"julia {RELAX_CODE_PATH} -d {theta} -N {gridsz*DENSITY_SCALE} -o {self.outdir}")
+        print(stream.read(), flush=True)
         self.outpath = self.outdir + RELAX_CODE_OUT
         assert os.path.isfile(self.outpath), f"Failed to find expected relaxer output file at {self.outpath}"
         print("Relaxer code finished.")
-        self.u = np.load(self.outdir + RELAXED_DELTA_OUT)
-        self.b = np.load(self.outdir + UNRELAXED_CONFIGS_OUT)
+
+        # Load and de-densify secondary output
+        idxs = DENSITY_SCALE * np.arange(self.gridsz)
+        self.u = np.load(self.outdir + RELAXED_DELTA_OUT).reshape((self.gridsz*DENSITY_SCALE,self.gridsz*DENSITY_SCALE,2))
+        self.b = np.load(self.outdir + UNRELAXED_CONFIGS_OUT).reshape((self.gridsz*DENSITY_SCALE,self.gridsz*DENSITY_SCALE,2))
+        self.u = self.u[idxs]; self.u = self.u[:, idxs]
+        self.b = self.b[idxs]; self.b = self.b[:, idxs]
+        self.u = self.u.reshape((self.gridsz**2, 2))
+        self.b = self.b.reshape((self.gridsz**2, 2))
+
+        # Load and de-densify main output
         bprime_cart = np.load(self.outdir + RELAX_CODE_OUT)
+        bprime_cart = bprime_cart.reshape((self.gridsz*DENSITY_SCALE,self.gridsz*DENSITY_SCALE,2))
+        bprime_cart = bprime_cart[idxs]
+        bprime_cart = bprime_cart[:, idxs]
+        assert bprime_cart.shape == (self.gridsz, self.gridsz, 2)
+
         # Relaxer uses y-major order, we use x-major order, so convert
         bprime_cart = np.transpose(\
             bprime_cart.reshape((self.gridsz,self.gridsz,2)),\
                  axes=(1,0,2)).reshape((self.gridsz**2,2))
         self.bprime_cart = bprime_cart
         assert bprime_cart.shape == (self.gridsz**2, 2), f"Invalid relaxation matrix shape (expected {(self.gridsz**2, 2)}):\n {bprime_cart}"
+
         self.bprime_dir_raw = (LA.inv(self.cob) @ bprime_cart.T).T
         bprime = np.round((self.bprime_dir_raw + 1.0000001) % 1, 7) # mod unit cell torus
         self.bprime_dir = np.hstack((bprime, np.zeros(self.gridsz**2).reshape(self.gridsz**2, 1)))
-        self.plot_quiver()
+
     def get_configs(self, save=True, cartesian=False):
         if save:
             np.save(self.outdir + RELAXED_CONFIGS_NPY, self.bprime_dir)
         return self.bprime_cart if cartesian else self.bprime_dir
+
     def plot_relaxation(self, filename='relax.png'):
         plt.clf(); _, ax = plt.subplots()
         plt.scatter(self.b[:,0], self.b[:,1], c='royalblue', alpha=0.15, label='before')
@@ -70,6 +87,7 @@ class RelaxerAPI:
         outname = self.outdir + 'ba_' + filename
         plt.savefig(outname)
         succ("Successfully wrote relax Cartesian before-after plot out to " + outname)
+
     def plot_relaxation_direct(self, filename='relax_direct.png'):
         filename = filename[:filename.index('.')] + self.pfx + filename[filename.index('.'):]
         plt.clf(); _, ax = plt.subplots()
@@ -91,6 +109,7 @@ class RelaxerAPI:
         outname = self.outdir + filename
         plt.savefig(outname)
         succ("Successfully wrote relax Cartesian before-after plot out to " + outname)
+
     def plot_quiver(self, filename='quiver.png'):
         filename = filename[:filename.index('.')] + self.pfx + filename[filename.index('.'):]
         plt.clf(); _, ax = plt.subplots()
@@ -111,6 +130,7 @@ class RelaxerAPI:
         outname = self.outdir + 'vecfld_' + filename
         plt.savefig(outname)
         succ("Successfully wrote relax Cartesian vector field plot out to " + outname)
+
     def plot_quiver_direct(self, filename='quiver_direct.png'):
         filename = filename[:filename.index('.')] + self.pfx + filename[filename.index('.'):]
         b = (LA.inv(self.cob) @ self.b.T).T; u = (LA.inv(self.cob) @ self.u.T).T
@@ -131,6 +151,7 @@ class RelaxerAPI:
         outname = self.outdir + filename
         plt.savefig(outname)
         succ("Successfully wrote relax direct vector field plot out to " + outname)
+
     def plot_all(self):
         self.plot_relaxation(); self.plot_relaxation_direct()
         self.plot_quiver(); self.plot_quiver_direct()
@@ -157,7 +178,7 @@ if __name__ == '__main__':
     r_api.plot_all()
     succ("== Configuration Analyzer Complete (Took %.3lfs) =="%(time()-start_time))
 
-    
+
 
 
 

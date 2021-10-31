@@ -21,7 +21,7 @@ from ___constants_names import (
     POSCAR_CONFIG_NAMEPRE, 
     SHIFT_NAME, SHIFTS_NPY_NAME, 
     DEFAULT_PH_BAND_PLOT_NAME, DEFAULT_PH_BANDDOS_PLOT_NAME, 
-    ANGLE_SAMPLE_INAME, RSPC_LIST_INAME, 
+    ANGLE_SAMPLE_INAME, RSPC_LIST_INAME, RSPC_K_INAME, 
     MODE_TNSR_ONAME, ANGLE_SAMPLE_ONAME, GAMMA_IDX_ONAME, 
     K_MAGS_ONAME, K_SET_ONAME, DM_TNSR_ONAME
 )
@@ -60,13 +60,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # Legacy compatibility
-    theta = np.deg2rad(args.theta); indir = args.dir; outdir = args.out; multirelax = args.mr
+    theta = np.deg2rad(args.theta/2); indir = args.dir; outdir = args.out; multirelax = args.mr
     relax = args.relax; plot_intra = args.intra; force_sum = args.fsum; name = args.name
     cutoff = args.cut; realspace = args.rs; do_sum_rule = not args.ns; outname = args.oname
     print(f"Twist angle: {round(np.rad2deg(theta), 6)} deg")
 
     if cutoff is None:
-        cutoff = int(40 * ((args.theta)**0.85))
+        cutoff = int(40 * ((theta)**0.85))
 
     if not theta:
         err(f"Error: must supply twist angle. Run `python3 {sys.argv[0]} --usage` for help.")
@@ -252,8 +252,12 @@ if __name__ == '__main__':
             print("\nAnalyzing sum of forces in twisted bilayer (G0 only)...")
             TDM.print_force_sum()
 
-        if realspace:
-            print("Analyzing phonons in realspace at Gamma point...")
+        if realspace: 
+            # TODO generalize for as many k as you want, separated by newlines
+            rspc_k = np.array([0,0])
+            if os.path.isfile(indir + RSPC_K_INAME):
+                rspc_k = np.loadtxt(indir + RSPC_K_INAME)
+            print(f"Analyzing phonons in realspace at k-points:\n{rspc_k}")
             n_at = sum([sum(p.natoms) for p in poscars_uc])
             print(f"Number of atoms in bilayer configuration cell: {n_at}")
             twrph = TwistedRealspacePhonon(round(np.rad2deg(theta), 6), np.array([0,0]), GM_set, 
@@ -285,7 +289,7 @@ if __name__ == '__main__':
                 # iDOS = TwistedDOS(mesh_TDMs_intra, len(GM_set), np.rad2deg(theta), width=WIDTH, kdim=args.dos)
                 # normalizer = np.max(iDOS.get_DOS()[1])
                 normalizer = 1 #! delete
-                TDOS = TwistedDOS(mesh_TDMs, len(GM_set), round(np.rad2deg(theta), 6), 
+                TDOS = TwistedDOS(mesh_TDMs, len(GM_set), round(np.rad2deg(theta), 6), cutoff=cutoff, 
                                   width=WIDTH, kdim=args.dos, normalizer=normalizer, eigsys=eigsys)
                 if eigsys is None:
                     eigsys = TDOS.get_eigsys()

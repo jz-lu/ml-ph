@@ -615,7 +615,7 @@ class TwistedDM:
 
 
 class TwistedDOS:
-    def __init__(self, TDMs, n_G, theta, width=0.2, 
+    def __init__(self, TDMs, n_G, theta, cutoff=None, width=0.2, 
                  partition_density=DEFAULT_PARTITION_DENSITY, 
                  kdim=DEFAULT_KDIM, normalizer=1, eigsys=None):
         # Eigensort the eigenbasis, then slice off everything but the G0 component
@@ -623,7 +623,7 @@ class TwistedDOS:
             vals, vecs = LA.eig(A); idxs = vals.argsort()   
             vals = vals[idxs]; vecs = vecs[:,idxs]
             mid = vecs.shape[0] // 2; glen = vecs.shape[0] // (n_G * 2)
-            # Cut matrix in half (split by layer), then split by G
+            # Cut matrix in half (split by layer), then take the G0 (First) component
             vecs = np.vstack((vecs[0 : 0+glen], vecs[mid : mid+glen]))
             assert vecs.shape == (glen*2, vals.shape[0])
             if idx % 100 == 0:
@@ -645,7 +645,11 @@ class TwistedDOS:
         assert self.modes.shape == self.weights.shape == (kdim**2, TDMs[0].shape[0])
         self.modes = self.modes.flatten(); self.weights = self.weights.flatten()
         self.mode_extrema = [np.min(self.modes), np.max(self.modes)]
-        breakpoint()
+        if cutoff is not None:
+            print(f"DOS CUTOFF: {cutoff}")
+            assert cutoff > self.mode_extrema[0], \
+                f"Cutoff {cutoff} smaller than minimum freq {self.mode_extrema[0]}"
+            self.mode_extrema[1] = min(self.mode_extrema[1], cutoff)
         self.__set_parameters(theta, width, partition_density, normalizer)
         self.DOS = None
     
