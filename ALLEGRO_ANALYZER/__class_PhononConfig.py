@@ -162,7 +162,7 @@ class TwistedRealspacePhonon:
     def plot_spatial_avgs(self, outname='spavg.png'):
         avgtnsr = np.mean(self.rphtnsr, axis=2) # shape: (n_at, C, d)
         avgtnsr = np.transpose(avgtnsr, axes=(1,0,2)) # shape: (C, n_at, d)
-        np.save(self.outdir + "avgtnsr.npy", avgtnsr)
+        np.save(self.outdir + f"avgtnsr_{self.kpt}.npy", avgtnsr)
         print(f"Realspace average tensor shape: {avgtnsr.shape}")
         nuc_at = self.n_at//2
         plt.clf(); plt.plot(avgtnsr[0,:,0], avgtnsr[0,:,1]) # just to get the right dom/range
@@ -189,7 +189,7 @@ class TwistedRealspacePhonon:
                 ax.set_xlim(lim)
                 ax.set_aspect('equal')
             plt.suptitle(f"Mean field phonons from continuum (mode {self.modeidxs[m_j]})")
-            this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}' + outname[outname.index('.'):]
+            this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_k{self.kpt}' + outname[outname.index('.'):]
             fig.savefig(self.outdir + this_outname)
             plt.close(fig)
         succ("Successfully outputted spatial-average phonon plots")
@@ -212,7 +212,7 @@ class TwistedRealspacePhonon:
             for ax in axes:
                 ax.set_aspect('equal')
             plt.suptitle(f"Mean atom phonons in diagonal cut (mode {self.modeidxs[m_j]})")
-            this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}' + outname[outname.index('.'):]
+            this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_k{self.kpt}' + outname[outname.index('.'):]
             fig.savefig(self.outdir + this_outname)
             plt.close(fig)
         succ("Successfully outputted atomic-average phonon plots")
@@ -221,7 +221,7 @@ class TwistedRealspacePhonon:
     # there is one plot per mode, per layer
     def plot_phonons(self, outname='phreal.png'):
         coords = self.r_matrix
-        np.save(self.outdir + "rphtnsr.npy", self.rphtnsr)
+        np.save(self.outdir + f"rphtnsr_k{self.kpt}.npy", self.rphtnsr)
 
         mnormed_tnsr = np.array([y/sqrt(x) for x, y in zip(self.bl_masses, self.rphtnsr)])
         layer_blks = np.split(mnormed_tnsr, 2, axis=0) # split back by layer, then avg it
@@ -245,7 +245,7 @@ class TwistedRealspacePhonon:
                 plt.xlabel("x"); plt.ylabel("y")
                 ax.scatter(coords[:,0], coords[:,1], c='black', s=2)
                 ax.set_aspect('equal')
-                this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}' + outname[outname.index('.'):]
+                this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}_k{self.kpt}' + outname[outname.index('.'):]
                 plt.title(r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" Mode {m_j}, Layer {l_i} at " + self.kpt)
                 # v1 = np.linspace(z.min(), z.max(), 8, endpoint=True)
                 # cb = plt.colorbar(ticks=v1)

@@ -27,6 +27,7 @@ from ___constants_names import (
 )
 from ___constants_phonopy import POSCAR_UNIT_NAME
 from ___constants_compute import DEFAULT_NUM_LAYERS
+from ___constants_sampling import IBZ_GAMMA, IBZ_K_60, IBZ_M_60
 from __directory_searchers import checkPath, findDirsinDir, findFilesInDir
 from __dirModifications import build_dir
 from __class_Configuration import Configuration
@@ -253,21 +254,44 @@ if __name__ == '__main__':
             TDM.print_force_sum()
 
         if realspace: 
-            # TODO generalize for as many k as you want, separated by newlines
-            rspc_k = np.array([0,0])
+            print("Starting realspace analysis...")
+            rspc_kpts = np.array([IBZ_GAMMA]) # default to Gamma point
             if os.path.isfile(indir + RSPC_K_INAME):
-                rspc_k = np.loadtxt(indir + RSPC_K_INAME)
-            print(f"Analyzing phonons in realspace at k-points:\n{rspc_k}")
+                rspc_kpts = np.loadtxt(indir + RSPC_K_INAME)
+                print(f"Loaded list of k-points from {indir + RSPC_K_INAME}")
+            else:
+                print("No input set of k-points found, using Gamma point as default")
+            dir_rspc_kpts = rspc_kpts
+            rspc_kpts = bzsamples.k_dir_to_cart(rspc_kpts) # convert to Cartesian coordinates
+            print(f"Analyzing phonons in realspace at k-points ::\nCartesian:\n{rspc_kpts}\nDirect:{dir_rspc_kpts}")
             n_at = sum([sum(p.natoms) for p in poscars_uc])
             print(f"Number of atoms in bilayer configuration cell: {n_at}")
-            twrph = TwistedRealspacePhonon(round(np.rad2deg(theta), 6), np.array([0,0]), GM_set, 
-                    TDM.get_DM_at_Gamma(), n_at, bl_M, poscars_uc, 
-                    outdir=outdir, modeidxs=np.loadtxt(indir + RSPC_LIST_INAME), 
-                    kpt=r'$\Gamma$')
-            print("Phonons in realspace analyzed.")
-            twrph.plot_phonons()
-            # twrph.plot_spatial_avgs()
-            # twrph.plot_atomic_avgs()
+
+            # Build the dynamical matrices at the requested k-points
+            rspc_MLDMs = [MonolayerDM(uc, sc, ph, GM_set, G0_set, rspc_kpts, 0) \
+                        for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
+            rspc_TDM = TwistedDM(rspc_MLDMs[0], rspc_MLDMs[1], ILDM, np.zeros(rspc_kpts.size), \
+                [p.structure.species for p in poscars_uc], 0)
+            if do_sum_rule:
+                rspc_TDM.apply_sum_rule()
+            rspc_TDMs = rspc_TDM.get_DM_set()
+            modeidxs = np.loadtxt(indir + RSPC_LIST_INAME)
+            for kidx, rspc_k in enumerate(rspc_kpts):
+                TDM_k = rspc_TDM
+                kpt_name = "(%4.3lf, %4.3lf)"%(rspc_k[0], rspc_k[1])
+                if np.isclose(IBZ_GAMMA, rspc_k):
+                    kpt_name = r'$\Gamma$'
+                elif np.isclose(IBZ_K_60, rspc_k):
+                    kpt_name = r'$K$'
+                elif np.isclose(IBZ_M_60, rspc_k):
+                    kpt_name = r'$M$'
+                twrph = TwistedRealspacePhonon(round(np.rad2deg(theta), 6), rspc_k, GM_set, 
+                        rspc_TDMs[kidx], n_at, bl_M, poscars_uc, outdir=outdir, modeidxs=modeidxs, 
+                        kpt=kpt_name)
+                print(f"Phonons in realspace analyzed at {rspc_k} (i.e. {kpt_name}).")
+                twrph.plot_phonons()
+                # twrph.plot_spatial_avgs()
+                # twrph.plot_atomic_avgs()
         
         print(f"Diagonalizing and outputting modes with corners {corner_kmags}...")
         if args.dos is not None:

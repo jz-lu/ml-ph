@@ -147,6 +147,10 @@ class BZSampler:
         self.k_mesh = grid_dir @ self.GM.T
         return self.k_mesh
     
+    def k_dir_to_cart(self, k_dir):
+        assert k_dir.shape[1] == 2, f"Expected k to be a Nx2 matrix, but got shape {k_dir.shape}"
+        return k_dir @ self.GM.T
+    
     # Sample nk points along each IBZ boundary line
     def sample_k0(self, nk=DEFAULT_NK, log=False):
         assert self.ltype == 'hexagonal'

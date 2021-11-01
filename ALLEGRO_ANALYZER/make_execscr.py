@@ -58,7 +58,6 @@ def build_bash_exe(calc_type='basic', outdir='.', wdir=None, calc_list=[ENERGIES
         passname += ('' if passname == '' else '-') + '${SLURM_ARRAY_TASK_ID}'
     if len(passname) > 0:
         passname = '-n ' + passname
-    print(f"PASSNAME: {passname}")
 
     with open(exepath, 'w') as f:
         f.write('#!/bin/bash\n')

@@ -499,12 +499,13 @@ class TwistedDM:
         for k in range(self.n_k):
             self.DMs[k] = self.DMs[k] + corr
 
-    # Retrieve list dynamical matrices corresponding to the list of sampled k-vectors
     def get_DM_set(self):
+        """Retrieve list dynamical matrices corresponding to the list of sampled k-vectors"""
         print(f"Retrieved DM set of shape {self.DMs[0].shape} from twisted DM object")
         return np.array(self.DMs)
     
     def get_DM_at_Gamma(self):
+        """Dynamical matrix at Gamma point"""
         return self.DMs[self.Gamma_idx]
     
     def print_force_sum(self, G0_only=True):
@@ -551,12 +552,12 @@ class TwistedDM:
         print("Retrieved k set sample from twisted DM object")
         return self.k_mags
 
-    # Diagonalize the set of DMs to get phonon modes
     def build_modes(self, dump=False, outdir='.'):
+        """Diagonalize the set of DMs to get phonon modes"""
         self.mode_set = [0]*len(self.k_mags)
         self.modetnsr = [0]*len(self.k_mags)
         for i, (k_mag, DM) in enumerate(zip(self.k_mags, self.DMs)):
-            evals = LA.eigvals(DM)
+            evals = LA.eigvals(DM) 
             signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
             modes_k = signs * np.sqrt(np.abs(evals)) * (VASP_FREQ_TO_INVCM_UNITS) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
             self.mode_set[i] = (k_mag, modes_k)
