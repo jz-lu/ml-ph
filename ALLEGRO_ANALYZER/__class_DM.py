@@ -460,6 +460,7 @@ class TwistedDM:
         self.l0szs = [l1.l0_shape[0], l2.l0_shape[0]]
         self.Gamma_idx = Gamma_idx
         self.Gamma_intra_blks = [l1.Gamma_blks(), l2.Gamma_blks()]
+        breakpoint()
         self.DMs = [self.__block_l2([DMs_layer1[i] + DM_cfgintra[0],\
              DMs_layer2[i] + DM_cfgintra[1]], DM_inter) for i in range(self.n_k)]
         self.corr_mat = self.__block_l2([l1.get_corr_mat() + DM_cfgintra[0], \

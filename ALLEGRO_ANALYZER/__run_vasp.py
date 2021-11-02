@@ -76,7 +76,7 @@ def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax', edinit=
     outfile_name = VASP_RUN_OUT_NAME%(run_type)
     errfile_name = VASP_RUN_ERR_NAME%(run_type)
     if run_type == 'dfpt':
-        print("Using DFPT algorithm")
+        print("Using DFPT algorithm", flush=True)
         vaspObj['INCAR']['IBRION'] = IBRION['dfpt']
         vaspObj['INCAR']['NSW'] = 1
         if 'NPAR' in list(vaspObj['INCAR'].keys()):
@@ -93,7 +93,7 @@ def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax', edinit=
         sgn = -1 if force_cut else 1
         vaspObj['INCAR']['EDIFF'] = edinit
         vaspObj['INCAR']['EDIFFG'] = vaspObj['INCAR']['EDIFFG'] = sgn * edinit # round(10 * edinit, 12)
-        print(f"Starting initial LT-algorithm run at EDIFF={edinit}")
+        print(f"Starting initial LT-algorithm run at EDIFF={edinit}", flush=True)
         vaspObj = run_vasp_relaxation(vaspObj, dirName, outfile_name, errfile_name)
         LT_converged = False
         tight_loopctr = 1

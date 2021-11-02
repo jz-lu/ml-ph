@@ -245,6 +245,7 @@ class TwistedRealspacePhonon:
                 phonons = np.real(phonons) # just take the real component
                 z = phonons[:,2]
                 plt.clf(); fig, ax = plt.subplots()
+                ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="darkviolet", alpha=0.4)
                 plt.quiver(coords[:,0], coords[:,1],    # positions
                             phonons[:,0], phonons[:,1], # arrows
                             z,                          # arrow colors
@@ -254,7 +255,6 @@ class TwistedRealspacePhonon:
                 ax.text(0.02*(xp-xm)+xm, 0.02*(yp-ym)+ym, r'$\lambda = %.3E$'%max_norm)
                 plt.xlabel("x"); plt.ylabel("y")
                 ax.scatter(coords[:,0], coords[:,1], c='black', s=2)
-                ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="darkviolet", alpha=0.4)
                 ax.set_aspect('equal')
                 this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}_k{self.kpt}' + outname[outname.index('.'):]
                 plt.title(r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" Mode {m_j}, Layer {l_i} at " + self.kpt)

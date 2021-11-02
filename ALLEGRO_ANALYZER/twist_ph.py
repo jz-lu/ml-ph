@@ -61,13 +61,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # Legacy compatibility
-    theta = np.deg2rad(args.theta/5); indir = args.dir; outdir = args.out; multirelax = args.mr
+    theta = np.deg2rad(args.theta); indir = args.dir; outdir = args.out; multirelax = args.mr
     relax = args.relax; plot_intra = args.intra; force_sum = args.fsum; name = args.name
     cutoff = args.cut; realspace = args.rs; do_sum_rule = not args.ns; outname = args.oname
     print(f"Twist angle: {round(np.rad2deg(theta), 6)} deg")
 
     if cutoff is None:
-        cutoff = int(40 * ((args.theta/5)**0.85))
+        cutoff = int(40 * ((args.theta)**0.85))
 
     if not theta:
         err(f"Error: must supply twist angle. Run `python3 {sys.argv[0]} --usage` for help.")
@@ -257,10 +257,11 @@ if __name__ == '__main__':
             print("Starting realspace analysis...")
             rspc_kpts = np.array([IBZ_GAMMA]) # default to Gamma point
             if os.path.isfile(indir + RSPC_K_INAME):
-                rspc_kpts = np.loadtxt(indir + RSPC_K_INAME)
+                rspc_kpts = np.concatenate((rspc_kpts, np.loadtxt(indir + RSPC_K_INAME)))
                 print(f"Loaded list of k-points from {indir + RSPC_K_INAME}")
             else:
                 print("No input set of k-points found, using Gamma point as default")
+            rspc_kpts = np.unique([tuple(row) for row in rspc_kpts]) # filter duplicate rows
             dir_rspc_kpts = rspc_kpts
             rspc_kpts = bzsamples.k_dir_to_cart(rspc_kpts) # convert to Cartesian coordinates
             print(f"Analyzing phonons in realspace at k-points ::\nCartesian:\n{rspc_kpts}\nDirect:{dir_rspc_kpts}")
