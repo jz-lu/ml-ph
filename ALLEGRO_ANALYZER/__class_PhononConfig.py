@@ -71,6 +71,15 @@ class PhononConfig:
             fig.savefig(self.outdir + this_outname)
         succ(f"Successfully plotted configuration maps of mode indices {modeidxs}")
 
+def make_unit_square():
+    """Helper function that returns the coordinates of a unit square"""
+    npts = 11
+    a = np.linspace(0, 1, npts, endpoint=True)
+    a0 = np.zeros_like(a); a1 = np.ones_like(a)
+    l1 = np.stack((a, a0), axis=1); l2 = np.stack((a1, a), axis=1)
+    l3 = np.stack((np.flip(a), a1), axis=1); l4 = np.stack((a0, np.flip(a)), axis=1)
+    sq = np.concatenate((l1, l2, l3, l4)); assert sq.shape == (4*npts, 2)
+    return sq
 
 """
 Plots twisted phonons at Gamma point in realspace under continuum model. Since the twisted DM
@@ -111,6 +120,7 @@ class TwistedRealspacePhonon:
         self.diagidxs = self.r_matrix[:,0] == self.r_matrix[:,1]
         self.r_linecut_direct = self.r_matrix[self.diagidxs]
         self.r_matrix = self.r_matrix @ self.sc_lattice.T # make Cartesian
+        self.moire_boundary = make_unit_square() @ self.sc_lattice.T # boundary line of moire cell
         self.outdir = checkPath(os.path.abspath(outdir))
         self.phtnsr = None; self.rphtnsr = None # Fourier and real space phonons
         self.old_rphtnsr_shape = (self.n_r, self.n_at, self.nmodes, self.d) # realspace phonons
@@ -244,6 +254,7 @@ class TwistedRealspacePhonon:
                 ax.text(0.02*(xp-xm)+xm, 0.02*(yp-ym)+ym, r'$\lambda = %.3E$'%max_norm)
                 plt.xlabel("x"); plt.ylabel("y")
                 ax.scatter(coords[:,0], coords[:,1], c='black', s=2)
+                ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="darkviolet", alpha=0.4)
                 ax.set_aspect('equal')
                 this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}_k{self.kpt}' + outname[outname.index('.'):]
                 plt.title(r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" Mode {m_j}, Layer {l_i} at " + self.kpt)
