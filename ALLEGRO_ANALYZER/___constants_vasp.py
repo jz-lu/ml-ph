@@ -14,9 +14,10 @@ Z_LATTICE_SIZE = 35.0
 Z_LAYER_SEP = {
   'WSe2': 0.2045,
   'MoS2_0': 0.19405515, 
-  'MoS2_180': 0.19403429
+  'MoS2_180': 0.19403429,
+  'Gr': 0.103
 } # Layer separation in terms of the z-basis vector
-Z_LAYER_SEP = Z_LAYER_SEP['WSe2']
+Z_LAYER_SEP = Z_LAYER_SEP['Gr']
 # Precision of POSCAR lattice and atoms, in number of decimal places
 POSCAR_PRECISION = 6
 POSCAR_PREC_COMP_THRESHOLD = 0.0001
