@@ -27,7 +27,7 @@ from ___constants_names import (
 )
 from ___constants_phonopy import POSCAR_UNIT_NAME
 from ___constants_compute import DEFAULT_NUM_LAYERS
-from ___constants_sampling import IBZ_GAMMA, IBZ_K_60, IBZ_M_60
+from ___constants_sampling import IBZ_GAMMA, IBZ_K_60, IBZ_M_60, DEFAULT_RSPC_SZ
 from __directory_searchers import checkPath, findDirsinDir, findFilesInDir
 from __dirModifications import build_dir
 from __class_Configuration import Configuration
@@ -57,6 +57,7 @@ if __name__ == '__main__':
     parser.add_argument("--mr", action="store_true", help=f'multirelax (req parameter file \'{ANGLE_SAMPLE_INAME}\')')
     parser.add_argument("--rs", action="store_true", help='do realspace analysis')
     parser.add_argument("--kdir", action="store_true", help="input k-points are in direct coordinates (default Cartesian)")
+    parser.add_argument("--rssz", type=int, help="supercell size for realspace plots", default=DEFAULT_RSPC_SZ)
     parser.add_argument("--dos", type=int, help='DOS k-mesh size')
     parser.add_argument("-f", "--fsum", action="store_true", help='output force sums (only useful for debugging)')
     args = parser.parse_args()
@@ -80,6 +81,7 @@ if __name__ == '__main__':
         assert os.path.isfile(indir + ANGLE_SAMPLE_INAME), f"Must provide input file {ANGLE_SAMPLE_INAME}"
     if realspace:
         assert os.path.isfile(indir + RSPC_LIST_INAME), f"Must provide input file {RSPC_LIST_INAME}"
+        assert args.rssz > 0, f"Realspace supercell size must be a positive integer, but got {args.rssz}"
     print(f"WD: {indir}, Output to: {outdir}")
     outname = 'd' + str(round(np.rad2deg(theta), 6)) + "_" + outname
     print("Building twisted crystal phonon modes...")
@@ -301,7 +303,7 @@ if __name__ == '__main__':
                     os.mkdir(this_outdir)
                 twrph = TwistedRealspacePhonon(round(np.rad2deg(theta), 6), rspc_k, GM_set, 
                         rspc_TDMs[kidx], n_at, bl_M, poscars_uc, outdir=this_outdir, modeidxs=modeidxs, 
-                        kpt=kpt_name)
+                        kpt=kpt_name, RSPC_SUPERCELL_SZ=args.rssz)
                 print(f"Phonons in realspace analyzed at {rspc_k} (i.e. {kpt_name}).")
                 twrph.plot_phonons()
                 # twrph.plot_spatial_avgs()

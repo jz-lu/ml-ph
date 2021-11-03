@@ -94,12 +94,12 @@ anyway, since the lattice constants will be too far apart to form a stable bilay
 some reason it is useful for different numbers of atoms, simply adjust layer slicing in formation 
 of `phtnsr` to slice proportional to ratio of atoms, instead of in half.
 """
-RSPC_SUPERCElL_SIZE = 3 # make grid of (RSPC_SUPERCElL_SIZE) x (RSPC_SUPERCElL_SIZE) moire realspace cells
-# assert RSPC_SUPERCElL_SIZE % 2 == 0, f"Realspace supercell size should be even, but is {RSPC_SUPERCElL_SIZE}"
 class TwistedRealspacePhonon:
     def __init__(self, theta, k, GM_set, DM_at_k, n_at, bl_masses, 
-                 poscars_uc, gridsz=11, outdir='.', modeidxs=np.linspace(0,6,6), kpt=r'$\Gamma$'):
+                 poscars_uc, gridsz=11, outdir='.', modeidxs=np.linspace(0,6,6), kpt=r'$\Gamma$',
+                 RSPC_SUPERCELL_SIZE=3):
         assert len(bl_masses) == n_at
+        self.RSPC_SUPERCElL_SIZE = RSPC_SUPERCElL_SIZE
         self.kpt = kpt
         self.bl_masses = bl_masses
         self.GM_set = GM_set; self.n_G = len(GM_set); self.k = k
@@ -244,8 +244,8 @@ class TwistedRealspacePhonon:
             for m_j, phonons in enumerate(layer_blk):
                 phonons = np.real(phonons) # just take the real component
                 z = phonons[:,2]
-                plt.clf(); fig, ax = plt.subplots(figsize=(3.5*RSPC_SUPERCElL_SIZE, 5.5*RSPC_SUPERCElL_SIZE))
-                plt.rc('font', size=8*RSPC_SUPERCElL_SIZE)
+                plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.RSPC_SUPERCElL_SIZE, 5.5*self.RSPC_SUPERCElL_SIZE))
+                plt.rc('font', size=8*self.RSPC_SUPERCElL_SIZE)
                 ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="limegreen", alpha=0.8)
                 plt.quiver(coords[:,0], coords[:,1],    # positions
                             phonons[:,0], phonons[:,1], # arrows
