@@ -675,8 +675,8 @@ class TwistedDOS:
             if idx % 100 == 0:
                 print(".", end="", flush=True)
             return sum([weight * A * np.exp(-np.power(omega - omega_k, 2.) / (2 * np.power(sigma, 2.))) \
-                for omega_k, weight in zip(modes, weights) \
-                if abs(omega_k - omega) <= bin_sz / 2]) 
+                for omega_k, weight in zip(modes, weights) ])
+                # if abs(omega_k - omega) <= bin_sz / 2]) # TODO show this to zoe lol
 
         print("Getting DOS at omegas", end="", flush=True)
         DOSs = np.array([DOS_at_omega(enum, self.A, self.sigma, \
@@ -745,6 +745,7 @@ class TwistedPlotter:
             self.DOS = self.DOS[self.omegas <= self.cutoff]
             self.omegas = self.omegas[self.omegas <= self.cutoff]
         axdos.plot(self.DOS, self.omegas, c='black', linewidth=0.6)
+        # axdos.scatter(self.DOS, self.omegas, c='black', s=1)
         axdos.set_title("DOS")
         plt.ylim(lims)
         plt.savefig(outdir + filename, format='pdf')
