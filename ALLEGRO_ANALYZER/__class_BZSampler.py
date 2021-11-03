@@ -151,6 +151,10 @@ class BZSampler:
         assert k_dir.shape[1] == 2, f"Expected k to be a Nx2 matrix, but got shape {k_dir.shape}"
         return k_dir @ self.GM.T
     
+    def k_cart_to_dir(self, k_cart):
+        assert k_cart.shape[1] == 2, f"Expected k to be a Nx2 matrix, but got shape {k_cart.shape}"
+        return k_cart @ LA.inv(self.GM).T
+    
     # Sample nk points along each IBZ boundary line
     def sample_k0(self, nk=DEFAULT_NK, log=False):
         assert self.ltype == 'hexagonal'

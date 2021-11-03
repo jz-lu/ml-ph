@@ -460,7 +460,6 @@ class TwistedDM:
         self.l0szs = [l1.l0_shape[0], l2.l0_shape[0]]
         self.Gamma_idx = Gamma_idx
         self.Gamma_intra_blks = [l1.Gamma_blks(), l2.Gamma_blks()]
-        breakpoint()
         self.DMs = [self.__block_l2([DMs_layer1[i] + DM_cfgintra[0],\
              DMs_layer2[i] + DM_cfgintra[1]], DM_inter) for i in range(self.n_k)]
         self.corr_mat = self.__block_l2([l1.get_corr_mat() + DM_cfgintra[0], \
@@ -617,7 +616,7 @@ class TwistedDM:
 
 
 class TwistedDOS:
-    def __init__(self, TDMs, n_G, theta, cutoff=None, width=0.2, 
+    def __init__(self, TDMs, n_G, theta, cutoff=None, width=20, 
                  partition_density=DEFAULT_PARTITION_DENSITY, 
                  kdim=DEFAULT_KDIM, normalizer=1, eigsys=None):
         # Eigensort the eigenbasis, then slice off everything but the G0 component
@@ -725,7 +724,7 @@ class TwistedPlotter:
         if width is not None:
             filename = "w%f_"%(round(width, 3)) + filename
         outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Invalid directory {outdir}"
-        plt.clf(); _, [axband, axdos] = plt.subplots(nrows=1, ncols=2, sharey=True)
+        plt.clf(); fig, [axband, axdos] = plt.subplots(nrows=1, ncols=2, sharey=True)
         lims = [0,0]
         for k_mag, modes in self.mode_set:
             if self.cutoff is not None:
@@ -748,8 +747,8 @@ class TwistedPlotter:
         axdos.plot(self.DOS, self.omegas, c='black', linewidth=0.6)
         axdos.set_title("DOS")
         plt.ylim(lims)
-
         plt.savefig(outdir + filename, format='pdf')
+        plt.close(fig)
         print(f"Band-DOS plot written to {outdir+filename}")
 
         

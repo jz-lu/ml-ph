@@ -94,8 +94,8 @@ anyway, since the lattice constants will be too far apart to form a stable bilay
 some reason it is useful for different numbers of atoms, simply adjust layer slicing in formation 
 of `phtnsr` to slice proportional to ratio of atoms, instead of in half.
 """
-RSPC_SUPERCElL_SIZE = 12 # make grid of (RSPC_SUPERCElL_SIZE) x (RSPC_SUPERCElL_SIZE) moire realspace cells
-assert RSPC_SUPERCElL_SIZE % 2 == 0, f"Realspace supercell size should be even, but is {RSPC_SUPERCElL_SIZE}"
+RSPC_SUPERCElL_SIZE = 3 # make grid of (RSPC_SUPERCElL_SIZE) x (RSPC_SUPERCElL_SIZE) moire realspace cells
+# assert RSPC_SUPERCElL_SIZE % 2 == 0, f"Realspace supercell size should be even, but is {RSPC_SUPERCElL_SIZE}"
 class TwistedRealspacePhonon:
     def __init__(self, theta, k, GM_set, DM_at_k, n_at, bl_masses, 
                  poscars_uc, gridsz=11, outdir='.', modeidxs=np.linspace(0,6,6), kpt=r'$\Gamma$'):
@@ -113,7 +113,7 @@ class TwistedRealspacePhonon:
         self.sc_lattice = A_delta2inv @ A0
         self.at_pos = np.concatenate([p.structure.cart_coords for p in poscars_uc], axis=0)
         self.at_pos[self.n_at//2:,2] += Z_LAYER_SEP*poscars_uc[0].structure.lattice.matrix[-1,-1] # make interlayer space
-        x = np.linspace(-RSPC_SUPERCElL_SIZE//2, RSPC_SUPERCElL_SIZE//2, num=gridsz*RSPC_SUPERCElL_SIZE, endpoint=False)
+        x = np.linspace(-RSPC_SUPERCElL_SIZE/2, RSPC_SUPERCElL_SIZE/2, num=gridsz*RSPC_SUPERCElL_SIZE, endpoint=False)
         self.d = 3; self.theta = theta
         self.gridsz = gridsz; self.n_r = (gridsz * RSPC_SUPERCElL_SIZE)**2
         self.r_matrix = np.array(list(prod(x, x))); assert self.r_matrix.shape == (self.n_r, 2)
@@ -244,8 +244,9 @@ class TwistedRealspacePhonon:
             for m_j, phonons in enumerate(layer_blk):
                 phonons = np.real(phonons) # just take the real component
                 z = phonons[:,2]
-                plt.clf(); fig, ax = plt.subplots()
-                ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="darkviolet", alpha=0.4)
+                plt.clf(); fig, ax = plt.subplots(figsize=(3.5*RSPC_SUPERCElL_SIZE, 5.5*RSPC_SUPERCElL_SIZE))
+                plt.rc('font', size=8*RSPC_SUPERCElL_SIZE)
+                ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="limegreen", alpha=0.8)
                 plt.quiver(coords[:,0], coords[:,1],    # positions
                             phonons[:,0], phonons[:,1], # arrows
                             z,                          # arrow colors
@@ -254,14 +255,14 @@ class TwistedRealspacePhonon:
                 max_norm = np.max([LA.norm(phonon[:-1]) for phonon in phonons])
                 ax.text(0.02*(xp-xm)+xm, 0.02*(yp-ym)+ym, r'$\lambda = %.3E$'%max_norm)
                 plt.xlabel("x"); plt.ylabel("y")
-                ax.scatter(coords[:,0], coords[:,1], c='black', s=2)
+                ax.scatter(coords[:,0], coords[:,1], c='black', s=1)
                 ax.set_aspect('equal')
                 this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}_k{self.kpt}' + outname[outname.index('.'):]
                 plt.title(r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" Mode {m_j}, Layer {l_i} at " + self.kpt)
                 # v1 = np.linspace(z.min(), z.max(), 8, endpoint=True)
                 # cb = plt.colorbar(ticks=v1)
                 # cb.ax.set_yticklabels(["{:6.4f}".format(i) for i in v1])
-                plt.colorbar()
+                plt.colorbar(shrink=0.5)
                 plt.clim(-zbound, zbound)
                 fig.savefig(self.outdir + this_outname)
                 plt.close(fig)

@@ -56,6 +56,7 @@ if __name__ == '__main__':
     parser.add_argument("-r", "--relax", action="store_true", help='do theta-relaxation')
     parser.add_argument("--mr", action="store_true", help=f'multirelax (req parameter file \'{ANGLE_SAMPLE_INAME}\')')
     parser.add_argument("--rs", action="store_true", help='do realspace analysis')
+    parser.add_argument("--kdir", action="store_true", help="input k-points are in direct coordinates (default Cartesian)")
     parser.add_argument("--dos", type=int, help='DOS k-mesh size')
     parser.add_argument("-f", "--fsum", action="store_true", help='output force sums (only useful for debugging)')
     args = parser.parse_args()
@@ -90,7 +91,9 @@ if __name__ == '__main__':
     poscars_uc = [Poscar.from_file(indir + pname) for pname in poscars_uc]
     assert npos > 1, "Must give at least 2 POSCARs, 1 per layer, for twist calculations"
     assert npos == DEFAULT_NUM_LAYERS, "Twist calculations for more than 2 layers not supported (yet)"
-    assert (args.dos is None) or (args.dos >= 21), f"k-mesh size must be at least 21"
+    assert (args.dos is None) or (args.dos > 0), f"Must give a positive k-mesh size"
+    if (args.dos is not None) and (args.dos < 21):
+        warn(f"WARNING: realspace k-mesh size {args.dos} likely too small to be accurate")
     s0 = poscars_uc[0].structure.lattice.matrix[0:2, 0:2]
     s1 = poscars_uc[1].structure.lattice.matrix[0:2, 0:2]
     n_at = [len(posc.structure.species) for posc in poscars_uc]
@@ -261,9 +264,16 @@ if __name__ == '__main__':
                 print(f"Loaded list of k-points from {indir + RSPC_K_INAME}")
             else:
                 print("No input set of k-points found, using Gamma point as default")
-            rspc_kpts = np.unique([tuple(row) for row in rspc_kpts]) # filter duplicate rows
-            dir_rspc_kpts = rspc_kpts
-            rspc_kpts = bzsamples.k_dir_to_cart(rspc_kpts) # convert to Cartesian coordinates
+            rspc_kpts = np.unique(rspc_kpts, axis=0) # filter duplicate rows
+            if args.kdir:
+                print("USING: k-points in direct coordinates")
+                dir_rspc_kpts = rspc_kpts
+                rspc_kpts = bzsamples.k_dir_to_cart(rspc_kpts) # convert to Cartesian coordinates
+            else:
+                print("USING: k-points in Cartesian coordinates")
+                dir_rspc_kpts = bzsamples.k_cart_to_dir(rspc_kpts) # convert to direct coordinates
+            num_kpts = rspc_kpts.shape[0]
+            assert rspc_kpts.shape[1] == 2
             print(f"Analyzing phonons in realspace at k-points ::\nCartesian:\n{rspc_kpts}\nDirect:{dir_rspc_kpts}")
             n_at = sum([sum(p.natoms) for p in poscars_uc])
             print(f"Number of atoms in bilayer configuration cell: {n_at}")
@@ -271,23 +281,26 @@ if __name__ == '__main__':
             # Build the dynamical matrices at the requested k-points
             rspc_MLDMs = [MonolayerDM(uc, sc, ph, GM_set, G0_set, rspc_kpts, 0) \
                         for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
-            rspc_TDM = TwistedDM(rspc_MLDMs[0], rspc_MLDMs[1], ILDM, np.zeros(rspc_kpts.size), \
+            rspc_TDM = TwistedDM(rspc_MLDMs[0], rspc_MLDMs[1], ILDM, np.zeros(rspc_kpts.shape[0]), \
                 [p.structure.species for p in poscars_uc], 0)
             if do_sum_rule:
                 rspc_TDM.apply_sum_rule()
             rspc_TDMs = rspc_TDM.get_DM_set()
             modeidxs = np.loadtxt(indir + RSPC_LIST_INAME)
             for kidx, rspc_k in enumerate(rspc_kpts):
-                TDM_k = rspc_TDM
                 kpt_name = "(%4.3lf, %4.3lf)"%(rspc_k[0], rspc_k[1])
-                if np.isclose(IBZ_GAMMA, rspc_k):
+                if np.isclose(IBZ_GAMMA, rspc_k).all():
                     kpt_name = r'$\Gamma$'
-                elif np.isclose(IBZ_K_60, rspc_k):
+                elif np.isclose(IBZ_K_60, rspc_k).all():
                     kpt_name = r'$K$'
-                elif np.isclose(IBZ_M_60, rspc_k):
+                elif np.isclose(IBZ_M_60, rspc_k).all():
                     kpt_name = r'$M$'
+                this_outdir = outdir
+                if num_kpts > 1:
+                    this_outdir += kpt_name[2:-1] if kpt_name[0] == '$' else kpt_name
+                    os.mkdir(this_outdir)
                 twrph = TwistedRealspacePhonon(round(np.rad2deg(theta), 6), rspc_k, GM_set, 
-                        rspc_TDMs[kidx], n_at, bl_M, poscars_uc, outdir=outdir, modeidxs=modeidxs, 
+                        rspc_TDMs[kidx], n_at, bl_M, poscars_uc, outdir=this_outdir, modeidxs=modeidxs, 
                         kpt=kpt_name)
                 print(f"Phonons in realspace analyzed at {rspc_k} (i.e. {kpt_name}).")
                 twrph.plot_phonons()

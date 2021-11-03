@@ -41,7 +41,7 @@ def optim_lc(ROOT, plot=True):
     e_toprint = np.vstack((np.arange(nshifts)+1, (energies - e)*1000))
     print("All energies by shift index:")
     print(e_toprint)
-    print(f"Index(es) with minimum energy: {idx}, spacing (direct): {lc_star}, energy: {'%.3lf'%e} eV")
+    print(f"Index(es) with minimum energy: {idx}, lattice constant: {lc_star}, energy: {'%.3lf'%e} eV")
     if plot:
         plt.clf(); fig, ax = plt.subplots()
         plt.title("Energy vs. lattice constant")
