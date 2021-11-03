@@ -4,7 +4,7 @@
 POSCAR_UNIT_NAME = 'POSCAR_unit' # Unit cell POSCAR name
 PHONOPY_NUM_LINE_INTS = 101 # Number of samples along each line in kpoints path, should be an odd number so the center lines up
 SUPER_DIM = (3, 3, 1)
-LARGE_SUPER_DIM = (8,8,1)
+LARGE_SUPER_DIM = (6,6,1)
 SUPER_DIM_STR = ' '.join(map(str, SUPER_DIM)) # Supercell size
 LARGE_SUPER_DIM_STR = ' '.join(map(str, SUPER_DIM)) # Supercell size
 PHONOPY_DISP_MSG = 'Phonopy activated. Getting displacements...'
