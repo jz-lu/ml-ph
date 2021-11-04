@@ -7,7 +7,7 @@ using Optim
 using LinearAlgebra
 using NPZ
 using ArgParse
-using PyPlot, PyCall
+# using PyPlot, PyCall
 
 function parse_commandline()
     s = ArgParseSettings()
@@ -52,11 +52,11 @@ function main()
     # the sign flips and it becomes b <- b - u
     u = -2*reshape(Optim.minimizer(results), (2, N^2))
     bprime = transpose(u) + transpose(hull.G) # output
-    npzwrite(dir*"b_cart.npz", transpose(hull.G))
-    npzwrite(dir*"u_cart.npz", transpose(u))
-    npzwrite(dir*"bprime_cart.npz", bprime)
+    npzwrite(dir*"/b_cart.npz", transpose(hull.G))
+    npzwrite(dir*"/u_cart.npz", transpose(u))
+    npzwrite(dir*"/bprime_cart.npz", bprime)
     println("Output written to $(parsed_args["out"])")
-    if true
+    if false
         GSFE_range = GSFE(blg.E*[2/3 1/3 .46385 0 ;2/3 1/3 .46385 0], blg)
         mid1 = (GSFE_range[2]-GSFE_range[1])/(GSFE_range[4]-GSFE_range[1])
         mid2 = (GSFE_range[3]-GSFE_range[1])/(GSFE_range[4]-GSFE_range[1])
@@ -88,8 +88,8 @@ function main()
         clim(GSFE_range[[1,end]])
         ax = gca()
         ax.set_aspect(1)
+        savefig(dir*"/rgsfe.png")
         figure(1)
-        savefig(dir*"landscape.png")
         println(max(u[1,:]...))
         println("Plotting done")
     end

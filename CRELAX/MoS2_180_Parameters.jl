@@ -29,14 +29,14 @@ function gradient_GSFE(X::Array{Float64,2}, bl::Bilayer)
     return bl.invE' * vcat(
         # ! partial F/partial s
             -12.3222215429e-3 .* (sin.(s) .+ sin.(s+t)) .+
-                 2.077e-3 .* (sin.(s.+2. .*t) .+ sin.(s.-t) .+ 2. .*sin.(2. .*s .+ t)) .+
-                (0.7834479467e-3 * 2) .* (sin.(2*s) .+ sin.(2. .*(s .+ t))) .+
-                2.3972862255e-3 .* (cos.(s) .- cos.(s.+t)) .+ # TODO this and next line
+                -2.077e-3 .* (sin.(s.+2. .*t) .+ sin.(s.-t) .+ 2. .*sin.(2. .*s .+ t)) .+
+                (0.7834479467e-3 * -2) .* (sin.(2*s) .+ sin.(2. .*(s .+ t))) .+
+                2.3972862255e-3 .* (cos.(s) .- cos.(s.+t)) .+
                 (0.25897164873e-3 * 2) .* (cos.(2*s .+ 2*t) .- cos.(2*s)),
             # ! partial F/partial t
             -12.3222215429e-3 .* (sin.(t) .+ sin.(s+t)) .+
-                2.077e-3 .* (2*sin.(s.+2. .*t) .+ sin.(t.-s) .+ sin.(2. .*s .+ t)) .+
-                (0.7834479467e-3 * 2) .* (sin.(2*t) .+ sin.(2. .*(s .+ t))) .+
+                -2.077e-3 .* (2*sin.(s.+2. .*t) .+ sin.(t.-s) .+ sin.(2. .*s .+ t)) .+
+                (0.7834479467e-3 * -2) .* (sin.(2*t) .+ sin.(2. .*(s .+ t))) .+
                 2.3972862255e-3 .* (cos.(t) .- cos.(s.+t)) .+
                 (0.25897164873e-3 * 2) .* (cos.(2*s .+ 2*t) .- cos.(2*t))
             );
