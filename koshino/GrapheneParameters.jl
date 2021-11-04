@@ -1,5 +1,5 @@
 # lattice constant, in angstrom
-l = 1.42
+l = 1.42 # TODO do I have to divide by sqrt(3) here?
 
 # Graphene elastic constants (eV/unit cell)
 K = 2.0*34.759  # Bulk modulus
@@ -16,6 +16,9 @@ c4 = 0;
 c5 = 0;
 
 c_list = [c1, c2, c3, c4, c5]
+
+# TODO can't we move this stuff below into a general file, then just make paramters above for each mateiral?
+# TODO and then this file will just import the parameters file?
 
 function GSFE(X::Array{Float64,2}, bl::Bilayer)
     R = bl.invE*X
@@ -110,11 +113,12 @@ function gradient_GSFE(X::Array{Float64,2}, bl::Bilayer)
     for i=1:size(X,2)
       @inbounds G[1,i] = -c1 * (sin(s[i]) + sin(s[i]+t[i])) +
                  -c2 * (sin(s[i]+2. *t[i]) + sin(s[i]-t[i]) + 2. *sin(2. *s[i] + t[i])) +
-                 -c3 * (sin(2. *s[i]) + sin(2. *(s[i]+t[i])))
+                 -c3 * (sin(2. *s[i]) + sin(2. *(s[i]+t[i]))) # ! missing a factor of 2 here?
       @inbounds G[2,i] = -c1 * (sin(t[i]) + sin(s[i]+t[i])) +
                   -c2 * (2. *sin(s[i]+2. *t[i]) + sin(t[i]-s[i]) + sin(2. *s[i]+t[i])) +
-                  -c3 * (sin(2. *t[i]) + sin(2. *(s[i]+t[i])))
+                  -c3 * (sin(2. *t[i]) + sin(2. *(s[i]+t[i]))) # ! missing a factor of 2 here?
     end
 
     return (bl.invE') * G
 end
+# TODO verified the derivative 
