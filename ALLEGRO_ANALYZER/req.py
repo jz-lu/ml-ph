@@ -62,8 +62,10 @@ else:
                 shutil.rmtree(subdir)
                 if bad_term:
                     print(f"[{i}] Found bad termination at disp{j}")
-                if other_err:
+                elif other_err or unknown_failure:
                     print(f"[{i}] Found unknown error at disp{j}")
+                elif never_finished:
+                    print(f"[{i}] Found job never finished at disp{j}")
                 fails.append(j)
         if len(fails) > 0:
             no_fails = False
