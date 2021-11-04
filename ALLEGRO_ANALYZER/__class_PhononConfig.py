@@ -96,10 +96,10 @@ of `phtnsr` to slice proportional to ratio of atoms, instead of in half.
 """
 class TwistedRealspacePhonon:
     def __init__(self, theta, k, GM_set, DM_at_k, n_at, bl_masses, 
-                 poscars_uc, gridsz=11, outdir='.', modeidxs=np.linspace(0,6,6), kpt=r'$\Gamma$',
+                 poscars_uc, gridsz=13, outdir='.', modeidxs=np.linspace(0,6,6), kpt=r'$\Gamma$',
                  RSPC_SUPERCELL_SIZE=3):
         assert len(bl_masses) == n_at
-        self.RSPC_SUPERCElL_SIZE = RSPC_SUPERCElL_SIZE
+        self.RSPC_SUPERCELL_SIZE = RSPC_SUPERCELL_SIZE
         self.kpt = kpt
         self.bl_masses = bl_masses
         self.GM_set = GM_set; self.n_G = len(GM_set); self.k = k
@@ -113,9 +113,9 @@ class TwistedRealspacePhonon:
         self.sc_lattice = A_delta2inv @ A0
         self.at_pos = np.concatenate([p.structure.cart_coords for p in poscars_uc], axis=0)
         self.at_pos[self.n_at//2:,2] += Z_LAYER_SEP*poscars_uc[0].structure.lattice.matrix[-1,-1] # make interlayer space
-        x = np.linspace(-RSPC_SUPERCElL_SIZE/2, RSPC_SUPERCElL_SIZE/2, num=gridsz*RSPC_SUPERCElL_SIZE, endpoint=False)
+        x = np.linspace(-RSPC_SUPERCELL_SIZE/2, RSPC_SUPERCELL_SIZE/2, num=gridsz*RSPC_SUPERCELL_SIZE, endpoint=False)
         self.d = 3; self.theta = theta
-        self.gridsz = gridsz; self.n_r = (gridsz * RSPC_SUPERCElL_SIZE)**2
+        self.gridsz = gridsz; self.n_r = (gridsz * RSPC_SUPERCELL_SIZE)**2
         self.r_matrix = np.array(list(prod(x, x))); assert self.r_matrix.shape == (self.n_r, 2)
         self.diagidxs = self.r_matrix[:,0] == self.r_matrix[:,1]
         self.r_linecut_direct = self.r_matrix[self.diagidxs]
@@ -244,8 +244,8 @@ class TwistedRealspacePhonon:
             for m_j, phonons in enumerate(layer_blk):
                 phonons = np.real(phonons) # just take the real component
                 z = phonons[:,2]
-                plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.RSPC_SUPERCElL_SIZE, 5.5*self.RSPC_SUPERCElL_SIZE))
-                plt.rc('font', size=8*self.RSPC_SUPERCElL_SIZE)
+                plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.RSPC_SUPERCELL_SIZE, 5.5*self.RSPC_SUPERCELL_SIZE))
+                plt.rc('font', size=8*self.RSPC_SUPERCELL_SIZE)
                 ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="limegreen", alpha=0.8)
                 plt.quiver(coords[:,0], coords[:,1],    # positions
                             phonons[:,0], phonons[:,1], # arrows
@@ -255,7 +255,7 @@ class TwistedRealspacePhonon:
                 max_norm = np.max([LA.norm(phonon[:-1]) for phonon in phonons])
                 ax.text(0.02*(xp-xm)+xm, 0.02*(yp-ym)+ym, r'$\lambda = %.3E$'%max_norm)
                 plt.xlabel("x"); plt.ylabel("y")
-                ax.scatter(coords[:,0], coords[:,1], c='black', s=1)
+                ax.scatter(coords[:,0], coords[:,1], c='black', s=0.2)
                 ax.set_aspect('equal')
                 this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}_k{self.kpt}' + outname[outname.index('.'):]
                 plt.title(r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" Mode {m_j}, Layer {l_i} at " + self.kpt)
