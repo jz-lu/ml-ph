@@ -38,7 +38,7 @@ end
 
 ## Parameters:
 parsed_args = parse_commandline()
-dir = abspath(parsed_args["out"])
+dir = string(abspath(parsed_args["out"]), "/")
 println("Output directory: $(dir)")
 θ = deg2rad(parsed_args["deg"])
 
@@ -108,14 +108,14 @@ ax = gca()
 ax.set_aspect(1)
 title("Relaxed")
 colorbar()
-savefig(string( "/Users/jonathanlu/Documents/ml-ph/ALLEGRO_RELAXER/my_figs/", "MoS2_180", "_" , rad2deg(θ), ".png"))
+savefig(string( dir, "MoS2_180", "_" , rad2deg(θ), ".png"))
 figure(1)
 
 figure(2)
 quiver(reshape(x,(N+1,N+1)), reshape(y, (N+1,N+1)), ux, uy )
 ax = gca()
 ax.set_aspect(1)
-savefig(string( "/Users/jonathanlu/Documents/ml-ph/ALLEGRO_RELAXER/my_figs/", "MoS2_180_2", "_" , rad2deg(θ), ".png"))
+savefig(string( dir, "MoS2_180_2", "_" , rad2deg(θ), ".png"))
 
 
 u1x = reshape(ux, (N+1, N+1))
