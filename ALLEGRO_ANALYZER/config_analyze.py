@@ -21,60 +21,46 @@ import os
 from time import time
 from math import sqrt
 import itertools
+import argparse
 from pymatgen.io.vasp.inputs import Poscar
 from ___helpers_parsing import succ, warn, err, update, greet
-INTERLAYER_ONLY = False
-SAME_CART_ONLY = False
 
 if __name__ == '__main__':
-    USAGE_ERR_MSG = 'Usage: python3 <DIR>/config_analyze.py -n <NUM SHIFTS> -d <I/O DIR FROM MAIN PROGRAM> -e <MIN ENERGY (eV)> (optional: --diag --nff --fc --perr)'
+    parser = argparse.ArgumentParser(description="Analysis of configuration space calculations")
+    parser.add_argument("-d", "--dir", type=str, help="main directory", default='.')
+    parser.add_argument("-e", "--ame", type=float, help="absolute minimum energy (default auto)")
+    parser.add_argument("-l", "--nlevel", type=int, help="number of contour levels", default=DEFAULT_CONTOUR_LEVELS)
+    parser.add_argument("--diag", action="store_true", help="sampling is on a diagonal cut")
+    parser.add_argument("--nff", action="store_true", help="do not do GSFE Fourier fit")
+    parser.add_argument("--fc", action="store_true", help="compute force constants")
+    parser.add_argument("--int", action="store_true", help="force constants: interlayer only")
+    parser.add_argument("--cfx", action="store_true", help="force constants: same Cartesian coordinate only")
+    parser.add_argument("--fcf", nargs="+", help="force constants: fixed set of choices")
+    parser.add_argument("--phcfg", type=int, help="phonon configuration calculation on shift (X)", default=0)
+    parser.add_argument("--perr", action="store_true", help="plot percent error in GSFE prediction")
+    parser.add_argument("nshifts", type=int, help='enter N^2 for NxN grid, or N for N diagonal cut', default=81)
+    args = parser.parse_args()
+
+    # Legacy compatibility
+    BASE_ROOT = checkPath(os.path.abspath(args.dir))
+    nshifts = args.nshifts
+    abs_min_energy = args.ame
+    nlevel = args.nlevel
+    diag = args.diag
+    ff = not args.nff
+    fc = args.fc
+    INTERLAYER_ONLY = args.int
+    SAME_CART_ONLY = args.cfx
+    fclist = np.array(list(map(int, args.fcf))) if args.fcf is not None else None
+    phcfg = args.phcfg
+    plot_perr = args.perr
+    nplt = int(sqrt(len(fclist))) if fclist is not None else 4
+    fc_fixed = (args.fcf is not None)
 
     # The ConfigOutput class expects a COB matrix and 
     # a list of (config vector b, z-spacing, energy in eV), as well as a minimum energy in eV to shift by.
     # This was all outputted in various files in the calculations, which need to be parsed.
 
-    # Parse cmdline args
-    cmdargs = list(copy.deepcopy(sys.argv))[1:]; i = 0; n = len(cmdargs)
-    BASE_ROOT = '.'; abs_min_energy = None; nshifts = None; diag = False; ff = True; fc = False; nplt = 4
-    nlevel = DEFAULT_CONTOUR_LEVELS; plot_perr = False; fc_fixed = False; fclist = [0]*6; phcfg = -1
-    while i < n:
-        if cmdargs[i] == '-n':
-            i += 1; nshifts = int(cmdargs[i]); i += 1
-        elif cmdargs[i] == '-d':
-            i += 1; BASE_ROOT = checkPath(cmdargs[i]); i += 1
-            assert isdir(BASE_ROOT) # specify full path if not working properly
-        elif cmdargs[i] == '-e':
-            i += 1; abs_min_energy = float(cmdargs[i]); i += 1
-        elif cmdargs[i] == '-l':
-            i += 1; nlevel = int(cmdargs[i]); i += 1
-        elif cmdargs[i] == '--diag':
-            diag = True; i += 1
-        elif cmdargs[i] == '--nff':
-            ff = False; i += 1
-        elif cmdargs[i] == '--int':
-            INTERLAYER_ONLY = True; i += 1
-        elif cmdargs[i] == '--cfx':
-            SAME_CART_ONLY  = True; i += 1
-        elif cmdargs[i] == '--fcf':
-            i += 1
-            for j in range(6):
-                fclist[j] = int(cmdargs[i])
-                i += 1
-            fc = True; fc_fixed = True; nplt = 1
-            print(f"Force constants index list: {fclist}")
-        elif cmdargs[i] == '--fc':
-            i += 1; fc = int(cmdargs[i]); i += 1; fc = True
-        elif cmdargs[i] == '--phcfg':
-            i += 1; phcfg = int(cmdargs[i]); i += 1
-            print(f"Phonon configuration analysis on shift {phcfg}")
-        elif cmdargs[i] == '--perr':
-            i += 1; plot_perr = True
-        elif cmdargs[i] == '--usage':
-            print(USAGE_ERR_MSG)
-            sys.exit(0)
-        else:
-            warn(f"Unrecognized token '{cmdargs[i]}'")
-            err(USAGE_ERR_MSG)
     assert BASE_ROOT and nlevel > 0 and nplt > 0
     BASE_ROOT = checkPath(os.path.abspath(BASE_ROOT))
     if int(sqrt(nplt))**2 != nplt:
@@ -259,4 +245,4 @@ if __name__ == '__main__':
     succ("== Configuration Analyzer Complete (Took %.3lfs) =="%(time()-start_time))
 
 else:
-    err("Error: script has nothing to import")
+    err(f"Error: '{__name__}' has nothing to import")

@@ -4,8 +4,9 @@ using FFTW
 FFTW.set_num_threads(Sys.CPU_THREADS)
 
 include("Bilayers.jl")
-#include("MoS2_0_Parameters.jl")
-include("MoS2_180_Parameters.jl")
+include("gsfe_func.jl")
+# include("MoS2_0_Parameters.jl")
+# include("MoS2_180_Parameters.jl")
 #include("GrapheneParameters.jl")
 
 using PyPlot
@@ -55,7 +56,7 @@ g!(storage, u) = Gradient!(storage, u, hull)
 @time results = optimize(f, g!, zeros(2, N^2), LBFGS(), Optim.Options(allow_f_increases=true))
 
 u = reshape(Optim.minimizer(results), (2, N^2))
-# ∇u = ∇(u, hull)
+
 
 GSFE_range = GSFE(blg.E*[2/3 1/3 .46385 0 ;2/3 1/3 .46385 0], blg)
 GSFE_range = sort(GSFE_range)
@@ -108,14 +109,14 @@ ax = gca()
 ax.set_aspect(1)
 title("Relaxed")
 colorbar()
-savefig(string( dir, "MoS2_180", "_" , rad2deg(θ), ".png"))
+savefig(string( dir, "MoS2_0", "_" , rad2deg(θ), ".png"))
 figure(1)
 
 figure(2)
 quiver(reshape(x,(N+1,N+1)), reshape(y, (N+1,N+1)), ux, uy )
 ax = gca()
 ax.set_aspect(1)
-savefig(string( dir, "MoS2_180_2", "_" , rad2deg(θ), ".png"))
+savefig(string( dir, "MoS2_0_2", "_" , rad2deg(θ), ".png"))
 
 
 u1x = reshape(ux, (N+1, N+1))
