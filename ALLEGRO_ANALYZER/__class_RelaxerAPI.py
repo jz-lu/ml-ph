@@ -5,7 +5,6 @@ from ___constants_names import (
     RELAX_CODE_OUT, RELAXED_DELTA_OUT, UNRELAXED_CONFIGS_OUT,
     RELAXED_CONFIGS_NPY
 )
-from ___constants_sampling import DENSITY_SCALE
 from __directory_searchers import checkPath
 from __class_Configuration import Configuration
 import numpy.linalg as LA
@@ -17,10 +16,22 @@ from time import time
 
 RELAX_CODE_PATH = "/Users/jonathanlu/Documents/ml-ph/" + RELAX_CODE_SUBPATH
 
+def find_density_scale(theta):
+    density_scale = 1
+    if theta < 2.1:
+        density_scale *= 2
+    if theta < 1.1:
+        density_scale *= 3
+    if theta < 0.6:
+        density_scale *= 2
+    if theta < 0.1:
+        density_scale *= 2
+    return density_scale
+
 class RelaxerAPI:
     def __init__(self, theta, gridsz, outdir, cob, dedensify=True):
         assert isinstance(gridsz, int) and gridsz > 1, f"Invalid grid size {gridsz}: must be positive integer"
-        assert theta > 0 and theta < 180, f"Invalid twist angle {theta}"
+        assert theta > 0 and theta < 180, f"Invalid twist angle {theta} deg"
         assert os.path.isdir(outdir), f"Invalid directory {outdir}"
         self.pfx = '_%.3lf'%theta
         self.outdir = checkPath(os.path.abspath(outdir))
@@ -28,16 +39,17 @@ class RelaxerAPI:
         self.langle = Configuration.lattice_angle_from_cob(self.cob)
         assert np.isclose(self.langle, 60), f"Lattice angle must be 60, but is {self.langle}"
         print(f"Starting relaxer program {RELAX_CODE_PATH} in Julia...")
-        stream = os.popen(f"julia {RELAX_CODE_PATH} -d {theta} -N {gridsz*DENSITY_SCALE} -o {self.outdir}")
+        density_scale = find_density_scale(theta)
+        stream = os.popen(f"julia {RELAX_CODE_PATH} -d {theta} -N {gridsz*density_scale} -o {self.outdir}")
         print(stream.read(), flush=True)
         self.outpath = self.outdir + RELAX_CODE_OUT
         assert os.path.isfile(self.outpath), f"Failed to find expected relaxer output file at {self.outpath}"
         print("Relaxer code finished.")
 
         # Load and maybe de-densify secondary output
-        idxs = DENSITY_SCALE * np.arange(self.gridsz)
-        self.u = np.load(self.outdir + RELAXED_DELTA_OUT).reshape((self.gridsz*DENSITY_SCALE,self.gridsz*DENSITY_SCALE,2))
-        self.b = np.load(self.outdir + UNRELAXED_CONFIGS_OUT).reshape((self.gridsz*DENSITY_SCALE,self.gridsz*DENSITY_SCALE,2))
+        idxs = density_scale * np.arange(self.gridsz)
+        self.u = np.load(self.outdir + RELAXED_DELTA_OUT).reshape((self.gridsz*density_scale,self.gridsz*density_scale,2))
+        self.b = np.load(self.outdir + UNRELAXED_CONFIGS_OUT).reshape((self.gridsz*density_scale,self.gridsz*density_scale,2))
         if dedensify:
             self.u = self.u[idxs]; self.u = self.u[:, idxs]
             self.b = self.b[idxs]; self.b = self.b[:, idxs]
@@ -46,13 +58,13 @@ class RelaxerAPI:
 
         # Load and maybe de-densify main output
         bprime_cart = np.load(self.outdir + RELAX_CODE_OUT)
-        bprime_cart = bprime_cart.reshape((self.gridsz*DENSITY_SCALE,self.gridsz*DENSITY_SCALE,2))
+        bprime_cart = bprime_cart.reshape((self.gridsz*density_scale,self.gridsz*density_scale,2))
         if dedensify:
             bprime_cart = bprime_cart[idxs]
             bprime_cart = bprime_cart[:, idxs]
             assert bprime_cart.shape == (self.gridsz, self.gridsz, 2)
         else:
-            self.gridsz = self.gridsz * DENSITY_SCALE # grid size effectively scaled up henceforth
+            self.gridsz = self.gridsz * density_scale # grid size effectively scaled up henceforth
 
         # Relaxer uses y-major order, we use x-major order, so convert
         bprime_cart = np.transpose(\
