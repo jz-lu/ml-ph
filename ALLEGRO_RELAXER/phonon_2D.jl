@@ -3,52 +3,29 @@ using FFTW
 
 FFTW.set_num_threads(Sys.CPU_THREADS)
 include("Bilayers.jl")
-include("gsfe_func.jl")
+include("GrapheneParameters.jl")
+
+# include("MoS2_180_Parameters.jl")
+# include("Janus_SSe_180_Parameters.jl")
 
 using PyPlot
 using PyCall
 using Interpolations
 using Optim
 using LinearAlgebra
-using ArgParse
-
-function parse_commandline()
-    s = ArgParseSettings()
-
-    @add_arg_table! s begin
-        "--deg", "-d"
-            help = "twist angle in degrees"
-            required = true
-            arg_type = Float64
-        "-N", "-n"
-            help = "grid size (N if grid is NxN)"
-            arg_type = Int
-            required = true
-        "--cut", "-c"
-            help = "Grid shell cutoff"
-            arg_type = Int
-            default = 7
-        "--out", "-o"
-            help = "output directory path (must end in slash)"
-            arg_type = String
-            default = "."
-    end
-
-    return parse_args(s)
-end
 
 close("all")
 
 ## Parameters:
-parsed_args = parse_commandline()
-θ = deg2rad(parsed_args["deg"])
-N = parsed_args["N"]
+θ = deg2rad(2)
+
+N = 51
 hN = div(N,2)
 blg = Bilayer(l, θ, K, G)
 hull = Hull(blg, N, [0.,0.]);
 
 # Cutofff radius in k-space
-G_cutoff = parse_args["cut"] # need to be large for small angles
+G_cutoff = 5 # need to be large for small angles
 # number of points to sample on the high symmetry line
 nq = 20
 nr = 50
@@ -329,3 +306,89 @@ plot(w/w0,color="black")
 ylim((0.0,3))
 xlim((0,size(w)[1]))
 figure(2, figsize = (6,8))
+# savefig(string( "./figures/",  "Ph_MoS2_180_" , rad2deg(θ), ".png"))
+
+# calculate wavefunction at one k point
+# sampling real space positions
+# band = range(1, length=10)
+# r = EM * [xmesh[:]' .- max(xmesh[:]...)/2;ymesh[:]' .- max(ymesh[:]...)/2]/nq * 4
+# rx = reshape(r[1,:], (nr, nr))
+# ry = reshape(r[2,:], (nr, nr))
+#
+# uGx = evecs_all[:,1:2:end,:]
+# uGy = evecs_all[:,2:2:end,:]
+#
+# global ubx = zeros(ComplexF64, (nr^2, size(q_list,2)))
+# global uby = zeros(ComplexF64, (nr^2, size(q_list,2)))
+# j = complex(0,1)
+#
+#
+# for r_idx = 1:size(r,2)
+#     for q_idx = 1:size(q_list,2)
+#         ph_here = j * (r[1,r_idx] * q_list[1, q_idx] + r[2, r_idx] * q_list[2, q_idx])
+#         ph = exp(j * sum(dot.(kline[:,wf_idx], r[:,r_idx]),dims=1)[1])
+#         ubx[r_idx, :] += uGx[q_idx, :, wf_idx] .* exp(ph_here) / size(q_list,2) .* ph
+#         uby[r_idx, :] += uGy[q_idx, :, wf_idx] .* exp(ph_here) / size(q_list,2) .* ph
+#     end
+# end
+#
+#
+# ubx = reshape(ubx, (nr, nr, size(ubx,2)))
+# uby = reshape(uby, size(ubx))
+#
+# band_idx = 1
+# fig = figure(3,figsize = (8, 6))
+# clf()
+# quiver(rx,ry,real.(ubx[:,:,band_idx]),real.(uby[:,:,band_idx]))
+# ax=gca()
+# ax.set_aspect(1)
+# figure(3)
+
+# elseif mode == "mesh"
+#
+#     mode = 2
+#
+#
+#     # check the zero component of eigen vectors. Looks fine, but it's somehow cutoff outside of the first irreducible BZ
+#     fig = figure(2,figsize = (8, 10))
+#     fig.subplots_adjust(hspace=0.1, wspace=0.1)
+#     clf()
+#     subplot(2,1,1)
+#     pcolormesh(reshape(kline[1,:],(nq,nq)),reshape(kline[2,:],(nq,nq)),reshape(real.(uGx)[:,mode],(nq,nq)))
+#     ax=gca()
+#     ax.set_aspect(1)
+#     colorbar()
+#
+#     subplot(2,1,2)
+#     pcolormesh(reshape(kline[1,:],(nq,nq)),reshape(kline[2,:],(nq,nq)),reshape(real.(uGy)[:,mode],(nq,nq)))
+#     ax=gca()
+#     ax.set_aspect(1)
+#     colorbar()
+#     figure(2)
+#
+#     # check eigenvalues
+#     fig = figure(3,figsize = (5,8))
+#     fig.subplots_adjust(hspace=0.1, wspace=0.1)
+#     clf()
+#     pcolormesh(reshape(kline[1,:],(nq,nq)),reshape(kline[2,:],(nq,nq)),reshape(evals[:,mode],(nq,nq)))
+#     ax=gca()
+#     ax.set_aspect(1)
+#     colorbar()
+#     figure(3)
+#
+#
+#     fig = figure(4,figsize = (20, 16))
+#     clf()
+#     quiver(rx,ry,real.(ubx[:,:,mode]),real.(uby[:,:,mode]))
+#     ax=gca()
+#     ax.set_aspect(1)
+#
+#     # figure(5)
+#     # clf()
+#     # pcolormesh(reshape(kline[1,:],(nq,nq)),reshape(kline[2,:],(nq,nq)), reshape(w[:,mode]./w0,(nq,nq)))
+#     # ax=gca()
+#     # ax.set_aspect(1)
+#     # colorbar()
+#     # figure(5)
+#
+# end

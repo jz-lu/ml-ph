@@ -2,12 +2,12 @@ using FFTW
 
 FFTW.set_num_threads(Sys.CPU_THREADS)
 include("Bilayers.jl")
-include("MoS2_0_Parameters.jl") # replace with appropriate parameters file
+include("MoS2_180_Parameters.jl") # replace with appropriate parameters file
 using Optim
 using LinearAlgebra
 using NPZ
 using ArgParse
-# using PyPlot, PyCall
+using PyPlot, PyCall
 
 function parse_commandline()
     s = ArgParseSettings()
@@ -56,7 +56,8 @@ function main()
     npzwrite(dir*"/u_cart.npz", transpose(u))
     npzwrite(dir*"/bprime_cart.npz", bprime)
     println("Output written to $(parsed_args["out"])")
-    if false
+    if true
+        u = -u/2
         GSFE_range = GSFE(blg.E*[2/3 1/3 .46385 0 ;2/3 1/3 .46385 0], blg)
         mid1 = (GSFE_range[2]-GSFE_range[1])/(GSFE_range[4]-GSFE_range[1])
         mid2 = (GSFE_range[3]-GSFE_range[1])/(GSFE_range[4]-GSFE_range[1])
@@ -88,8 +89,8 @@ function main()
         clim(GSFE_range[[1,end]])
         ax = gca()
         ax.set_aspect(1)
-        savefig(dir*"/rgsfe.png")
         figure(1)
+        savefig(dir*"/rgsfe.png")
         println(max(u[1,:]...))
         println("Plotting done")
     end

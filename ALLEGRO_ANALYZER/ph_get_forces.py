@@ -19,8 +19,8 @@ from __dirModifications import move
 def generate_fc_conf(ROOT):
     fccf_path = checkPath(ROOT) + FC_CONF_NAME
     with open(fccf_path, 'w') as f:
-        f.write("FORCE_CONSTANTS = WRITE")
-        f.write("FULL_FORCE_CONSTANTS = .TRUE.")
+        f.write("FORCE_CONSTANTS = WRITE\n")
+        f.write("FULL_FORCE_CONSTANTS = .TRUE.\n")
 
 def get_many_forces(indir, twist=False):
     indir = checkPath(indir)
@@ -67,6 +67,8 @@ if __name__ == '__main__':
             ftype = 'twist'; i += 1
         elif args[i] == '--cfg':
             ftype = 'config'; i += 1
+        elif args[i] == '--intra':
+            ftype = 'intra'; i += 1
         elif args[i] in ['--usage', '-h', '--help']:
             print(USAGE_ERR_MSG)
             sys.exit(0)
@@ -83,6 +85,8 @@ if __name__ == '__main__':
         update("Mode: configuration")
         get_many_forces(indir, twist=False)
         succ(f"Successfully generated per-configuration force constants files in {indir}")
+    elif ftype == 'intra':
+        pass # TODO
     else:
         # Call FORCE_SETS generator
         update("Mode: basic")
