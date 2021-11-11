@@ -36,7 +36,7 @@ if __name__ == '__main__':
     parser.add_argument("--int", action="store_true", help="force constants: interlayer only")
     parser.add_argument("--cfx", action="store_true", help="force constants: same Cartesian coordinate only")
     parser.add_argument("--fcf", nargs="+", help="force constants: fixed set of choices")
-    parser.add_argument("--phcfg", type=int, help="phonon configuration calculation on shift (X)", default=0)
+    parser.add_argument("--phcfg", type=int, help="phonon configuration calculation on shift (X)", default=-1)
     parser.add_argument("--perr", action="store_true", help="plot percent error in GSFE prediction")
     parser.add_argument("nshifts", type=int, help='enter N^2 for NxN grid, or N for N diagonal cut', default=81)
     args = parser.parse_args()
