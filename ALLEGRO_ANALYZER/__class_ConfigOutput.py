@@ -328,6 +328,7 @@ class ConfigOutput:
 # See Eq(4), Carr 2018
 # Performs a mapping to a BZ associated with 60-degree realspace lattice, which works regardless of 
 # lattice in original POSCAR
+# * Coefficients are in eV, while everything else is in meV above
 class FourierGSFE:
     def __init__(self, energies, b_matrix, lattice_matrix, ltype='hexagonal', sampling_type='grid', dump=False):
         self.stype = sampling_type; assert isinstance(self.stype, str)
@@ -338,9 +339,9 @@ class FourierGSFE:
         b_matrix = b_matrix[:,:2]
         if dump:
             print(f"Configurations (direct basis):\n {b_matrix}\nConfigurations (Cartesian):\n {(self.__A @ b_matrix.T).T}")
-        minenergy = min(energies); self.GSFE = 1000*(np.array(energies)-minenergy)
+        minenergy = min(energies); self.GSFE = np.array(energies) - minenergy
         if dump:
-            print(f"Adjusted energies (meV): {self.GSFE}")
+            print(f"Adjusted energies (eV): {self.GSFE}")
         self.nb = len(b_matrix); self.b_matrix = b_matrix
         self.__fitted = False; self.coeffs = None; self.reg = None
         self.X = self.__b_to_fourier_basis(b_matrix)
@@ -349,7 +350,7 @@ class FourierGSFE:
         assert self.__A.shape == (2,2)
         M = 2 * pi * np.array([[1,-1/sqrt(3)],[0,2/sqrt(3)]]) / LA.norm(self.__A.T[0])
         return (M @ self.__A @ b_mat.T).T
-    def __vw_to_fourier_basis(self, vw, sym=True):
+    def __vw_to_fourier_basis(self, vw, sym=False):
         nbas = 3 if sym else 5
         X = np.zeros((len(vw), nbas)); v = vw[:,0]; w = vw[:,1]
         X[:,0] = np.cos(v) + np.cos(w) + np.cos(v + w)
