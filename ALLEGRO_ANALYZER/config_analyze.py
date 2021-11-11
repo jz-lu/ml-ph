@@ -149,7 +149,7 @@ if __name__ == '__main__':
             large_cfg = Configuration.sample_line(npts=NPREDPTS, basis=Configuration.diagonal_basis_from_cob(cob), dump=False, as_mat=True)
         else:
             large_cfg = np.array(Configuration.sample_grid(grid=(81, 81, 1)))
-        ff_pred = ff_gsfe.predict(large_cfg)
+        ff_pred = ff_gsfe.predict(large_cfg) * 1000 # convert to meV
     if diag:
         pts = [0, nshifts//3, 2*nshifts//3]
         update(f"Parsing successful (special points: {pts}), passing to analyzer...")
