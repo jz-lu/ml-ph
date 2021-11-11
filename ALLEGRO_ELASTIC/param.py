@@ -5,7 +5,7 @@ to calculate the shear and bulk modulus constants for a given material.
 import argparse
 import os, sys
 from gen_poscar_elastic import get_poscar_elastic, pathify
-CODE_DIR = '/n/home04/jzlu/codes/ml-ph/CRELAX/'
+CODE_DIR = '/n/home04/jzlu/codes/ml-ph/ALLEGRO_ELASTIC/'
 
 folder_names = ['stretch1', 'stretch2', 'shear']
 

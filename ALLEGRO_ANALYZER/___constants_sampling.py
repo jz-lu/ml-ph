@@ -13,4 +13,4 @@ IBZ_M_60 = [0.5, 0.5]
 DEFAULT_RSPC_SZ = 3
 
 # theta-Relaxation sampling
-DENSITY_SCALE = 6 # increase sampling density by this factor
+DENSITY_SCALE = 12 # increase sampling density by this factor

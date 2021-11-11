@@ -4,21 +4,45 @@ using FFTW
 FFTW.set_num_threads(Sys.CPU_THREADS)
 
 include("Bilayers.jl")
-# include("MoS2_0_Parameters.jl")
-include("MoS2_180_Parameters.jl")
-#include("GrapheneParameters.jl")
+include("gsfe_func.jl")
 
 using PyPlot
 using PyCall
 using Interpolations
 using Optim
 using LinearAlgebra
+using ArgParse
+using NPZ
+
+function parse_commandline()
+    s = ArgParseSettings()
+
+    @add_arg_table! s begin
+        "--deg", "-d"
+            help = "twist angle in degrees"
+            required = true
+            arg_type = Float64
+        "-N", "-n"
+            help = "grid size (N if grid is NxN)"
+            arg_type = Int
+            required = true
+        "--out", "-o"
+            help = "output directory path (must end in slash)"
+            arg_type = String
+            default = "."
+    end
+
+    return parse_args(s)
+end
 
 ## Parameters:
+parsed_args = parse_commandline()
+dir = string(abspath(parsed_args["out"]), "/")
+println("Output directory: $(dir)")
+θ = deg2rad(parsed_args["deg"])
 
-θ = deg2rad(0.8)
-
-N =54
+N = parsed_args["N"]
+println("Using $(N) x $(N) grid")
 hN = div(N,2)
 blg = Bilayer(l, θ, K, G)
 hull = Hull(blg, N, [0., 0.]);
@@ -30,9 +54,17 @@ g!(storage, u) = Gradient!(storage, u, hull)
 @time results = optimize(f, g!, zeros(2, N^2), LBFGS(), Optim.Options(allow_f_increases=true))
 
 u = reshape(Optim.minimizer(results), (2, N^2))
-
+rel_u = 2 * u # relative relaxation between two layers is twice as strong
 GSFE_range = GSFE(blg.E*[2/3 1/3 .46385 0 ;2/3 1/3 .46385 0], blg)
 GSFE_range = sort(GSFE_range)
+
+rel_u_T = transpose(rel_u)
+b_cart = transpose(hull.G)
+npzwrite(dir*"b_cart.npz", b_cart)
+npzwrite(dir*"u_cart.npz", rel_u_T)
+npzwrite(dir*"bprime_cart.npz", rel_u_T + b_cart)
+println("Output written to $(parsed_args["out"])")
+
 mid1 = (GSFE_range[2]-GSFE_range[1])/(GSFE_range[4]-GSFE_range[1])
 mid2 = (GSFE_range[3]-GSFE_range[1])/(GSFE_range[4]-GSFE_range[1])
 cscale(c) = c < mid1 ? c/(3*mid1) : (c < mid2 ? ( 1. + (c-mid1)/(mid2-mid1))/3. : (2. + (c-mid2)/(1-mid2))/3.)
@@ -82,17 +114,16 @@ ax = gca()
 ax.set_aspect(1)
 title("Relaxed")
 colorbar()
-savefig(string( "/Users/jonathanlu/Documents/twbl-phonon/Julia/my_figs/", "MoS2_0", "_" , rad2deg(θ), ".png"))
+savefig(string( dir, "GSFE_" , rad2deg(θ), ".png"))
 figure(1)
 
 figure(2)
 quiver(reshape(x,(N+1,N+1)), reshape(y, (N+1,N+1)), ux, uy )
 ax = gca()
 ax.set_aspect(1)
-savefig(string( "/Users/jonathanlu/Documents/twbl-phonon/Julia/my_figs/", "MoS2_0_2", "_" , rad2deg(θ), ".png"))
+savefig(string( dir, "RelField_" , rad2deg(θ), ".png"))
 
 
 u1x = reshape(ux, (N+1, N+1))
 u1y = reshape(uy, (N+1, N+1))
 print(max(u1x...))
-
