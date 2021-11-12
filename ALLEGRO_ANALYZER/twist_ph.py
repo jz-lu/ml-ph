@@ -36,7 +36,7 @@ from __class_ForceInterp import ForceInterp, FourierForceInterp
 from __class_PhononConfig import TwistedRealspacePhonon
 from ___helpers_parsing import greet, update, succ, warn, err, is_flag, check_not_flag
 import os, sys, copy, argparse
-from math import pi
+from math import pi, sqrt
 
 #* deprecated
 RELAX_FOURIER_INTERP = 1
@@ -228,8 +228,9 @@ if __name__ == '__main__':
         relaxed_forces = None; b_relaxed = None
         if relax:
             print("Non-uniformizing configurations via relaxation...")
-            relax_api = RelaxerAPI(round(np.rad2deg(theta), 6), gridsz, outdir, s0.T)
+            relax_api = RelaxerAPI(round(np.rad2deg(theta), 6), gridsz, outdir, s0.T, dedensify=True) # keep dense sampling for fourier interp
             b_relaxed = relax_api.get_configs(cartesian=True)
+            print(f"UPDATED: configuration grid size to {int(sqrt(b_relaxed.shape[0]))} for implicit Fourier interpolation")
             relax_api.plot_relaxation()
 
         print("Note: Using GM sampling set from intralayer calculations.")
@@ -242,7 +243,7 @@ if __name__ == '__main__':
                              GM_set, G0_set, 
                              [p.structure.species for p in poscars_uc], cfg_sc, cfg_uc, 
                              ph_list=config_ph_list, 
-                             force_matrices=None, br_set=b_relaxed)
+                             force_matrices=None, br_set=b_relaxed, A0=A0)
         print("Interlayer DM objects constructed.")
 
         print("Combining into a single twisted dynamical matrix object...")

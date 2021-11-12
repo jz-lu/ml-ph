@@ -257,7 +257,7 @@ class InterlayerDM:
                  GM_set, G0_set, 
                  species_per_layer, sc, uc, 
                  ph_list=None, 
-                 force_matrices=None, G0=None, br_set=None):
+                 force_matrices=None, G0=None, br_set=None, A0=None):
         self.DM_G_blks = None
         self.M = np.array([[species.atomic_mass for species in layer] for layer in species_per_layer])
         self.bl_M = bl_M; self.bl_n_at = len(bl_M)
@@ -284,9 +284,13 @@ class InterlayerDM:
         else:
             self.force_matrices = force_matrices
         if br_set is not None:
+            assert A0 is not None, f"Must give lattice matrix A0 when using relaxer"
+            br_sz = int(sqrt(self.br_set.shape[0]))
             update("CONFIGURATION DM: Using RELAXED configs")
             relaxed_forces = [self.__inverse_block_inter_l0(br) for br in self.br_set]
             self.force_matrices = relaxed_forces
+            a = np.linspace(0,1,br_sz, endpoint=False)
+            self.b_set = np.array(list(prod(a,a))) @ A0.T
        
         assert self.force_matrices[0].shape[0] == self.force_matrices[0].shape[1], f"Force matrix is not square: shape {self.force_matrices[0].shape}"
         assert self.force_matrices[0].shape[0] % 2 == 0, f"Force matrix size is odd: shape {self.force_matrices[0].shape}"

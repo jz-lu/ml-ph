@@ -48,18 +48,18 @@ class RelaxerAPI:
 
         # Load and maybe de-densify secondary output
         idxs = density_scale * np.arange(self.gridsz)
-        self.u = np.load(self.outdir + RELAXED_DELTA_OUT).reshape((self.gridsz*density_scale,self.gridsz*density_scale,2))
-        self.b = np.load(self.outdir + UNRELAXED_CONFIGS_OUT).reshape((self.gridsz*density_scale,self.gridsz*density_scale,2))
+        self.u = np.load(self.outdir + RELAXED_DELTA_OUT)
+        self.b = np.load(self.outdir + UNRELAXED_CONFIGS_OUT)
         if dedensify:
-            self.u = self.u[idxs]; self.u = self.u[:, idxs]
-            self.b = self.b[idxs]; self.b = self.b[:, idxs]
+            self.u = self.u.reshape((self.gridsz*density_scale,self.gridsz*density_scale,2))[idxs]; self.u = self.u[:, idxs]
+            self.b = self.b.reshape((self.gridsz*density_scale,self.gridsz*density_scale,2))[idxs]; self.b = self.b[:, idxs]
             self.u = self.u.reshape((self.gridsz**2, 2))
             self.b = self.b.reshape((self.gridsz**2, 2))
 
         # Load and maybe de-densify main output
         bprime_cart = np.load(self.outdir + RELAX_CODE_OUT)
-        bprime_cart = bprime_cart.reshape((self.gridsz*density_scale,self.gridsz*density_scale,2))
         if dedensify:
+            bprime_cart = bprime_cart.reshape((self.gridsz*density_scale,self.gridsz*density_scale,2))
             bprime_cart = bprime_cart[idxs]
             bprime_cart = bprime_cart[:, idxs]
             assert bprime_cart.shape == (self.gridsz, self.gridsz, 2)
