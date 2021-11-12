@@ -8,10 +8,11 @@ parser.add_argument("-d", "--dir", type=str, help='main directory path', default
 parser.add_argument("-m", "--data", type=str, help='data directory path', default="..")
 parser.add_argument("-n", "--name", type=str, help='material name', default="(mat)")
 parser.add_argument("-r", "--relax", action="store_true", help='run relaxer')
-parser.add_argument("range", nargs=3, type=int, help="theta: (start, end, number of)")
+parser.add_argument("range", nargs=3, type=float, help="theta: (start, end, number of)")
 args = parser.parse_args()
 
 t_start, t_end, n_t = tuple(args.range)
+n_t = int(n_t)
 thetas = np.linspace(t_start, t_end, n_t)
 main_dir = os.path.abspath(args.dir)
 path = main_dir + '/' + 'batrs'
