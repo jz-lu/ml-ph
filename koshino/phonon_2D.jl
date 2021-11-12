@@ -1,4 +1,3 @@
-# In-plane phonon modes
 using FFTW
 
 FFTW.set_num_threads(Sys.CPU_THREADS)
@@ -48,7 +47,7 @@ blg = Bilayer(l, θ, K, G)
 hull = Hull(blg, N, [0.,0.]);
 
 # Cutofff radius in k-space
-G_cutoff = parse_args["cut"] # need to be large for small angles
+G_cutoff = parsed_args["cut"] # need to be large for small angles
 # number of points to sample on the high symmetry line
 nq = 20
 nr = 50
