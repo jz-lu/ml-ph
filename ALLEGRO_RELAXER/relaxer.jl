@@ -130,3 +130,4 @@ if !on_cluster
     u1x = reshape(ux, (N+1, N+1))
     u1y = reshape(uy, (N+1, N+1))
     print(max(u1x...))
+end

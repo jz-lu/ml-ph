@@ -67,7 +67,6 @@ def get_poscar_elastic(args):
     for car in ['INCAR', 'POTCAR', 'KPOINTS']:
         shutil.copyfile(ROOT+car, fpath+car)
     os.chdir(fpath)
-    print(f"Contents of {fpath}: {os.listdir(fpath)}")
 
     lattice = np.array([[sqrt(3)/2*a0, -0.5*a0, 0], [sqrt(3)/2*a0, 0.5*a0, 0], [0, 0, 20]])
 

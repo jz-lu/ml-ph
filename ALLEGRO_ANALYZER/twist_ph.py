@@ -277,7 +277,7 @@ if __name__ == '__main__':
                 dir_rspc_kpts = bzsamples.k_cart_to_dir(rspc_kpts) # convert to direct coordinates
             num_kpts = rspc_kpts.shape[0]
             assert rspc_kpts.shape[1] == 2
-            print(f"Analyzing phonons in realspace at k-points ::\nCartesian:\n{rspc_kpts}\nDirect:{dir_rspc_kpts}")
+            print(f"Analyzing phonons in realspace at k-points ::\nCartesian:\n{rspc_kpts}\nDirect:\n{dir_rspc_kpts}")
             n_at = sum([sum(p.natoms) for p in poscars_uc])
             print(f"Number of atoms in bilayer configuration cell: {n_at}")
 
@@ -295,18 +295,20 @@ if __name__ == '__main__':
                 if np.isclose(IBZ_GAMMA, rspc_k).all():
                     kpt_name = r'$\Gamma$'
                 elif np.isclose(IBZ_K_60, rspc_k).all():
-                    kpt_name = r'$K$'
+                    kpt_name = 'K'
                 elif np.isclose(IBZ_M_60, rspc_k).all():
-                    kpt_name = r'$M$'
+                    kpt_name = 'M'
+                log_name = kpt_name[2:-1] if kpt_name == r'$\Gamma$' else kpt_name
                 this_outdir = outdir
                 if num_kpts > 1:
-                    this_outdir += kpt_name[2:-1] if kpt_name[0] == '$' else kpt_name
+                    this_outdir += log_name
                     os.mkdir(this_outdir)
+                print(f"[{kidx}/{num_kpts}] NOW WORKING ON: k = {log_name}, print to {this_outdir}")
                 twrph = TwistedRealspacePhonon(round(np.rad2deg(theta), 6), rspc_k, GM_set, 
                         rspc_TDMs[kidx], n_at, bl_M, poscars_uc, outdir=this_outdir, modeidxs=modeidxs, 
                         kpt=kpt_name, RSPC_SUPERCELL_SIZE=args.rssz)
-                print(f"Phonons in realspace analyzed at {rspc_k} (i.e. {kpt_name}).")
                 twrph.plot_phonons()
+                print(f"Phonons in realspace analyzed at {rspc_k} (i.e. {kpt_name}).")
                 # twrph.plot_spatial_avgs()
                 # twrph.plot_atomic_avgs()
         
