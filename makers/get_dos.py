@@ -1,7 +1,7 @@
 import argparse
 import numpy as np
 import os
-from consts import ALLEGRO_DIR
+from consts import ALLEGRO_DIR, MAKE_DIR
 
 parser = argparse.ArgumentParser(description="Submit band-DOS plots job to cluster")
 parser.add_argument("-d", "--dir", type=str, help='main directory path', default=".")
@@ -32,7 +32,7 @@ with open(path, 'w') as f:
     f.write(f'WDIR="{main_dir}' + '"\necho "WD: ${WDIR}"\n')
     f.write(f'ALLEGRO_DIR="{ALLEGRO_DIR}"\n')
     f.write("module load julia\nmodule list\nsource activate $HOME/anaconda_env\n")
-    f.write(f'echo "Starting calculations..."\npython3 make_dos.py -d {args.dir} --data {args.data} {r} -n {args.name} -k {args.kdim} {t_start} {t_end} {n_t}\necho "Calculations complete!"')
+    f.write(f'echo "Starting calculations..."\npython3 {MAKE_DIR}/make_dos.py -d {args.dir} --data {args.data} {r} -n {args.name} -k {args.kdim} {t_start} {t_end} {n_t}\necho "Calculations complete!"')
 
 print(f"Submitting {path}...", flush=True)
 print(os.popen(f"sbatch {path}").read(), flush=True)
