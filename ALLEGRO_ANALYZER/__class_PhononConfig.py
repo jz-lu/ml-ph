@@ -257,7 +257,8 @@ class TwistedRealspacePhonon:
                 plt.xlabel("x"); plt.ylabel("y")
                 ax.scatter(coords[:,0], coords[:,1], c='black', s=0.2)
                 ax.set_aspect('equal')
-                this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}_k{self.kpt}' + outname[outname.index('.'):]
+                fname = self.kpt[2:-1] if self.kpt[0] == "$" else self.kpt
+                this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}_k-{fname}' + outname[outname.index('.'):]
                 plt.title(r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" Mode {m_j}, Layer {l_i} at " + self.kpt)
                 # v1 = np.linspace(z.min(), z.max(), 8, endpoint=True)
                 # cb = plt.colorbar(ticks=v1)
