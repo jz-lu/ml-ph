@@ -39,7 +39,9 @@ end
 close("all")
 
 ## Parameters:
+# TODO savefig where in code?
 parsed_args = parse_commandline()
+dir = string(abspath(parsed_args["out"]), "/")
 θ = deg2rad(parsed_args["deg"])
 N = parsed_args["N"]
 hN = div(N,2)
