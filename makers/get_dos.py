@@ -21,7 +21,7 @@ r = "-r" if args.relax else ""
 
 with open(path, 'w') as f:
     f.write("#!/bin/bash\n")
-    f.write(f"#SBATCH --job-name=rs-{args.name}\n")
+    f.write(f"#SBATCH --job-name=dos-{args.name}\n")
     f.write("#SBATCH -N 1\n#SBATCH -n 24\n")
     f.write("#SBATCH -t 16:00:00\n")
     f.write("#SBATCH -p kaxiras,shared\n")
