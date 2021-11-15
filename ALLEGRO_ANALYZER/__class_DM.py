@@ -15,6 +15,7 @@ from ___constants_vasp import VASP_FREQ_TO_INVCM_UNITS
 from ___helpers_parsing import update, succ
 from scipy.linalg import block_diag
 from scipy.sparse import bmat # block matrix
+from scipy.signal import savgol_filter as smoothen_filter
 from math import sqrt, pi, log
 import sys
 from __class_PhonopyAPI import PhonopyAPI
@@ -689,9 +690,11 @@ class TwistedDOS:
         return DOSs
 
     # Obtain DOS for plotting / any other use
-    def get_DOS(self):
+    def get_DOS(self, smoothen=False):
         if self.DOS is None:
             self.DOS = self.__DOS_at_omegas(self.omegas)
+        if smoothen:
+            self.DOS = smoothen_filter(self.DOS, 31, 7) # window size 31, polynomial order 7
         return self.omegas, self.DOS
     
     def plot_DOS(self, vertical=True, outdir='.'):
