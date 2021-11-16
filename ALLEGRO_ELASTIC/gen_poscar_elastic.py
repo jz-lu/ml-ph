@@ -51,6 +51,11 @@ def get_poscar_elastic(args):
         a0 = 3.244
         print(f"Material:WSe2 with lattice constants {a0}")
         pos = [[0, 0, 0], [sqrt(3)/3*a0, 0, -1.671], [sqrt(3)/3*a0, 0, 1.671]]
+    elif mat[:4] == 'MoSe':
+        species = ['Mo', 'Se', 'Se']
+        a0 = 3.122 # TODO
+        print(f"Material: MoSe2 with lattice constants {a0}")
+        pos = [[0, 0, 0], [sqrt(3)/3*a0, 0, -1.565], [sqrt(3)/3*a0, 0, 1.565]]
     elif mat[0] == 'M':
         species = ['Mo', 'S', 'S']
         a0 = 3.122

@@ -299,7 +299,11 @@ if __name__ == '__main__':
                     kpt_name = 'K'
                 elif np.isclose(IBZ_M_60, dir_rspc_k).all():
                     kpt_name = 'M'
-                log_name = kpt_name[2:-1] if kpt_name == r'$\Gamma$' else "%4.3lf_%4.3lf"%(dir_rspc_k[0], dir_rspc_k[1])
+                log_name = "%4.3lf_%4.3lf"%(dir_rspc_k[0], dir_rspc_k[1])
+                if kpt_name == r'$\Gamma$':
+                    log_name = "Gamma"
+                elif kpt_name[0] != "(":
+                    log_name = kpt_name
                 this_outdir = outdir
                 if num_kpts > 1:
                     this_outdir += log_name
@@ -334,6 +338,8 @@ if __name__ == '__main__':
             # WIDTH = 0.05
                 # iDOS = TwistedDOS(mesh_TDMs_intra, len(GM_set), np.rad2deg(theta), width=WIDTH, kdim=args.dos)
                 # normalizer = np.max(iDOS.get_DOS()[1])
+                print(f"DOING: width={WIDTH}", flush=True)
+
                 normalizer = 1 #! delete
                 TDOS = TwistedDOS(mesh_TDMs, len(GM_set), round(np.rad2deg(theta), 6), cutoff=cutoff, 
                                   width=WIDTH, kdim=args.dos, normalizer=normalizer, eigsys=eigsys)

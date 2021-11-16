@@ -334,6 +334,7 @@ if __name__ == '__main__':
             # WIDTH = 0.05
                 # iDOS = TwistedDOS(mesh_TDMs_intra, len(GM_set), np.rad2deg(theta), width=WIDTH, kdim=args.dos)
                 # normalizer = np.max(iDOS.get_DOS()[1])
+                print(f"DOING: width={WIDTH}", flush=True)
                 normalizer = 1 #! delete
                 TDOS = TwistedDOS(mesh_TDMs, len(GM_set), round(np.rad2deg(theta), 6), cutoff=cutoff, 
                                   width=WIDTH, kdim=args.dos, normalizer=normalizer, eigsys=eigsys)
