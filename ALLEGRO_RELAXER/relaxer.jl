@@ -12,7 +12,7 @@ using LinearAlgebra
 using ArgParse
 using NPZ
 
-on_cluster = true #! make true when on cluster
+on_cluster = false #! make true when on cluster
 
 function parse_commandline()
     s = ArgParseSettings()
@@ -44,17 +44,22 @@ println("Output directory: $(dir)")
 N = parsed_args["N"]
 println("Using $(N) x $(N) grid")
 hN = div(N,2)
-blg = Bilayer(l, θ, K, G)
+blg = Bilayer(l, θ, K1, G1, K2, G2)
 hull = Hull(blg, N, [0., 0.]);
 
 
 ## Here are rotated functionals with symmetry - try *_nosym versions for the simplified functional in the paper
 f(u) = Energy(u, hull)
 g!(storage, u) = Gradient!(storage, u, hull)
-@time results = optimize(f, g!, zeros(2, N^2), LBFGS(), Optim.Options(allow_f_increases=true))
+@time results = optimize(f, g!, zeros(4, N^2), LBFGS(),
+    Optim.Options(allow_f_increases=true, show_trace = true, 
+                  store_trace = true, show_every = 100))
+println(results)
 
-u = reshape(Optim.minimizer(results), (2, N^2))
-rel_u = 2 * u # relative relaxation between two layers is twice as strong
+u = reshape(Optim.minimizer(results), (4, N^2))
+u1 = u[1:2, :]
+u2 = u[3:4, :]
+rel_u = u1 + u2 # relative relaxation between two layers is twice as strong
 GSFE_range = GSFE(blg.E*[2/3 1/3 .46385 0 ;2/3 1/3 .46385 0], blg)
 GSFE_range = sort(GSFE_range)
 
@@ -87,14 +92,16 @@ if !on_cluster
     X = complete(reshape(hull.G[1,:], (N,N)), dot(blg.E[1,:],[0;1]), dot(blg.E[1,:],[1;0]))
     Y = complete(reshape(hull.G[2,:], (N,N)), dot(blg.E[2,:],[0;1]), dot(blg.E[2,:],[1;0]))
     C0 = complete(reshape(GSFE(hull.G, hull.bl), (N,N)));
-    C = complete(reshape(GSFE(hull.G + hull.bl.iR * 2 * u, hull.bl), (N,N)));
+    C = complete(reshape(GSFE(hull.G + hull.bl.iR * (u1 + u2), hull.bl), (N,N)));
 
     # convert to supercell positions
     r = inv(blg.R - blg.iR) * [X[:], Y[:]]
     x = r[1]
     y = r[2]
-    ux = complete(reshape(u[1,:], (N,N)))
-    uy = complete(reshape(u[2,:], (N,N)))
+    ux_l1 = complete(reshape(u[1,:], (N,N)))
+    uy_l1 = complete(reshape(u[2,:], (N,N)))
+    ux_l2 = complete(reshape(u[3,:], (N,N)))
+    uy_l2 = complete(reshape(u[4,:], (N,N)))
 
 
     ##
@@ -121,13 +128,22 @@ if !on_cluster
     figure(1)
 
     figure(2)
-    quiver(reshape(x,(N+1,N+1)), reshape(y, (N+1,N+1)), ux, uy )
+    quiver(reshape(x,(N+1,N+1)), reshape(y, (N+1,N+1)), ux_l1, uy_l1)
     ax = gca()
     ax.set_aspect(1)
-    savefig(string( dir, "RelField_" , rad2deg(θ), ".png"))
+    savefig(string( dir, "RelField1_" , rad2deg(θ), ".png"))
+
+    figure(3)
+    quiver(reshape(x,(N+1,N+1)), reshape(y, (N+1,N+1)), ux_l2, uy_l2)
+    ax = gca()
+    ax.set_aspect(1)
+    savefig(string( dir, "RelField2_" , rad2deg(θ), ".png"))
 
 
-    u1x = reshape(ux, (N+1, N+1))
-    u1y = reshape(uy, (N+1, N+1))
-    print(max(u1x...))
+    u1x = reshape(ux_l1, (N+1, N+1))
+    u1y = reshape(uy_l1, (N+1, N+1))
+    u2x = reshape(ux_l2, (N+1, N+1))
+    u2y = reshape(uy_l2, (N+1, N+1))
+    println(string("Layer 1 max ux: ", max(u1x...)))
+    println(string("Layer 2 max ux: ", max(u2x...)))
 end

@@ -149,7 +149,7 @@ class TwistedRealspacePhonon:
         assert evecs.shape == (self.n_at, self.n_G, self.nmodes, self.d), f"Incorrect shape {evecs.shape}"
         self.phtnsr = np.transpose(evecs, axes=(1,0,2,3)) # shape: (n_G, n_at, C, d)
         assert self.phtnsr.shape == self.phtnsr_shape, f"Unexpected phonon tensor shape {self.phtnsr.shape}, expected {self.phtnsr_shape}"
-        self.evals_real = np.real(np.array(evals)[self.nmodes])
+        self.evals_real = np.real(np.array(evals)[self.modeidxs])
         print(f"Fourier phonon tensor constructed: shape {self.phtnsr.shape}")
 
     def __build_modes(self):
@@ -253,7 +253,8 @@ class TwistedRealspacePhonon:
                             cmap='CMRmap')
                 (xm, xp), (ym, yp) = plt.xlim(), plt.ylim()
                 max_norm = np.max([LA.norm(phonon[:-1]) for phonon in phonons])
-                ax.text(0.02*(xp-xm)+xm, 0.02*(yp-ym)+ym, r'$\lambda = %.3E$'%max_norm)
+                ax.text(0.02*(xp-xm)+xm, 0.02*(yp-ym)+ym, r'$\delta u_{xy} = %.3E$'%max_norm)
+                ax.text(0.06*(xp-xm)+xm, 0.06*(yp-ym)+ym, r'$\omega = %.3f$'%self.modes[m_j])
                 plt.xlabel("x"); plt.ylabel("y")
                 ax.scatter(coords[:,0], coords[:,1], c='black', s=0.2)
                 ax.set_aspect('equal')

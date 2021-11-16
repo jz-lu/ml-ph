@@ -20,9 +20,10 @@ mutable struct Bilayer
     tP::Array{Array{Float64,1},1}
 
     # Effective elastic tensor in hull space
-    tC::Array{Float64,4}
+    tC1::Array{Float64,4}
+    tC2::Array{Float64,4}
 
-    function Bilayer(l, θ, K, G)
+    function Bilayer(l, θ, K1, G1, K2, G2)
         # E = l * [3/2 3/2; -sqrt(3)/2 sqrt(3)/2]
         E = l * [1 1/2 ; 0 sqrt(3)/2] * sqrt(3)
         P = l * [1; 0]
@@ -36,13 +37,16 @@ mutable struct Bilayer
         tP = [iR*P,R*P]
 
         ## Intra-layer elastic tensor, with stress tensor linear ordering [E_11; E_12; E_21; E_22]
-        C = [K+G 0 0 K-G; 0 G G 0; 0 G G 0; K-G 0 0 K+G]
+        C1 = [K1+G1 0 0 K1-G1; 0 G1 G1 0; 0 G1 G1 0; K1-G1 0 0 K1+G1]
+        C2 = [K2+G2 0 0 K2-G2; 0 G2 G2 0; 0 G2 G2 0; K2-G2 0 0 K2+K2]
         T = inv(E)  * (R - iR)
         T = [T[1,1] 0 T[1,2] 0; 0 T[1,1] 0 T[1,2]; T[2,1] 0 T[2,2] 0; 0 T[2,1] 0 T[2,2]] # Hull [0,1]^2 -> Real space gradient transformation
-        tC =  T * C * T';
-        tC = reshape(tC, (2,2,2,2))
+        tC1 =  T * C1 * T';
+        tC2 =  T * C2 * T';
+        tC1 = reshape(tC1, (2,2,2,2))
+        tC2 = reshape(tC2, (2,2,2,2))
 
-        new(l, E, 2*pi*inv(E), P, θ, R, iR, tE, tP, tC)
+        new(l, E, 2*pi*inv(E), P, θ, R, iR, tE, tP, tC1, tC2)
     end
 end
 
@@ -52,7 +56,8 @@ mutable struct Hull
     N::Int
     G::Array{Float64,2}
     Gref::Array{Float64,2}
-    Hess_Elastic::Array{Float64,4}
+    Hess_Elastic1::Array{Float64,4}
+    Hess_Elastic2::Array{Float64,4}
     plan
     iplan
 
@@ -78,14 +83,18 @@ mutable struct Hull
         A = zeros(Complex{Float64}, (2, N, N))
         iplan = plan_ifft!(A, (2,3))
 
-        Hess = zeros(2,2,N,N)
+        Hess1 = zeros(2,2,N,N) # layer 1
+        Hess2 = zeros(2,2,N,N) # layer 2
         K1 = K1 .+ 2*pi*kidx[1]
         K2 = K2 .+ 2*pi*kidx[2]
         for a=1:2, c=1:2
-            Hess[a,c,:,:] =  bl.tC[a,1,c,1] * (K1.*K1) .+ (bl.tC[a,2,c,1] .+ bl.tC[a,1,c,2]) * (K1.*K2) .+ bl.tC[a,2,c,2] * (K2.*K2)
+            Hess1[a,c,:,:] =  bl.tC1[a,1,c,1] * (K1.*K1) .+ (bl.tC1[a,2,c,1] .+ 
+                bl.tC1[a,1,c,2]) * (K1.*K2) .+ bl.tC1[a,2,c,2] * (K2.*K2)
+            Hess2[a,c,:,:] =  bl.tC2[a,1,c,1] * (K1.*K1) .+ (bl.tC2[a,2,c,1] .+ 
+                bl.tC2[a,1,c,2]) * (K1.*K2) .+ bl.tC2[a,2,c,2] * (K2.*K2)
         end
 
-        new(bl, N, G, Gref, Hess, plan, iplan)
+        new(bl, N, G, Gref, Hess1, Hess2, plan, iplan)
     end
 end
 
@@ -99,74 +108,66 @@ end
 
 # Implements GSFE energy for a displacement u discretized on the hull
 function Misfit(u::Array{Float64, 2}, hull::Hull)
-    # return sum(GSFE(hull.G + hull.bl.iR * (Reflection(u,hull)-u), hull.bl))
-    return sum(GSFE(hull.G + 2 * hull.bl.iR * u, hull.bl))
+    u1 = u[1:2, :]
+    u2 = u[3:4, :]
+    return sum(GSFE(hull.G + hull.bl.iR * (u1+u2), hull.bl))
 end
 
 
 # Implements first variation of GSFE energy for a displacement u discretized on the hull
 function gradient_Misfit(u::Array{Float64, 2}, hull::Hull)
-    v = 2 * hull.bl.iR * u
-    return 2 * hull.bl.R * gradient_GSFE(hull.G + v, hull.bl)
-    # v = Reflection(u, hull) - u
-    # return (- hull.bl.iR) * gradient_GSFE(hull.G + hull.bl.R * v, hull.bl) - hull.bl.R * gradient_GSFE(hull.G + hull.bl.iR * v, hull.bl)
+    u1 = u[1:2, :]
+    u2 = u[3:4, :]
+    v = hull.bl.iR * (u1+u2)
+    grad1 = hull.bl.R * gradient_GSFE(hull.G + v, hull.bl)
+    return [grad1; grad1]
 end
-
-# Implements GSFE energy for a displacement u discretized on the hull
-# function Misfit(u::Array{Float64, 2}, hull::Hull)
-#     return sum(GSFE(hull.G + hull.bl.iR * (Reflection(u, hull) - u), hull.bl))
-# end
-#
-#
-# # Implements first variation of GSFE energy for a displacement u discretized on the hull
-# function gradient_Misfit(u::Array{Float64, 2}, hull::Hull)
-#     v = Reflection(u, hull) - u
-#     return (- hull.bl.iR) * gradient_GSFE(hull.G + hull.bl.R * v, hull.bl) - hull.bl.R * gradient_GSFE(hull.G + hull.bl.iR * v, hull.bl)
-# end
-
 
 # Implements elastic energy for a displacement u discretized on the hull
 function Elastic(u::Array{Float64, 2}, hull::Hull)
+    u1 = u[1:2, :]
+    u2 = u[3:4, :]
     N = hull.N
-    v = hull.plan * reshape(u, (2, N, N))
-    W = dropdims(sum(hull.Hess_Elastic .* reshape(v, (2, 1, N, N)), dims=1), dims=1);
-    @views return .5 / N^2 * real( dot(W[:], v[:]) )
+    # v = hull.plan * reshape(u, (2, N, N))
+    v1 = hull.plan * reshape(u1, (2, N, N))
+    v2 = hull.plan * reshape(u2, (2, N, N))
+    # W = dropdims(sum(hull.Hess_Elastic .* reshape(v, (2, 1, N, N)), dims=1), dims=1);
+    W1 = dropdims(sum(hull.Hess_Elastic1 .* reshape(v1, (2, 1, N, N)), dims=1), dims=1);
+    W2 = dropdims(sum(hull.Hess_Elastic2 .* reshape(v2, (2, 1, N, N)), dims=1), dims=1);
+    # @views return .5 / N^2 * real( dot(W[:], v[:]) )
+    @views return .5 / N^2 * (real( dot(W1[:], v1[:]) ) + real( dot(W2[:], v2[:]) ))
 end
 
 # Implements first variation of elastic energy for a displacement u discretized on the hull
 function gradient_Elastic(u::Array{Float64, 2}, hull::Hull)
+    u1 = u[1:2, :]
+    u2 = u[3:4, :]
     N = hull.N
-
-    v = hull.plan * reshape(u, (2, N, N))
-    W = dropdims(sum(hull.Hess_Elastic .* reshape(v, (2, 1, N, N)), dims=1), dims=1);
-    hull.iplan * W
-    return reshape(real(W), (2, N^2))
+    # v = hull.plan * reshape(u, (2, N, N))
+    v1 = hull.plan * reshape(u1, (2, N, N))
+    v2 = hull.plan * reshape(u2, (2, N, N))
+    # W = dropdims(sum(hull.Hess_Elastic .* reshape(v, (2, 1, N, N)), dims=1), dims=1);
+    W1 = dropdims(sum(hull.Hess_Elastic1 .* reshape(v1, (2, 1, N, N)), dims=1), dims=1);
+    W2 = dropdims(sum(hull.Hess_Elastic2 .* reshape(v2, (2, 1, N, N)), dims=1), dims=1);
+    # hull.iplan * W
+    hull.iplan * W1
+    hull.iplan * W2
+    # return reshape(real(W), (2, N^2))
+    return reshape(real([W1; W2]), (4, N^2))
 end
 
 # Computes the total (potential) energy of the bilayer for a displacement u discretized on the hull
 function Energy(u::Array{Float64, 2}, hull::Hull)
-    return 2*Elastic(u, hull) + Misfit(u, hull)
+    return Elastic(u, hull) + Misfit(u, hull)
 end
 
 # Computes the first variation of the total (potential) energy of the bilayer for a displacement u discretized on the hull
 function Gradient(u::Array{Float64, 2}, hull::Hull)
-    return 2*gradient_Elastic(u, hull) + gradient_Misfit(u, hull)
+    return gradient_Elastic(u, hull) + gradient_Misfit(u, hull)
 end
 
 
 function Gradient!(grad::Array{Float64, 2}, u::Array{Float64, 2}, hull::Hull)
-    # N = hull.N
-    #
-    # v = hull.plan * reshape(u, (2, N, N))
-    # W = dropdims(sum(hull.Hess_Elastic .* reshape(v, (2, 1, N, N)), dims=1), dims=1);
-    # hull.iplan * W
-    # grad[:] = 2*real(W)
-    #
-    # # v = 2 * hull.bl.iR * u
-    # # grad .+= 2 * hull.bl.R * gradient_GSFE(hull.G + v, hull.bl)
-    #
-    # v = Reflection(u, hull) - u
-    # grad .+= (-hull.bl.iR) * gradient_GSFE(hull.G + hull.bl.R * v, hull.bl) - hull.bl.R * gradient_GSFE(hull.G + hull.bl.iR * v, hull.bl)
-    grad .= gradient_Misfit(u, hull) + 2*gradient_Elastic(u, hull)
+    grad .= gradient_Misfit(u, hull) + gradient_Elastic(u, hull)
     nothing
 end
