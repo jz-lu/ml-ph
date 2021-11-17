@@ -621,7 +621,7 @@ class TwistedDM:
 
 
 class TwistedDOS:
-    def __init__(self, TDMs, n_G, theta, cutoff=None, width=20, 
+    def __init__(self, TDMs, n_G, theta, cutoff=None, 
                  partition_density=DEFAULT_PARTITION_DENSITY, 
                  kdim=DEFAULT_KDIM, normalizer=1, eigsys=None):
         # Eigensort the eigenbasis, then slice off everything but the G0 component
@@ -656,22 +656,43 @@ class TwistedDOS:
             assert cutoff > self.mode_extrema[0], \
                 f"Cutoff {cutoff} smaller than minimum freq {self.mode_extrema[0]}"
             self.mode_extrema[1] = min(self.mode_extrema[1], cutoff)
-        self.__set_parameters(theta, width, partition_density, normalizer)
+        self.__set_parameters(theta, partition_density, normalizer)
         self.DOS = None
     
     def get_eigsys(self):
         return self.eigsys
+    
+    def __obtain_width(self, theta):
+        if theta < 1.01:
+            return 0.03
+        if theta < 1.51:
+            return 0.09
+        if theta < 2.01:
+            return 0.13
+        if theta < 2.51:
+            return 0.15
+        if theta < 3.51:
+            return 0.21
+        if theta < 5.51:
+            return 0.27
+        if theta < 6.51:
+            return 0.31
+        if theta < 7.51:
+            return 0.37
+        if theta < 9.01:
+            return 0.43
+        else:
+            return 0.45
         
-    def __set_parameters(self, theta, width, partition_density, normalizer):
+    def __set_parameters(self, theta, partition_density, normalizer):
         # Gaussian is f(x) = A e^(x^2/2 sigma)
         # Width parameter converts to sigma via http://hyperphysics.phy-astr.gsu.edu/hbase/Math/gaufcn2.html 
         self.bin_sz = (self.mode_extrema[1] - self.mode_extrema[0]) / partition_density
         self.omegas = np.linspace(self.mode_extrema[0], self.mode_extrema[1], num=partition_density)
-        self.width = width
-        self.sigma = width / (2 * sqrt(2 * log(2))) 
+        self.width = self.__obtain_width(theta)
+        self.sigma = self.width / (2 * sqrt(2 * log(2))) 
         self.A = normalizer
         print(f"DOS PARAMETERS:\n\tA: {self.A}\n\tdE: {self.bin_sz}\n\tWidth: {self.width}\n\tsigma: {self.sigma}")
-        # TODO do adjustments of parameters based ONLY on theta (get rid of width param in function input)
 
     # Compute DOS at some list of omegas
     def __DOS_at_omegas(self, omegas):
@@ -681,7 +702,6 @@ class TwistedDOS:
                 print(".", end="", flush=True)
             return sum([weight * A * np.exp(-np.power(omega - omega_k, 2.) / (2 * np.power(sigma, 2.))) \
                 for omega_k, weight in zip(modes, weights) ])
-                # if abs(omega_k - omega) <= bin_sz / 2]) # TODO show this to zoe lol
 
         print("Getting DOS at omegas", end="", flush=True)
         DOSs = np.array([DOS_at_omega(enum, self.A, self.sigma, \
@@ -690,12 +710,14 @@ class TwistedDOS:
         return DOSs
 
     # Obtain DOS for plotting / any other use
-    def get_DOS(self, smoothen=False):
+    def get_DOS(self, smoothen=True, wsz=31, polyd=7):
         if self.DOS is None:
             self.DOS = self.__DOS_at_omegas(self.omegas)
         if smoothen:
-            self.DOS = smoothen_filter(self.DOS, 31, 7) # window size 31, polynomial order 7
-        return self.omegas, self.DOS
+            smooth_DOS = smoothen_filter(self.DOS, wsz, polyd) # window size 31, polynomial order 7
+            return self.omegas, smooth_DOS
+        else:
+            return self.omegas, self.DOS
     
     def plot_DOS(self, vertical=True, outdir='.'):
         assert os.path.isdir(outdir), f"Invalid directory '{outdir}'"
@@ -727,9 +749,11 @@ class TwistedPlotter:
         self.cutoff = cutoff
         print("Initialized TwistedPlotter object")
     
-    def make_plot(self, outdir='./', filename=DEFAULT_PH_BANDDOS_PLOT_NAME, name=None, width=None):
+    def make_plot(self, outdir='./', filename=DEFAULT_PH_BANDDOS_PLOT_NAME, name=None, width=None, pfx=None):
         if width is not None:
             filename = "w%f_"%(round(width, 3)) + filename
+        if pfx is not None:
+            filename = pfx + "_" + filename
         outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Invalid directory {outdir}"
         plt.clf(); fig, [axband, axdos] = plt.subplots(nrows=1, ncols=2, sharey=True)
         lims = [0,0]
