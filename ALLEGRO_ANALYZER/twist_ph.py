@@ -36,7 +36,7 @@ from __class_ForceInterp import ForceInterp, FourierForceInterp
 from __class_PhononConfig import TwistedRealspacePhonon
 from ___helpers_parsing import greet, update, succ, warn, err, is_flag, check_not_flag
 import os, sys, copy, argparse
-from math import pi, sqrt
+from math import pi, sqrt, ceil
 
 #* deprecated
 RELAX_FOURIER_INTERP = 1
@@ -69,7 +69,7 @@ if __name__ == '__main__':
     print(f"Twist angle: {round(np.rad2deg(theta), 6)} deg")
 
     if cutoff is None:
-        cutoff = int(40 * ((args.theta)**0.8))
+        cutoff = int(40 * ((args.theta)**0.8)) if theta > 1.01 else int(ceil(args.theta))
 
     if not theta:
         err(f"Error: must supply twist angle. Run `python3 {sys.argv[0]} --usage` for help.")
