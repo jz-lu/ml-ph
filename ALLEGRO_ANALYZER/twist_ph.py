@@ -63,13 +63,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # Legacy compatibility
-    theta = np.deg2rad(args.theta/2); indir = args.dir; outdir = args.out; multirelax = args.mr
+    theta = np.deg2rad(args.theta); indir = args.dir; outdir = args.out; multirelax = args.mr
     relax = args.relax; plot_intra = args.intra; force_sum = args.fsum; name = args.name
     cutoff = args.cut; realspace = args.rs; do_sum_rule = not args.ns; outname = args.oname
     print(f"Twist angle: {round(np.rad2deg(theta), 6)} deg")
 
     if cutoff is None:
-        cutoff = int(40 * ((args.theta/2)**0.8))
+        cutoff = int(40 * ((args.theta)**0.8))
 
     if not theta:
         err(f"Error: must supply twist angle. Run `python3 {sys.argv[0]} --usage` for help.")
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     assert os.path.isdir(indir), f"Directory {indir} does not exist"
     assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
     if multirelax:
-        assert not relax, f"`multirelax` and `relax` are incompatible options"
+        assert not relax, "`multirelax` and `relax` are incompatible options"
         assert os.path.isfile(indir + ANGLE_SAMPLE_INAME), f"Must provide input file {ANGLE_SAMPLE_INAME}"
     if realspace:
         assert os.path.isfile(indir + RSPC_LIST_INAME), f"Must provide input file {RSPC_LIST_INAME}"
