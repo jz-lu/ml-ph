@@ -342,7 +342,7 @@ if __name__ == '__main__':
                 eigsys = TDOS.get_eigsys()
             windows = 2*(np.arange(32)+1)+1
             for pd in range(1,11):
-                for wz in windows:
+                for wz in windows[windows > pd]:
                     omegas, DOS = TDOS.get_DOS(smoothen=True, wsz=wz, polyd=pd)
                     pfx = f"p{pd}_z{wz}"
                     TPLT = TwistedPlotter(round(np.rad2deg(theta), 6), omegas, DOS, mode_set, corner_kmags, cutoff=cutoff)
