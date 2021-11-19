@@ -97,7 +97,7 @@ of `phtnsr` to slice proportional to ratio of atoms, instead of in half.
 class TwistedRealspacePhonon:
     def __init__(self, theta, k, GM_set, DM_at_k, n_at, bl_masses, 
                  poscars_uc, gridsz=13, outdir='.', modeidxs=np.linspace(0,6,6), kpt=r'$\Gamma$',
-                 RSPC_SUPERCELL_SIZE=3):
+                 RSPC_SUPERCELL_SIZE=2):
         assert len(bl_masses) == n_at
         self.RSPC_SUPERCELL_SIZE = RSPC_SUPERCELL_SIZE
         self.kpt = kpt
@@ -229,7 +229,7 @@ class TwistedRealspacePhonon:
 
     # Generate a plot of the phonons averaged over each layer;
     # there is one plot per mode, per layer
-    def plot_phonons(self, outname='phreal.png'):
+    def plot_phonons(self, outname='phreal.png', zcolmesh=False):
         coords = self.r_matrix
         np.save(self.outdir + f"rphtnsr_k{self.kpt}.npy", self.rphtnsr)
 
@@ -252,22 +252,37 @@ class TwistedRealspacePhonon:
                             z,                          # arrow colors
                             cmap='CMRmap')
                 (xm, xp), (ym, yp) = plt.xlim(), plt.ylim()
-                max_norm = np.max([LA.norm(phonon[:-1]) for phonon in phonons])
-                ax.text(0.02*(xp-xm)+xm, 0.02*(yp-ym)+ym, r'$\delta u_{xy} = %.3E$'%max_norm)
-                ax.text(0.06*(xp-xm)+xm, 0.06*(yp-ym)+ym, r'$\omega = %.3f$'%self.modes[m_j])
+                max_xy = np.max([LA.norm(phonon[:-1]) for phonon in phonons])
+                max_z = np.max(np.abs(z))
+                ax.text(0.02*(xp-xm)+xm, 0.02*(yp-ym)+ym, r'$\delta u_{xy} = %.3E$'%max_xy)
+                ax.text(0.06*(xp-xm)+xm, 0.06*(yp-ym)+ym, r'$\delta u_{z} = %.3E$'%max_z)
+                ax.text(0.10*(xp-xm)+xm, 0.10*(yp-ym)+ym, r'$\omega = %.3f$'%self.modes[m_j])
                 plt.xlabel("x"); plt.ylabel("y")
                 ax.scatter(coords[:,0], coords[:,1], c='black', s=0.2)
                 ax.set_aspect('equal')
                 fname = self.kpt[2:-1] if self.kpt[0] == "$" else self.kpt
                 this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}_k-{fname}' + outname[outname.index('.'):]
                 plt.title(r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" Mode {m_j}, Layer {l_i} at " + self.kpt)
-                # v1 = np.linspace(z.min(), z.max(), 8, endpoint=True)
-                # cb = plt.colorbar(ticks=v1)
-                # cb.ax.set_yticklabels(["{:6.4f}".format(i) for i in v1])
                 plt.colorbar(shrink=0.5)
                 plt.clim(-zbound, zbound)
                 fig.savefig(self.outdir + this_outname)
                 plt.close(fig)
+
+                if zcolmesh:
+                    plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.RSPC_SUPERCELL_SIZE, 5.5*self.RSPC_SUPERCELL_SIZE))
+                    tri = ax.tricontourf(coords[:,0], coords[:,1], z, cmap='CMRmap', levels=201)
+                    ax.set_aspect('equal')
+                    ax.text(0.06*(xp-xm)+xm, 0.06*(yp-ym)+ym, r'$\delta u_{xy} = %.3E$'%max_xy)
+                    ax.text(0.10*(xp-xm)+xm, 0.10*(yp-ym)+ym, r'$\delta u_{z} = %.3E$'%max_z)
+                    ax.text(0.14*(xp-xm)+xm, 0.14*(yp-ym)+ym, r'$\omega = %.3f$'%self.modes[m_j])
+                    ax.set_xlabel("x"); plt.set_ylabel("y")
+                    ax.set_title(r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" Mode {m_j}, Layer {l_i} at " + self.kpt)
+                    plt.colorbar(shrink=0.5)
+                    tri.set_clim(vmin=-zbound, vmax=zbound)
+                    print(f"ZBOUND = {zbound}")
+                    plt.show()
+                    fig.savefig(self.outdir + "COL_" + this_outname)
+                    plt.close(fig)
                 update(f"Wrote twisted phonons in realspace to {self.outdir + this_outname}")
         succ(f"Successfully generated {self.nmodes * self.n_at} realspace twisted phonon plots")
 

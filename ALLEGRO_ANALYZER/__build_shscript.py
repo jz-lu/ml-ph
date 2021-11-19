@@ -60,7 +60,7 @@ def compute_configs(BASE_ROOT, user_input_settings, configposcar_shift_tuple):
         else:
             compute_jobname = 'h' + compute_jobname
         no_ionic_step = False
-        if user_input_settings.sampling_is_interlayer() or user_input_settings.sampling_is_lc():
+        if user_input_settings.sampling_is_interlayer():
             no_ionic_step = True
         build_bash_exe(calc_type='basic', outdir=BASE_ROOT,
                         compute_jobname=compute_jobname, compute_time=compute_time, vdw=vdw, kpts=kpts, fname=START_BATCH_NAME, 

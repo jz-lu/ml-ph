@@ -603,6 +603,7 @@ class TwistedDM:
         for k_mag, modes in self.mode_set:
             if cutoff is not None:
                 modes = modes[modes <= cutoff]
+                assert len(modes) > 0, f"Cutoff size {cutoff} too small!"
             lims[0] = min(0, lims[0], min(modes))
             lims[1] = max(lims[1], max(modes))
             plt.scatter([k_mag] * len(modes), modes, c='black', s=0.07)
@@ -689,6 +690,7 @@ class TwistedDOS:
         # Width parameter converts to sigma via http://hyperphysics.phy-astr.gsu.edu/hbase/Math/gaufcn2.html 
         self.bin_sz = (self.mode_extrema[1] - self.mode_extrema[0]) / partition_density
         self.omegas = np.linspace(self.mode_extrema[0], self.mode_extrema[1], num=partition_density)
+        self.npts = partition_density
         self.width = self.__obtain_width(theta)
         self.sigma = self.width / (2 * sqrt(2 * log(2))) 
         self.A = normalizer
@@ -713,6 +715,7 @@ class TwistedDOS:
     def get_DOS(self, smoothen=True, wsz=31, polyd=7):
         if self.DOS is None:
             self.DOS = self.__DOS_at_omegas(self.omegas)
+            self.max_DOS = np.max(self.DOS)
         if smoothen:
             smooth_DOS = smoothen_filter(self.DOS, wsz, polyd) # window size 31, polynomial order 7
             return self.omegas, smooth_DOS

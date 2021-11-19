@@ -57,6 +57,7 @@ if __name__ == '__main__':
     parser.add_argument("--mr", action="store_true", help=f'multirelax (req parameter file \'{ANGLE_SAMPLE_INAME}\')')
     parser.add_argument("--rs", action="store_true", help='do realspace analysis')
     parser.add_argument("--kdir", action="store_true", help="input k-points are in direct coordinates (default Cartesian)")
+    parser.add_argument("--zmesh", action="store_true", help="plot realspace z color mesh (does nothing without --rs)")
     parser.add_argument("--rssz", type=int, help="supercell size for realspace plots", default=DEFAULT_RSPC_SZ)
     parser.add_argument("--dos", type=int, help='DOS k-mesh size')
     parser.add_argument("-f", "--fsum", action="store_true", help='output force sums (only useful for debugging)')
@@ -69,7 +70,7 @@ if __name__ == '__main__':
     print(f"Twist angle: {round(np.rad2deg(theta), 6)} deg")
 
     if cutoff is None:
-        cutoff = int(40 * ((args.theta)**0.8)) if theta > 1.01 else int(ceil(args.theta))
+        cutoff = int(40 * ((args.theta)**0.8)) if args.theta > 1.01 else int(ceil(args.theta))
 
     if not theta:
         err(f"Error: must supply twist angle. Run `python3 {sys.argv[0]} --usage` for help.")
@@ -312,7 +313,7 @@ if __name__ == '__main__':
                 twrph = TwistedRealspacePhonon(round(np.rad2deg(theta), 6), rspc_k, GM_set, 
                         rspc_TDMs[kidx], n_at, bl_M, poscars_uc, outdir=this_outdir, modeidxs=modeidxs, 
                         kpt=kpt_name, RSPC_SUPERCELL_SIZE=args.rssz)
-                twrph.plot_phonons()
+                twrph.plot_phonons(zcolmesh=args.zmesh)
                 print(f"Phonons in realspace analyzed at {rspc_k} [Cart], {dir_rspc_k} [dir] (i.e. {kpt_name}).")
                 # twrph.plot_spatial_avgs()
                 # twrph.plot_atomic_avgs()
