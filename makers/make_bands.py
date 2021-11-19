@@ -19,6 +19,7 @@ data_dir = os.path.abspath(args.data)
 r = "-r" if args.relax else ""
 if r == "-r":
     print("RUNNING: relaxer", flush=True)
+
 os.chdir(main_dir)
 
 for theta in thetas:

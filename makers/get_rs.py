@@ -8,6 +8,7 @@ parser.add_argument("-d", "--dir", type=str, help='main directory path', default
 parser.add_argument("-m", "--data", type=str, help='data directory path', default="..")
 parser.add_argument("-n", "--name", type=str, help='material name', default="(mat)")
 parser.add_argument("-r", "--relax", action="store_true", help='run relaxer')
+parser.add_argument("-z", "--zmesh", action="store_true", help='calculate z color mesh')
 parser.add_argument("range", nargs=3, type=float, help="theta: (start, end, number of)")
 args = parser.parse_args()
 
@@ -17,6 +18,7 @@ thetas = np.linspace(t_start, t_end, n_t)
 main_dir = os.path.abspath(args.dir)
 path = main_dir + '/' + 'batrs'
 r = "-r" if args.relax else ""
+zmesh = "--zmesh" if args.zmesh else ""
 
 with open(path, 'w') as f:
     f.write("#!/bin/bash\n")
@@ -31,7 +33,7 @@ with open(path, 'w') as f:
     f.write(f'WDIR="{main_dir}' + '"\necho "WD: ${WDIR}"\n')
     f.write(f'ALLEGRO_DIR="{ALLEGRO_DIR}"\n')
     f.write("module load julia\nmodule list\nsource activate $HOME/anaconda_env\n")
-    f.write(f'echo "Starting calculations..."\npython3 {MAKE_DIR}/make_rs.py -d {args.dir} --data {args.data} {r} -n {args.name} {t_start} {t_end} {n_t}\necho "Calculations complete!"')
+    f.write(f'echo "Starting calculations..."\npython3 {MAKE_DIR}/make_rs.py -d {args.dir} --data {args.data} {r} {zmesh} -n {args.name} {t_start} {t_end} {n_t}\necho "Calculations complete!"')
 
 print(f"Submitting {path}...", flush=True)
 print(os.popen(f"sbatch {path}").read(), flush=True)

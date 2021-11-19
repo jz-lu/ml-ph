@@ -16,7 +16,7 @@ from ___helpers_parsing import update, succ
 from scipy.linalg import block_diag
 from scipy.sparse import bmat # block matrix
 from scipy.signal import savgol_filter as smoothen_filter
-from math import sqrt, pi, log
+from math import sqrt, pi, log, ceil
 from copy import deepcopy as dc
 import sys
 from __class_PhonopyAPI import PhonopyAPI
@@ -721,7 +721,7 @@ class TwistedDOS:
         if smoothen:
             smooth_DOS = dc(self.DOS)
             scan_wsz = self.npts // 40
-            nwindow = len(self.DOS) // scan_wsz
+            nwindow = int(ceil(len(self.DOS) / scan_wsz))
             for i in range(nwindow):
                 start, end = scan_wsz*i, scan_wsz*(i+1)
                 window = self.DOS[start:end]
