@@ -618,6 +618,7 @@ class TwistedDM:
         title += r" at " + '%.3lf'%angle + r"$^\circ$"
         plt.title(title)
         plt.savefig(outdir + filename, format='pdf')
+        plt.close()
         print(f"Band plot written to {outdir+filename}")
         return
 

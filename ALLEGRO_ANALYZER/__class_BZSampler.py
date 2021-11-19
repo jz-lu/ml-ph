@@ -207,7 +207,7 @@ class BZSampler:
         assert self.corners0 is not None, "Cannot plot sampling until k-points have been sampled"
         labels = (r'K', r'$\Gamma$', r'M', r'K')
         plt.clf()
-        _, ax = plt.subplots()
+        fig, ax = plt.subplots()
         cols = list(mcolors.TABLEAU_COLORS.keys()); ncol = len(cols)
         random.shuffle(cols)
         G01 = self.G0_set[:,0]; G02 = self.G0_set[:,1]
@@ -237,13 +237,14 @@ class BZSampler:
         ax.set_xlabel(r'$k_x$'); ax.set_ylabel(r'$k_y$')
         outname = self.outdir + filename
         plt.savefig(outname); succ("Successfully wrote sampling plot out to " + outname)
+        plt.close(fig)
 
     def plot_sampling(self, filename='sampling.png'):
         assert self.g_idxs is not None, "Cannot plot sampling until G vectors have been sampled"
         assert self.corners is not None, "Cannot plot sampling until k-points have been sampled"
         labels = (r'K', r'$\Gamma$', r'M', r'K')
         plt.clf()
-        _, ax = plt.subplots()
+        fig, ax = plt.subplots()
         cols = list(mcolors.TABLEAU_COLORS.keys()); ncol = len(cols)
         random.shuffle(cols)
         GM1 = self.GM_set[:,0]; GM2 = self.GM_set[:,1]
@@ -274,11 +275,12 @@ class BZSampler:
         ax.set_xlabel(r'$k_x$'); ax.set_ylabel(r'$k_y$')
         outname = self.outdir + filename
         plt.savefig(outname); succ("Successfully wrote sampling plot out to " + outname)
+        plt.close(fig)
     
     def plot_mesh_sampling(self, filename='mesh.png'):
         assert self.k_mesh is not None, "Cannot plot mesh sampling until k-mesh has been sampled"
         plt.clf()
-        _, ax = plt.subplots()
+        fig, ax = plt.subplots()
         cols = list(mcolors.TABLEAU_COLORS.keys()); ncol = len(cols)
         random.shuffle(cols)
         GM1 = self.GM_set[:,0]; GM2 = self.GM_set[:,1]
@@ -304,6 +306,7 @@ class BZSampler:
         ax.set_xlabel(r'$k_x$'); ax.set_ylabel(r'$k_y$')
         outname = self.outdir + filename
         plt.savefig(outname); succ("Successfully wrote MESH plot out to " + outname)
+        plt.close(fig)
 
     def get_GM_set(self):
         assert self.GM_sampled, "Must run GM-sampler before retrieving GM-set"

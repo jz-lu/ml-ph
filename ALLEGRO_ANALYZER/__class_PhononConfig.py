@@ -289,11 +289,11 @@ class TwistedRealspacePhonon:
                     fname = self.kpt[2:-1] if self.kpt[0] == "$" else self.kpt
                     this_outname = "COL_" + outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}_k-{fname}' + outname[outname.index('.'):]
                     plt.title(r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" Mode {m_j}, Layer {l_i} at " + self.kpt)
-                    plt.colorbar(shrink=0.5)
-                    plt.clim(-zbound, zbound)
+                    cb = plt.colorbar(shrink=0.5)
+                    cb.mappable.set_clim(-zbound, zbound)
                     fig.savefig(self.outdir + this_outname)
                     plt.close(fig)
-                    
+
                 update(f"Wrote twisted phonons in realspace to {self.outdir + this_outname}")
         succ(f"Successfully generated {self.nmodes * self.n_at} realspace twisted phonon plots")
 
