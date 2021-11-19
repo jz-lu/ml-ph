@@ -268,21 +268,32 @@ class TwistedRealspacePhonon:
                 fig.savefig(self.outdir + this_outname)
                 plt.close(fig)
 
-                if zcolmesh:
+        if zcolmesh:
+            for l_i, layer_blk in enumerate(layer_blks):
+                l_i += 1 # index layers by 1
+                for m_j, phonons in enumerate(layer_blk):
+                    phonons = np.real(phonons) # just take the real component
+                    z = phonons[:,2]
                     plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.RSPC_SUPERCELL_SIZE, 5.5*self.RSPC_SUPERCELL_SIZE))
-                    tri = ax.tricontourf(coords[:,0], coords[:,1], z, cmap='CMRmap', levels=201)
+                    plt.rc('font', size=8*self.RSPC_SUPERCELL_SIZE)
+                    plt.tricontourf(coords[:,0], coords[:,1], z, cmap='CMRmap', levels=201)
+                    ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="limegreen", alpha=0.8)
+                    (xm, xp), (ym, yp) = plt.xlim(), plt.ylim()
+                    max_xy = np.max([LA.norm(phonon[:-1]) for phonon in phonons])
+                    max_z = np.max(np.abs(z))
+                    ax.text(0.02*(xp-xm)+xm, 0.02*(yp-ym)+ym, r'$\delta u_{xy} = %.3E$'%max_xy)
+                    ax.text(0.06*(xp-xm)+xm, 0.06*(yp-ym)+ym, r'$\delta u_{z} = %.3E$'%max_z)
+                    ax.text(0.10*(xp-xm)+xm, 0.10*(yp-ym)+ym, r'$\omega = %.3f$'%self.modes[m_j])
+                    plt.xlabel("x"); plt.ylabel("y")
                     ax.set_aspect('equal')
-                    ax.text(0.06*(xp-xm)+xm, 0.06*(yp-ym)+ym, r'$\delta u_{xy} = %.3E$'%max_xy)
-                    ax.text(0.10*(xp-xm)+xm, 0.10*(yp-ym)+ym, r'$\delta u_{z} = %.3E$'%max_z)
-                    ax.text(0.14*(xp-xm)+xm, 0.14*(yp-ym)+ym, r'$\omega = %.3f$'%self.modes[m_j])
-                    ax.set_xlabel("x"); plt.set_ylabel("y")
-                    ax.set_title(r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" Mode {m_j}, Layer {l_i} at " + self.kpt)
+                    fname = self.kpt[2:-1] if self.kpt[0] == "$" else self.kpt
+                    this_outname = "COL_" + outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}_k-{fname}' + outname[outname.index('.'):]
+                    plt.title(r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" Mode {m_j}, Layer {l_i} at " + self.kpt)
                     plt.colorbar(shrink=0.5)
-                    tri.set_clim(vmin=-zbound, vmax=zbound)
-                    print(f"ZBOUND = {zbound}")
-                    plt.show()
-                    fig.savefig(self.outdir + "COL_" + this_outname)
+                    plt.clim(-zbound, zbound)
+                    fig.savefig(self.outdir + this_outname)
                     plt.close(fig)
+                    
                 update(f"Wrote twisted phonons in realspace to {self.outdir + this_outname}")
         succ(f"Successfully generated {self.nmodes * self.n_at} realspace twisted phonon plots")
 

@@ -340,7 +340,7 @@ if __name__ == '__main__':
                               kdim=args.dos, normalizer=normalizer, eigsys=eigsys)
             if eigsys is None:
                 eigsys = TDOS.get_eigsys()
-            windows = 2*(np.arange(32)+1)+1
+            windows = 2*(np.arange(16)+1)+1
             for pd in range(1,11):
                 for wz in windows[windows > pd]:
                     omegas, DOS = TDOS.get_DOS(smoothen=True, wsz=wz, polyd=pd)

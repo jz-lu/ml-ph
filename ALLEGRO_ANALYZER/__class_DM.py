@@ -17,6 +17,7 @@ from scipy.linalg import block_diag
 from scipy.sparse import bmat # block matrix
 from scipy.signal import savgol_filter as smoothen_filter
 from math import sqrt, pi, log
+from copy import deepcopy as dc
 import sys
 from __class_PhonopyAPI import PhonopyAPI
 
@@ -712,12 +713,21 @@ class TwistedDOS:
         return DOSs
 
     # Obtain DOS for plotting / any other use
-    def get_DOS(self, smoothen=True, wsz=31, polyd=7):
+    def get_DOS(self, smoothen=True, wsz=13, polyd=5):
         if self.DOS is None:
             self.DOS = self.__DOS_at_omegas(self.omegas)
             self.max_DOS = np.max(self.DOS)
         if smoothen:
-            smooth_DOS = smoothen_filter(self.DOS, wsz, polyd) # window size 31, polynomial order 7
+            smooth_DOS = dc(self.DOS)
+            scan_wsz = self.npts // 40
+            nwindow = len(self.DOS) // scan_wsz
+            for i in range(nwindow):
+                start, end = scan_wsz*i, scan_wsz*(i+1)
+                window = self.DOS[start:end]
+                wmin, wmax = np.min(window), np.max(window)
+                if abs(wmax-wmin) <= self.max_DOS * 0.05:
+                    smooth_DOS[start:end] = smoothen_filter(window, wsz, polyd)
+            # smooth_DOS = smoothen_filter(self.DOS, wsz, polyd) # window size 31, polynomial order 7
             return self.omegas, smooth_DOS
         else:
             return self.omegas, self.DOS
