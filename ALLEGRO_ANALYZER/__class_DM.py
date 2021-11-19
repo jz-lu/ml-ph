@@ -727,7 +727,12 @@ class TwistedDOS:
                 window = self.DOS[start:end]
                 wmin, wmax = np.min(window), np.max(window)
                 if abs(wmax-wmin) <= self.max_DOS * 0.05:
-                    smooth_DOS[start:end] = smoothen_filter(window, min(wsz, len(window)), polyd)
+                    wsz_here = min(wsz, len(window))
+                    if wsz_here % 2 == 0:
+                        wsz_here -= 1
+                    if wsz_here <= 0:
+                        continue
+                    smooth_DOS[start:end] = smoothen_filter(window, wsz_here, polyd)
             # smooth_DOS = smoothen_filter(self.DOS, wsz, polyd) # window size 31, polynomial order 7
             return self.omegas, smooth_DOS
         else:
