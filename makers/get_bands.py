@@ -25,7 +25,7 @@ with open(path, 'w') as f:
     f.write("#SBATCH -t 16:00:00\n")
     f.write("#SBATCH -p kaxiras,shared\n")
     f.write("#SBATCH --mem-per-cpu=4000\n")
-    f.write("#SBATCH -o rs_%a.out\n#SBATCH -e er_rs_%a.err\n")
+    f.write("#SBATCH -o band_%a.out\n#SBATCH -e er_band_%a.err\n")
     f.write("#SBATCH --mail-type=END,FAIL\n#SBATCH --mail-user=jlu@college.harvard.edu\n")
     f.write("source activate $HOME/anaconda_env\n")
     f.write(f'WDIR="{main_dir}' + '"\necho "WD: ${WDIR}"\n')
