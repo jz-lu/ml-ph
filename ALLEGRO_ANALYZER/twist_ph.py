@@ -70,7 +70,7 @@ if __name__ == '__main__':
     print(f"Twist angle: {round(np.rad2deg(theta), 6)} deg")
 
     if cutoff is None:
-        cutoff = int(40 * ((args.theta)**0.8)) if args.theta > 1.01 else int(ceil(args.theta))
+        cutoff = int(40 * ((args.theta)**0.8)) if args.theta > 1.01 else 45*int(ceil(args.theta))
 
     if not theta:
         err(f"Error: must supply twist angle. Run `python3 {sys.argv[0]} --usage` for help.")
