@@ -714,7 +714,7 @@ class TwistedDOS:
         return DOSs
 
     # Obtain DOS for plotting / any other use
-    def get_DOS(self, smoothen=True, wsz=13, polyd=5):
+    def get_DOS(self, smoothen=True, wsz=33, polyd=5):
         if self.DOS is None:
             self.DOS = self.__DOS_at_omegas(self.omegas)
             self.max_DOS = np.max(self.DOS)
@@ -726,7 +726,7 @@ class TwistedDOS:
                 start, end = scan_wsz*i, scan_wsz*(i+1)
                 window = self.DOS[start:end]
                 wmin, wmax = np.min(window), np.max(window)
-                if abs(wmax-wmin) <= self.max_DOS * 0.05:
+                if abs(wmax-wmin) <= self.max_DOS * 0.1:
                     wsz_here = min(wsz, len(window))
                     if wsz_here % 2 == 0:
                         wsz_here -= 1

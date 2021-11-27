@@ -313,6 +313,7 @@ if __name__ == '__main__':
                 twrph = TwistedRealspacePhonon(round(np.rad2deg(theta), 6), rspc_k, GM_set, 
                         rspc_TDMs[kidx], n_at, bl_M, poscars_uc, outdir=this_outdir, modeidxs=modeidxs, 
                         kpt=kpt_name, RSPC_SUPERCELL_SIZE=args.rssz)
+                # twrph.plot_phonons_per_atom(zcolmesh=args.zmesh)
                 twrph.plot_phonons(zcolmesh=args.zmesh)
                 print(f"Phonons in realspace analyzed at {rspc_k} [Cart], {dir_rspc_k} [dir] (i.e. {kpt_name}).")
                 # twrph.plot_spatial_avgs()

@@ -14,7 +14,7 @@ import argparse
 from ___helpers_parsing import succ
 from time import time
 
-# RELAX_CODE_PATH = "/Users/jonathanlu/Documents/ml-ph/" + RELAX_CODE_SUBPATH
+RELAX_CODE_PATH = "/Users/jonathanlu/Documents/ml-ph/" + RELAX_CODE_SUBPATH
 
 def find_density_scale(theta):
     density_scale = 1
