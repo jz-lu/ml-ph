@@ -1,12 +1,9 @@
 # lattice constant, in angstrom
-l = 1.42
+l = 2.446/sqrt(3)
 
 # Graphene elastic constants (eV/unit cell)
-K = 2.0*34.759  # Bulk modulus
-G = 2.0*23.676  # Shear modulus
-
-μ = G
-λ = K - 2*μ/3
+K = 98.9307 # Bulk modulus
+G = 99.5246 # Shear modulus
 
 c1 = 4.063543396e-3
 c2 = -0.374e-3

@@ -45,5 +45,5 @@ for folder in folder_names:
             f.write(str(a1x[i]) + ', ' + str(a1y[i]) + ', ' + str(a2x[i]) + ', ' + str(a2y[i]) + ', ' + str(xf[i]) + ', ' + str(yf[i]) + ', ' + str(E0[i]) + '\n')
     np.save(apath, E0)
     print(f"Finished writing to {writepath}")
-print("All analyses completed. Run MATLAB analyzer to obtain moduli coefficients.")
+print("All analyses completed. Run `fit_elastic_const.py` to obtain moduli coefficients.")
 
