@@ -8,7 +8,7 @@ from itertools import product as prod
 from bzsampler import BZSampler
 import matplotlib.pyplot as plt
 from __directory_searchers import checkPath
-from ___constants_sampling import DEFAULT_KDIM, DEFAULT_PARTITION_DENSITY
+from ___constants_sampling import DEFAULT_KDIM, DEFAULT_PARTITION_DENSITY, DOS_NEGLIGIBLITY_PROP
 from ___constants_phonopy import SUPER_DIM
 from ___constants_names import DEFAULT_PH_BAND_PLOT_NAME, DEFAULT_PH_BANDDOS_PLOT_NAME
 from ___constants_vasp import VASP_FREQ_TO_INVCM_UNITS
@@ -449,14 +449,14 @@ class TwistedDM:
         self.interobj = inter; self.intraobjs = [l1, l2]
         self.n_ats = [l1.n_at, l2.n_at]
         self.GM_set = inter.get_GM_set()
+        
         print("Building dynamical matrix intra(er) blocks...")
         DMs_layer1 = l1.get_DM_set(); DMs_layer2 = l2.get_DM_set()
         DM_inter = inter.get_DM(); DM_cfgintra = inter.get_DM_intra_piece()
-        # DMs_layer1, DMs_layer2 = inter.get_intra_DM_set()
         self.szs = [DMs_layer1[0].shape[0], DMs_layer2[0].shape[0]]
         print("Blocks built.")
+        
         self.M = np.array([[species.atomic_mass for species in layer] for layer in species_per_layer])
-        # self.off_diag_blocks = inter.get_all_blocks()
         self.off_diag_blocks = inter.get_off_diag_blocks()
         self.on_diag_blocks = [l.get_origin_G_blocks() for l in [l1, l2]]
         self.intra_config_blocks = inter.get_intra_blocks()
@@ -466,6 +466,7 @@ class TwistedDM:
         self.l0szs = [l1.l0_shape[0], l2.l0_shape[0]]
         self.Gamma_idx = Gamma_idx
         self.Gamma_intra_blks = [l1.Gamma_blks(), l2.Gamma_blks()]
+        
         self.DMs = [self.__block_l2([DMs_layer1[i] + DM_cfgintra[0],\
              DMs_layer2[i] + DM_cfgintra[1]], DM_inter) for i in range(self.n_k)]
         self.corr_mat = self.__block_l2([l1.get_corr_mat() + DM_cfgintra[0], \
@@ -476,7 +477,7 @@ class TwistedDM:
     
     # Dynamical matrix without any interlayer coupling
     def get_intra_set(self): 
-        return self.intra_set
+        return np.array(self.intra_set)
 
     # Create level-2 (final level--full matrix) block matrix with intralayer and interlayer terms
     def __block_l2(self, DM_intras, DM_inter):
@@ -714,7 +715,7 @@ class TwistedDOS:
         return DOSs
 
     # Obtain DOS for plotting / any other use
-    def get_DOS(self, smoothen=True, wsz=33, polyd=5):
+    def get_DOS(self, smoothen=True, wsz=33, polyd=2):
         if self.DOS is None:
             self.DOS = self.__DOS_at_omegas(self.omegas)
             self.max_DOS = np.max(self.DOS)
@@ -726,7 +727,7 @@ class TwistedDOS:
                 start, end = scan_wsz*i, scan_wsz*(i+1)
                 window = self.DOS[start:end]
                 wmin, wmax = np.min(window), np.max(window)
-                if abs(wmax-wmin) <= self.max_DOS * 0.1:
+                if abs(wmax-wmin) <= self.max_DOS * DOS_NEGLIGIBLITY_PROP:
                     wsz_here = min(wsz, len(window))
                     if wsz_here % 2 == 0:
                         wsz_here -= 1

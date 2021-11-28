@@ -43,11 +43,12 @@ def get_many_forces(indir, twist=False):
         if not os.path.isfile(path + PH_FORCE_SETS_NAME):
             err(f"Error: could not find {PH_FORCE_SETS_NAME} in {path}. Check phonopy output for log.")
     for layer in layers:
+        assert os.path.isdir(layer), f"Directory {layer} does not exist"
+        print(f"Generating {FC_CONF_NAME} in {layer}...")
         generate_fc_conf(layer)
         print(f"Generating {PH_FORCE_CONSTANTS_NAME} in {layer}...")
         os.chdir(layer)
-        assert os.path.isdir(layer), f"Directory {layer} does not exist"
-        os.popen(f"phonopy {FC_CONF_NAME}")
+        print(os.popen(f"phonopy {FC_CONF_NAME}").read())
         assert os.path.isfile(layer + PH_FORCE_CONSTANTS_NAME), f"{PH_FORCE_CONSTANTS_NAME} not found in {layer}"
     return
 

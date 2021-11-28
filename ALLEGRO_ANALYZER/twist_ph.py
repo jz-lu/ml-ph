@@ -342,13 +342,11 @@ if __name__ == '__main__':
                               kdim=args.dos, normalizer=normalizer, eigsys=eigsys)
             if eigsys is None:
                 eigsys = TDOS.get_eigsys()
-            windows = 3*(np.arange(16)+1)
-            for pd in range(1,11):
-                for wz in windows:
-                    omegas, DOS = TDOS.get_DOS(smoothen=True, wsz=wz, polyd=pd)
-                    pfx = f"p{pd}_z{wz}"
-                    TPLT = TwistedPlotter(round(np.rad2deg(theta), 6), omegas, DOS, mode_set, corner_kmags, cutoff=cutoff)
-                    TPLT.make_plot(outdir=outdir, name=name, filename=outname, pfx=pfx)
+            omegas, DOS = TDOS.get_DOS(smoothen=True)
+            pfx = f"SMOOTH"
+            TPLT = TwistedPlotter(round(np.rad2deg(theta), 6), omegas, DOS, mode_set, corner_kmags, cutoff=cutoff)
+            TPLT.make_plot(outdir=outdir, name=name, filename=outname, pfx=pfx)
+            
             omegas, DOS = TDOS.get_DOS(smoothen=False)
             pfx = "ROUGH"
             TPLT = TwistedPlotter(round(np.rad2deg(theta), 6), omegas, DOS, mode_set, corner_kmags, cutoff=cutoff)

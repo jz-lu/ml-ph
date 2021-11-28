@@ -36,7 +36,7 @@ from __class_ForceInterp import ForceInterp, FourierForceInterp
 from __class_PhononConfig import TwistedRealspacePhonon
 from ___helpers_parsing import greet, update, succ, warn, err, is_flag, check_not_flag
 import os, sys, copy, argparse
-from math import pi, sqrt
+from math import pi, sqrt, ceil
 
 #* deprecated
 RELAX_FOURIER_INTERP = 1
@@ -69,7 +69,7 @@ if __name__ == '__main__':
     print(f"Twist angle: {round(np.rad2deg(theta), 6)} deg")
 
     if cutoff is None:
-        cutoff = int(40 * ((args.theta/2)**0.8))
+        cutoff = int(40 * ((args.theta)**0.8)) if args.theta > 1.01 else 45*int(ceil(args.theta))
 
     if not theta:
         err(f"Error: must supply twist angle. Run `python3 {sys.argv[0]} --usage` for help.")
@@ -328,23 +328,27 @@ if __name__ == '__main__':
                         [p.structure.species for p in poscars_uc], 0)
             if do_sum_rule:
                 mesh_TDM.apply_sum_rule()
+            eigsys = None
+            
             mesh_TDMs = mesh_TDM.get_DM_set()
             mesh_TDMs_intra = mesh_TDM.get_intra_set()
-            widths = np.linspace(0.01, 0.21, 21)
-            if np.rad2deg(theta) > 1.9:
-                widths = np.linspace(0.11, 0.51, 21)
-            eigsys = None
+            
+            # Normalize peaks by monolayer DOS
+            iDOS = TwistedDOS(mesh_TDMs_intra, len(GM_set), round(np.rad2deg(theta), 6), kdim=args.dos)
+            normalizer = np.max(iDOS.get_DOS()[1])
+            print(f"DOS NORMALIZER: {normalizer}")
 
-            normalizer = 1 #! delete
+            # Compute normalizer DOS
             TDOS = TwistedDOS(mesh_TDMs, len(GM_set), round(np.rad2deg(theta), 6), cutoff=cutoff, 
                               kdim=args.dos, normalizer=normalizer, eigsys=eigsys)
             if eigsys is None:
-                eigsys = TDOS.get_eigsys()
-            for pd in range(2,7):
-                omegas, DOS = TDOS.get_DOS(smoothen=True, polyd=pd)
-                pfx = f"p{pd}"
-                TPLT = TwistedPlotter(round(np.rad2deg(theta), 6), omegas, DOS, mode_set, corner_kmags, cutoff=cutoff)
-                TPLT.make_plot(outdir=outdir, name=name, filename=outname, pfx=pfx)
+                eigsys = TDOS.get_eigsys() # deprecated: cache if looping over multiple parameters over width
+                
+            omegas, DOS = TDOS.get_DOS(smoothen=True)
+            pfx = "SMOOTH"
+            TPLT = TwistedPlotter(round(np.rad2deg(theta), 6), omegas, DOS, mode_set, corner_kmags, cutoff=cutoff)
+            TPLT.make_plot(outdir=outdir, name=name, filename=outname, pfx=pfx)
+            
             omegas, DOS = TDOS.get_DOS(smoothen=False)
             pfx = "ROUGH"
             TPLT = TwistedPlotter(round(np.rad2deg(theta), 6), omegas, DOS, mode_set, corner_kmags, cutoff=cutoff)

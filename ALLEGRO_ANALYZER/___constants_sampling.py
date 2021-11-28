@@ -11,6 +11,7 @@ IBZ_GAMMA = [0,0]
 IBZ_K_60 = [0.66667, 0.33333]
 IBZ_M_60 = [0.5, 0.5]
 DEFAULT_RSPC_SZ = 2
+DOS_NEGLIGIBLITY_PROP = 0.125
 
 # theta-Relaxation sampling
 
