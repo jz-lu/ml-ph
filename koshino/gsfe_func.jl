@@ -1,5 +1,8 @@
 include("Param_MoS2_0.jl")
 
+μ = G
+λ = K - 2*μ/3
+
 c_list = [c1, c2, c3, c4, c5]
 
 function GSFE(X::Array{Float64,2}, bl::Bilayer)

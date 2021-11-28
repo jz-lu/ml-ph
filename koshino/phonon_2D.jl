@@ -39,10 +39,10 @@ end
 close("all")
 
 ## Parameters:
-# TODO savefig where in code?
 parsed_args = parse_commandline()
 dir = string(abspath(parsed_args["out"]), "/")
 θ = deg2rad(parsed_args["deg"])
+θdeg = parsed_args["deg"]
 N = parsed_args["N"]
 hN = div(N,2)
 blg = Bilayer(l, θ, K, G)
@@ -325,9 +325,10 @@ rcParams["font.size"] = 15
 fig=figure(2, figsize = (6, 8))
 clf()
 xlabel("k")
-ylabel("w/w0")
+ylabel("ω/ω₀")
 plot(w/w0,color="black")
+title(string("θ = ", θdeg))
 ylim((0.0,3))
 xlim((0,size(w)[1]))
 figure(2, figsize = (6,8))
-savefig(dir*"koshino.png")
+savefig(string(dir, "koshino_", θdeg, ".png"))
