@@ -2,8 +2,8 @@
 l = 2.446/sqrt(3)
 
 # Graphene elastic constants (eV/unit cell)
-K = 98.9307 # Bulk modulus
-G = 99.5246 # Shear modulus
+G = 98.9307 # Bulk modulus
+K = 99.5246 # Shear modulus
 
 c1 = 4.063543396e-3
 c2 = -0.374e-3
