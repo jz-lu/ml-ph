@@ -715,7 +715,7 @@ class TwistedDOS:
         return DOSs
 
     # Obtain DOS for plotting / any other use
-    def get_DOS(self, smoothen=True, wsz=33, polyd=2):
+    def get_DOS(self, smoothen=True, wsz=33, polyd=3):
         if self.DOS is None:
             self.DOS = self.__DOS_at_omegas(self.omegas)
             self.max_DOS = np.max(self.DOS)
