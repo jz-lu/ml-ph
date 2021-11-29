@@ -798,6 +798,7 @@ class TwistedPlotter:
         axdos.plot(self.DOS, self.omegas, c='black', linewidth=0.6)
         # axdos.scatter(self.DOS, self.omegas, c='black', s=1)
         axdos.set_title("DOS")
+        axdos.ticklabel_format(axis='x', scilimits=(0,0), style='sci')
         plt.ylim(lims)
         plt.savefig(outdir + filename, format='pdf')
         plt.close(fig)
