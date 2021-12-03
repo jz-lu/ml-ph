@@ -157,7 +157,7 @@ class Configuration:
         # TMDCs: Fix one metal. Fix xy of other metal. Allow chalcogens to relax fully.
         # Graphene: Interlayer relaxation allowed for one layer.
         NUM_LAYERS = 2 # * change if extending to more layers
-        assert num_fixed + num_nonfixed % NUM_LAYERS == 0
+        assert (num_fixed + num_nonfixed) % NUM_LAYERS == 0
         assert num_fixed == 1 # legacy compatibility
         n_at_per_layer = (num_fixed + num_nonfixed) // 2
         sd_mat = []
