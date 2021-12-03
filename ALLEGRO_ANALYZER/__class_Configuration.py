@@ -154,12 +154,26 @@ class Configuration:
     
     # Return a SD indicator matrix constraining directions of relaxation.
     def __get_sd_matrix(self, num_fixed, num_nonfixed):
-        # Interlayer relaxation allowed for all layers except the fixed layer.
+        # TMDCs: Fix one metal. Fix xy of other metal. Allow chalcogens to relax fully.
+        # Graphene: Interlayer relaxation allowed for one layer.
+        NUM_LAYERS = 2 # * change if extending to more layers
+        assert num_fixed + num_nonfixed % NUM_LAYERS == 0
+        assert num_fixed == 1 # legacy compatibility
+        n_at_per_layer = (num_fixed + num_nonfixed) // 2
         sd_mat = []
         for _ in range(num_fixed):
             sd_mat.append(NO_RELAX_SELECTIVE_DYNAMICS_ARR)
-        for _ in range(num_nonfixed):
-            sd_mat.append(LAYER_RELAX_SELECTIVE_DYNAMICS_ARR)
+        if n_at_per_layer % 3 != 0: # Graphene
+            for _ in range(num_nonfixed):
+                sd_mat.append(LAYER_RELAX_SELECTIVE_DYNAMICS_ARR)
+        else: # TMDC
+            for _ in range(2):
+                sd_mat.append(FULL_RELAX_SELECTIVE_DYNAMICS_ARR)
+            for i in range(num_nonfixed-2):
+                if i % 3 == 0:  
+                    sd_mat.append(LAYER_RELAX_SELECTIVE_DYNAMICS_ARR)
+                else:
+                    sd_mat.append(FULL_RELAX_SELECTIVE_DYNAMICS_ARR)
         return sd_mat
 
     # For each shift, construct a single POSCAR input file containing all the validated layers,

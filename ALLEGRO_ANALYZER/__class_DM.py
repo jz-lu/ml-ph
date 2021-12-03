@@ -453,13 +453,13 @@ class TwistedDM:
         print("Building dynamical matrix intra(er) blocks...")
         DMs_layer1 = l1.get_DM_set(); DMs_layer2 = l2.get_DM_set()
         DM_inter = inter.get_DM(); DM_cfgintra = inter.get_DM_intra_piece()
+        
+        DM_inter = np.zeros_like(DM_inter); DM_cfgintra = np.zeros_like(DM_cfgintra) #! delete!!
+        
         self.szs = [DMs_layer1[0].shape[0], DMs_layer2[0].shape[0]]
         print("Blocks built.")
         
         self.M = np.array([[species.atomic_mass for species in layer] for layer in species_per_layer])
-        self.off_diag_blocks = inter.get_off_diag_blocks()
-        self.on_diag_blocks = [l.get_origin_G_blocks() for l in [l1, l2]]
-        self.intra_config_blocks = inter.get_intra_blocks()
         self.n_GM = len(l1.get_GM_set())
         self.k_mags = k_mags; self.n_k = len(k_mags)
         self.modes_built = False

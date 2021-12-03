@@ -145,6 +145,7 @@ class TwistedRealspacePhonon:
             evecs_by_layer[li] = np.array(np.split(evecs_by_layer[li], self.n_G, axis=1)) # shape: (n_G, C, n_at/2 x d)
             evecs_by_layer[li] = np.array(np.split(evecs_by_layer[li], self.n_at//2, axis=2)) # shape: (n_at/2, n_G, C, d)
             print(f"Final evec shape for layer {li}: {evecs_by_layer[li].shape}")
+        breakpoint()
         evecs = np.concatenate(evecs_by_layer, axis=0) # bring them together, so shape: (n_at, n_G, C, d)
         assert evecs.shape == (self.n_at, self.n_G, self.nmodes, self.d), f"Incorrect shape {evecs.shape}"
         self.phtnsr = np.transpose(evecs, axes=(1,0,2,3)) # shape: (n_G, n_at, C, d)
