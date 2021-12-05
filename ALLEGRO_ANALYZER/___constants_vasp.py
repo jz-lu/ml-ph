@@ -84,15 +84,14 @@ INCAR_RELAX_SETTINGS = {'ISTART': ISTART,
                           'PREC': PREC, 
                           'POTIM': POTIM
                         } # We'll add in SYSTEM manually, EDIFFG can be larger if not phonon calc.
-INCAR_VDW_SETTINGS = {
-    'GGA': GGA,
-    'IVDW': IVDW
-}
-if USE_SCAN_VDW:
-  INCAR_VDW_SETTINGS = {'METAGGA': METAGGA,
-                        'LASPH': LASPH,
-                        'LUSE_VDW': LUSE_VDW,
-                        'BPARAM': BPARAM}
+# INCAR_VDW_SETTINGS = {
+#     'GGA': GGA,
+#     'IVDW': IVDW
+# }
+INCAR_VDW_SETTINGS = {'METAGGA': METAGGA,
+                      'LASPH': LASPH,
+                      'LUSE_VDW': LUSE_VDW,
+                      'BPARAM': BPARAM}
 INCAR_NORELAX_SCON_SETTINGS = {'ISTART': ISTART, 
                           'ISMEAR': ISMEAR, 
                           'SIGMA': SIGMA['narrow'], 
