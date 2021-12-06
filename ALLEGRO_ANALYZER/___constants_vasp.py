@@ -22,7 +22,7 @@ Z_LAYER_SEP = Z_LAYER_SEP['MoSe2']
 # Precision of POSCAR lattice and atoms, in number of decimal places
 POSCAR_PRECISION = 6
 POSCAR_PREC_COMP_THRESHOLD = 0.0001
-INIT_EDIFF0 = 1e-5
+INIT_EDIFF0 = 1e-4
 
 # Error checker for vasp.out
 VASP_OUTFILE_LEN_THRESHOLD = 1000

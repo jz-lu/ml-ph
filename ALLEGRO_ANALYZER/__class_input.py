@@ -49,6 +49,7 @@ class InputData:
         self.ROOT = args.dir
         self.do_vdW = args.vdw
         self.ediff0 = args.edinit if args.edinit is not None else EDIFF['relax']
+        print(f"INITIAL EDIFF: {self.ediff0}")
         assert self.ediff0 is not None
         self.as_dfpt = args.dfpt
         self.fcut = args.fcut
