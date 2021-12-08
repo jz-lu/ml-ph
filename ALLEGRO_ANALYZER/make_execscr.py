@@ -65,7 +65,7 @@ def build_bash_exe(calc_type='basic', outdir='.', wdir=None, calc_list=[ENERGIES
             f.write('#SBATCH -J %s\n'%(compute_jobname))
         else:
             f.write('#SBATCH --job-name=' + compute_jobname + '\n')
-        if USE_NODE_INDICATOR:
+        if USE_NODE_INDICATOR and compute_ncpu <= 24:
             f.write('#SBATCH -N %s\n'%(compute_nnode))
         f.write('#SBATCH -n %s\n#SBATCH -t %s\n#SBATCH -p %s\n#SBATCH --mem-per-cpu=%s\n'%(compute_ncpu, compute_time, compute_partitions, compute_mem_per_cpu))
         if as_arr:
