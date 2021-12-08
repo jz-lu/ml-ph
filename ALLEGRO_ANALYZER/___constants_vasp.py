@@ -92,7 +92,8 @@ if USE_SCAN_VDW:
   INCAR_VDW_SETTINGS = {'METAGGA': METAGGA,
                         'LASPH': LASPH,
                         'LUSE_VDW': LUSE_VDW,
-                        'BPARAM': BPARAM}
+                        'BPARAM': BPARAM, 
+                        'POTIM': 2*POTIM}
 INCAR_NORELAX_SCON_SETTINGS = {'ISTART': ISTART, 
                           'ISMEAR': ISMEAR, 
                           'SIGMA': SIGMA['narrow'], 
