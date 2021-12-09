@@ -93,7 +93,7 @@ if USE_SCAN_VDW:
                         'LASPH': LASPH,
                         'LUSE_VDW': LUSE_VDW,
                         'BPARAM': BPARAM, 
-                        'POTIM': 2*POTIM}
+                        'POTIM': 3*POTIM}
 INCAR_NORELAX_SCON_SETTINGS = {'ISTART': ISTART, 
                           'ISMEAR': ISMEAR, 
                           'SIGMA': SIGMA['narrow'], 
