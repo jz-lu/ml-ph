@@ -12,7 +12,8 @@ from ___constants_compute import (
     USE_NODE_INDICATOR, 
     COMPUTE_NNODE, 
     COMPUTE_JOBNAME, 
-    COMPUTE_ANACONDA_ENV
+    COMPUTE_ANACONDA_ENV, 
+    CPUS_PER_NODE
 )
 from ___constants_names import (
     START_BATCH_NAME, ENERGIES, CMD_LINE_ARG_LIST, CODE_DIR, 
@@ -65,7 +66,7 @@ def build_bash_exe(calc_type='basic', outdir='.', wdir=None, calc_list=[ENERGIES
             f.write('#SBATCH -J %s\n'%(compute_jobname))
         else:
             f.write('#SBATCH --job-name=' + compute_jobname + '\n')
-        if USE_NODE_INDICATOR and compute_ncpu <= 24:
+        if USE_NODE_INDICATOR and int(compute_ncpu) <= CPUS_PER_NODE:
             f.write('#SBATCH -N %s\n'%(compute_nnode))
         f.write('#SBATCH -n %s\n#SBATCH -t %s\n#SBATCH -p %s\n#SBATCH --mem-per-cpu=%s\n'%(compute_ncpu, compute_time, compute_partitions, compute_mem_per_cpu))
         if as_arr:
