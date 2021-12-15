@@ -56,7 +56,7 @@ PREC = 'Accurate'
 POTIM = 0.05
 
 # SCAN-rvv10 vdW settings
-METAGGA = 'SCAN'
+METAGGA = 'R2SCAN'
 LASPH = '.TRUE.'
 LUSE_VDW = '.TRUE.'
 BPARAM = 15.7
