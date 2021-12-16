@@ -53,7 +53,7 @@ LCHARG = {'write_charge': '.TRUE.', "no_write_charge": '.FALSE.'}
 ALGO = 'N'
 NELMIN = 5
 PREC = 'Accurate'
-POTIM = 0.05
+POTIM = 0.1
 
 # SCAN-rvv10 vdW settings
 METAGGA = 'R2SCAN'
