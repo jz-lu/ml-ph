@@ -99,7 +99,7 @@ def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax', edinit=
         tight_loopctr = 1
         print("LT: switching to quasi-Newton method descent")
         vaspObj['INCAR']['IBRION'] = 1
-        vaspObj['INCAR']['POTIM'] = 0.1
+        # vaspObj['INCAR']['POTIM'] = 0.1
         while tight_loopctr <= VASP_MAX_CONVERGENCE_ATTEMPTS['T']:
             EDIFF_here = vaspObj['INCAR']['EDIFF']
             if np.isclose(EDIFF_here, EDIFF0) or EDIFF_here <= EDIFF0 or round(EDIFF_here, 12) <= 1e-8:
