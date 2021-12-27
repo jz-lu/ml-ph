@@ -93,7 +93,7 @@ if USE_SCAN_VDW:
                         'LASPH': LASPH,
                         'LUSE_VDW': LUSE_VDW,
                         'BPARAM': BPARAM, 
-                        'POTIM'30*POTIM, 
+                        'POTIM': 30*POTIM, 
                         'EDIFF': EDIFF['vdw_relax'], 
                         'EDIFFG': EDIFFG['vdw_relax']
                         }
