@@ -23,7 +23,8 @@ if args.cfg:
             continue
         s1 = os.popen(f"grep 'not available' shift_{i}/relaxation/relax.err | wc -l").read()
         s2 = os.popen(f"grep 'rror' shift_{i}/relaxation/relax.err | wc -l").read()
-        if int(s1) > 0 or int(s2) > 0:
+        s3 = os.popen(f"grep 'rror' shift_{i}/relaxation/relax.out | wc -l").read()
+        if int(s1) > 0 or int(s2) > 0 or int(s3) > 0:
             if os.path.isfile(f'shift_{i}/relaxation/CONTCAR'):
                 shutil.copy(f'shift_{i}/relaxation/CONTCAR', f'shift_{i}/POSCAR')
             shutil.rmtree(f'shift_{i}/relaxation/')
