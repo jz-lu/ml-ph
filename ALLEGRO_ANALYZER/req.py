@@ -2,8 +2,16 @@
 Script to systematically search for and resubmit failed 
 ml-ph VASP jobs submitted to the computing cluster.
 """
-import os, shutil
-import argparse
+import os, shutil, argparse
+import numpy as np
+
+def expand_range(rg):
+    try:
+        idx = rg.index('-')
+        start = int(rg[:idx]); end = int(rg[idx+1:])
+        return np.arange(start, end+1)
+    except:
+        return np.array([rg])
 
 parser = argparse.ArgumentParser(description="Requeue failed jobs on cluster")
 parser.add_argument("sampling", type=int, help="number of shifts")
@@ -12,7 +20,7 @@ parser.add_argument("-c", "--cfg", action="store_true", help="configuration requ
 args = parser.parse_args()
 
 d = os.getcwd()
-skip = list(map(lambda x: int(x), args.skip))
+skip = np.hstack([expand_range(x) for x in args.skip])
 if len(skip) > 0:
     print(f"Skipping: {skip}")
 N = args.sampling
