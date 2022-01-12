@@ -276,6 +276,7 @@ class InterlayerDM:
         assert int(sqrt(self.nshift))**2 == self.nshift, f"Number of shifts {self.nshift} must be a perfect square"
         self.GM_set = GM_set; self.G0_set = G0_set; self.DM = None; self.DM_intra = None
         self.per_layer_at_idxs = per_layer_at_idxs; assert len(self.per_layer_at_idxs) == 2, f"Only 2 layers supported"
+        cat_pl_idxs = np.concatenate(self.per_layer_at_idxs)
         self.k_set = k_set
         self.modes_built = False
         self.n_GM = len(GM_set)
@@ -285,6 +286,14 @@ class InterlayerDM:
             # self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0]) for ph in ph_list] # DM(Gamma) ~= FC (mass-scaled)
         else:
             self.force_matrices = force_matrices
+        self.force_matrices = [fm[cat_pl_idxs] for fm in self.force_matrices]
+        self.force_matrices = [fm[:,cat_pl_idxs] for fm in self.force_matrices]
+        def symmetrize_intralayer(fm):
+            mid = fm.shape[0] // 2
+            fm[:mid, :mid] = fm[mid:, mid:] = 1/2 * (fm[:mid, :mid] + fm[mid:, mid:])
+            return fm
+        self.force_matrices = [symmetrize_intralayer(fm) for fm in self.force_matrices]
+        
         if br_set is not None:
             assert A0 is not None, f"Must give lattice matrix A0 when using relaxer"
             br_sz = int(sqrt(self.br_set.shape[0]))
@@ -314,13 +323,17 @@ class InterlayerDM:
         succ("ILDM DONE")
 
     def __block_inter_l0(self, G0, k=np.array([0,0])):
+        cut = len(self.per_layer_at_idxs[0])
         D = sum([force_matrix * np.exp(1j * np.dot(G0 + k, b)) \
                         for force_matrix, b in zip(self.force_matrices, self.b_set)])
         # Extract a submatrix with rows of atoms from layer 1 
         # and columns of atoms from layer 2, which is the interlayer 1-2 interactions.
-        D_inter = D[np.ix_(self.per_layer_at_idxs[0], self.per_layer_at_idxs[1])] / self.nshift
-        D_intra1 = D[np.ix_(self.per_layer_at_idxs[0], self.per_layer_at_idxs[0])] / self.nshift
-        D_intra2 = D[np.ix_(self.per_layer_at_idxs[1], self.per_layer_at_idxs[1])] / self.nshift
+        # D_inter = D[np.ix_(self.per_layer_at_idxs[0], self.per_layer_at_idxs[1])] / self.nshift
+        # D_intra1 = D[np.ix_(self.per_layer_at_idxs[0], self.per_layer_at_idxs[0])] / self.nshift
+        # D_intra2 = D[np.ix_(self.per_layer_at_idxs[1], self.per_layer_at_idxs[1])] / self.nshift
+        D_inter = D[:cut,cut:] / self.nshift
+        D_intra1 = D[:cut,:cut] / self.nshift
+        D_intra2 = D[cut:,cut:] / self.nshift
         self.l0sz = D_inter.shape
         assert len(D.shape) == 2 and D.shape[0] == D.shape[1], f"D with shape {D.shape} not square matrix"
         assert len(D_inter.shape) == 2 and D_inter.shape[0] == D_inter.shape[1], f"D_inter with shape {D_inter.shape} not square matrix"
@@ -343,8 +356,7 @@ class InterlayerDM:
     def __block_inter_l1(self):
         n_GM = self.n_GM; assert len(self.G0_set) == n_GM, f"|G0_set| {len(self.G0_set)} != |GM_set| = {n_GM}"
         assert LA.norm(self.G0_set[0]) == 0, f"G0[0] should be 0, but is {LA.norm(self.GM_set[0])}"
-        D0,_,_ = self.__block_inter_l0(self.G0_set[0]); block_l0_shape = D0.shape
-        # D0 = 1.15 * D0
+        D0, D0intra1, D0intra2 = self.__block_inter_l0(self.G0_set[0]); block_l0_shape = D0.shape
         self.DM = [[None]*n_GM for _ in range(n_GM)] # NoneType interpreted by scipy as 0 matrix block
         self.DM_intra = [[[None]*n_GM for _ in range(n_GM)] for _ in range(2)]
         self.GMi_intra_blocks = [[0]*(n_GM-1) for i in range(2)]
@@ -365,6 +377,8 @@ class InterlayerDM:
                         \n {LA.norm(self.DM_intra[j][0][i])}\nvs. \n{LA.norm(self.DM_intra[j][i][0])}"
         for i in range(n_GM): # fill diagonal, but only for interlayer piece
             self.DM[i][i] = D0
+            # self.DM_intra[0][i][i] = D0intra1
+            # self.DM_intra[1][i][i] = D0intra2
         self.DM = bmat(self.DM).toarray() # convert NoneTypes to zero-matrix blocks to make sparse matrix
         for i in range(2):
             self.DM_intra[i] = bmat(self.DM_intra[i]).toarray()
@@ -454,7 +468,7 @@ class TwistedDM:
         DMs_layer1 = l1.get_DM_set(); DMs_layer2 = l2.get_DM_set()
         DM_inter = inter.get_DM(); DM_cfgintra = inter.get_DM_intra_piece()
         
-        DM_inter = np.zeros_like(DM_inter); DM_cfgintra = np.zeros_like(DM_cfgintra) #! delete!!
+        # DM_inter = np.zeros_like(DM_inter); DM_cfgintra = np.zeros_like(DM_cfgintra) #! delete!!
         
         self.szs = [DMs_layer1[0].shape[0], DMs_layer2[0].shape[0]]
         print("Blocks built.")
@@ -473,6 +487,7 @@ class TwistedDM:
              l2.get_corr_mat() + DM_cfgintra[1]], DM_inter)
         self.sum_rule_applied = False
         self.intra_set = [block_diag(DMs_layer1[i], DMs_layer2[i]) for i in range(self.n_k)]
+        breakpoint()
         assert self.intra_set[0].shape == self.DMs[0].shape
     
     # Dynamical matrix without any interlayer coupling

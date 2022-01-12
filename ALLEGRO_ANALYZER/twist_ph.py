@@ -250,7 +250,7 @@ if __name__ == '__main__':
 
         print("Combining into a single twisted dynamical matrix object...")
         TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc], Gamma_idx)
-        print("Twisted dynamical matrix object constructed.") 
+        print("Twisted dynamical matrix object constructed.")
         if do_sum_rule:
             TDM.apply_sum_rule()
         mode_set = TDM.get_mode_set()
@@ -284,6 +284,7 @@ if __name__ == '__main__':
             print(f"Number of atoms in bilayer configuration cell: {n_at}")
 
             # Build the dynamical matrices at the requested k-points
+            rspc_nG = len(GM_set) # expand over G0 component centered at k + GMi
             rspc_MLDMs = [MonolayerDM(uc, sc, ph, GM_set, G0_set, rspc_kpts, 0) \
                         for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
             rspc_TDM = TwistedDM(rspc_MLDMs[0], rspc_MLDMs[1], ILDM, np.zeros(rspc_kpts.shape[0]), \
