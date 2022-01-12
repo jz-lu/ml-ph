@@ -96,7 +96,7 @@ some reason it is useful for different numbers of atoms, simply adjust layer sli
 of `phtnsr` to slice proportional to ratio of atoms, instead of in half.
 """
 class TwistedRealspacePhonon:
-    def __init__(self, theta, k, GM_set, DM_at_k, n_at, bl_masses, 
+    def __init__(self, theta, k, GM_set, DMset_at_k, n_at, bl_masses, 
                  poscars_uc, gridsz=13, outdir='.', modeidxs=np.linspace(0,6,6), kpt=r'$\Gamma$',
                  RSPC_SUPERCELL_SIZE=2):
         assert len(bl_masses) == n_at
@@ -107,7 +107,7 @@ class TwistedRealspacePhonon:
         self.modeidxs = np.array(modeidxs).astype(int)
         self.nmodes = len(modeidxs); assert self.nmodes >= 1
         self.n_at = n_at
-        self.DM_at_k = DM_at_k
+        self.DMset_at_k = DMset_at_k
         angle = np.deg2rad(theta)
         A_delta2inv = LA.inv(np.array([[1-np.cos(angle), np.sin(angle)],[-np.sin(angle), 1-np.cos(angle)]]))
         A0 = poscars_uc[0].structure.lattice.matrix[:2,:2].T
@@ -132,27 +132,33 @@ class TwistedRealspacePhonon:
 
     def __DM_to_phtnsr(self):
         print("Diagonalizing and sorting dynamical matrix at Gamma...")
-        def sorted_filtered_eigsys(A):
-            vals, vecs = SLA.eig(A)
-            vals = np.real(vals); vecs = np.real_if_close(vecs)
+        def extract_G0_eig(A):
+            vals, vecs = LA.eig(A)
+            vecs_by_layer = np.split(vecs, 2, axis=1)
+            for li in range(2):
+                vecs_by_layer[li] = np.array(np.split(evecs_by_layer[li], self.n_G, axis=1)[0]) # G0 only
+            return (vals, vecs_by_layer)
+        def sorted_filtered_eigsys(M_set):
+            assert len(M_set) == self.n_G
+            raw_eigsys = [extract_G0_eig(M) for M in M_set]
+            vals = np.real(raw_eigsys[0][0]) # the eigenvalues corr to bands are at k = k + G0
+            
+            # In this case n_at refers to number of atoms in entire bilayer unit cell
+            vecs = np.array([vec for _,vec in raw_eigsys ]) # shape: (n_G, 2, n_at/2 x d, num_evecs=n_G x n_at x d)
             idxs = vals.argsort()  
-            vals = vals[idxs]; vecs = vecs[:,idxs]
+            vals = vals[idxs]; vecs = vecs[:,:,:,idxs]
+            vecs = np.array(np.split(vecs, self.n_at//2, axis=2)) # shape: (n_at/2, n_G, 2, d, num_evecs)
+            vecs = np.transpose(vecs, axes=(2,0,1,4,3)) # shape: (2, n_at/2, n_G, num_evecs, d)
+            vecs = np.concatenate(vecs, axis=0) # shape: (n_at, n_G, num_evecs, d)
+            assert vals.shape[0] == vecs.shape[2]
             return vals, vecs
-        evals, evecs = sorted_filtered_eigsys(self.DM_at_k)
-        np.save("/Users/jonathanlu/Documents/tmos2_2/test/DM_inter.npy", self.DM_at_k)
+
+        evals, evecs = sorted_filtered_eigsys(self.DMset_at_k)
         self.evals_real = evals[self.modeidxs]
+        evecs = evecs[:,:,self.modeidxs] # shape: (n_at, n_G, C, d) [C := num evecs user wants]
         print("Diagonalized.")
         print("Transforming eigenmatrix into truncated Fourier phonon tensor...")
-        # In this case n_at refers to number of atoms in entire bilayer unit cell
-        evecs = np.array(evecs[:,self.modeidxs]).T # shape: (C, n_G x n_at x d) [C := num evecs]
-        evecs_by_layer = np.split(evecs, 2, axis=1) # layer slice must be first
-        breakpoint()
-        for li in range(2): # each layer has shape: (C, n_G x n_at/2 x d)
-            evecs_by_layer[li] = np.array(np.split(evecs_by_layer[li], self.n_G, axis=1)) # shape: (n_G, C, n_at/2 x d)
-            evecs_by_layer[li] = np.array(np.split(evecs_by_layer[li], self.n_at//2, axis=2)) # shape: (n_at/2, n_G, C, d)
-            print(f"Final evec shape for layer {li}: {evecs_by_layer[li].shape}")
-        # breakpoint()
-        evecs = np.concatenate(evecs_by_layer, axis=0) # bring them together, so shape: (n_at, n_G, C, d)
+        
         assert evecs.shape == (self.n_at, self.n_G, self.nmodes, self.d), f"Incorrect shape {evecs.shape}"
         self.phtnsr = np.transpose(evecs, axes=(1,0,2,3)) # shape: (n_G, n_at, C, d)
         assert self.phtnsr.shape == self.phtnsr_shape, f"Unexpected phonon tensor shape {self.phtnsr.shape}, expected {self.phtnsr_shape}"
@@ -170,16 +176,12 @@ class TwistedRealspacePhonon:
         
         self.rphtnsr = np.array([sum([G_blk * np.exp(-1j * np.dot(GM + self.k, r)) 
             for G_blk, GM in zip(self.phtnsr, self.GM_set)]) for r in self.r_matrix])
-        breakpoint()
         assert self.rphtnsr.shape == self.old_rphtnsr_shape, \
             f"Unexpected phonon tensor shape {self.rphtnsr.shape}, expected {self.old_rphtnsr_shape}"
             
         self.rphtnsr = np.transpose(self.rphtnsr, axes=(1,2,0,3)) # shape: (n_at, C, n_r, d)
         assert self.rphtnsr.shape == (self.n_at, self.nmodes, self.n_r, self.d)
         print(f"Realspace phonon tensor built: shape {self.rphtnsr.shape}")
-        np.save("/Users/jonathanlu/Documents/tmos2_2/test/realspace_mesh.npy", self.r_matrix)
-        np.save("/Users/jonathanlu/Documents/tmos2_2/test/DM_tensor.npy", self.phtnsr)
-        np.save("/Users/jonathanlu/Documents/tmos2_2/test/FT_tensor.npy", self.rphtnsr)
     
     def plot_spatial_avgs(self, outname='spavg.png'):
         avgtnsr = np.mean(self.rphtnsr, axis=2) # shape: (n_at, C, d)

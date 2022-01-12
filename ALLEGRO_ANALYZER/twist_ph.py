@@ -283,8 +283,14 @@ if __name__ == '__main__':
             n_at = sum([sum(p.natoms) for p in poscars_uc])
             print(f"Number of atoms in bilayer configuration cell: {n_at}")
 
+            rspc_nG = GM_set.shape[0] # expand over G0 component centered at k + GMi
+            rspc_kpts = np.repeat(rspc_kpts, rspc_nG, axis=0)
+            pumped_GM_set = np.tile(GM_set, (num_kpts, 1))
+            assert rspc_kpts.shape == pumped_GM_set.shape, \
+                f"Rspc-k/PumpedG shapes inconsistent: {rspc_kpts.shape} vs. {pumped_GM_set.shape}"
+            rspc_kpts = rspc_kpts + pumped_GM_set
+            
             # Build the dynamical matrices at the requested k-points
-            rspc_nG = len(GM_set) # expand over G0 component centered at k + GMi
             rspc_MLDMs = [MonolayerDM(uc, sc, ph, GM_set, G0_set, rspc_kpts, 0) \
                         for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
             rspc_TDM = TwistedDM(rspc_MLDMs[0], rspc_MLDMs[1], ILDM, np.zeros(rspc_kpts.shape[0]), \
@@ -292,8 +298,11 @@ if __name__ == '__main__':
             if do_sum_rule:
                 rspc_TDM.apply_sum_rule()
             rspc_TDMs = rspc_TDM.get_DM_set()
+            assert len(rspc_TDMs) == num_kpts * rspc_nG
+            
             modeidxs = np.loadtxt(indir + RSPC_LIST_INAME)
-            for kidx, rspc_k in enumerate(rspc_kpts):
+            for kidx in range(num_kpts):
+                rspc_k = rspc_kpts[rspc_nG*kidx]
                 dir_rspc_k = dir_rspc_kpts[kidx]
                 kpt_name = "(%4.3lf, %4.3lf)"%(dir_rspc_k[0], dir_rspc_k[1])
                 if np.isclose(IBZ_GAMMA, dir_rspc_k).all():
@@ -312,9 +321,12 @@ if __name__ == '__main__':
                     this_outdir += log_name
                     os.mkdir(this_outdir)
                 print(f"[{kidx+1}/{num_kpts}] NOW WORKING ON: k = {log_name}, print to {this_outdir}")
-                twrph = TwistedRealspacePhonon(round(np.rad2deg(theta), 6), rspc_k, GM_set, 
-                        rspc_TDMs[kidx], n_at, bl_M, poscars_uc, outdir=this_outdir, modeidxs=modeidxs, 
-                        kpt=kpt_name, RSPC_SUPERCELL_SIZE=args.rssz)
+                twrph = TwistedRealspacePhonon(
+                            round(np.rad2deg(theta), 6), rspc_k, GM_set, 
+                            rspc_TDMs[rspc_nG*kidx : rspc_nG*(kidx+1)], n_at, bl_M, poscars_uc, 
+                            outdir=this_outdir, modeidxs=modeidxs, 
+                            kpt=kpt_name, RSPC_SUPERCELL_SIZE=args.rssz
+                        )
                 # twrph.plot_phonons_per_atom(zcolmesh=args.zmesh)
                 twrph.plot_phonons(zcolmesh=args.zmesh)
                 print(f"Phonons in realspace analyzed at {rspc_k} [Cart], {dir_rspc_k} [dir] (i.e. {kpt_name}).")
