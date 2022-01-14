@@ -49,7 +49,7 @@ if args.cfg:
 else:
     no_fails = True
     for i in range(N):
-        if i % 10 == 0:
+        if i % 10 == 0 and i > 0:
             print(f"Analysis finished up to shift {i}")
         if i in skip:
             continue

@@ -285,9 +285,8 @@ if __name__ == '__main__':
             print(f"Analyzing phonons in realspace at k-points ::\nCartesian:\n{rspc_kpts}\nDirect:\n{dir_rspc_kpts}")
             n_at = sum([sum(p.natoms) for p in poscars_uc])
             print(f"Number of atoms in bilayer configuration cell: {n_at}")
-
+            
             # Build the dynamical matrices at the requested k-points
-            rspc_nG = len(GM_set) # expand over G0 component centered at k + GMi
             rspc_MLDMs = [MonolayerDM(uc, sc, ph, GM_set, G0_set, rspc_kpts, 0) \
                         for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
             rspc_TDM = TwistedDM(rspc_MLDMs[0], rspc_MLDMs[1], ILDM, np.zeros(rspc_kpts.shape[0]), \
@@ -295,6 +294,8 @@ if __name__ == '__main__':
             if do_sum_rule:
                 rspc_TDM.apply_sum_rule()
             rspc_TDMs = rspc_TDM.get_DM_set()
+            assert len(rspc_TDMs) == num_kpts
+            
             modeidxs = np.loadtxt(indir + RSPC_LIST_INAME)
             for kidx, rspc_k in enumerate(rspc_kpts):
                 dir_rspc_k = dir_rspc_kpts[kidx]
