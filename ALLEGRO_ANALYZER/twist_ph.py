@@ -129,6 +129,9 @@ if __name__ == '__main__':
 
     update("Retrieving per-layer atomic indices...")
     per_layer_at_idxs = Configuration.load_at_idxs(build_dir([indir, CONFIG_DIR_NAME]))
+    layer_idx_permuter = np.concatenate(
+        Configuration.load_at_idxs(build_dir([indir, CONFIG_DIR_NAME]), expand=False)
+    )
     assert len(per_layer_at_idxs) == 2, f"Only 2 layers supported (for now), got {len(per_layer_at_idxs)}"
     print(f"Found per-layer atomic indices.")
     
@@ -313,7 +316,7 @@ if __name__ == '__main__':
                     os.mkdir(this_outdir)
                 print(f"[{kidx+1}/{num_kpts}] NOW WORKING ON: k = {log_name}, print to {this_outdir}")
                 twrph = TwistedRealspacePhonon(round(np.rad2deg(theta), 6), rspc_k, GM_set, 
-                        rspc_TDMs[kidx], n_at, bl_M, poscars_uc, outdir=this_outdir, modeidxs=modeidxs, 
+                        rspc_TDMs[kidx], n_at, bl_M[layer_idx_permuter], poscars_uc, outdir=this_outdir, modeidxs=modeidxs, 
                         kpt=kpt_name, RSPC_SUPERCELL_SIZE=args.rssz)
                 # twrph.plot_phonons_per_atom(zcolmesh=args.zmesh)
                 twrph.plot_phonons(zcolmesh=args.zmesh)

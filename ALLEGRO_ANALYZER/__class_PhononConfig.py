@@ -146,7 +146,7 @@ class TwistedRealspacePhonon:
         # In this case n_at refers to number of atoms in entire bilayer unit cell
         evecs = np.array(evecs[:,self.modeidxs]).T # shape: (C, n_G x n_at x d) [C := num evecs]
         evecs_by_layer = np.split(evecs, 2, axis=1) # layer slice must be first
-        breakpoint()
+        # breakpoint()
         for li in range(2): # each layer has shape: (C, n_G x n_at/2 x d)
             evecs_by_layer[li] = np.array(np.split(evecs_by_layer[li], self.n_G, axis=1)) # shape: (n_G, C, n_at/2 x d)
             evecs_by_layer[li] = np.array(np.split(evecs_by_layer[li], self.n_at//2, axis=2)) # shape: (n_at/2, n_G, C, d)
@@ -168,18 +168,24 @@ class TwistedRealspacePhonon:
         self.__build_modes()
         print(f"Building realspace phonon tensor...(k={self.k}, |k| = {LA.norm(self.k)})")
         
+        # tx = self.phtnsr[:,:,3,0]
+        # for rr in self.r_matrix:
+        #     ft = np.array([np.exp(-1j * np.dot(GM, rr)) * blk for GM, blk in zip(self.GM_set, tx)])
+        #     ssum = np.sum(ft, axis=0)
+        #     print(np.real(np.split(ssum, 2)[0])/np.real(np.split(ssum, 2)[1]))
+        # breakpoint()
         self.rphtnsr = np.array([sum([G_blk * np.exp(-1j * np.dot(GM + self.k, r)) 
             for G_blk, GM in zip(self.phtnsr, self.GM_set)]) for r in self.r_matrix])
-        breakpoint()
+        # for rblk in self.rphtnsr:
+        #     ssum = rblk[:,3,0]
+        #     print(np.real(np.split(ssum, 2)[0])/np.real(np.split(ssum, 2)[1]))
+        # breakpoint()
         assert self.rphtnsr.shape == self.old_rphtnsr_shape, \
             f"Unexpected phonon tensor shape {self.rphtnsr.shape}, expected {self.old_rphtnsr_shape}"
             
         self.rphtnsr = np.transpose(self.rphtnsr, axes=(1,2,0,3)) # shape: (n_at, C, n_r, d)
         assert self.rphtnsr.shape == (self.n_at, self.nmodes, self.n_r, self.d)
         print(f"Realspace phonon tensor built: shape {self.rphtnsr.shape}")
-        np.save("/Users/jonathanlu/Documents/tmos2_2/test/realspace_mesh.npy", self.r_matrix)
-        np.save("/Users/jonathanlu/Documents/tmos2_2/test/DM_tensor.npy", self.phtnsr)
-        np.save("/Users/jonathanlu/Documents/tmos2_2/test/FT_tensor.npy", self.rphtnsr)
     
     def plot_spatial_avgs(self, outname='spavg.png'):
         avgtnsr = np.mean(self.rphtnsr, axis=2) # shape: (n_at, C, d)
@@ -265,8 +271,10 @@ class TwistedRealspacePhonon:
                 (xm, xp), (ym, yp) = plt.xlim(), plt.ylim()
                 max_xy = np.max([LA.norm(phonon[:-1]) for phonon in phonons])
                 max_z = np.max(np.abs(z))
+                max_xyz = np.max([LA.norm(phonon) for phonon in phonons])
                 ax.text(0.02*(xp-xm)+xm, 0.02*(yp-ym)+ym, r'$\delta u_{xy} = %.3E$'%max_xy)
-                ax.text(0.06*(xp-xm)+xm, 0.06*(yp-ym)+ym, r'$\delta u_{z} = %.3E$'%max_z)
+                # ax.text(0.06*(xp-xm)+xm, 0.06*(yp-ym)+ym, r'$\delta u_{z} = %.3E$'%max_z)
+                ax.text(0.06*(xp-xm)+xm, 0.06*(yp-ym)+ym, r'$\delta u = %.3E$'%max_xyz)
                 ax.text(0.10*(xp-xm)+xm, 0.10*(yp-ym)+ym, r'$\omega = %.3f$'%self.modes[m_j])
                 plt.xlabel("x"); plt.ylabel("y")
                 ax.scatter(coords[:,0], coords[:,1], c='black', s=0.2)
