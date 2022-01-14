@@ -134,9 +134,11 @@ class TwistedRealspacePhonon:
         print("Diagonalizing and sorting dynamical matrix at Gamma...")
         def extract_G0_eig(A):
             vals, vecs = LA.eig(A)
-            vecs_by_layer = np.split(vecs, 2, axis=1)
+            vecs_by_layer = np.split(vecs, 2, axis=0)
+            # breakpoint()
             for li in range(2):
-                vecs_by_layer[li] = np.array(np.split(evecs_by_layer[li], self.n_G, axis=1)[0]) # G0 only
+                vecs_by_layer[li] = np.array(np.split(vecs_by_layer[li], self.n_G, axis=0)[0]) # G0 only
+            # breakpoint()
             return (vals, vecs_by_layer)
         def sorted_filtered_eigsys(M_set):
             assert len(M_set) == self.n_G
@@ -144,7 +146,7 @@ class TwistedRealspacePhonon:
             vals = np.real(raw_eigsys[0][0]) # the eigenvalues corr to bands are at k = k + G0
             
             # In this case n_at refers to number of atoms in entire bilayer unit cell
-            vecs = np.array([vec for _,vec in raw_eigsys ]) # shape: (n_G, 2, n_at/2 x d, num_evecs=n_G x n_at x d)
+            vecs = np.array([vec for _,vec in raw_eigsys]) # shape: (n_G, 2, n_at/2 x d, num_evecs=n_G x n_at x d)
             idxs = vals.argsort()  
             vals = vals[idxs]; vecs = vecs[:,:,:,idxs]
             vecs = np.array(np.split(vecs, self.n_at//2, axis=2)) # shape: (n_at/2, n_G, 2, d, num_evecs)
@@ -182,6 +184,8 @@ class TwistedRealspacePhonon:
         self.rphtnsr = np.transpose(self.rphtnsr, axes=(1,2,0,3)) # shape: (n_at, C, n_r, d)
         assert self.rphtnsr.shape == (self.n_at, self.nmodes, self.n_r, self.d)
         print(f"Realspace phonon tensor built: shape {self.rphtnsr.shape}")
+        self.mnormed_tnsr = np.array([y/sqrt(x) for x, y in zip(self.bl_masses, self.rphtnsr)])
+        # breakpoint()
     
     def plot_spatial_avgs(self, outname='spavg.png'):
         avgtnsr = np.mean(self.rphtnsr, axis=2) # shape: (n_at, C, d)
@@ -247,9 +251,8 @@ class TwistedRealspacePhonon:
         coords = self.r_matrix
         np.save(self.outdir + f"rphtnsr_k{self.kpt}.npy", self.rphtnsr)
 
-        mnormed_tnsr = np.array([y/sqrt(x) for x, y in zip(self.bl_masses, self.rphtnsr)])
-        layer_blks = np.split(mnormed_tnsr, 2, axis=0) # split back by layer, then avg it
-        layer_blks = np.real(list(map(lambda x: np.mean(x, axis=0), layer_blks)))
+        layer_blks = np.split(self.mnormed_tnsr, 2, axis=0) # split back by layer, then avg it
+        layer_blks = np.abs(list(map(lambda x: np.mean(x, axis=0), layer_blks)))
         assert layer_blks.shape == (2, self.nmodes, self.n_r, self.d)
         zbound = np.max(np.abs(layer_blks[:,:,:,2]))
         for l_i, layer_blk in enumerate(layer_blks):

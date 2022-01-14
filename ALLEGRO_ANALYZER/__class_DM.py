@@ -292,7 +292,7 @@ class InterlayerDM:
             mid = fm.shape[0] // 2
             fm[:mid, :mid] = fm[mid:, mid:] = 1/2 * (fm[:mid, :mid] + fm[mid:, mid:])
             return fm
-        self.force_matrices = [symmetrize_intralayer(fm) for fm in self.force_matrices]
+        # self.force_matrices = [symmetrize_intralayer(fm) for fm in self.force_matrices]
         
         if br_set is not None:
             assert A0 is not None, f"Must give lattice matrix A0 when using relaxer"
@@ -487,7 +487,6 @@ class TwistedDM:
              l2.get_corr_mat() + DM_cfgintra[1]], DM_inter)
         self.sum_rule_applied = False
         self.intra_set = [block_diag(DMs_layer1[i], DMs_layer2[i]) for i in range(self.n_k)]
-        breakpoint()
         assert self.intra_set[0].shape == self.DMs[0].shape
     
     # Dynamical matrix without any interlayer coupling
