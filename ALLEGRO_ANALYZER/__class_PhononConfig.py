@@ -2,8 +2,9 @@ import phonopy
 import numpy as np
 import numpy.linalg as LA
 from scipy import linalg as SLA
-from math import floor, log10, sqrt
+from math import floor, log10, sqrt, ceil
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcol
 import os
 from itertools import product as prod
 from random import randint
@@ -72,7 +73,7 @@ class PhononConfig:
             fig.savefig(self.outdir + this_outname)
         succ(f"Successfully plotted configuration maps of mode indices {modeidxs}")
 
-def make_unit_square():
+def make_unit_square(translate=False):
     """Helper function that returns the coordinates of a unit square"""
     npts = 11
     a = np.linspace(0, 1, npts, endpoint=True)
@@ -80,6 +81,7 @@ def make_unit_square():
     l1 = np.stack((a, a0), axis=1); l2 = np.stack((a1, a), axis=1)
     l3 = np.stack((np.flip(a), a1), axis=1); l4 = np.stack((a0, np.flip(a)), axis=1)
     sq = np.concatenate((l1, l2, l3, l4)); assert sq.shape == (4*npts, 2)
+    sq = sq - (0.5, 0.5) if translate else sq
     return sq
 
 """
@@ -95,12 +97,13 @@ anyway, since the lattice constants will be too far apart to form a stable bilay
 some reason it is useful for different numbers of atoms, simply adjust layer slicing in formation 
 of `phtnsr` to slice proportional to ratio of atoms, instead of in half.
 """
+PLOT_CMAP = 'RdGy'
 class TwistedRealspacePhonon:
     def __init__(self, theta, k, GM_set, DM_at_k, n_at, bl_masses, 
                  poscars_uc, gridsz=13, outdir='.', modeidxs=np.linspace(0,6,6), kpt=r'$\Gamma$',
-                 RSPC_SUPERCELL_SIZE=2):
+                 rspc_sc_sz=2):
         assert len(bl_masses) == n_at
-        self.RSPC_SUPERCELL_SIZE = RSPC_SUPERCELL_SIZE
+        self.rspc_sc_sz = rspc_sc_sz
         self.kpt = kpt
         self.bl_masses = bl_masses
         self.GM_set = GM_set; self.n_G = len(GM_set); self.k = k
@@ -108,20 +111,12 @@ class TwistedRealspacePhonon:
         self.nmodes = len(modeidxs); assert self.nmodes >= 1
         self.n_at = n_at
         self.DM_at_k = DM_at_k
-        angle = np.deg2rad(theta)
-        A_delta2inv = LA.inv(np.array([[1-np.cos(angle), np.sin(angle)],[-np.sin(angle), 1-np.cos(angle)]]))
-        A0 = poscars_uc[0].structure.lattice.matrix[:2,:2].T
-        self.sc_lattice = A_delta2inv @ A0
+        self.d = 3; self.theta = theta
+        self.__make_realspace_mesh(theta, gridsz, rspc_sc_sz, poscars_uc)
+        
         self.at_pos = np.concatenate([p.structure.cart_coords for p in poscars_uc], axis=0)
         self.at_pos[self.n_at//2:,2] += Z_LAYER_SEP*poscars_uc[0].structure.lattice.matrix[-1,-1] # make interlayer space
-        x = np.linspace(-RSPC_SUPERCELL_SIZE/2, RSPC_SUPERCELL_SIZE/2, num=gridsz*RSPC_SUPERCELL_SIZE, endpoint=False)
-        self.d = 3; self.theta = theta
-        self.gridsz = gridsz; self.n_r = (gridsz * RSPC_SUPERCELL_SIZE)**2
-        self.r_matrix = np.array(list(prod(x, x))); assert self.r_matrix.shape == (self.n_r, 2)
-        self.diagidxs = self.r_matrix[:,0] == self.r_matrix[:,1]
-        self.r_linecut_direct = self.r_matrix[self.diagidxs]
-        self.r_matrix = self.r_matrix @ self.sc_lattice.T # make Cartesian
-        self.moire_boundary = make_unit_square() @ self.sc_lattice.T # boundary line of moire cell
+        
         self.outdir = checkPath(os.path.abspath(outdir))
         self.phtnsr = None; self.rphtnsr = None # Fourier and real space phonons
         self.old_rphtnsr_shape = (self.n_r, self.n_at, self.nmodes, self.d) # realspace phonons
@@ -129,8 +124,39 @@ class TwistedRealspacePhonon:
         print("Initializing twisted realspace phonon object...")
         self.__phonon_inverse_fourier()
         print(f"Twisted realspace phonon object initialized. Mode indices={self.modeidxs}")
+    
+    def __make_realspace_mesh(self, theta, gridsz, rspc_sc_sz, poscars_uc):
+        """
+        Construct a mesh in real space so we can plot phonons at each point.
+        """
+        # Make lattice transform matrix
+        angle = np.deg2rad(theta)
+        A_delta2inv = LA.inv(np.array([[1-np.cos(angle), np.sin(angle)],[-np.sin(angle), 1-np.cos(angle)]]))
+        A0 = poscars_uc[0].structure.lattice.matrix[:2,:2].T
+        self.sc_lattice = A_delta2inv @ A0
+        
+        # Sample and transform mesh
+        self.gridsz = gridsz; self.n_r = (gridsz * rspc_sc_sz)**2
+        x = np.linspace(-rspc_sc_sz/2, rspc_sc_sz/2, num=gridsz*rspc_sc_sz, endpoint=False)
+        self.r_matrix = np.array(list(prod(x, x)))
+        assert self.r_matrix.shape == (self.n_r, 2)
+        self.diagidxs = self.r_matrix[:,0] == self.r_matrix[:,1]
+        self.r_linecut_direct = self.r_matrix[self.diagidxs]
+        self.r_matrix = self.r_matrix @ self.sc_lattice.T # make Cartesian
+        self.moire_boundary = make_unit_square() @ self.sc_lattice.T # boundary line of moire cell
+        
+        # Make a rectangular version of the mesh
+        self.rec_nr = ceil(1.0 * gridsz * rspc_sc_sz)
+        x_interval = [np.min(self.r_matrix[:,0]), np.max(self.r_matrix[:,0])]
+        y_interval = [np.min(self.r_matrix[:,1]), np.max(self.r_matrix[:,1])]
+        x_interval[1] *= 1.1; y_interval[1] *= 1.1 # slight pump for aesthetics
+        x = np.linspace(*x_interval, num=self.rec_nr, endpoint=True)
+        y = np.linspace(*y_interval, num=self.rec_nr, endpoint=True)
+        self.rec_rmatrix = np.array(list(prod(x, y)))
+        self.rec_nr = self.rec_nr ** 2
 
     def __DM_to_phtnsr(self):
+        """Turn flattened dynamical matrix into a diagonalized tensor object"""
         print("Diagonalizing and sorting dynamical matrix at Gamma...")
         def sorted_filtered_eigsys(A):
             vals, vecs = LA.eig(A)
@@ -164,6 +190,7 @@ class TwistedRealspacePhonon:
         print("Modes prepared.")
 
     def __phonon_inverse_fourier(self):
+        """Inverse Fourier transform from GM-basis (natural DM basis) to real-space basis"""
         self.__build_modes()
         
         print(f"Building realspace phonon tensor...(k={self.k}, |k| = {LA.norm(self.k)})")
@@ -171,13 +198,17 @@ class TwistedRealspacePhonon:
             for G_blk, GM in zip(self.phtnsr, self.GM_set)]) for r in self.r_matrix])
         assert self.rphtnsr.shape == self.old_rphtnsr_shape, \
             f"Unexpected phonon tensor shape {self.rphtnsr.shape}, expected {self.old_rphtnsr_shape}"
+        self.rec_rphtnsr = np.array([sum([G_blk * np.exp(-1j * np.dot(GM + self.k, r)) 
+            for G_blk, GM in zip(self.phtnsr, self.GM_set)]) for r in self.rec_rmatrix])
             
         self.rphtnsr = np.transpose(self.rphtnsr, axes=(1,2,0,3)) # shape: (n_at, C, n_r, d)
+        self.rec_rphtnsr = np.transpose(self.rec_rphtnsr, axes=(1,2,0,3)) # shape: (n_at, C, rec_nr, d)
         assert self.rphtnsr.shape == (self.n_at, self.nmodes, self.n_r, self.d)
         print(f"Realspace phonon tensor built: shape {self.rphtnsr.shape}")
         self.mnormed_tnsr = np.array([y/sqrt(x) for x, y in zip(self.bl_masses, self.rphtnsr)])
+        self.rec_mnormed_tnsr = np.array([y/sqrt(x) for x, y in zip(self.bl_masses, self.rec_rphtnsr)])
     
-    def plot_spatial_avgs(self, outname='spavg.png'):
+    def plot_spatial_avgs(self, outname='spavg.pdf'):
         avgtnsr = np.mean(self.rphtnsr, axis=2) # shape: (n_at, C, d)
         avgtnsr = np.transpose(avgtnsr, axes=(1,0,2)) # shape: (C, n_at, d)
         np.save(self.outdir + f"avgtnsr_{self.kpt}.npy", avgtnsr)
@@ -212,7 +243,7 @@ class TwistedRealspacePhonon:
             plt.close(fig)
         succ("Successfully outputted spatial-average phonon plots")
     
-    def plot_atomic_avgs(self, outname='atavg.png'):
+    def plot_atomic_avgs(self, outname='atavg.pdf'):
         # Take a diagonal cut of the sampling, and plot averages over all atoms
         # Key idea: shear/LB modes will cancel on average, while translations will not.
         # For this function only n_r := number of realsoace points along the line cut.
@@ -235,28 +266,66 @@ class TwistedRealspacePhonon:
             plt.close(fig)
         succ("Successfully outputted atomic-average phonon plots")
 
-    # Generate a plot of the phonons averaged over each layer;
-    # there is one plot per mode, per layer
-    def plot_phonons(self, outname='phreal.png', zcolmesh=False):
-        coords = self.r_matrix
-        np.save(self.outdir + f"rphtnsr_k{self.kpt}.npy", self.rphtnsr)
+    def plot_phonons(self, outname='phreal.png', zcolmesh=False, rectangular=True):
+        """
+        Generate a plot of the phonons averaged over each layer;
+        there is one plot per mode, per layer. If `rectangular` is True, the plot is 
+        rectangular in Cartesian basis instead of square in lattice basis. If `zcolmesh` is True,
+        plot a color contour of the z-component only (useful for interlayer analysis).
+        """
+        coords = self.rec_rmatrix if rectangular else self.r_matrix
+        mode_tnsr = self.rec_mnormed_tnsr if rectangular else self.mnormed_tnsr
 
-        layer_blks = np.split(self.mnormed_tnsr, 2, axis=0) # split back by layer, then avg it
+        layer_blks = np.split(mode_tnsr, 2, axis=0) # split back by layer, then avg it
         layer_blks = np.real(list(map(lambda x: np.mean(x, axis=0), layer_blks)))
-        assert layer_blks.shape == (2, self.nmodes, self.n_r, self.d)
+        assert layer_blks.shape == (2, self.nmodes, self.rec_nr if rectangular else self.n_r, self.d)
         zbound = np.max(np.abs(layer_blks[:,:,:,2]))
         for l_i, layer_blk in enumerate(layer_blks):
             l_i += 1 # index layers by 1
             for m_j, phonons in enumerate(layer_blk):
                 phonons = np.real(phonons) # just take the real component
                 z = phonons[:,2]
-                plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.RSPC_SUPERCELL_SIZE, 5.5*self.RSPC_SUPERCELL_SIZE))
-                plt.rc('font', size=8*self.RSPC_SUPERCELL_SIZE)
+                plt.rc('font', size=8*self.rspc_sc_sz)
+                plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.rspc_sc_sz, 5.5*self.rspc_sc_sz))
+                plt.tricontourf(coords[:,0], coords[:,1], z, cmap=PLOT_CMAP, levels=501) # color the z component as background
+                ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="black", alpha=0.8) # I have a better tie, it's cornflower blue!
+                (xm, xp), (ym, yp) = plt.xlim(), plt.ylim()
+                max_xy = np.max([LA.norm(phonon[:-1]) for phonon in phonons])
+                max_z = np.max(np.abs(z))
+                # max_xyz = np.max([LA.norm(phonon) for phonon in phonons])
+                textstr = r'$\omega = %.3f$'%self.modes[m_j] + '\n' + \
+                          r'$\delta u_{xy} = %.3E$'%max_xy + \
+                          '\n' + r'$\delta u_{z} = %.3E$'%max_z
+                props = dict(boxstyle='round', facecolor='wheat', alpha=0.75)
+                ax.text(0.10*(xp-xm)+xm, 0.10*(yp-ym)+ym, textstr, 
+                        transform=ax.transAxes, verticalalignment='top', bbox=props)
+                plt.xlabel("x"); plt.ylabel("y")
+                ax.set_aspect('equal')
+                fname = self.kpt[2:-1] if self.kpt[0] == "$" else self.kpt
+                this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}_k-{fname}' + outname[outname.index('.'):]
+                plt.title(r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" Mode {self.modeidxs[m_j]}, Layer {l_i} at " + self.kpt)
+                plt.colorbar(shrink=0.5)
+                plt.clim(-zbound, zbound)
+                if zcolmesh:
+                    fig.savefig(self.outdir + 'COL_' + this_outname)
+                plt.quiver(coords[:,0], coords[:,1],    # positions
+                            phonons[:,0], phonons[:,1], 
+                            headlength=6, headaxislength=6, color='dodgerblue') # arrows
+                fig.savefig(self.outdir + this_outname)
+                plt.close(fig)
+
+        for l_i, layer_blk in enumerate(layer_blks):
+            l_i += 1 # index layers by 1
+            for m_j, phonons in enumerate(layer_blk):
+                phonons = np.real(phonons) # just take the real component
+                z = phonons[:,2]
+                plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.rspc_sc_sz, 5.5*self.rspc_sc_sz))
+                plt.rc('font', size=8*self.rspc_sc_sz)
                 ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="limegreen", alpha=0.8)
                 plt.quiver(coords[:,0], coords[:,1],    # positions
                             phonons[:,0], phonons[:,1], # arrows
                             z,                          # arrow colors
-                            cmap='CMRmap')
+                            cmap=PLOT_CMAP)
                 (xm, xp), (ym, yp) = plt.xlim(), plt.ylim()
                 max_xy = np.max([LA.norm(phonon[:-1]) for phonon in phonons])
                 max_z = np.max(np.abs(z))
@@ -269,46 +338,20 @@ class TwistedRealspacePhonon:
                 ax.scatter(coords[:,0], coords[:,1], c='black', s=0.2)
                 ax.set_aspect('equal')
                 fname = self.kpt[2:-1] if self.kpt[0] == "$" else self.kpt
-                this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}_k-{fname}' + outname[outname.index('.'):]
-                plt.title(r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" Mode {self.modeidxs[m_j]}, Layer {l_i} at " + self.kpt)
+                this_outname = 'REF_' + outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}_k-{fname}' + outname[outname.index('.'):]
+                plt.title(r"Ref $\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" Mode {self.modeidxs[m_j]}, Layer {l_i} at " + self.kpt)
                 plt.colorbar(shrink=0.5)
                 plt.clim(-zbound, zbound)
                 fig.savefig(self.outdir + this_outname)
                 plt.close(fig)
+                break
+            break
 
-        if zcolmesh:
-            for l_i, layer_blk in enumerate(layer_blks):
-                l_i += 1 # index layers by 1
-                for m_j, phonons in enumerate(layer_blk):
-                    phonons = np.real(phonons) # just take the real component
-                    z = phonons[:,2]
-                    plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.RSPC_SUPERCELL_SIZE, 5.5*self.RSPC_SUPERCELL_SIZE))
-                    plt.rc('font', size=8*self.RSPC_SUPERCELL_SIZE)
-                    plt.tricontourf(coords[:,0], coords[:,1], z, cmap='CMRmap', levels=201)
-                    ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="limegreen", alpha=0.8)
-                    (xm, xp), (ym, yp) = plt.xlim(), plt.ylim()
-                    max_xy = np.max([LA.norm(phonon[:-1]) for phonon in phonons])
-                    max_z = np.max(np.abs(z))
-                    ax.text(0.02*(xp-xm)+xm, 0.02*(yp-ym)+ym, r'$\delta u_{xy} = %.3E$'%max_xy)
-                    ax.text(0.06*(xp-xm)+xm, 0.06*(yp-ym)+ym, r'$\delta u_{z} = %.3E$'%max_z)
-                    ax.text(0.10*(xp-xm)+xm, 0.10*(yp-ym)+ym, r'$\omega = %.3f$'%self.modes[m_j])
-                    plt.xlabel("x"); plt.ylabel("y")
-                    ax.set_aspect('equal')
-                    fname = self.kpt[2:-1] if self.kpt[0] == "$" else self.kpt
-                    this_outname = "COL_" + outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}_k-{fname}' + outname[outname.index('.'):]
-                    plt.title(r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" Mode {self.modeidxs[m_j]}, Layer {l_i} at " + self.kpt)
-                    cb = plt.colorbar(shrink=0.5)
-                    cb.mappable.set_clim(-zbound, zbound)
-                    fig.savefig(self.outdir + this_outname)
-                    plt.close(fig)
-
-                update(f"Wrote twisted phonons in realspace to {self.outdir + this_outname}")
         succ(f"Successfully generated {self.nmodes * self.n_at} realspace twisted phonon plots")
         
-    # One plot per mode, per atom, per layer
-    def plot_phonons_per_atom(self, outname='phat.png', zcolmesh=False):
+    def plot_phonons_per_atom(self, outname='phat.pdf', zcolmesh=False):
+        """One plot per mode, per atom, per layer"""
         coords = self.r_matrix
-        np.save(self.outdir + f"rphtnsr_k{self.kpt}.npy", self.rphtnsr)
 
         layer_blks = np.array(np.split(self.mnormed_tnsr, 2, axis=0)) # split back by layer, then avg it
         zbound = np.max(np.abs(layer_blks[:,:,:,:,2]))
@@ -318,8 +361,8 @@ class TwistedRealspacePhonon:
                 for m_j, phonons in enumerate(at_blk):
                     phonons = np.real(phonons) # just take the real component
                     z = phonons[:,2]
-                    plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.RSPC_SUPERCELL_SIZE, 5.5*self.RSPC_SUPERCELL_SIZE))
-                    plt.rc('font', size=8*self.RSPC_SUPERCELL_SIZE)
+                    plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.rspc_sc_sz, 5.5*self.rspc_sc_sz))
+                    plt.rc('font', size=8*self.rspc_sc_sz)
                     ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="limegreen", alpha=0.8)
                     plt.quiver(coords[:,0], coords[:,1],    # positions
                                 phonons[:,0], phonons[:,1], # arrows
@@ -349,8 +392,8 @@ class TwistedRealspacePhonon:
                         for m_j, phonons in enumerate(at_blk):
                             phonons = np.real(phonons) # just take the real component
                             z = phonons[:,2]
-                            plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.RSPC_SUPERCELL_SIZE, 5.5*self.RSPC_SUPERCELL_SIZE))
-                            plt.rc('font', size=8*self.RSPC_SUPERCELL_SIZE)
+                            plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.rspc_sc_sz, 5.5*self.rspc_sc_sz))
+                            plt.rc('font', size=8*self.rspc_sc_sz)
                             plt.tricontourf(coords[:,0], coords[:,1], z, cmap='CMRmap', levels=201)
                             ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="limegreen", alpha=0.8)
                             (xm, xp), (ym, yp) = plt.xlim(), plt.ylim()
