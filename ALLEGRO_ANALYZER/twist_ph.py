@@ -336,20 +336,24 @@ if __name__ == '__main__':
                         [p.structure.species for p in poscars_uc], 0)
             if do_sum_rule:
                 mesh_TDM.apply_sum_rule()
+            eigsys = None
+            
             mesh_TDMs = mesh_TDM.get_DM_set()
             mesh_TDMs_intra = mesh_TDM.get_intra_set()
-            widths = np.linspace(0.01, 0.21, 21)
-            if np.rad2deg(theta) > 1.9:
-                widths = np.linspace(0.11, 0.51, 21)
-            eigsys = None
+            
+            # Normalize peaks by monolayer DOS
+            iDOS = TwistedDOS(mesh_TDMs_intra, len(GM_set), round(np.rad2deg(theta), 6), kdim=args.dos)
+            normalizer = np.max(iDOS.get_DOS()[1])
+            print(f"DOS NORMALIZER: {normalizer}")
 
-            normalizer = 1 #! delete
+            # Compute normalizer DOS
             TDOS = TwistedDOS(mesh_TDMs, len(GM_set), round(np.rad2deg(theta), 6), cutoff=cutoff, 
                               kdim=args.dos, normalizer=normalizer, eigsys=eigsys)
             if eigsys is None:
-                eigsys = TDOS.get_eigsys()
+                eigsys = TDOS.get_eigsys() # deprecated: cache if looping over multiple parameters over width
+                
             omegas, DOS = TDOS.get_DOS(smoothen=True)
-            pfx = f"SMOOTH"
+            pfx = "SMOOTH"
             TPLT = TwistedPlotter(round(np.rad2deg(theta), 6), omegas, DOS, mode_set, corner_kmags, cutoff=cutoff)
             TPLT.make_plot(outdir=outdir, name=name, filename=outname, pfx=pfx)
             
