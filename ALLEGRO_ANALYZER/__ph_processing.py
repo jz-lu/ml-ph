@@ -22,6 +22,8 @@ def compute_displacements(ROOT, user_input_settings, ndisp):
     print(f'Writing a job-array bash executable to {ROOT}')
     vdw = 'T' if user_input_settings.do_vdW in ['T', True] else 'F'
     subname = user_input_settings.passname()
+    large_sc = (user_input_settings.get_super_dim() > 3) # larger supercells need more CPUs
+    monster = (large_sc and (vdw == 'T')) # hardest type of calculation to converge
     if user_input_settings.get_type_flag() == TYPE_RELAX_CONFIG:
         if user_input_settings.sampling_is_diagonal():
             subname += '-d'
@@ -31,9 +33,12 @@ def compute_displacements(ROOT, user_input_settings, ndisp):
         subname += '-v'
     kpts = 'GAMMA' if user_input_settings.kpoints_is_gamma_centered else 'MP'
     exepath = build_bash_exe(calc_type='norelax', outdir=ROOT, wdir=ROOT+PHDISP_STATIC_NAME, 
-                   calc_list=[ENERGIES], compute_jobname=PHONON_JOBNAME+subname, vdw=vdw, kpts=kpts, compute_time='16:00:00', 
-                   as_arr=True, compute_ncpu='72' if user_input_settings.get_super_dim() > 3 else '16',
-                   USE_NODE_INDICATOR=False if user_input_settings.get_super_dim() > 3 else True)
+                   calc_list=[ENERGIES], compute_jobname=PHONON_JOBNAME+subname, 
+                   compute_mem_per_cpu='8000' if monster else COMPUTE_MEM_PER_CPU, 
+                   vdw=vdw, kpts=kpts, 
+                   compute_time='24:00:00' if monster else COMPUTE_TIME, 
+                   as_arr=True, compute_ncpu='72' if large_sc else '16',
+                   USE_NODE_INDICATOR=False if large_sc else True)
     print('Executable built.')
     runcmd = 'sbatch --array=1-%d'%(ndisp) + ' ' + exepath
     print('Running %s...'%runcmd)
