@@ -33,25 +33,6 @@ parser.add_argument("calc", nargs="+", help="calculations list: energies, ph, el
 cmdargs = parser.parse_args()
 
 start_time = print_start_msg()
-
-# Import and check the command line arguments.
-# First flag indicates the type of operation we are doing (0 for standard, int > 0 for configuration)
-# Second flag is just the directory where the input files are stored, we will make it the root of our calculations
-# Third flag is whether to do van der Waals forces (T/F) bool
-# The remaining flags need to say which calculations to do.
-# cmdargs = list(copy.deepcopy(sys.argv))
-# if '-f' in cmdargs:
-#     filename = cmdargs[cmdargs.index('-f') + 1]
-#     print("Reading program inputs settings from file named '%s'.\n"%(filename))
-#     try:
-#         with open(filename) as f:
-#             cmdargs = tuple(f.read().splitlines())
-#     except:
-#         exit_with_error(GENERAL_ERR_USAGE_MSG + "\n\n\t" + filename + "is not a valid file.\n\n")
-# else:
-#     cmdargs = tuple(cmdargs[1:]) # Get rid of the name of the program in the first arg
-#     print("Reading program inputs settings from command line.\n")
-
 user_input_settings = InputData(cmdargs)
 
 bze_points = begin_computation(user_input_settings)
