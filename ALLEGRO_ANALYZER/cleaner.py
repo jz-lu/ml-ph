@@ -1,5 +1,5 @@
 """
-Script for removing all files in a twisted calculations 
+Script for removing all files in a twisted calculation;
 not necessary to construct dynamical matrix.
 """
 import os
@@ -11,24 +11,23 @@ parser = argparse.ArgumentParser(description="Remove unnecessary files for twist
 parser.add_argument("-d", "--dir", type=str, help="root calc directory", default='.')
 args = parser.parse_args()
 ROOT = checkPath(os.path.abspath(args.dir))
-PREFIXES = tuple(['FORCE', 'POSCAR', 'CONTCAR'])
+PREFIXES = tuple(['FORCE', 'POSCAR', 'CONTCAR', 'INCAR'])
 SUFFIXES = tuple(['.txt'])
 
-update("Cleaning files...")
+update("Cleaning files...", flush=True)
 for root, dirs, files in os.walk(ROOT, topdown=True):
    for name in files:
-       trash = False
        if name.startswith(PREFIXES) or name.endswith(SUFFIXES):
             path = os.path.join(root, name)
-            print(f"REMOVING: {path}")
+            print(f"REMOVING: {path}", flush=True)
             os.remove(path)
 
-update("Cleaning folders...")
+update("Cleaning folders...", flush=True)
 for root, dirs, files in os.walk(ROOT, topdown=True):
     for name in dirs:
         path = os.path.join(root, name)
         if not os.listdir(path):
-            print(f"CLEARING: {path}")
+            print(f"CLEARING: {path}", flush=True)
             os.rmdir(path)
 
 succ("Cleaning complete.")
