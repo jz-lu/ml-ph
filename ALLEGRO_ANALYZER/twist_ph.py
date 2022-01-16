@@ -23,7 +23,7 @@ from ___constants_names import (
     DEFAULT_PH_BAND_PLOT_NAME, DEFAULT_PH_BANDDOS_PLOT_NAME, 
     ANGLE_SAMPLE_INAME, RSPC_LIST_INAME, RSPC_K_INAME, SELECT_K_INAME, 
     MODE_TNSR_ONAME, ANGLE_SAMPLE_ONAME, GAMMA_IDX_ONAME, 
-    K_MAGS_ONAME, K_SET_ONAME, DM_TNSR_ONAME
+    K_MAGS_ONAME, K_SET_ONAME, DM_TNSR_ONAME, THSPC_MODES_ONAME
 )
 from ___constants_phonopy import POSCAR_UNIT_NAME
 from ___constants_compute import DEFAULT_NUM_LAYERS
@@ -240,14 +240,15 @@ if __name__ == '__main__':
                         for GM_set_here, G0_set_here, k_th, br_here \
                             in zip(thspc_GM_sets, thspc_G0_sets, thspc_k_set, thspc_b_relaxed)]
             th_TDM = [TwistedDM(MLDM_here[0], MLDM_here[1], ILDM_here, [[0,0]], 
-                                [p.structure.species for p in poscars_uc], None)
+                                [p.structure.species for p in poscars_uc], None, log=False)
                         for MLDM_here, ILDM_here in zip(th_MLDMs, th_ILDM)]
             if do_sum_rule:
                 for TDM_here in th_TDM:       
                     TDM_here.apply_sum_rule()
-                    
+            
+            n_at = sum([sum(p.natoms) for p in poscars_uc])
             th_TDMs = np.array([TDM_here.get_DM_set()[0] for TDM_here in th_TDM])
-            thspc_modes = ThetaSpaceDM(k_here, th_TDMs, thetas).get_modes()
+            thspc_modes = ThetaSpaceDM(k_here, th_TDMs, thetas, len(GM_set), n_at).get_modes()
             np.save(this_outdir + THSPC_MODES_ONAME, thspc_modes)
             print(f"Saved theta-space modes for k = {k_here} to {this_outdir + THSPC_MODES_ONAME}", flush=True)
             
@@ -267,7 +268,7 @@ if __name__ == '__main__':
         
         update("Constructing intralayer dynamical matrix objects...")
         MLDMs = [MonolayerDM(uc, sc, ph, GM_set, \
-                            G0_set, k_set, Gamma_idx, k_mags=k_mags) \
+                            G0_set, k_set, Gamma_idx, k_mags=k_mags, log=True) \
                             for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
         if plot_intra:
             print("Plotting one intralayer component...")
@@ -288,7 +289,7 @@ if __name__ == '__main__':
                              GM_set, G0_set, 
                              [p.structure.species for p in poscars_uc], cfg_sc, cfg_uc, 
                              ph_list=config_ph_list, 
-                             force_matrices=None, br_set=b_relaxed, A0=A0)
+                             force_matrices=None, br_set=b_relaxed, A0=A0, log=True)
         print("Interlayer DM objects constructed.")
 
         print("Combining into a single twisted dynamical matrix object...")

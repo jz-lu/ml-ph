@@ -83,13 +83,11 @@ def dm_calc(q, ph, poscar_sc, poscar_uc, pos_sc_idx):
 # Monolayer dynamical matrix
 class MonolayerDM:
     def __init__(self, poscar_uc : Poscar, poscar_sc : Poscar, ph, 
-                 GM_set, G0_set, k_set, Gamma_idx, k_mags=None):
+                 GM_set, G0_set, k_set, Gamma_idx, k_mags=None, log=False):
         if Gamma_idx is not None:
             assert LA.norm(k_set[Gamma_idx]) == 0, f"Gamma index has nonzero norm {LA.norm(k_set[Gamma_idx])}"
             assert np.all(k_set[Gamma_idx] == [0,0]), f"Nonzero kGamma={k_set[Gamma_idx]}"
-        print("Symmetrizing force constants...")
         ph.symmetrize_force_constants()
-        print("Force constants symmetrized.")
         self.n_at = sum(poscar_uc.natoms)
         self.uc = poscar_uc.structure; self.sc = None if poscar_sc is None else poscar_sc.structure # get structure objects from Poscar objects
         self.GM_set = GM_set; self.n_GM = len(GM_set); self.k_set = np.array(k_set); self.ph = ph
@@ -97,7 +95,7 @@ class MonolayerDM:
         self.n_k = len(k_set)
         self.A0 = self.uc.lattice.matrix[:2,:2].T # remove z-axis
         self.G0 = 2 * pi * LA.inv(self.A0).T
-        self.DM_set = None; self.dbgprint = True; self.l0_shape = None
+        self.DM_set = None; self.dbgprint = self.log = log; self.l0_shape = None
         self.name = poscar_uc.comment; self.modes_built = False
         self.M = np.array([species.atomic_mass for species in poscar_uc.structure.species])
         self.Gamma_idx = Gamma_idx
@@ -148,9 +146,10 @@ class MonolayerDM:
     def get_DM_set(self):
         if self.DM_set is None:
             self.__block_intra_l1()
-        print(f"Retrieved monolayer dynamical matrix of shape {self.DM_set[0].shape} for solid {self.name}")
-        if self.Gamma_idx is not None:
-            print(f"Frobenius norm of pristine intralayer piece at Gamma: {LA.norm(self.DM_set[self.Gamma_idx])}")
+        if self.log:
+            print(f"Retrieved monolayer dynamical matrix of shape {self.DM_set[0].shape} for solid {self.name}")
+            if self.Gamma_idx is not None:
+                print(f"Frobenius norm of pristine intralayer piece at Gamma: {LA.norm(self.DM_set[self.Gamma_idx])}")
         return self.DM_set
     
     def get_corr_mat(self):
@@ -166,7 +165,8 @@ class MonolayerDM:
         l0sz = self.l0_shape[0]
         DM = self.DM_set[self.Gamma_idx]
         blks = [DM[i*l0sz:(i+1)*l0sz, i*l0sz:(i+1)*l0sz] for i in range(1, self.n_at)]
-        print(f"Retrieved {len(blks)} blocks from intralayer G-blocks")
+        if self.log:
+            print(f"Retrieved {len(blks)} blocks from intralayer G-blocks")
         return blks
     
     def plot_sampled_l0(self, outdir='.'):
@@ -222,9 +222,11 @@ class MonolayerDM:
                   filename='intra_' + DEFAULT_PH_BAND_PLOT_NAME, name=None, cutoff=None):
         outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Invalid directory {outdir}"
         if not self.modes_built:
-            print("Intralayer modes not built yet, building...")
+            if self.log:
+                print("Intralayer modes not built yet, building...")
             self.build_modes(k_mags, dump=False, outdir=outdir)
-            print("Intralayer modes built.")
+            if self.log:
+                print("Intralayer modes built.")
         plt.clf(); bot = 100
         for k_mag, modes in self.mode_set:
             if cutoff is not None:
@@ -244,11 +246,13 @@ class MonolayerDM:
         return
 
     def get_GM_set(self):
-        print(f"Retrieved GM sample set for solid {self.name}")
+        if self.log:
+            print(f"Retrieved GM sample set for solid {self.name}")
         return self.GM_set
 
     def get_k_set(self):
-        print(f"Retrieved k sample set for solid {self.name}")
+        if self.log:
+            print(f"Retrieved k sample set for solid {self.name}")
         return self.k_set
 
 
@@ -259,20 +263,23 @@ class InterlayerDM:
                  GM_set, G0_set, 
                  species_per_layer, sc, uc, 
                  ph_list=None, 
-                 force_matrices=None, G0=None, br_set=None, A0=None):
+                 force_matrices=None, G0=None, br_set=None, A0=None, log=False):
         self.DM_G_blks = None
         self.M = np.array([[species.atomic_mass for species in layer] for layer in species_per_layer])
         self.bl_M = bl_M; self.bl_n_at = len(bl_M)
         assert self.bl_n_at == len(uc.species)
-        self.ph_list = ph_list
+        self.ph_list = ph_list; self.log = log
         self.br_set = br_set # relaxed b vector set
 
-        print(f"Interlayer DM uses bilayer with {self.bl_n_at} atoms of masses {self.bl_M}")
+        if self.log:
+            print(f"Interlayer DM uses bilayer with {self.bl_n_at} atoms of masses {self.bl_M}")
 
         assert (ph_list is not None) ^ (force_matrices is not None), "Must give exactly one of: phonopy obj list, force matrix list"
         assert len(b_set[0]) == 2, "Shift vectors must be 2-dimensional"
         self.b_set = b_set; self.ph_list = ph_list # list of phonopy objects for each config
-        self.nshift = len(b_set); print(f"Number of configurations: {self.nshift}")
+        self.nshift = len(b_set)
+        if self.log:
+            print(f"Number of configurations: {self.nshift}")
         assert int(sqrt(self.nshift))**2 == self.nshift, f"Number of shifts {self.nshift} must be a perfect square"
         self.GM_set = GM_set; self.G0_set = G0_set; self.DM = None; self.DM_intra = None
         self.per_layer_at_idxs = per_layer_at_idxs; assert len(self.per_layer_at_idxs) == 2, f"Only 2 layers supported"
@@ -297,7 +304,8 @@ class InterlayerDM:
         if br_set is not None:
             assert A0 is not None, f"Must give lattice matrix A0 when using relaxer"
             br_sz = int(sqrt(self.br_set.shape[0]))
-            update("CONFIGURATION DM: Using RELAXED configs")
+            if self.log:
+                update("CONFIGURATION DM: Using RELAXED configs")
             relaxed_forces = [self.__inverse_block_inter_l0(br) for br in self.br_set]
             self.force_matrices = relaxed_forces
             a = np.linspace(0,1,br_sz, endpoint=False)
@@ -320,7 +328,6 @@ class InterlayerDM:
         ax.set_xticklabels(["K", r"$\Gamma$", "M", "K"])
         ax.set_xlim([0, np.max(corner_k0mags)])
         plt.savefig(outdir + "blpristine.png")
-        succ("ILDM DONE")
 
     def __block_inter_l0(self, G0, k=np.array([0,0])):
         cut = len(self.per_layer_at_idxs[0])
@@ -382,7 +389,8 @@ class InterlayerDM:
         self.DM = bmat(self.DM).toarray() # convert NoneTypes to zero-matrix blocks to make sparse matrix
         for i in range(2):
             self.DM_intra[i] = bmat(self.DM_intra[i]).toarray()
-            print(f"Frobenius norm of cfg-{i} intralayer piece at Gamma: {LA.norm(self.DM_intra[i])}")
+            if self.log:
+                print(f"Frobenius norm of cfg-{i} intralayer piece at Gamma: {LA.norm(self.DM_intra[i])}")
         return self.DM
 
     # Diagonalize the set of DMs to get phonon modes
@@ -410,68 +418,83 @@ class InterlayerDM:
     
     def get_off_diag_blocks(self):
         if self.DM is None:
-            print("Building interlayer dynamical matrix...")
+            if self.log:
+                print("Building interlayer dynamical matrix...")
             self.__block_inter_l1()
-        print(f"Off-diagonal level-0 size: {self.l0sz}")
+        if self.log:
+            print(f"Off-diagonal level-0 size: {self.l0sz}")
         self.off_diag_blks = np.split(self.DM[:self.l0sz[0]], self.n_GM, axis=1)[1:]
-        print(f"Off-diagonal block ({len(self.off_diag_blks)} ct.) shapes: {self.off_diag_blks[0].shape}")
+        if self.log:
+            print(f"Off-diagonal block ({len(self.off_diag_blks)} ct.) shapes: {self.off_diag_blks[0].shape}")
         return self.off_diag_blks
     
     def get_Gamma_block(self):
         if self.DM is None:
-            print("Building interlayer dynamical matrix...")
+            if self.log:
+                print("Building interlayer dynamical matrix...")
             self.__block_inter_l1()
-        print(f"Interlayer Gamma block shape: {self.Gamma_block.shape}")
+        if self.log:
+            print(f"Interlayer Gamma block shape: {self.Gamma_block.shape}")
         return self.Gamma_block
     
     def get_intra_blocks(self):
         if self.DM is None:
-            print("Building interlayer dynamical matrix...")
+            if self.log:
+                print("Building interlayer dynamical matrix...")
             self.__block_inter_l1()
-        print(f"Config intralayer block shapes: {self.GMi_intra_blocks[0][0].shape} and {self.GMi_intra_blocks[1][0].shape}")
+        if self.log:
+            print(f"Config intralayer block shapes: {self.GMi_intra_blocks[0][0].shape} and {self.GMi_intra_blocks[1][0].shape}")
         return self.GMi_intra_blocks
     
     def get_all_blocks(self):
         if self.DM is None:
-            print("Building interlayer dynamical matrix...")
+            if self.log:
+                print("Building interlayer dynamical matrix...")
             self.__block_inter_l1()
         return self.all_blocks
 
     def get_DM(self):
         if self.DM is None:
-            print("Building interlayer dynamical matrix...")
+            if self.log:
+                print("Building interlayer dynamical matrix...")
             self.__block_inter_l1()
-        print(f"Retrieved interlayer dynamical matrix of shape {self.DM.shape}")
+        if self.log:
+            print(f"Retrieved interlayer dynamical matrix of shape {self.DM.shape}")
         return self.DM
     
     def get_DM_intra_piece(self):
         if self.DM is None:
-            print("Building interlayer dynamical matrix...")
+            if self.log:
+                print("Building interlayer dynamical matrix...")
             self.__block_inter_l1()
-        print(f"Retrieved interlayer dynamical matrix of shape {self.DM.shape}")
+        if self.log:
+            print(f"Retrieved interlayer dynamical matrix of shape {self.DM.shape}")
         assert self.DM_intra[0].shape == self.DM_intra[1].shape == self.DM.shape
         return self.DM_intra
 
     def get_GM_set(self):
-        print("Retrieved GM sample set")
+        if self.log:
+            print("Retrieved GM sample set")
         return self.GM_set
 
 
 # Build full dynamical matrix from intralayer and interlayer terms via the above 2 classes
 class TwistedDM:
-    def __init__(self, l1 : MonolayerDM, l2 : MonolayerDM, inter : InterlayerDM, k_mags, species_per_layer, Gamma_idx):
+    def __init__(self, l1 : MonolayerDM, l2 : MonolayerDM, inter : InterlayerDM, 
+                 k_mags, species_per_layer, Gamma_idx, log=True):
         self.interobj = inter; self.intraobjs = [l1, l2]
         self.n_ats = [l1.n_at, l2.n_at]
         self.GM_set = inter.get_GM_set()
+        self.log = log
         
-        print("Building dynamical matrix intra(er) blocks...")
+        if self.log:
+            print("Building dynamical matrix intra(er) blocks...")
         DMs_layer1 = l1.get_DM_set(); DMs_layer2 = l2.get_DM_set()
         DM_inter = inter.get_DM(); DM_cfgintra = inter.get_DM_intra_piece()
         
-        # DM_inter = np.zeros_like(DM_inter); DM_cfgintra = np.zeros_like(DM_cfgintra) #! delete!!
-        
         self.szs = [DMs_layer1[0].shape[0], DMs_layer2[0].shape[0]]
-        print("Blocks built.")
+        if self.log:
+            print("Blocks built.")
         
         self.M = np.array([[species.atomic_mass for species in layer] for layer in species_per_layer])
         self.n_GM = len(l1.get_GM_set())
@@ -501,9 +524,11 @@ class TwistedDM:
         return DM
 
     def apply_sum_rule(self):
-        update("ENFORCING: acoustic sum rule")
+        if self.log:
+            update("ENFORCING: acoustic sum rule")
         if self.sum_rule_applied:
-            update("Already applied sum rule!")
+            if self.log:
+                update("Already applied sum rule!")
             return
         else:
             self.sum_rule_applied = True
@@ -522,7 +547,8 @@ class TwistedDM:
 
     def get_DM_set(self):
         """Retrieve list dynamical matrices corresponding to the list of sampled k-vectors"""
-        print(f"Retrieved DM set of shape {self.DMs[0].shape} from twisted DM object")
+        if self.log:
+            print(f"Retrieved DM set of shape {self.DMs[0].shape} from twisted DM object")
         return np.array(self.DMs)
     
     def get_DM_at_Gamma(self):
@@ -612,9 +638,11 @@ class TwistedDM:
     def plot_band(self, corner_kmags, angle, outdir='./', filename=DEFAULT_PH_BAND_PLOT_NAME, name=None, cutoff=None):
         outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Invalid directory {outdir}"
         if not self.modes_built:
-            print("Modes not built yet, building...")
+            if self.log:
+                print("Modes not built yet, building...")
             self.build_modes(dump=True, outdir=outdir)
-            print("Modes built.")
+            if self.log:
+                print("Modes built.")
         plt.clf()
         lims = [0,0]
         for k_mag, modes in self.mode_set:
@@ -635,15 +663,17 @@ class TwistedDM:
         plt.title(title)
         plt.savefig(outdir + filename, format='pdf')
         plt.close()
-        print(f"Band plot written to {outdir+filename}")
+        if self.log:
+            print(f"Band plot written to {outdir+filename}")
         return
 
 """Analysis of dynamical matrix for a given k-point in theta-space"""
 class ThetaSpaceDM:
-    def __init__(self, k, TDMs, thetas, modeidxs=np.arange(0,6)):
+    def __init__(self, k, TDMs, thetas, n_G, n_at, modeidxs=np.arange(0,6)):
         assert len(thetas) == len(TDMs), \
             f"Number of angles {len(thetas)} does not math number of DMs {len(TDMs)}"
         self.DM_set = TDMs; self.thetas = thetas
+        self.n_G = n_G; self.n_at = n_at
         self.modeidxs = np.array(modeidxs).astype(int)
         print(f"Initialized dynamical matrix analyzer in theta-space for k = {k}.")
         self.__analyze()
