@@ -100,7 +100,7 @@ of `phtnsr` to slice proportional to ratio of atoms, instead of in half.
 PLOT_CMAP = 'RdGy'
 class TwistedRealspacePhonon:
     def __init__(self, theta, k, GM_set, DM_at_k, n_at, bl_masses, 
-                 poscars_uc, gridsz=13, outdir='.', modeidxs=np.linspace(0,6,6), kpt=r'$\Gamma$',
+                 poscars_uc, gridsz=13, outdir='.', modeidxs=np.arange(0,6), kpt=r'$\Gamma$',
                  rspc_sc_sz=2):
         assert len(bl_masses) == n_at
         self.rspc_sc_sz = rspc_sc_sz

@@ -17,7 +17,7 @@ SUFFIXES = tuple(['.txt'])
 update("Cleaning files...")
 for root, dirs, files in os.walk(ROOT, topdown=True):
    for name in files:
-       if name.startswith(PREFIXES) or name.endswith(SUFFIXES):
+       if not (name.startswith(PREFIXES) or name.endswith(SUFFIXES)):
             path = os.path.join(root, name)
             print(f"REMOVING: {path}", flush=True)
             os.remove(path)

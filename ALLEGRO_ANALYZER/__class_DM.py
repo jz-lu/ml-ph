@@ -84,7 +84,9 @@ def dm_calc(q, ph, poscar_sc, poscar_uc, pos_sc_idx):
 class MonolayerDM:
     def __init__(self, poscar_uc : Poscar, poscar_sc : Poscar, ph, 
                  GM_set, G0_set, k_set, Gamma_idx, k_mags=None):
-        assert LA.norm(k_set[Gamma_idx]) == 0, f"Gamma index has nonzero norm {LA.norm(k_set[Gamma_idx])}"
+        if Gamma_idx is not None:
+            assert LA.norm(k_set[Gamma_idx]) == 0, f"Gamma index has nonzero norm {LA.norm(k_set[Gamma_idx])}"
+            assert np.all(k_set[Gamma_idx] == [0,0]), f"Nonzero kGamma={k_set[Gamma_idx]}"
         print("Symmetrizing force constants...")
         ph.symmetrize_force_constants()
         print("Force constants symmetrized.")
@@ -92,7 +94,6 @@ class MonolayerDM:
         self.uc = poscar_uc.structure; self.sc = None if poscar_sc is None else poscar_sc.structure # get structure objects from Poscar objects
         self.GM_set = GM_set; self.n_GM = len(GM_set); self.k_set = np.array(k_set); self.ph = ph
         self.G0_set = G0_set
-        assert np.all(k_set[Gamma_idx] == [0,0]), f"Nonzero kGamma={k_set[Gamma_idx]}"
         self.n_k = len(k_set)
         self.A0 = self.uc.lattice.matrix[:2,:2].T # remove z-axis
         self.G0 = 2 * pi * LA.inv(self.A0).T
@@ -103,7 +104,6 @@ class MonolayerDM:
         self.k_mags = k_mags
         self.l0_shape = [3*self.n_at]*2
         self.corr_mat = None
-        # super().__init__(self.sc, self.uc)
     
     # Compute intralayer dynamical matrix block element for given some (direct) center `q` and phonopy object `ph`
     def __block_intra_l0(self, q, ph):
@@ -149,7 +149,8 @@ class MonolayerDM:
         if self.DM_set is None:
             self.__block_intra_l1()
         print(f"Retrieved monolayer dynamical matrix of shape {self.DM_set[0].shape} for solid {self.name}")
-        print(f"Frobenius norm of pristine intralayer piece at Gamma: {LA.norm(self.DM_set[self.Gamma_idx])}")
+        if self.Gamma_idx is not None:
+            print(f"Frobenius norm of pristine intralayer piece at Gamma: {LA.norm(self.DM_set[self.Gamma_idx])}")
         return self.DM_set
     
     def get_corr_mat(self):
@@ -159,10 +160,9 @@ class MonolayerDM:
         return self.corr_mat
     
     def get_origin_G_blocks(self):
+        assert self.Gamma_idx is not None, "Function cannot be called with Gamma_idx as NoneType"
         if self.DM_set is None:
             self.__block_intra_l1()
-        # blks = [self.__block_intra_l0(GM, self.ph) for GM in self.GM_set if LA.norm(GM) > 0]
-        # assert np.allclose(block_diag(self.__block_intra_l0(0, self.ph), *blks), self.DM_set[self.Gamma_idx])
         l0sz = self.l0_shape[0]
         DM = self.DM_set[self.Gamma_idx]
         blks = [DM[i*l0sz:(i+1)*l0sz, i*l0sz:(i+1)*l0sz] for i in range(1, self.n_at)]
@@ -527,6 +527,7 @@ class TwistedDM:
     
     def get_DM_at_Gamma(self):
         """Dynamical matrix at Gamma point"""
+        assert self.Gamma_idx is not None, "Gamma_idx cannot be NoneType"
         return self.DMs[self.Gamma_idx]
     
     def print_force_sum(self, G0_only=True):
@@ -639,11 +640,11 @@ class TwistedDM:
 
 """Analysis of dynamical matrix for a given k-point in theta-space"""
 class ThetaSpaceDM:
-    def __init__(self, k, TDMs, thetas, modeidxs=np.linspace(0,6,6)):
+    def __init__(self, k, TDMs, thetas, modeidxs=np.arange(0,6)):
         assert len(thetas) == len(TDMs), \
             f"Number of angles {len(thetas)} does not math number of DMs {len(TDMs)}"
         self.DM_set = TDMs; self.thetas = thetas
-        self.modeidxs = modeidxs
+        self.modeidxs = np.array(modeidxs).astype(int)
         print(f"Initialized dynamical matrix analyzer in theta-space for k = {k}.")
         self.__analyze()
         

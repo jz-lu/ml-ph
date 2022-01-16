@@ -64,7 +64,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # Legacy compatibility
-    theta = np.deg2rad(args.theta); indir = args.dir; outdir = args.out; theta_space = args.mr
+    theta = np.deg2rad(args.theta); indir = args.dir; outdir = args.out; theta_space = args.thspc
     relax = args.relax; plot_intra = args.intra; force_sum = args.fsum; name = args.name
     cutoff = args.cut; realspace = args.rs; do_sum_rule = not args.ns; outname = args.oname
     print(f"Twist angle: {round(np.rad2deg(theta), 6)} deg")
@@ -171,12 +171,14 @@ if __name__ == '__main__':
     print(f"Bilayer masses: {list(bl_M)}")
 
     if theta_space:
+        print("Analysis type: theta-space", flush=True)
         # Import and parse angle list file
         thetas = None
         with open(indir + ANGLE_SAMPLE_INAME, 'r') as f:
             thetas = list(map(float, f.read().splitlines()))
             assert len(thetas) == 3 and 20 > thetas[1] > thetas[0] > 0 and thetas[2] > 0, f"Invalid thetas {thetas}"
         ntheta = int(thetas[2])
+        print(f"Theta parameters: from {thetas[0]} to {thetas[1]} in {ntheta} steps", flush=True)
         thetas = np.linspace(np.deg2rad(thetas[0]), np.deg2rad(thetas[1]), ntheta)
         
         # Import and parse k-points list file
@@ -187,20 +189,26 @@ if __name__ == '__main__':
         thspc_GM_sets = np.zeros((ntheta, *(GM_set.shape)))
         thspc_G0_sets = np.zeros((ntheta, *(G0_set.shape)))
         for i, theta_here in enumerate(thetas):
-            th_bzsamples = get_bz_sample(theta_here, poscars_uc[0], outdir, make_plot=False, super_dim=super_dim)
+            th_bzsamples = get_bz_sample(theta_here, poscars_uc[0], outdir, super_dim=super_dim, log=False)
             _, thspc_GM_sets[i] = th_bzsamples.get_GM_set()
             _, thspc_G0_sets[i] = th_bzsamples.get_G0_set()
         
+        # The theta-relaxation depends on theta, so collect relaxed configs at each theta
+        thspc_b_relaxed = [RelaxerAPI(round(np.rad2deg(th), 6), gridsz, \
+                                        outdir, s0.T, dedensify=True).get_configs(cartesian=True) 
+                            for th in thetas]
+        update("Finished obtaining relaxed data.")
+        
         # Conduct a theta-space analysis for each specified k-point
-        for kidx, k_here in enumerate(thspc_kpts):
-            kpt_name = "(%4.3lf, %4.3lf)"%k_here
+        for kidx, k_here in enumerate(thspc_kpts_dir):
+            kpt_name = "(%4.3lf, %4.3lf)"%(k_here[0], k_here[1])
             if np.isclose(IBZ_GAMMA, k_here).all():
                 kpt_name = r'$\Gamma$'
             elif np.isclose(IBZ_K_60, k_here).all():
                 kpt_name = 'K'
             elif np.isclose(IBZ_M_60, k_here).all():
                 kpt_name = 'M'
-            log_name = "%4.3lf_%4.3lf"%k_here
+            log_name = "%4.3lf_%4.3lf"%(k_here[0], k_here[1])
             if kpt_name == r'$\Gamma$':
                 log_name = "Gamma"
             elif kpt_name[0] != "(":
@@ -219,11 +227,6 @@ if __name__ == '__main__':
                 GM1 = GM_mat[:,0]; GM2 = GM_mat[:,1] # Moire reciprocal lattice vectors
                 return k_here[0]*GM1 + k_here[1]*GM2
             thspc_k_set = np.array([k_cart_at_theta(th) for th in thetas])
-            
-            # The theta-relaxation depends on theta, so collect relaxed configs at each theta
-            thspc_b_relaxed = [RelaxerAPI(round(np.rad2deg(th), 6), gridsz, \
-                                          outdir, s0.T, dedensify=True).get_configs(cartesian=True) 
-                               for th in thetas]
 
             th_MLDMs = [[MonolayerDM(uc, sc, ph, GM_set_here, G0_set_here, [k_theta], None) \
                         for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)] \
@@ -236,7 +239,7 @@ if __name__ == '__main__':
                                 force_matrices=None, br_set=br_here, A0=A0)
                         for GM_set_here, G0_set_here, k_th, br_here \
                             in zip(thspc_GM_sets, thspc_G0_sets, thspc_k_set, thspc_b_relaxed)]
-            th_TDM = [TwistedDM(MLDM_here[0], MLDM_here[1], ILDM_here, None, 
+            th_TDM = [TwistedDM(MLDM_here[0], MLDM_here[1], ILDM_here, [[0,0]], 
                                 [p.structure.species for p in poscars_uc], None)
                         for MLDM_here, ILDM_here in zip(th_MLDMs, th_ILDM)]
             if do_sum_rule:
@@ -251,6 +254,7 @@ if __name__ == '__main__':
         update(f"Finished writing theta-space analysis to {outdir}")
 
     else:
+        print("Analysis type: k-space", flush=True)
         b_relaxed = None
         if relax:
             print("Non-uniformizing configurations via relaxation...")
