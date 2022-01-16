@@ -637,6 +637,55 @@ class TwistedDM:
         print(f"Band plot written to {outdir+filename}")
         return
 
+"""Analysis of dynamical matrix for a given k-point in theta-space"""
+class ThetaSpaceDM:
+    def __init__(self, k, TDMs, thetas, modeidxs=np.linspace(0,6,6)):
+        assert len(thetas) == len(TDMs), \
+            f"Number of angles {len(thetas)} does not math number of DMs {len(TDMs)}"
+        self.DM_set = TDMs; self.thetas = thetas
+        self.modeidxs = modeidxs
+        print(f"Initialized dynamical matrix analyzer in theta-space for k = {k}.")
+        self.__analyze()
+        
+    def __DM_to_DDM(self):
+        """Diagonalize and sort eigensystem"""
+        def sorted_filtered_eigsys(A):
+            evals, evecs = LA.eig(A)
+            evals = np.real(evals); evecs = np.real_if_close(evecs)
+            idxs = evals.argsort()  
+            evals = evals[idxs]; evecs = evecs[:,idxs].T
+            evals = evals[self.modeidxs]; evecs = evecs[self.modeidxs]
+            return evals, evecs
+        
+        # Let C = len(modeidxs) and n_th = len(thetas)
+        eigsys = [sorted_filtered_eigsys(A) for A in self.DM_set]
+        evals = np.array([vals for vals,_ in eigsys]) # shape: (n_th, C)
+        self.DDM = np.transpose([vecs for _,vecs in eigsys], axes=(1,2,0)) # shape: (C, n_at x n_G x d, n_th)
+        self.modes = np.sign(evals) * np.sqrt(np.abs(evals)) * VASP_FREQ_TO_INVCM_UNITS
+        print("Diagonalization complete.")
+    
+    def __DDM_to_thtnsr(self):
+        """Diagonalized dynamical matrix -> tensor object. Run after __DM_to_DDM"""
+        evecs_by_layer = np.split(self.DDM, 2, axis=1) # layer slice must be first
+        for li in range(2): # each layer has shape: (C, n_G x n_at/2 x d, n_th)
+            evecs_by_layer[li] = np.array(np.split(evecs_by_layer[li], self.n_G, axis=1)) # shape: (n_G, C, n_at/2 x d, n_th)
+            evecs_by_layer[li] = np.array(np.split(evecs_by_layer[li], self.n_at//2, axis=2)) # shape: (n_at/2, n_G, C, d, n_th)
+            print(f"Final evec shape for layer {li}: {evecs_by_layer[li].shape}")
+        evecs = np.concatenate(evecs_by_layer, axis=0) # bring them together, so shape: (n_at, n_G, C, d, n_th)
+        self.thtnsr = np.transpose(evecs, axes=(1,0,2,3,4)) # shape: (n_G, n_at, C, d, n_th)
+        print("Tensors prepared.")
+
+    def __analyze(self):
+        self.__DM_to_DDM()
+        self.__DDM_to_thtnsr()
+        print("Analysis in theta-space complete.")
+    
+    def get_modes(self):
+        return self.modes
+
+    def get_thtnsr(self):
+        return self.thtnsr
+        
 
 class TwistedDOS:
     def __init__(self, TDMs, n_G, theta, cutoff=None, 
