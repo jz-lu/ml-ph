@@ -14,7 +14,7 @@ ROOT = checkPath(os.path.abspath(args.dir))
 PREFIXES = tuple(['FORCE', 'POSCAR', 'CONTCAR', 'INCAR'])
 SUFFIXES = tuple(['.txt'])
 
-update("Cleaning files...", flush=True)
+update("Cleaning files...")
 for root, dirs, files in os.walk(ROOT, topdown=True):
    for name in files:
        if name.startswith(PREFIXES) or name.endswith(SUFFIXES):
@@ -22,7 +22,7 @@ for root, dirs, files in os.walk(ROOT, topdown=True):
             print(f"REMOVING: {path}", flush=True)
             os.remove(path)
 
-update("Cleaning folders...", flush=True)
+update("Cleaning folders...")
 for root, dirs, files in os.walk(ROOT, topdown=True):
     for name in dirs:
         path = os.path.join(root, name)

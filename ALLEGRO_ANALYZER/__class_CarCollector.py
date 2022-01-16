@@ -8,7 +8,8 @@ from ___constants_vasp import (
     INCAR_RELAX_SETTINGS, 
     INCAR_NORELAX_SCON_SETTINGS, 
     INCAR_VDW_SETTINGS, 
-    POT_PMG_INIT_CMD
+    POT_PMG_INIT_CMD, 
+    EDIFF, EDIFFG
 )
 from ___constants_misc import ERR_NO_POSCAR
 from __directory_searchers import checkPath
@@ -113,6 +114,8 @@ class CarCollector:
             print('Adding van der Waals interaction parameters to INCAR...')
             for i in range(0, len(vdW_keys)):
                 incar[vdW_keys[i]] = vdW_values[i]
+            incar['EDIFF'] = EDIFF['no_relax']
+            incar['EDIFFG'] = EDIFFG['no_relax']
         
         # Get a SYSTEM tag for the name, as a comment
         incar['SYSTEM'] = self.mat_name
