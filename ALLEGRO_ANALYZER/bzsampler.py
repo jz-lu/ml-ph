@@ -18,17 +18,28 @@ from __directory_searchers import checkPath
 from ___constants_phonopy import SUPER_DIM
 from ____exit_with_error import exit_with_error
 
+def get_GM_mat(theta, poscar):
+    assert isinstance(poscar, Poscar) or isinstance(poscar, str), "Input 'poscar' must either be a 'Poscar' obj or a path to a POSCAR file"
+    s = poscar.structure if isinstance(poscar, Poscar) else struct.Structure.from_file(poscar)
+    A0 = s.lattice.matrix[0:2, 0:2].T # makes realspace lattice A-basis matrix [a1 a2]
+    G0 = 2 * pi * LA.inv(A0).T 
+    R1 = np.array([[np.cos(theta/2), -np.sin(theta/2)], [np.sin(theta/2), np.cos(theta/2)]]) # rot by theta/2
+    R2 = LA.inv(R1) # rot by -theta/2
+    G1 = np.matmul(R1, G0); G2 = np.matmul(R2, G0)
+    GM_mat = G1 - G2 # moire G-basis matrix
+    return GM_mat
+
 def get_bz_sample(theta, poscar, outdir, super_dim=SUPER_DIM[:2], 
                   max_shell=DEFAULT_MAX_SHELL, gridsz=DEFAULT_GRID_SIZE, nk=DEFAULT_NK, 
                   log=True, make_plot=False):
     assert isinstance(poscar, Poscar) or isinstance(poscar, str), "Input 'poscar' must either be a 'Poscar' obj or a path to a POSCAR file"
-    s = poscar.structure if isinstance(poscar, Poscar) else struct.Structure.from_file(poscar)
     if isinstance(poscar, str):
         assert os.path.isfile(poscar), f"Invalid path {poscar}"
     assert os.path.isdir(outdir), f"Invalid directory {outdir}"
     assert max_shell >= 1 and gridsz > 1 and nk > 1 and (theta is None or theta > 0), "Invalid sampling parameters"
 
     # Build realspace A-basis and reciprocal space G-basis in the moire cell
+    s = poscar.structure if isinstance(poscar, Poscar) else struct.Structure.from_file(poscar)
     A0 = s.lattice.matrix[0:2, 0:2].T # makes realspace lattice A-basis matrix [a1 a2]
     G0 = 2 * pi * LA.inv(A0).T 
     if log:
@@ -105,7 +116,7 @@ if __name__ == '__main__':
     with open(indir+"theta.txt", "r") as f:
         theta_data = list(map(float, f.read().splitlines()))
     theta_data[-1] = int(theta_data[-1])
-    thetas = np.linspace(*theta_data); print(f"Angles: {thetas}")
+    thetas = np.linspace(*theta_data); print(f"Angles: {thetas}") # pylint: disable=no-value-for-parameter
     for i, theta_here in enumerate(thetas):
         name = int(theta_here) if theta_here == int(theta_here) else round(theta_here, 1)
         update(f"SAVED TO: {name}")

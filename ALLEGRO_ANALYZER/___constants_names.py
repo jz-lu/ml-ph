@@ -23,11 +23,12 @@ PH = 'ph'
 CMD_LINE_ARG_LIST = [ELEDOS, ELEBAND, PHDOS, PHBAND, ENERGIES, PH]
 
 # Input files for sampling
-ANGLE_SAMPLE_INAME = 'theta.txt'
-RSPC_LIST_INAME = 'rs.txt'
-RSPC_K_INAME = 'rspck.txt'
-ISPC_SAMPLE_INAME = 'ispc.txt'
-LC_SAMPLE_INAME = 'lc.txt'
+ANGLE_SAMPLE_INAME = 'theta.txt' # start, end, num theta
+RSPC_LIST_INAME = 'rs.txt' # mode indices list
+RSPC_K_INAME = 'rspck.txt' # list of k (direct basis) for realspace
+SELECT_K_INAME = 'k.txt' # list of k for theta-space analyses
+ISPC_SAMPLE_INAME = 'ispc.txt' # start, stop, number (interlayer spacings for VASP calculations)
+LC_SAMPLE_INAME = 'lc.txt' # start, stop, number (lattice constants for VASP calculations)
 
 # Output files for interpolation
 MODE_TNSR_ONAME = 'mode_%d.npy'

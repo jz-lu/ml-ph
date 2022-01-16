@@ -13,7 +13,7 @@ import pymatgen.core.structure as struct
 from pymatgen.io.vasp.inputs import Poscar
 from __class_DM import TwistedDM, InterlayerDM, MonolayerDM, TwistedDOS, TwistedPlotter
 from __class_PhonopyAPI import PhonopyAPI
-from bzsampler import get_bz_sample
+from bzsampler import get_bz_sample, get_GM_mat
 from ___constants_names import (
     SPOSCAR_NAME, PH_FORCE_SETS_NAME, 
     ANALYSIS_DIR_NAME, PHONOPY_DIR_NAME, 
@@ -21,7 +21,7 @@ from ___constants_names import (
     POSCAR_CONFIG_NAMEPRE, 
     SHIFT_NAME, SHIFTS_NPY_NAME, 
     DEFAULT_PH_BAND_PLOT_NAME, DEFAULT_PH_BANDDOS_PLOT_NAME, 
-    ANGLE_SAMPLE_INAME, RSPC_LIST_INAME, RSPC_K_INAME, 
+    ANGLE_SAMPLE_INAME, RSPC_LIST_INAME, RSPC_K_INAME, SELECT_K_INAME, 
     MODE_TNSR_ONAME, ANGLE_SAMPLE_ONAME, GAMMA_IDX_ONAME, 
     K_MAGS_ONAME, K_SET_ONAME, DM_TNSR_ONAME
 )
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     parser.add_argument("--oname", type=str, help='output filename', default=DEFAULT_PH_BANDDOS_PLOT_NAME)
     parser.add_argument("--intra", action="store_true", help='do intralayer analysis')
     parser.add_argument("-r", "--relax", action="store_true", help='do theta-relaxation')
-    parser.add_argument("--mr", action="store_true", help=f'multirelax (req parameter file \'{ANGLE_SAMPLE_INAME}\')')
+    parser.add_argument("--thspc", action="store_true", help=f'analyze in theta-space (must input: \'{ANGLE_SAMPLE_INAME}\', \'{SELECT_K_INAME}\')')
     parser.add_argument("--rs", action="store_true", help='do realspace analysis')
     parser.add_argument("--kdir", action="store_true", help="input k-points are in direct coordinates (default Cartesian)")
     parser.add_argument("--zmesh", action="store_true", help="plot realspace z color mesh (does nothing without --rs)")
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # Legacy compatibility
-    theta = np.deg2rad(args.theta); indir = args.dir; outdir = args.out; multirelax = args.mr
+    theta = np.deg2rad(args.theta); indir = args.dir; outdir = args.out; theta_space = args.mr
     relax = args.relax; plot_intra = args.intra; force_sum = args.fsum; name = args.name
     cutoff = args.cut; realspace = args.rs; do_sum_rule = not args.ns; outname = args.oname
     print(f"Twist angle: {round(np.rad2deg(theta), 6)} deg")
@@ -78,12 +78,13 @@ if __name__ == '__main__':
     indir = checkPath(os.path.abspath(indir)); outdir = checkPath(os.path.abspath(outdir))
     assert os.path.isdir(indir), f"Directory {indir} does not exist"
     assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
-    if multirelax:
-        assert not relax, "`multirelax` and `relax` are incompatible options"
-        assert os.path.isfile(indir + ANGLE_SAMPLE_INAME), f"Must provide input file {ANGLE_SAMPLE_INAME}"
+    if theta_space:
+        assert os.path.isfile(indir + ANGLE_SAMPLE_INAME), f"Required input file not found: {ANGLE_SAMPLE_INAME}"
+        assert os.path.isfile(indir + SELECT_K_INAME), f"Required input file not found: {SELECT_K_INAME}"
     if realspace:
-        assert os.path.isfile(indir + RSPC_LIST_INAME), f"Must provide input file {RSPC_LIST_INAME}"
+        assert os.path.isfile(indir + RSPC_LIST_INAME), f"Required input file not found: {RSPC_LIST_INAME}"
         assert args.rssz > 0, f"Realspace supercell size must be a positive integer, but got {args.rssz}"
+        
     print(f"WD: {indir}, Output to: {outdir}")
     outname = 'd' + str(round(np.rad2deg(theta), 6)) + "_" + outname
     print("Building twisted crystal phonon modes...")
@@ -146,29 +147,9 @@ if __name__ == '__main__':
     Gamma_idx = bzsamples.get_Gamma_idx()
     k_set, k_mags = bzsamples.get_kpts(); corner_kmags = bzsamples.get_corner_kmags()
     k0_set, k0_mags = bzsamples.get_kpts0(); corner_k0mags = bzsamples.get_corner_kmags0()
-    # np.save(outdir + "km.npy", k_mags)
-    # np.save(outdir + "k.npy", k_set)
-    # np.save(outdir + "ck.npy", corner_kmags)
     print("Sampling complete.")
     os.chdir(outdir)
 
-    update("Constructing intralayer dynamical matrix objects...")
-    MLDMs = [MonolayerDM(uc, sc, ph, GM_set, \
-                         G0_set, k_set, Gamma_idx, k_mags=k_mags) \
-                         for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
-    if plot_intra:
-        print("Plotting one intralayer component...")
-        print("Plotting in pristine space...")
-        MLDMs[0].plot_pristine_band(k0_set, k0_mags, corner_k0mags, outdir=outdir)
-        print("Plotting in moire space...") # ; MLDMs[0].plot_sampled_l0()
-        MLDMs[0].plot_band(k_mags, corner_kmags, name=name, outdir=outdir, filename='intra_'+outname, cutoff=cutoff)
-    if force_sum:
-        for i, MLDM in enumerate(MLDMs):
-            print(f"Computing layer {i} force sums...")
-            MLDM.print_force_sum()
-    print("Intralayer DM objects constructed.")
-
-    greet("Working on interlayer components...")
     print("Importing shift vectors...")
     nshift = len(findDirsinDir(build_dir([indir, CONFIG_DIR_NAME]), CONFIG_SUBDIR_NAME, searchType='start'))
     gridsz = int(sqrt(nshift)); assert gridsz**2 == nshift, f"Number of shifts {nshift} must be a perfect square"
@@ -185,43 +166,68 @@ if __name__ == '__main__':
     print("Getting interlayer phonopy objects from API...")
     config_ph_list = ph_api.inter_ph_list()
     print("Phonopy objects retrieved.")
+    
+    bl_M = ph_api.bl_masses()
+    print(f"Bilayer masses: {list(bl_M)}")
 
-    if multirelax:
+    if theta_space:
+        # Import and parse angle list file
         thetas = None
         with open(indir + ANGLE_SAMPLE_INAME, 'r') as f:
             thetas = list(map(float, f.read().splitlines()))
             assert len(thetas) == 3 and 20 > thetas[1] > thetas[0] > 0 and thetas[2] > 0, f"Invalid thetas {thetas}"
         ntheta = int(thetas[2])
         thetas = np.linspace(np.deg2rad(thetas[0]), np.deg2rad(thetas[1]), ntheta)
-        dmat_dim = 3 * len(GM_set) * sum(n_at); print(f"Moire dynamical matrix size = {dmat_dim}")
-        dmat_tnsr = np.zeros((ntheta, len(k_set), dmat_dim, dmat_dim))
-        # TODO wrong rn!! Need to resample k for each theta!!
-        for i, theta in enumerate(thetas):
-            # See non-multirelax case for comments
-            relax_api = RelaxerAPI(round(np.rad2deg(theta), 6), gridsz, outdir, s0.T)
-            b_relaxed = relax_api.get_configs(cartesian=True)
+        
+        # Import and parse k-points list file
+        thspc_kpts_dir = np.unique(np.loadtxt(indir + SELECT_K_INAME), axis=0)
+        num_kpts = len(thspc_kpts_dir)
+        
+        # Conduct a theta-space analysis for each specified k-point
+        for kidx, k_here in enumerate(thspc_kpts):
+            kpt_name = "(%4.3lf, %4.3lf)"%k_here
+            if np.isclose(IBZ_GAMMA, k_here).all():
+                kpt_name = r'$\Gamma$'
+            elif np.isclose(IBZ_K_60, k_here).all():
+                kpt_name = 'K'
+            elif np.isclose(IBZ_M_60, k_here).all():
+                kpt_name = 'M'
+            log_name = "%4.3lf_%4.3lf"%k_here
+            if kpt_name == r'$\Gamma$':
+                log_name = "Gamma"
+            elif kpt_name[0] != "(":
+                log_name = kpt_name
+            this_outdir = outdir
+            if num_kpts > 1:
+                this_outdir += log_name
+                if not os.path.isdir(this_outdir):
+                    os.mkdir(this_outdir)
+            print(f"[{kidx+1}/{num_kpts}] NOW WORKING ON: k = {log_name}, write to {this_outdir}", flush=True)
+            
+            # The BZ depends on theta, so collect the k-point at each theta
+            def k_cart_at_theta(theta):
+                GM_mat = get_GM_mat(theta, poscars_uc[0])
+                GM1 = self.GM[:,0]; GM2 = self.GM[:,1] # Moire reciprocal lattice vectors
+                return k_here[0]*GM1 + k_here[1]*GM2
+            thspc_k_set = np.array([k_cart_at_theta(theta, k_here) for theta in thetas])
+            
+            for i, theta in enumerate(thetas):
+                relax_api = RelaxerAPI(round(np.rad2deg(theta), 6), gridsz, outdir, s0.T, dedensify=True)
+                b_relaxed = relax_api.get_configs(cartesian=True)
+                bl_M = ph_api.bl_masses()
 
-            interp = FourierForceInterp(config_ph_list, np.array(b_set), s0.T)
-            relaxed_forces = interp.predict(b_relaxed)
-            relaxed_forces = np.transpose(relaxed_forces, axes=(4,0,1,2,3))
-
-            relaxed_ph_list = copy.deepcopy(config_ph_list)
-            for i in range(len(config_ph_list)):
-                relaxed_ph_list[i].force_constants = relaxed_forces[i]
-
-            bl_M = ph_api.bl_masses()
-            if i == 0:
-                print(f"Bilayer masses: {bl_M}")
-            ILDM =  InterlayerDM(per_layer_at_idxs, bl_M, 
-                                 b_relaxed, k_set, 
-                                 GM_set, G0_set, 
-                                 [p.structure.species for p in poscars_uc], cfg_sc, cfg_uc, 
-                                 ph_list=relaxed_ph_list, 
-                                 force_matrices=None)
-            TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc], Gamma_idx)
-            TDM.apply_sum_rule()
-            dmat_tnsr[i] = TDM.get_DM_set()
-            # np.save(outdir + MODE_TNSR_ONAME%i, TDM.k_mode_tensor())
+                MLDMs = [MonolayerDM(uc, sc, ph, GM_set, \
+                            G0_set, k_set, Gamma_idx, k_mags=k_mags) \
+                            for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)] # TODO need to resample GM set too, sigh...
+                ILDM =  InterlayerDM(per_layer_at_idxs, bl_M, 
+                                    b_relaxed, k_set, 
+                                    GM_set, G0_set, 
+                                    [p.structure.species for p in poscars_uc], cfg_sc, cfg_uc, 
+                                    ph_list=relaxed_ph_list, 
+                                    force_matrices=None) # TODO make inton ILDMs...
+                TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc], Gamma_idx)
+                TDM.apply_sum_rule()
+                dmat_tnsr[i] = TDM.get_DM_set()
         np.save(outdir + ANGLE_SAMPLE_ONAME, thetas)
         np.save(outdir + GAMMA_IDX_ONAME, Gamma_idx)
         np.save(outdir + K_MAGS_ONAME, k_mags)
@@ -230,7 +236,7 @@ if __name__ == '__main__':
         update(f"Saved all multirelax output files to {outdir}")
 
     else:
-        relaxed_forces = None; b_relaxed = None
+        b_relaxed = None
         if relax:
             print("Non-uniformizing configurations via relaxation...")
             relax_api = RelaxerAPI(round(np.rad2deg(theta), 6), gridsz, outdir, s0.T, dedensify=True) # keep dense sampling for fourier interp
@@ -239,9 +245,24 @@ if __name__ == '__main__':
             relax_api.plot_relaxation()
 
         print("Note: Using GM sampling set from intralayer calculations.")
-        print("Constructing interlayer dynamical matrix objects...")
-        bl_M = ph_api.bl_masses()
-        print(f"Bilayer masses: {list(bl_M)}")
+        
+        update("Constructing intralayer dynamical matrix objects...")
+        MLDMs = [MonolayerDM(uc, sc, ph, GM_set, \
+                            G0_set, k_set, Gamma_idx, k_mags=k_mags) \
+                            for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)]
+        if plot_intra:
+            print("Plotting one intralayer component...")
+            print("Plotting in pristine space...")
+            MLDMs[0].plot_pristine_band(k0_set, k0_mags, corner_k0mags, outdir=outdir)
+            print("Plotting in moire space...") # ; MLDMs[0].plot_sampled_l0()
+            MLDMs[0].plot_band(k_mags, corner_kmags, name=name, outdir=outdir, filename='intra_'+outname, cutoff=cutoff)
+        if force_sum:
+            for i, MLDM in enumerate(MLDMs):
+                print(f"Computing layer {i} force sums...")
+                MLDM.print_force_sum()
+        print("Intralayer DM objects constructed.")
+    
+        print("Constructing interlayer dynamical matrix objects...") 
         ILDM = InterlayerDM(per_layer_at_idxs, bl_M, 
                              b_set, 
                              bzsamples.get_kpts0()[0], 
@@ -314,7 +335,8 @@ if __name__ == '__main__':
                 this_outdir = outdir
                 if num_kpts > 1:
                     this_outdir += log_name
-                    os.mkdir(this_outdir)
+                    if not os.path.isdir(this_outdir):
+                        os.mkdir(this_outdir)
                 print(f"[{kidx+1}/{num_kpts}] NOW WORKING ON: k = {log_name}, print to {this_outdir}")
                 twrph = TwistedRealspacePhonon(round(np.rad2deg(theta), 6), rspc_k, GM_set, 
                         rspc_TDMs[kidx], n_at, bl_M[layer_idx_permuter], poscars_uc, outdir=this_outdir, modeidxs=modeidxs, 
