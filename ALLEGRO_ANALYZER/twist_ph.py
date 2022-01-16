@@ -11,7 +11,7 @@ from phonopy import Phonopy
 import phonopy
 import pymatgen.core.structure as struct
 from pymatgen.io.vasp.inputs import Poscar
-from __class_DM import TwistedDM, InterlayerDM, MonolayerDM, TwistedDOS, TwistedPlotter
+from __class_DM import TwistedDM, InterlayerDM, MonolayerDM, ThetaSpaceDM, TwistedDOS, TwistedPlotter
 from __class_PhonopyAPI import PhonopyAPI
 from bzsampler import get_bz_sample, get_GM_mat
 from ___constants_names import (
@@ -183,6 +183,14 @@ if __name__ == '__main__':
         thspc_kpts_dir = np.unique(np.loadtxt(indir + SELECT_K_INAME), axis=0)
         num_kpts = len(thspc_kpts_dir)
         
+        # The BZ depends on theta, so the GM set differs for each
+        thspc_GM_sets = np.zeros((ntheta, *(GM_set.shape)))
+        thspc_G0_sets = np.zeros((ntheta, *(G0_set.shape)))
+        for i, theta_here in enumerate(thetas):
+            th_bzsamples = get_bz_sample(theta_here, poscars_uc[0], outdir, make_plot=False, super_dim=super_dim)
+            _, thspc_GM_sets[i] = th_bzsamples.get_GM_set()
+            _, thspc_G0_sets[i] = th_bzsamples.get_G0_set()
+        
         # Conduct a theta-space analysis for each specified k-point
         for kidx, k_here in enumerate(thspc_kpts):
             kpt_name = "(%4.3lf, %4.3lf)"%k_here
@@ -202,38 +210,45 @@ if __name__ == '__main__':
                 this_outdir += log_name
                 if not os.path.isdir(this_outdir):
                     os.mkdir(this_outdir)
+            this_outdir = checkPath(this_outdir)
             print(f"[{kidx+1}/{num_kpts}] NOW WORKING ON: k = {log_name}, write to {this_outdir}", flush=True)
             
             # The BZ depends on theta, so collect the k-point at each theta
-            def k_cart_at_theta(theta):
-                GM_mat = get_GM_mat(theta, poscars_uc[0])
-                GM1 = self.GM[:,0]; GM2 = self.GM[:,1] # Moire reciprocal lattice vectors
+            def k_cart_at_theta(th):
+                GM_mat = get_GM_mat(th, poscars_uc[0])
+                GM1 = GM_mat[:,0]; GM2 = GM_mat[:,1] # Moire reciprocal lattice vectors
                 return k_here[0]*GM1 + k_here[1]*GM2
-            thspc_k_set = np.array([k_cart_at_theta(theta, k_here) for theta in thetas])
+            thspc_k_set = np.array([k_cart_at_theta(th) for th in thetas])
             
-            for i, theta in enumerate(thetas):
-                relax_api = RelaxerAPI(round(np.rad2deg(theta), 6), gridsz, outdir, s0.T, dedensify=True)
-                b_relaxed = relax_api.get_configs(cartesian=True)
-                bl_M = ph_api.bl_masses()
+            # The theta-relaxation depends on theta, so collect relaxed configs at each theta
+            thspc_b_relaxed = [RelaxerAPI(round(np.rad2deg(th), 6), gridsz, \
+                                          outdir, s0.T, dedensify=True).get_configs(cartesian=True) 
+                               for th in thetas]
 
-                MLDMs = [MonolayerDM(uc, sc, ph, GM_set, \
-                            G0_set, k_set, Gamma_idx, k_mags=k_mags) \
-                            for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)] # TODO need to resample GM set too, sigh...
-                ILDM =  InterlayerDM(per_layer_at_idxs, bl_M, 
-                                    b_relaxed, k_set, 
-                                    GM_set, G0_set, 
-                                    [p.structure.species for p in poscars_uc], cfg_sc, cfg_uc, 
-                                    ph_list=relaxed_ph_list, 
-                                    force_matrices=None) # TODO make inton ILDMs...
-                TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc], Gamma_idx)
-                TDM.apply_sum_rule()
-                dmat_tnsr[i] = TDM.get_DM_set()
-        np.save(outdir + ANGLE_SAMPLE_ONAME, thetas)
-        np.save(outdir + GAMMA_IDX_ONAME, Gamma_idx)
-        np.save(outdir + K_MAGS_ONAME, k_mags)
-        np.save(outdir + K_SET_ONAME, k_set)
-        np.save(outdir + DM_TNSR_ONAME, dmat_tnsr)
-        update(f"Saved all multirelax output files to {outdir}")
+            th_MLDMs = [[MonolayerDM(uc, sc, ph, GM_set_here, G0_set_here, [k_theta], None) \
+                        for uc, sc, ph in zip(poscars_uc, poscars_sc, ml_ph_list)] \
+                        for GM_set_here, G0_set_here, k_theta in zip(thspc_GM_sets, thspc_G0_sets, thspc_k_set)]
+            th_ILDM = [InterlayerDM(per_layer_at_idxs, bl_M, 
+                                b_set, [k_th], 
+                                GM_set_here, G0_set_here, 
+                                [p.structure.species for p in poscars_uc], cfg_sc, cfg_uc, 
+                                ph_list=config_ph_list, 
+                                force_matrices=None, br_set=br_here, A0=A0)
+                        for GM_set_here, G0_set_here, k_th, br_here \
+                            in zip(thspc_GM_sets, thspc_G0_sets, thspc_k_set, thspc_b_relaxed)]
+            th_TDM = [TwistedDM(MLDM_here[0], MLDM_here[1], ILDM_here, None, 
+                                [p.structure.species for p in poscars_uc], None)
+                        for MLDM_here, ILDM_here in zip(th_MLDMs, th_ILDM)]
+            if do_sum_rule:
+                for TDM_here in th_TDM:       
+                    TDM_here.apply_sum_rule()
+                    
+            th_TDMs = np.array([TDM_here.get_DM_set()[0] for TDM_here in th_TDM])
+            thspc_modes = ThetaSpaceDM(k_here, th_TDMs, thetas).get_modes()
+            np.save(this_outdir + THSPC_MODES_ONAME, thspc_modes)
+            print(f"Saved theta-space modes for k = {k_here} to {this_outdir + THSPC_MODES_ONAME}", flush=True)
+            
+        update(f"Finished writing theta-space analysis to {outdir}")
 
     else:
         b_relaxed = None

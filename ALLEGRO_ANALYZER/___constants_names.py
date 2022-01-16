@@ -37,6 +37,7 @@ GAMMA_IDX_ONAME = 'Gamidx.npy'
 K_MAGS_ONAME = 'kmags.npy'
 K_SET_ONAME = 'kset.npy'
 DM_TNSR_ONAME = 'dmtnsr.npy'
+THSPC_MODES_ONAME = 'thspc_modes.npy'
 
 # Calculation types
 TYPE_RELAX_BASIC = 0
