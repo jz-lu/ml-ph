@@ -33,6 +33,9 @@ path = (CLUSTER_PATH if args.cluster else LOCAL_PATH) + RELATIVE_PATH
 for theta in thetas:
     theta = round(theta, 4)
     print(f"WORKING ON: {theta} deg...", flush=True)
-    stream = os.popen(f"julia {path} -d {theta} -N {args.mesh} -o {args.out} -c {get_G_Cutoff(theta)}")
+    cmd_here = f"julia {path} -d {theta} -N {args.mesh} -o {args.out} -c {get_G_Cutoff(theta)}"
+    print(f"RUNNING: `{cmd_here}`", flush=True)
+    stream = os.popen(cmd_here)
+    print(stream.read())
     print("DONE", flush=True)
 print("All done!")

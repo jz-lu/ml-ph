@@ -300,7 +300,7 @@ for k_idx = 1:size(kline,2)
     # The kth eigenvector can be obtained from the slice F.vectors[:, k].
 
     if mod(k_idx,10) == 0
-        println("Diagonalizatsion done ", k_idx, "/", size(kline,2))
+        println("Diagonalization done ", k_idx, "/", size(kline,2))
     end
 end
 
@@ -332,3 +332,4 @@ ylim((0.0,3))
 xlim((0,size(w)[1]))
 figure(2, figsize = (6,8))
 savefig(string(dir, "koshino_", θdeg, ".png"))
+println(string("Saved to ", string(dir, "koshino_", θdeg, ".png")))
