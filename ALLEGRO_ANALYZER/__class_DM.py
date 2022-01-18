@@ -667,16 +667,33 @@ class TwistedDM:
             print(f"Band plot written to {outdir+filename}")
         return
 
-"""Analysis of dynamical matrix for a given k-point in theta-space"""
+"""
+Analysis of dynamical matrix for a given k-point in theta-space.
+
+k_set: k-points list of length |thetas| in Cartesian coordinates
+TDMs: dynamical matrices in a list
+thetas: sampled twist angles
+n_G: number of G vectors, n_at: number of atoms
+masses: list of `n_at` masses corresponds to dynamical matrices
+poscars_uc: list of monolayer Poscar objects
+modeidxs: indices of the modes desired
+"""
 class ThetaSpaceDM:
-    def __init__(self, k, TDMs, thetas, n_G, n_at, modeidxs=np.arange(0,6)):
-        assert len(thetas) == len(TDMs), \
-            f"Number of angles {len(thetas)} does not math number of DMs {len(TDMs)}"
+    def __init__(self, k_set, TDMs, thetas, n_G, n_at, masses, poscars_uc, 
+                 modeidxs=np.arange(0,6), gridsz=13, sc_sz=3):
+        self.ntheta = len(thetas)
+        
+        assert self.ntheta == len(TDMs), \
+            f"Number of twist angles {self.ntheta} does not math number of DMs {len(TDMs)}"
+        assert self.ntheta == len(k_set), \
+            f"Number of twist angles {self.ntheta} does not math number of k-pts {len(k_set)}"
+        
         self.DM_set = TDMs; self.thetas = thetas
-        self.n_G = n_G; self.n_at = n_at
+        self.n_G = n_G; self.n_at = n_at; self.k_set = k_set
         self.modeidxs = np.array(modeidxs).astype(int)
+        self.A0 = poscars_uc[0].structure.lattice.matrix[:2,:2].T
         print(f"Initialized dynamical matrix analyzer in theta-space for k = {k}.")
-        self.__analyze()
+        self.__analyze(masses, gridsz=gridsz, sc_sz=sc_sz)
         
     def __DM_to_DDM(self):
         """Diagonalize and sort eigensystem"""
@@ -703,19 +720,53 @@ class ThetaSpaceDM:
             evecs_by_layer[li] = np.array(np.split(evecs_by_layer[li], self.n_at//2, axis=2)) # shape: (n_at/2, n_G, C, d, n_th)
             print(f"Final evec shape for layer {li}: {evecs_by_layer[li].shape}")
         evecs = np.concatenate(evecs_by_layer, axis=0) # bring them together, so shape: (n_at, n_G, C, d, n_th)
-        self.thtnsr = np.transpose(evecs, axes=(1,0,2,3,4)) # shape: (n_G, n_at, C, d, n_th)
-        print("Tensors prepared.")
+        self.thtnsr = np.transpose(evecs, axes=(4,1,0,2,3)) # shape: (n_th, n_G, n_at, C, d)
+        print(f"Tensors prepared. Phonon tensor has shape {self.thtnsr.shape}.")
+        
+    def __th_tnsr_to_phonons(self, M, gridsz=13, sc_sz=3):
+        """
+        Phonon tensor in Fourier space to real space over a `sc_sz` x `sc_sz` supermoire cell 
+        and mesh density `gridsz`. Masses `M`.
+        """
+        x = np.linspace(-sc_sz/2, sc_sz/2, num=gridsz*sc_sz, endpoint=False)
+        r_mesh = np.array(list(prod(x, x)))
+        n_r = len(r_mesh)
+        def moire_mesh_at_th(th): # th in degrees
+            angle = np.deg2rad(th)
+            sc_lattice = LA.inv(np.array(
+                                   [[1-np.cos(angle), np.sin(angle)],[-np.sin(angle), 1-np.cos(angle)]]
+                                  )) @ self.A0
+            return r_mesh @ sc_lattice.T
+        
+        self.thspc_r_mesh = np.array([moire_mesh_at_th(th) for th in self.thetas])
+        assert len(thspc_r_mesh) == len(self.thtnsr)
+        self.phonons = np.transpose(
+            [
+                [
+                    sum([G_blk * np.exp(-1j * np.dot(GM + k_th, r)) 
+                        for G_blk, GM in zip(tnsr_th, self.GM_set)]) # Fourier sum over G
+                    for r in r_mesh_th # do a sum for each realspace vector
+                ] 
+                for k_th, tnsr_th, r_mesh_th in zip(self.k_set, self.thtnsr, self.thspc_r_mesh) # over theta-space
+            ], axes=(0,2,3,1,4)
+        )
+        np.transpose(self.rphtnsr, axes=(1,2,0,3)) # shape: (n_at, C, n_r, d)
+        assert self.phonons.shape == (self.ntheta, self.n_at, len(self.modeidxs), n_r, 3)
 
-    def __analyze(self):
+    def __analyze(self, masses, gridsz=13, sc_sz=3):
         self.__DM_to_DDM()
         self.__DDM_to_thtnsr()
+        self.__th_tnsr_to_phonons(masses, gridsz=gridsz, sc_sz=sc_sz)
         print("Analysis in theta-space complete.")
     
     def get_modes(self):
         return self.modes
 
-    def get_thtnsr(self):
-        return self.thtnsr
+    def get_phonons(self):
+        return self.phonons
+
+    def get_thspc_r_mesh(self):
+        return self.thspc_r_mesh
         
 
 class TwistedDOS:
