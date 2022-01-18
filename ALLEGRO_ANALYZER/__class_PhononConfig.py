@@ -293,12 +293,7 @@ class TwistedRealspacePhonon:
                 max_xy = np.max([LA.norm(phonon[:-1]) for phonon in phonons])
                 max_z = np.max(np.abs(z))
                 # max_xyz = np.max([LA.norm(phonon) for phonon in phonons])
-                textstr = r'$\omega = %.3f$'%self.modes[m_j] + '\n' + \
-                          r'$\delta u_{xy} = %.3E$'%max_xy + \
-                          '\n' + r'$\delta u_{z} = %.3E$'%max_z
-                props = dict(boxstyle='round', facecolor='wheat', alpha=0.75)
-                ax.text(0.10*(xp-xm)+xm, 0.10*(yp-ym)+ym, textstr, 
-                        transform=ax.transAxes, verticalalignment='top', bbox=props)
+                
                 plt.xlabel("x"); plt.ylabel("y")
                 ax.set_aspect('equal')
                 fname = self.kpt[2:-1] if self.kpt[0] == "$" else self.kpt
@@ -311,6 +306,13 @@ class TwistedRealspacePhonon:
                 plt.quiver(coords[:,0], coords[:,1],    # positions
                             phonons[:,0], phonons[:,1], 
                             headlength=6, headaxislength=6, color='dodgerblue') # arrows
+
+                textstr = r'$\omega = %.3f$'%self.modes[m_j] + '\n' + \
+                          r'$\delta u_{xy} = %.3E$'%max_xy + \
+                          '\n' + r'$\delta u_{z} = %.3E$'%max_z
+                props = dict(boxstyle='round', facecolor='wheat', alpha=0.75)
+                ax.text(0.10*(xp-xm)+xm, 0.10*(yp-ym)+ym, textstr, 
+                        transform=ax.transAxes, verticalalignment='top', bbox=props)
                 fig.savefig(self.outdir + this_outname)
                 plt.close(fig)
 

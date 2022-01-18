@@ -690,6 +690,7 @@ class ThetaSpaceDM:
         
         self.DM_set = TDMs; self.thetas = thetas
         self.n_G = n_G; self.n_at = n_at; self.k_set = k_set
+        self.masses = masses
         self.modeidxs = np.array(modeidxs).astype(int)
         self.A0 = poscars_uc[0].structure.lattice.matrix[:2,:2].T
         print(f"Initialized dynamical matrix analyzer in theta-space for k = {k_dir}.")
@@ -740,7 +741,7 @@ class ThetaSpaceDM:
         
         self.thspc_r_mesh = np.array([moire_mesh_at_th(th) for th in self.thetas])
         assert len(thspc_r_mesh) == len(self.thtnsr)
-        self.phonons = np.transpose(
+        self.phonon_mags = np.abs(np.transpose(
             [
                 [
                     sum([G_blk * np.exp(-1j * np.dot(GM + k_th, r)) 
@@ -748,10 +749,12 @@ class ThetaSpaceDM:
                     for r in r_mesh_th # do a sum for each realspace vector
                 ] 
                 for k_th, tnsr_th, r_mesh_th in zip(self.k_set, self.thtnsr, self.thspc_r_mesh) # over theta-space
-            ], axes=(0,2,3,1,4)
-        )
-        np.transpose(self.rphtnsr, axes=(1,2,0,3)) # shape: (n_at, C, n_r, d)
-        assert self.phonons.shape == (self.ntheta, self.n_at, len(self.modeidxs), n_r, 3)
+            ], axes=(2,0,3,1,4)
+        ))
+        assert self.phonon_mags.shape == (self.n_at, self.ntheta, len(self.modeidxs), n_r, 3)
+        self.phonon_mags = np.transpose([y/sqrt(x) for x, y in zip(self.bl_masses, self.phonon_mags)], axes=(1,0,2,3,4))
+        assert self.phonon_mags.shape == (self.ntheta, self.n_at, len(self.modeidxs), n_r, 3)
+        self.phonon_mags = np.mean(self.phonon_mags, axis=1) # average over atoms/layers
 
     def __analyze(self, masses, gridsz=13, sc_sz=3):
         self.__DM_to_DDM()
@@ -763,10 +766,10 @@ class ThetaSpaceDM:
         return self.modes
 
     def get_phonons(self):
-        return self.phonons
+        return self.phonon_mags
 
     def get_modes_and_phonons(self):
-        return self.modes, self.phonons
+        return self.modes, self.phonon_mags
 
     def get_thspc_r_mesh(self):
         return self.thspc_r_mesh
