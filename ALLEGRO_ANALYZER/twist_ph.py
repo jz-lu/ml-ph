@@ -23,7 +23,8 @@ from ___constants_names import (
     DEFAULT_PH_BAND_PLOT_NAME, DEFAULT_PH_BANDDOS_PLOT_NAME, 
     ANGLE_SAMPLE_INAME, RSPC_LIST_INAME, RSPC_K_INAME, SELECT_K_INAME, 
     MODE_TNSR_ONAME, ANGLE_SAMPLE_ONAME, GAMMA_IDX_ONAME, 
-    K_MAGS_ONAME, K_SET_ONAME, DM_TNSR_ONAME, THSPC_MODES_ONAME
+    K_MAGS_ONAME, K_SET_ONAME, DM_TNSR_ONAME, 
+    THSPC_MODES_ONAME, THSPC_PHONONS_ONAME
 )
 from ___constants_phonopy import POSCAR_UNIT_NAME
 from ___constants_compute import DEFAULT_NUM_LAYERS
@@ -82,8 +83,9 @@ if __name__ == '__main__':
         assert os.path.isfile(indir + ANGLE_SAMPLE_INAME), f"Required input file not found: {ANGLE_SAMPLE_INAME}"
         assert os.path.isfile(indir + SELECT_K_INAME), f"Required input file not found: {SELECT_K_INAME}"
     if realspace:
-        assert os.path.isfile(indir + RSPC_LIST_INAME), f"Required input file not found: {RSPC_LIST_INAME}"
         assert args.rssz > 0, f"Realspace supercell size must be a positive integer, but got {args.rssz}"
+    if theta_space or realspace:
+        assert os.path.isfile(indir + RSPC_LIST_INAME), f"Required input file not found: {RSPC_LIST_INAME}"
         
     print(f"WD: {indir}, Output to: {outdir}")
     outname = 'd' + str(round(np.rad2deg(theta), 6)) + "_" + outname
@@ -248,9 +250,15 @@ if __name__ == '__main__':
             
             n_at = sum([sum(p.natoms) for p in poscars_uc])
             th_TDMs = np.array([TDM_here.get_DM_set()[0] for TDM_here in th_TDM])
-            thspc_modes = ThetaSpaceDM(k_here, th_TDMs, thetas, len(GM_set), n_at).get_modes()
+            modeidxs = np.loadtxt(indir + RSPC_LIST_INAME)
+            thspc_modes, thspc_phonons = ThetaSpaceDM(k_here, thspc_k_set, th_TDMs, thetas, 
+                                                      len(GM_set), n_at, 
+                                                      bl_M[layer_idx_permuter], 
+                                                      poscars_uc, modeidxs=modeidxs).get_modes_and_phonons()
             np.save(this_outdir + THSPC_MODES_ONAME, thspc_modes)
-            print(f"Saved theta-space modes for k = {k_here} to {this_outdir + THSPC_MODES_ONAME}", flush=True)
+            np.save(this_outdir + THSPC_PHONONS_ONAME, thspc_phonons)
+            print(f"Saved theta-space modes for k = {k_here} to {this_outdir + THSPC_MODES_ONAME}")
+            print(f"Saved theta-space modes for k = {k_here} to {this_outdir + THSPC_PHONONS_ONAME}", flush=True)
             
         update(f"Finished writing theta-space analysis to {outdir}")
 

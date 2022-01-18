@@ -11,6 +11,46 @@ using Optim
 using LinearAlgebra
 using ArgParse
 
+# Obtain the DOS Gaussian standard deviation based on twist angle
+function DOS_stdev(θdeg)
+    width = 0.45
+    if θdeg < 1.01
+        width = 0.03
+    elseif θdeg < 1.51
+        width = 0.09
+    elseif θdeg < 2.01
+        width = 0.13
+    elseif θdeg < 2.51
+        width = 0.15
+    elseif θdeg < 3.51
+        width = 0.21
+    elseif θdeg < 5.51
+        width = .27
+    elseif θdeg < 6.51
+        width = 0.31
+    elseif θdeg < 7.51
+        width = 0.37
+    elseif θdeg < 9.01
+        width = 0.43
+    end
+    return width / (2 * sqrt(2 * log(2))) 
+end
+
+partition_density=1000
+function compute_DOS(weights, θdeg, omegas_k, A=1)
+    min_freq = minimum(minimum(omegas_k))
+    max_freq = maximum(maximum(omegas_k))
+    variance = DOS_stdev(θdeg)^2
+    omegas = LinRange(min_freq, max_freq, partition_density)
+    return omegas, [sum(
+        sum(
+            [weight * A * exp(-(omega - omega_k)^2 / (2 * variance)) 
+            for (omega_k, weight) in zip(omegas_k, weights) ]
+        )
+    ) for omega in omegas]
+end
+
+
 function parse_commandline()
     s = ArgParseSettings()
 
@@ -19,10 +59,14 @@ function parse_commandline()
             help = "twist angle in degrees"
             required = true
             arg_type = Float64
+            # default = 6.
         "-N", "-n"
             help = "grid size (N if grid is NxN)"
             arg_type = Int
-            required = true
+            default = 51
+        "--mesh", "-m"
+            help = "DOS over mesh instead of bands over line"
+            action = :store_true
         "--cut", "-c"
             help = "Grid shell cutoff"
             arg_type = Int
@@ -53,7 +97,11 @@ G_cutoff = parsed_args["cut"] # need to be large for small angles
 # number of points to sample on the high symmetry line
 nq = 20
 nr = 50
-mode = "line" # mode = "mesh" or "line", "line" to calculate band structures, "mesh" for DOS (not implemented)
+mode = "mesh"
+if parsed_args["mesh"] == true
+    mode = "mesh"
+    nq = 44
+end
 wf_idx = 1
 
 ## Here are rotated functionals with symmetry - try *_nosym versions for the simplified functional in the paper
@@ -88,24 +136,24 @@ k =  GM * [f1[:]'; f2[:]']
 kx = reshape(k[1,:], (N,N))
 ky = reshape(k[2,:], (N,N))
 
-fig = figure(1,figsize = (8, 10))
-fig.subplots_adjust(hspace=0.1, wspace=0.1)
-clf()
-subplot(2,1,1)
-pcolormesh(kx,ky,abs.(uG[1,:,:]))
-xlim((-5,5))
-ylim((-5,5))
-ax=gca()
-ax.set_aspect(1)
-colorbar()
+# fig = figure(1,figsize = (8, 10))
+# fig.subplots_adjust(hspace=0.1, wspace=0.1)
+# clf()
+# subplot(2,1,1)
+# pcolormesh(kx,ky,abs.(uG[1,:,:]))
+# xlim((-5,5))
+# ylim((-5,5))
+# ax=gca()
+# ax.set_aspect(1)
+# colorbar()
 
-subplot(2,1,2)
-pcolormesh(kx,ky,abs.(uG[2,:,:]))
-xlim((-5,5))
-ylim((-5,5))
-ax=gca()
-ax.set_aspect(1)
-colorbar()
+# subplot(2,1,2)
+# pcolormesh(kx,ky,abs.(uG[2,:,:]))
+# xlim((-5,5))
+# ylim((-5,5))
+# ax=gca()
+# ax.set_aspect(1)
+# colorbar()
 
 # define mesh grid
 xgrid = reshape(range(0,stop=nq-1,step=1), (1,nq))
@@ -142,25 +190,14 @@ if mode == "line"
         kline_idx[j,:] = [i1[j,1:nq];i2[j,1:nq];i3[j,:]]
     end
 
-    figure(10)
-    # scatter(Kpt[1], Kpt[2])
-    # scatter(Mpt[1], Mpt[2])
-    # scatter(Gpt[1], Gpt[2])
-    # scatter(K1[1], K1[2])
-    # scatter(K2[1], K2[2])
-    # scatter(G0[1,1], G0[2,1])
-    # scatter(G0[1,2], G0[2,2])
-    scatter(kline[1,:], kline[2,:])
-    ax=gca()
-    ax.set_aspect(1)
-    figure(10)
-
+    # figure(10)
+    # scatter(kline[1,:], kline[2,:])
+    # ax=gca()
+    # ax.set_aspect(1)
+    # figure(10)
 
 elseif mode == "mesh"
     # create a grid in k space
-
-    # kline = G0 * [xmesh[:]'; ymesh[:]'] / nq
-    # kline_idx = [xmesh[:]'; ymesh[:]'] / nq
     kline = GM * [xmesh[:]' .- max(xmesh[:]...)/2;ymesh[:]' .- max(ymesh[:]...)/2]/nq
     kline_idx = [xmesh[:]' .- max(xmesh[:]...)/2;ymesh[:]' .- max(ymesh[:]...)/2]/nq
 
@@ -183,10 +220,6 @@ id_q2 = findall(x -> x == 0, q_list[2,:])
 tmp_id = findall(x -> x in id_q2, id_q1)
 q0_idx = id_q1[tmp_id][1]
 
-# no cutoff
-# q_list = k
-# Kq = KG
-
 ##
 evals = zeros(Float64,(size(kline,2),size(q_list,2)*2))
 # interlayer
@@ -195,11 +228,8 @@ A = zeros(Float64, (N, N))
 plan = plan_bfft(A, (1,2) )
 
 # Fourier decomposition of relaxed GSFE
-
 B = hull.G + 2 * blg.iR * u0 # relaxed configuration space position
 VG = zeros(ComplexF64, (2, 2, N, N))
-
-# figure(3)
 
 for ci = 1:5
     prefac_tmp = inter_ph(blg, ci)
@@ -219,12 +249,6 @@ for ci = 1:5
         end
     end
 end
-
-# ax=gca()
-# ax.set_aspect(1)
-# colorbar()
-# figure(3)
-
 
 VG = reshape(VG, (2,2,N^2))
 
@@ -246,9 +270,6 @@ for q1_idx = 1:size(q_list,2)
         tmp_id = findall(x -> x in id_q2, id_q1)
         if !isempty(tmp_id)
             qid = id_q1[tmp_id]
-            # println(qid)
-            # println([q1_idx, q2_idx], dq, qid)
-            # println(qid)
             qidx[q1_idx, q2_idx] = qid[1]
 
             Hinter[id1:id1+1,id2:id2+1]=VG[:,:,qid]
@@ -257,7 +278,6 @@ for q1_idx = 1:size(q_list,2)
     end
 end
 
-
 a0 = l*sqrt(3)
 A0 = sqrt(3)/2*a0^2
 
@@ -265,15 +285,6 @@ evecs_all = zeros(ComplexF64,(size(q_list,2)*2, size(q_list,2)*2, size(kline,2))
 
 for k_idx = 1:size(kline,2)
     Hintra = zeros(ComplexF64,size(q_list,2)*2, size(q_list,2)*2)
-
-    # an equivalent way to create KG
-    # hull = Hull(blg, N, kline_idx[:,k_idx])
-    # KG = hull.Hess_Elastic
-    # KG = reshape(KG, (2, 2, N, N))
-    # KG = KG[:,:,ind,:]
-    # KG = KG[:,:,:,ind] # sort KG from smallest G vector to the largest
-    # KG = reshape(KG,(2,2,N^2))
-    # KG = KG[:,:,id] # within the cutoff radius
 
     KG = zeros(Float64, (2,2,size(q_list,2)))
     for g_idx = 1:size(KG, 3)
@@ -291,9 +302,7 @@ for k_idx = 1:size(kline,2)
 
     global H = (Hinter+Hintra)/A0 # convert from eV / cell to eV / A^2
 
-    # global H = Hintra/A0
-
-    global F = eigen(H) # default sort by (real(λ), real(λ))
+    global F = eigen(H) # default sort by real(λ)
     eid = sortperm(real.(F.values))
     evals[k_idx,:] = real(F.values[eid])
     global evecs_all[:, :, k_idx] = F.vectors[:,eid]
@@ -304,32 +313,49 @@ for k_idx = 1:size(kline,2)
     end
 end
 
-# normalization
-rho = 7.61 * 1e-7 # area density of single-layer graphene in kg/m^2
-evals_shift = evals .- min(evals[:]...)
-evals_shift = evals
+if mode == "line"
+    # normalization
+    rho = 7.61 * 1e-7 # area density of single-layer graphene in kg/m^2
+    evals_shift = evals .- min(evals[:]...)
+    evals_shift = evals
 
-w = sqrt.(abs.(evals_shift) * 1e20 * 16.02   ./ rho) # in Hz
-lambda = λ/A0# in eV / A^2
-lambda = lambda * 1.602e-19 *1e20; # in J / m^2
-LM = a0 / θ *1e-10 # moire length in m
-w0 = sqrt(lambda/rho) * (2*pi) / LM # in 1/s
-# convert to meV
-hbar = 4.1357e-15 # in eV.s
-w0_meV = w0 * hbar *1e3
-w0_THz = w0 / 10e12
+    w = sqrt.(abs.(evals_shift) * 1e20 * 16.02   ./ rho) # in Hz
+    lambda = λ/A0# in eV / A^2
+    lambda = lambda * 1.602e-19 *1e20; # in J / m^2
+    LM = a0 / θ *1e-10 # moire length in m
+    w0 = sqrt(lambda/rho) * (2*pi) / LM # in 1/s
+    # convert to meV
+    hbar = 4.1357e-15 # in eV.s
+    w0_meV = w0 * hbar *1e3
+    w0_THz = w0 / 10e12
 
-rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
-rcParams["font.size"] = 15
+    rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
+    rcParams["font.size"] = 15
 
-fig=figure(2, figsize = (6, 8))
-clf()
-xlabel("k")
-ylabel("ω/ω₀")
-plot(w/w0,color="black")
-title(string("θ = ", θdeg))
-ylim((0.0,3))
-xlim((0,size(w)[1]))
-figure(2, figsize = (6,8))
-savefig(string(dir, "koshino_", θdeg, ".png"))
-println(string("Saved to ", string(dir, "koshino_", θdeg, ".png")))
+    fig=figure(2, figsize = (6, 8))
+    clf()
+    xlabel("k")
+    ylabel("ω/ω₀")
+    plot(w/w0,color="black")
+    title(string("θ = ", θdeg))
+    ylim((0.0,3))
+    xlim((0,size(w)[1]))
+    figure(2, figsize = (6,8))
+    savefig(string(dir, "band_koshino_", θdeg, ".png"))
+    println(string("Saved to ", string(dir, "band_koshino_", θdeg, ".png")))
+elseif mode == "mesh"
+    freqs = sign.(evals) .* sqrt.(abs.(evals)) # TODO units?
+    G0_piece = evecs_all[2*q0_idx-1 : 2*q0_idx, :, :]
+    weights = sum(abs.(G0_piece).^2, dims=1)
+    omegas, DOS = compute_DOS(weights, θdeg, freqs, 1)
+
+    # Plot the DOS
+    clf()
+    xlabel("DOS")
+    ylabel("ω/ω₀")
+    plot(DOS, omegas, color="black")
+    title(string("θ = ", θdeg))
+    savefig(string(dir, "dos_koshino_", θdeg, ".png"))
+    println(string("Saved to ", string(dir, "dos_koshino_", θdeg, ".png")))
+    
+end

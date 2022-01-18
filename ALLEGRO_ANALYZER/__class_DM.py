@@ -679,7 +679,7 @@ poscars_uc: list of monolayer Poscar objects
 modeidxs: indices of the modes desired
 """
 class ThetaSpaceDM:
-    def __init__(self, k_set, TDMs, thetas, n_G, n_at, masses, poscars_uc, 
+    def __init__(self, k_dir, k_set, TDMs, thetas, n_G, n_at, masses, poscars_uc, 
                  modeidxs=np.arange(0,6), gridsz=13, sc_sz=3):
         self.ntheta = len(thetas)
         
@@ -692,7 +692,7 @@ class ThetaSpaceDM:
         self.n_G = n_G; self.n_at = n_at; self.k_set = k_set
         self.modeidxs = np.array(modeidxs).astype(int)
         self.A0 = poscars_uc[0].structure.lattice.matrix[:2,:2].T
-        print(f"Initialized dynamical matrix analyzer in theta-space for k = {k}.")
+        print(f"Initialized dynamical matrix analyzer in theta-space for k = {k_dir}.")
         self.__analyze(masses, gridsz=gridsz, sc_sz=sc_sz)
         
     def __DM_to_DDM(self):
@@ -764,6 +764,9 @@ class ThetaSpaceDM:
 
     def get_phonons(self):
         return self.phonons
+
+    def get_modes_and_phonons(self):
+        return self.modes, self.phonons
 
     def get_thspc_r_mesh(self):
         return self.thspc_r_mesh
