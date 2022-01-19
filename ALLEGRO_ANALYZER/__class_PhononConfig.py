@@ -97,7 +97,7 @@ anyway, since the lattice constants will be too far apart to form a stable bilay
 some reason it is useful for different numbers of atoms, simply adjust layer slicing in formation 
 of `phtnsr` to slice proportional to ratio of atoms, instead of in half.
 """
-PLOT_CMAP = 'RdGy'
+PLOT_CMAP = 'Spectral'
 class TwistedRealspacePhonon:
     def __init__(self, theta, k, GM_set, DM_at_k, n_at, bl_masses, 
                  poscars_uc, gridsz=13, outdir='.', modeidxs=np.arange(0,6), kpt=r'$\Gamma$',
@@ -288,7 +288,7 @@ class TwistedRealspacePhonon:
                 plt.rc('font', size=8*self.rspc_sc_sz)
                 plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.rspc_sc_sz, 5.5*self.rspc_sc_sz))
                 plt.tricontourf(coords[:,0], coords[:,1], z, cmap=PLOT_CMAP, levels=501) # color the z component as background
-                ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="black", alpha=0.8) # I have a better tie, it's cornflower blue!
+                ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="lightslategrey", linewidth=2.5)
                 (xm, xp), (ym, yp) = plt.xlim(), plt.ylim()
                 max_xy = np.max([LA.norm(phonon[:-1]) for phonon in phonons])
                 max_z = np.max(np.abs(z))
@@ -305,13 +305,13 @@ class TwistedRealspacePhonon:
                     fig.savefig(self.outdir + 'COL_' + this_outname)
                 plt.quiver(coords[:,0], coords[:,1],    # positions
                             phonons[:,0], phonons[:,1], 
-                            headlength=6, headaxislength=6, color='dodgerblue') # arrows
+                            width=0.0045, headlength=6, headwidth=3, color='black') # arrows
 
                 textstr = r'$\omega = %.3f$'%self.modes[m_j] + '\n' + \
                           r'$\delta u_{xy} = %.3E$'%max_xy + \
                           '\n' + r'$\delta u_{z} = %.3E$'%max_z
                 props = dict(boxstyle='round', facecolor='wheat', alpha=0.75)
-                ax.text(0.10*(xp-xm)+xm, 0.10*(yp-ym)+ym, textstr, 
+                ax.text(0.10*(xp-xm)+xm, 0.10*(yp-ym)+ym, "hi!", 
                         transform=ax.transAxes, verticalalignment='top', bbox=props)
                 fig.savefig(self.outdir + this_outname)
                 plt.close(fig)

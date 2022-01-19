@@ -282,6 +282,8 @@ a0 = l*sqrt(3)
 A0 = sqrt(3)/2*a0^2
 
 evecs_all = zeros(ComplexF64,(size(q_list,2)*2, size(q_list,2)*2, size(kline,2)))
+ievecs_all = zeros(ComplexF64,(size(q_list,2)*2, size(q_list,2)*2, size(kline,2)))
+ievals = zeros(Float64,(size(kline,2),size(q_list,2)*2))
 
 for k_idx = 1:size(kline,2)
     Hintra = zeros(ComplexF64,size(q_list,2)*2, size(q_list,2)*2)
@@ -302,6 +304,13 @@ for k_idx = 1:size(kline,2)
 
     global H = (Hinter+Hintra)/A0 # convert from eV / cell to eV / A^2
 
+    # intralayer part
+    iF = eigen(Hintra)
+    ieid = sortperm(real.(iF.values))
+    ievals[k_idx,:] = real(iF.values[eid])
+    ievecs_all[:, :, k_idx] = iF.vectors[:,ieid]
+
+    # the whole thing
     global F = eigen(H) # default sort by real(λ)
     eid = sortperm(real.(F.values))
     evals[k_idx,:] = real(F.values[eid])
@@ -348,6 +357,8 @@ elseif mode == "mesh"
     G0_piece = evecs_all[2*q0_idx-1 : 2*q0_idx, :, :]
     weights = sum(abs.(G0_piece).^2, dims=1)
     omegas, DOS = compute_DOS(weights, θdeg, freqs, 1)
+
+    # TODO normalize A by Hintra, copy/paste using ievals, ievecs_all
 
     # Plot the DOS
     clf()
