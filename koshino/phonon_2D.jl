@@ -97,10 +97,10 @@ G_cutoff = parsed_args["cut"] # need to be large for small angles
 # number of points to sample on the high symmetry line
 nq = 20
 nr = 50
-mode = "mesh"
+mode = "line"
 if parsed_args["mesh"] == true
     mode = "mesh"
-    nq = 44
+    nq = 45
 end
 wf_idx = 1
 
@@ -135,25 +135,6 @@ f2 = freq' .* ones(N,1)
 k =  GM * [f1[:]'; f2[:]']
 kx = reshape(k[1,:], (N,N))
 ky = reshape(k[2,:], (N,N))
-
-# fig = figure(1,figsize = (8, 10))
-# fig.subplots_adjust(hspace=0.1, wspace=0.1)
-# clf()
-# subplot(2,1,1)
-# pcolormesh(kx,ky,abs.(uG[1,:,:]))
-# xlim((-5,5))
-# ylim((-5,5))
-# ax=gca()
-# ax.set_aspect(1)
-# colorbar()
-
-# subplot(2,1,2)
-# pcolormesh(kx,ky,abs.(uG[2,:,:]))
-# xlim((-5,5))
-# ylim((-5,5))
-# ax=gca()
-# ax.set_aspect(1)
-# colorbar()
 
 # define mesh grid
 xgrid = reshape(range(0,stop=nq-1,step=1), (1,nq))
@@ -307,7 +288,7 @@ for k_idx = 1:size(kline,2)
     # intralayer part
     iF = eigen(Hintra)
     ieid = sortperm(real.(iF.values))
-    ievals[k_idx,:] = real(iF.values[eid])
+    ievals[k_idx,:] = real(iF.values[ieid])
     ievecs_all[:, :, k_idx] = iF.vectors[:,ieid]
 
     # the whole thing
@@ -362,8 +343,9 @@ elseif mode == "mesh"
 
     # Plot the DOS
     clf()
+    figure(2, figsize = (6,8))
     xlabel("DOS")
-    ylabel("ω/ω₀")
+    ylim((0.0, 3))
     plot(DOS, omegas, color="black")
     title(string("θ = ", θdeg))
     savefig(string(dir, "dos_koshino_", θdeg, ".png"))

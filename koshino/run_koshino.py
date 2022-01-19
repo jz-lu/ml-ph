@@ -15,7 +15,7 @@ def get_G_Cutoff(theta):
     if 1 <= theta < 3:
         return 11
     else:
-        return 12
+        return 13
 
 parser = argparse.ArgumentParser(description="Koshino model calculations over many twist angles")
 parser.add_argument("-N", "--mesh", type=int, help='enter N for NxN sampling mesh', default=51)
