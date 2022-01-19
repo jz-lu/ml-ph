@@ -596,8 +596,10 @@ class TwistedDM:
             totalsum = np.real_if_close(np.round(intrasum + intersum, 8))
             print(f"[Layer 2] [At {i}] total sum of reciprocal-forces at Gamma:\n{totalsum}")
 
-    def get_k_set(self):
+    def get_k_set(self, saveto=None):
         print("Retrieved k set sample from twisted DM object")
+        if saveto is not None:
+            np.save(saveto, self.k_mags)
         return self.k_mags
 
     def build_modes(self, dump=False, outdir='.'):
@@ -629,9 +631,11 @@ class TwistedDM:
             self.build_modes()
         return self.mode_set
     
-    def k_mode_tensor(self):
+    def k_mode_tensor(self, saveto=None):
         if not self.modes_built:
             self.build_modes()
+        if saveto is not None:
+            np.save(saveto, self.k_mags)
         return self.modetnsr
     
     # Plot phonon modes as a function of k

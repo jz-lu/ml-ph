@@ -23,7 +23,7 @@ from ___constants_names import (
     DEFAULT_PH_BAND_PLOT_NAME, DEFAULT_PH_BANDDOS_PLOT_NAME, 
     ANGLE_SAMPLE_INAME, RSPC_LIST_INAME, RSPC_K_INAME, SELECT_K_INAME, 
     MODE_TNSR_ONAME, ANGLE_SAMPLE_ONAME, GAMMA_IDX_ONAME, 
-    K_MAGS_ONAME, K_SET_ONAME, DM_TNSR_ONAME, 
+    K_MAGS_ONAME, K_SET_ONAME, DM_TNSR_ONAME, MODES_TNSR_ONAME, 
     THSPC_MODES_ONAME, THSPC_PHONONS_ONAME
 )
 from ___constants_phonopy import POSCAR_UNIT_NAME
@@ -62,6 +62,7 @@ if __name__ == '__main__':
     parser.add_argument("--rssz", type=int, help="supercell size for realspace plots", default=DEFAULT_RSPC_SZ)
     parser.add_argument("--dos", type=int, help='DOS k-mesh size')
     parser.add_argument("-f", "--fsum", action="store_true", help='output force sums (only useful for debugging)')
+    parser.add_argument("-s", "--save", action="store_true", help='save raw data')
     args = parser.parse_args()
     
     # Legacy compatibility
@@ -308,6 +309,10 @@ if __name__ == '__main__':
         mode_set = TDM.get_mode_set()
         TDM.plot_band(corner_kmags, round(np.rad2deg(theta), 6), outdir=outdir, name=name, \
             filename='band_'+outname, cutoff=cutoff)
+        if args.save:
+            TDM.get_k_set(outdir + K_MAGS_ONAME)
+            TDM.k_mode_tensor(outdir + MODES_TNSR_ONAME)
+            print(f"Saved `{K_MAGS_ONAME}` and `{MODES_TNSR_ONAME}` to {outdir}")
 
         if force_sum:
             print("\nAnalyzing sum of forces in twisted bilayer (G0 only)...")

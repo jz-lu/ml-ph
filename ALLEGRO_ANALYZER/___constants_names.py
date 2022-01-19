@@ -32,6 +32,7 @@ LC_SAMPLE_INAME = 'lc.txt' # start, stop, number (lattice constants for VASP cal
 
 # Output files for interpolation
 MODE_TNSR_ONAME = 'mode_%d.npy'
+MODES_TNSR_ONAME = 'modes.npy'
 ANGLE_SAMPLE_ONAME = 'thetas.npy'
 GAMMA_IDX_ONAME = 'Gamidx.npy'
 K_MAGS_ONAME = 'kmags.npy'

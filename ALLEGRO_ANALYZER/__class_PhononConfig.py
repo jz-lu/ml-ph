@@ -307,7 +307,7 @@ class TwistedRealspacePhonon:
                             phonons[:,0], phonons[:,1], 
                             width=0.0045, headlength=6, headwidth=3, color='black') # arrows
 
-                textstr = r'$\omega = %.3f$'%self.modes[m_j] + '\n' + \
+                textstr = r'$\omega = %.3f cm^{-1}$'%self.modes[m_j] + '\n' + \
                           r'$\delta u_{xy}^* = %.3E$'%max_xy + \
                           '\n' + r'$\delta u_{z}^* = %.3E$'%max_z
                 props = dict(boxstyle='round', facecolor='wheat', alpha=0.75)
