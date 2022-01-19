@@ -292,7 +292,6 @@ class TwistedRealspacePhonon:
                 ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="lightslategrey", linewidth=2.5)
                 max_xy = np.max([LA.norm(phonon[:-1]) for phonon in phonons])
                 max_z = np.max(np.abs(z))
-                # max_xyz = np.max([LA.norm(phonon) for phonon in phonons])
                 
                 plt.xlabel("x"); plt.ylabel("y")
                 ax.set_aspect('equal')

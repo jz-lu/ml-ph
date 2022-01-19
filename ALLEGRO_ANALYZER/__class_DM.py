@@ -677,13 +677,13 @@ Analysis of dynamical matrix for a given k-point in theta-space.
 k_set: k-points list of length |thetas| in Cartesian coordinates
 TDMs: dynamical matrices in a list
 thetas: sampled twist angles
-n_G: number of G vectors, n_at: number of atoms
+thspc_GM_sets: |thetas| x n_G x 2 tensor of moire G vectors for each theta
 masses: list of `n_at` masses corresponds to dynamical matrices
 poscars_uc: list of monolayer Poscar objects
 modeidxs: indices of the modes desired
 """
 class ThetaSpaceDM:
-    def __init__(self, k_dir, k_set, TDMs, thetas, n_G, n_at, masses, poscars_uc, 
+    def __init__(self, k_dir, k_set, TDMs, thetas, thspc_GM_sets, n_at, masses, poscars_uc, 
                  modeidxs=np.arange(0,6), gridsz=13, sc_sz=3):
         self.ntheta = len(thetas)
         
@@ -693,7 +693,8 @@ class ThetaSpaceDM:
             f"Number of twist angles {self.ntheta} does not math number of k-pts {len(k_set)}"
         
         self.DM_set = TDMs; self.thetas = thetas
-        self.n_G = n_G; self.n_at = n_at; self.k_set = k_set
+        self.thspc_GM_sets = thspc_GM_sets
+        self.n_G = thspc_GM_sets.shape[1]; self.n_at = n_at; self.k_set = k_set
         self.masses = masses
         self.modeidxs = np.array(modeidxs).astype(int)
         self.A0 = poscars_uc[0].structure.lattice.matrix[:2,:2].T
@@ -728,7 +729,7 @@ class ThetaSpaceDM:
         self.thtnsr = np.transpose(evecs, axes=(4,1,0,2,3)) # shape: (n_th, n_G, n_at, C, d)
         print(f"Tensors prepared. Phonon tensor has shape {self.thtnsr.shape}.")
         
-    def __th_tnsr_to_phonons(self, M, gridsz=13, sc_sz=3):
+    def __thtnsr_to_phonons(self, M, gridsz=13, sc_sz=3):
         """
         Phonon tensor in Fourier space to real space over a `sc_sz` x `sc_sz` supermoire cell 
         and mesh density `gridsz`. Masses `M`.
@@ -744,26 +745,28 @@ class ThetaSpaceDM:
             return r_mesh @ sc_lattice.T
         
         self.thspc_r_mesh = np.array([moire_mesh_at_th(th) for th in self.thetas])
-        assert len(thspc_r_mesh) == len(self.thtnsr)
+        assert len(self.thspc_r_mesh) == len(self.thtnsr)
         self.phonon_mags = np.abs(np.transpose(
             [
                 [
                     sum([G_blk * np.exp(-1j * np.dot(GM + k_th, r)) 
-                        for G_blk, GM in zip(tnsr_th, self.GM_set)]) # Fourier sum over G
+                        for G_blk, GM in zip(tnsr_th, GM_set)]) # Fourier sum over G
                     for r in r_mesh_th # do a sum for each realspace vector
                 ] 
-                for k_th, tnsr_th, r_mesh_th in zip(self.k_set, self.thtnsr, self.thspc_r_mesh) # over theta-space
+                for GM_set, k_th, tnsr_th, r_mesh_th in \
+                    zip(self.thspc_GM_sets, self.k_set, self.thtnsr, self.thspc_r_mesh) # over theta-space
             ], axes=(2,0,3,1,4)
         ))
         assert self.phonon_mags.shape == (self.n_at, self.ntheta, len(self.modeidxs), n_r, 3)
-        self.phonon_mags = np.transpose([y/sqrt(x) for x, y in zip(self.bl_masses, self.phonon_mags)], axes=(1,0,2,3,4))
+        self.phonon_mags = np.transpose([y/sqrt(x) for x, y in zip(self.masses, self.phonon_mags)], axes=(1,0,2,3,4))
         assert self.phonon_mags.shape == (self.ntheta, self.n_at, len(self.modeidxs), n_r, 3)
         self.phonon_mags = np.mean(self.phonon_mags, axis=1) # average over atoms/layers
+        print(f"Phonon magnitude tensor has shape {self.phonon_mags.shape}.")
 
     def __analyze(self, masses, gridsz=13, sc_sz=3):
         self.__DM_to_DDM()
         self.__DDM_to_thtnsr()
-        self.__th_tnsr_to_phonons(masses, gridsz=gridsz, sc_sz=sc_sz)
+        self.__thtnsr_to_phonons(masses, gridsz=gridsz, sc_sz=sc_sz)
         print("Analysis in theta-space complete.")
     
     def get_modes(self):

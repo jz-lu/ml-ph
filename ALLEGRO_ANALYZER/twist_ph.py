@@ -253,7 +253,7 @@ if __name__ == '__main__':
             th_TDMs = np.array([TDM_here.get_DM_set()[0] for TDM_here in th_TDM])
             modeidxs = np.loadtxt(indir + RSPC_LIST_INAME)
             thspc_modes, thspc_phonons = ThetaSpaceDM(k_here, thspc_k_set, th_TDMs, thetas, 
-                                                      len(GM_set), n_at, 
+                                                      thspc_GM_sets, n_at, 
                                                       bl_M[layer_idx_permuter], 
                                                       poscars_uc, modeidxs=modeidxs).get_modes_and_phonons()
             np.save(this_outdir + THSPC_MODES_ONAME, thspc_modes)
