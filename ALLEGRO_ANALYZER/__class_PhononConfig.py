@@ -144,12 +144,13 @@ class TwistedRealspacePhonon:
         self.r_linecut_direct = self.r_matrix[self.diagidxs]
         self.r_matrix = self.r_matrix @ self.sc_lattice.T # make Cartesian
         self.moire_boundary = make_unit_square() @ self.sc_lattice.T # boundary line of moire cell
+        self.rspc_sc_sz = rspc_sc_sz
         
         # Make a rectangular version of the mesh
         self.rec_nr = ceil(1.0 * gridsz * rspc_sc_sz)
         x_interval = [np.min(self.r_matrix[:,0]), np.max(self.r_matrix[:,0])]
         y_interval = [np.min(self.r_matrix[:,1]), np.max(self.r_matrix[:,1])]
-        x_interval[1] *= 1.1; y_interval[1] *= 1.1 # slight pump for aesthetics
+        x_interval[1] *= 1.125; y_interval[1] *= 1.125 # slight pump for aesthetics
         x = np.linspace(*x_interval, num=self.rec_nr, endpoint=True)
         y = np.linspace(*y_interval, num=self.rec_nr, endpoint=True)
         self.rec_rmatrix = np.array(list(prod(x, y)))
@@ -289,7 +290,6 @@ class TwistedRealspacePhonon:
                 plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.rspc_sc_sz, 5.5*self.rspc_sc_sz))
                 plt.tricontourf(coords[:,0], coords[:,1], z, cmap=PLOT_CMAP, levels=501) # color the z component as background
                 ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="lightslategrey", linewidth=2.5)
-                (xm, xp), (ym, yp) = plt.xlim(), plt.ylim()
                 max_xy = np.max([LA.norm(phonon[:-1]) for phonon in phonons])
                 max_z = np.max(np.abs(z))
                 # max_xyz = np.max([LA.norm(phonon) for phonon in phonons])
@@ -308,11 +308,11 @@ class TwistedRealspacePhonon:
                             width=0.0045, headlength=6, headwidth=3, color='black') # arrows
 
                 textstr = r'$\omega = %.3f$'%self.modes[m_j] + '\n' + \
-                          r'$\delta u_{xy} = %.3E$'%max_xy + \
-                          '\n' + r'$\delta u_{z} = %.3E$'%max_z
+                          r'$\delta u_{xy}^* = %.3E$'%max_xy + \
+                          '\n' + r'$\delta u_{z}^* = %.3E$'%max_z
                 props = dict(boxstyle='round', facecolor='wheat', alpha=0.75)
-                ax.text(0.10*(xp-xm)+xm, 0.10*(yp-ym)+ym, "hi!", 
-                        transform=ax.transAxes, verticalalignment='top', bbox=props)
+                ax.text(0.275, 0.085, textstr, 
+                        transform=ax.transAxes, verticalalignment='center', horizontalalignment='center', bbox=props)
                 fig.savefig(self.outdir + this_outname)
                 plt.close(fig)
 
