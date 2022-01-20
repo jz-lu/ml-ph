@@ -20,7 +20,7 @@ parser.add_argument("-c", "--cfg", action="store_true", help="configuration requ
 args = parser.parse_args()
 
 d = os.getcwd()
-skip = np.hstack([expand_range(x) for x in args.skip]) if len(args.skip) > 0 else None
+skip = np.hstack([expand_range(x) for x in args.skip]) if args.skip else None
 if len(skip) > 0:
     print(f"Skipping: {skip}")
 N = args.sampling
