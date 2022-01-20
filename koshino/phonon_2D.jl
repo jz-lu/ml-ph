@@ -95,7 +95,7 @@ hull = Hull(blg, N, [0.,0.]);
 # Cutofff radius in k-space
 G_cutoff = parsed_args["cut"] # need to be large for small angles
 # number of points to sample on the high symmetry line
-nq = 20
+nq = 100
 nr = 50
 mode = "line"
 if parsed_args["mesh"] == true

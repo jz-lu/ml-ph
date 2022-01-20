@@ -635,7 +635,7 @@ class TwistedDM:
         if not self.modes_built:
             self.build_modes()
         if saveto is not None:
-            np.save(saveto, self.k_mags)
+            np.save(saveto, self.modetnsr)
         return self.modetnsr
     
     # Plot phonon modes as a function of k

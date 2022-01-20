@@ -132,7 +132,7 @@ def begin_computation(user_input_settings):
                                      calc_list=clist, outdir=intra_path,
                                      compute_jobname=user_input_settings.passname()+MONOLAYER_JOBNAME+i, 
                                      vdw=vdw, kpts=kpts, 
-                                     compute_partitions='kaxiras,shared', 
+                                     compute_partitions=ALT_COMPUTE_PARTITIONS, 
                                      ediff0=user_input_settings.ediff0, 
                                      fcut=user_input_settings.fcut, 
                                      passname=user_input_settings.passname(), 

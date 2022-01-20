@@ -318,8 +318,8 @@ if __name__ == '__main__':
         TDM.plot_band(corner_kmags, round(np.rad2deg(theta), 6), outdir=outdir, name=name, \
             filename='band_'+outname, cutoff=cutoff)
         if args.save:
-            TDM.get_k_set(outdir + K_MAGS_ONAME)
-            TDM.k_mode_tensor(outdir + MODES_TNSR_ONAME)
+            TDM.get_k_set(saveto=outdir + K_MAGS_ONAME)
+            TDM.k_mode_tensor(saveto=outdir + MODES_TNSR_ONAME)
             print(f"Saved `{K_MAGS_ONAME}` and `{MODES_TNSR_ONAME}` to {outdir}")
 
         if force_sum:
