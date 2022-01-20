@@ -41,6 +41,7 @@ DM_TNSR_ONAME = 'dmtnsr.npy'
 THSPC_MODES_ONAME = 'thspc_modes.npy'
 THSPC_MAGS_ONAME = 'thspc_mags.npy'
 THSPC_PHONONS_ONAME = 'thspc_phonons.npy'
+THSPC_MESH_ONAME = 'thspc_mesh.npy'
 
 # Calculation types
 TYPE_RELAX_BASIC = 0

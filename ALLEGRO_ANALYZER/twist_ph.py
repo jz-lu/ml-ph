@@ -24,7 +24,7 @@ from ___constants_names import (
     ANGLE_SAMPLE_INAME, RSPC_LIST_INAME, RSPC_K_INAME, SELECT_K_INAME, 
     MODE_TNSR_ONAME, ANGLE_SAMPLE_ONAME, GAMMA_IDX_ONAME, 
     K_MAGS_ONAME, K_SET_ONAME, DM_TNSR_ONAME, MODES_TNSR_ONAME, 
-    THSPC_MODES_ONAME, THSPC_PHONONS_ONAME, THSPC_MAGS_ONAME
+    THSPC_MODES_ONAME, THSPC_PHONONS_ONAME, THSPC_MAGS_ONAME, THSPC_MESH_ONAME
 )
 from ___constants_phonopy import POSCAR_UNIT_NAME
 from ___constants_compute import DEFAULT_NUM_LAYERS
@@ -252,15 +252,21 @@ if __name__ == '__main__':
             n_at = sum([sum(p.natoms) for p in poscars_uc])
             th_TDMs = np.array([TDM_here.get_DM_set()[0] for TDM_here in th_TDM])
             modeidxs = np.loadtxt(indir + RSPC_LIST_INAME)
-            thspc_modes, thspc_phonons, thspc_mags = ThetaSpaceDM(k_here, thspc_k_set, th_TDMs, thetas, 
+            
+            thspc_analyzer = ThetaSpaceDM(k_here, thspc_k_set, th_TDMs, thetas, 
                                                       thspc_GM_sets, n_at, 
                                                       bl_M[layer_idx_permuter], 
-                                                      poscars_uc, modeidxs=modeidxs).get_modes_and_phonons()
+                                                      poscars_uc, modeidxs=modeidxs)
+            thspc_modes, thspc_phonons, thspc_mags = thspc_analyzer.get_modes_and_phonons()
+            thspc_mesh = thspc_analyzer.get_thspc_r_mesh()
+            
             np.save(this_outdir + THSPC_MODES_ONAME, thspc_modes)
             np.save(this_outdir + THSPC_PHONONS_ONAME, thspc_phonons)
             np.save(this_outdir + THSPC_MAGS_ONAME, thspc_mags)
+            np.save(this_outdir + THSPC_MESH_ONAME, thspc_mesh)
             print(f"Saved theta-space modes for k = {k_here} to {this_outdir + THSPC_MODES_ONAME}")
             print(f"Saved theta-space mags for k = {k_here} to {this_outdir + THSPC_MAGS_ONAME}")
+            print(f"Saved theta-space real space mesh for k = {k_here} to {this_outdir + THSPC_MESH_ONAME}")
             print(f"Saved theta-space phonons for k = {k_here} to {this_outdir + THSPC_PHONONS_ONAME}", flush=True)
             
         update(f"Finished writing theta-space analysis to {outdir}")
