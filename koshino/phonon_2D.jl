@@ -10,6 +10,7 @@ using Interpolations
 using Optim
 using LinearAlgebra
 using ArgParse
+using NPZ
 
 # Obtain the DOS Gaussian standard deviation based on twist angle
 function DOS_stdev(θdeg)
@@ -59,7 +60,6 @@ function parse_commandline()
             help = "twist angle in degrees"
             required = true
             arg_type = Float64
-            # default = 6.
         "-N", "-n"
             help = "grid size (N if grid is NxN)"
             arg_type = Int
@@ -170,12 +170,6 @@ if mode == "line"
         kline[j,:] = [l1[j,1:nq];l2[j,1:nq];l3[j,:]]
         kline_idx[j,:] = [i1[j,1:nq];i2[j,1:nq];i3[j,:]]
     end
-
-    # figure(10)
-    # scatter(kline[1,:], kline[2,:])
-    # ax=gca()
-    # ax.set_aspect(1)
-    # figure(10)
 
 elseif mode == "mesh"
     # create a grid in k space
@@ -332,14 +326,19 @@ if mode == "line"
     xlim((0,size(w)[1]))
     figure(2, figsize = (6,8))
     savefig(string(dir, "band_koshino_", θdeg, ".png"))
+    npzwrite(dstring(dir, "band_koshino_", θdeg, ".npz")), w/w0)
     println(string("Saved to ", string(dir, "band_koshino_", θdeg, ".png")))
 elseif mode == "mesh"
-    freqs = sign.(evals) .* sqrt.(abs.(evals)) # TODO units?
+    ifreqs = sign.(ievals) .* sqrt.(abs.(ievals))
+    iG0_piece = ievecs_all[2*q0_idx-1 : 2*q0_idx, :, :]
+    iweights = sum(abs.(iG0_piece).^2, dims=1)
+    iomegas, iDOS = compute_DOS(iweights, θdeg, ifreqs, 1)
+    normalizer = maximum(iDOS)
+
+    freqs = sign.(evals) .* sqrt.(abs.(evals))
     G0_piece = evecs_all[2*q0_idx-1 : 2*q0_idx, :, :]
     weights = sum(abs.(G0_piece).^2, dims=1)
-    omegas, DOS = compute_DOS(weights, θdeg, freqs, 1)
-
-    # TODO normalize A by Hintra, copy/paste using ievals, ievecs_all
+    omegas, DOS = compute_DOS(weights, θdeg, freqs, normalizer)
 
     # Plot the DOS
     clf()
@@ -349,6 +348,7 @@ elseif mode == "mesh"
     plot(DOS, omegas, color="black")
     title(string("θ = ", θdeg))
     savefig(string(dir, "dos_koshino_", θdeg, ".png"))
+    npzwrite(dstring(dir, "dos_koshino_", θdeg, ".npz")), DOS)
     println(string("Saved to ", string(dir, "dos_koshino_", θdeg, ".png")))
     
 end

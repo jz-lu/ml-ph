@@ -150,7 +150,7 @@ class TwistedRealspacePhonon:
         self.rec_nr = ceil(1.0 * gridsz * rspc_sc_sz)
         x_interval = [np.min(self.r_matrix[:,0]), np.max(self.r_matrix[:,0])]
         y_interval = [np.min(self.r_matrix[:,1]), np.max(self.r_matrix[:,1])]
-        x_interval[1] *= 1.125; y_interval[1] *= 1.125 # slight pump for aesthetics
+        x_interval[0] *= 1.11; x_interval[1] *= 1.11; y_interval[1] *= 1.1 # slight pump for aesthetics
         x = np.linspace(*x_interval, num=self.rec_nr, endpoint=True)
         y = np.linspace(*y_interval, num=self.rec_nr, endpoint=True)
         self.rec_rmatrix = np.array(list(prod(x, y)))

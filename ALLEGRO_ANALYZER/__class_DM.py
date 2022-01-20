@@ -746,7 +746,7 @@ class ThetaSpaceDM:
         
         self.thspc_r_mesh = np.array([moire_mesh_at_th(th) for th in self.thetas])
         assert len(self.thspc_r_mesh) == len(self.thtnsr)
-        self.phonon_mags = np.abs(np.transpose(
+        self.phonons = np.transpose(
             [
                 [
                     sum([G_blk * np.exp(-1j * np.dot(GM + k_th, r)) 
@@ -756,11 +756,22 @@ class ThetaSpaceDM:
                 for GM_set, k_th, tnsr_th, r_mesh_th in \
                     zip(self.thspc_GM_sets, self.k_set, self.thtnsr, self.thspc_r_mesh) # over theta-space
             ], axes=(2,0,3,1,4)
-        ))
-        assert self.phonon_mags.shape == (self.n_at, self.ntheta, len(self.modeidxs), n_r, 3)
-        self.phonon_mags = np.transpose([y/sqrt(x) for x, y in zip(self.masses, self.phonon_mags)], axes=(1,0,2,3,4))
+        )
+        assert self.phonons.shape == (self.n_at, self.ntheta, len(self.modeidxs), n_r, 3)
+        self.phonons = np.transpose([y/sqrt(x) for x, y in zip(self.masses, self.phonons)], axes=(1,0,2,3,4))
+        self.phonon_mags = np.abs(self.phonons)
         assert self.phonon_mags.shape == (self.ntheta, self.n_at, len(self.modeidxs), n_r, 3)
+        self.phonons = np.transpose(np.real(
+            list(
+                map(
+                    lambda x: np.mean(x, axis=1), \
+                    np.split(self.phonons, 2, axis=1)
+                    )
+                )
+            ), axes=(1,0,2,3,4))
+        assert self.phonons.shape == (self.ntheta, 2, len(self.modeidxs), n_r, 3)
         self.phonon_mags = np.mean(self.phonon_mags, axis=1) # average over atoms/layers
+        print(f"Phonon real-space tensor has shape {self.phonons.shape}")
         print(f"Phonon magnitude tensor has shape {self.phonon_mags.shape}.")
 
     def __analyze(self, masses, gridsz=13, sc_sz=3):
@@ -773,10 +784,10 @@ class ThetaSpaceDM:
         return self.modes
 
     def get_phonons(self):
-        return self.phonon_mags
+        return self.phonons, self.phonon_mags
 
     def get_modes_and_phonons(self):
-        return self.modes, self.phonon_mags
+        return self.modes, self.phonons, self.phonon_mags
 
     def get_thspc_r_mesh(self):
         return self.thspc_r_mesh

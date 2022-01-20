@@ -39,6 +39,7 @@ K_MAGS_ONAME = 'kmags.npy'
 K_SET_ONAME = 'kset.npy'
 DM_TNSR_ONAME = 'dmtnsr.npy'
 THSPC_MODES_ONAME = 'thspc_modes.npy'
+THSPC_MAGS_ONAME = 'thspc_mags.npy'
 THSPC_PHONONS_ONAME = 'thspc_phonons.npy'
 
 # Calculation types
