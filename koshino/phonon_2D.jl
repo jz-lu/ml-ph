@@ -326,7 +326,7 @@ if mode == "line"
     xlim((0,size(w)[1]))
     figure(2, figsize = (6,8))
     savefig(string(dir, "band_koshino_", θdeg, ".png"))
-    npzwrite(dstring(dir, "band_koshino_", θdeg, ".npz")), w/w0)
+    npzwrite(string(dir, "band_koshino_", θdeg, ".npz"), w/w0)
     println(string("Saved to ", string(dir, "band_koshino_", θdeg, ".png")))
 elseif mode == "mesh"
     ifreqs = sign.(ievals) .* sqrt.(abs.(ievals))
@@ -348,7 +348,7 @@ elseif mode == "mesh"
     plot(DOS, omegas, color="black")
     title(string("θ = ", θdeg))
     savefig(string(dir, "dos_koshino_", θdeg, ".png"))
-    npzwrite(dstring(dir, "dos_koshino_", θdeg, ".npz")), DOS)
+    npzwrite(string(dir, "dos_koshino_", θdeg, ".npz"), DOS)
     println(string("Saved to ", string(dir, "dos_koshino_", θdeg, ".png")))
     
 end

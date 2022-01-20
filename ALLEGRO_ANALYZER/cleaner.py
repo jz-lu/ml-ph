@@ -12,7 +12,7 @@ parser.add_argument("-d", "--dir", type=str, help="root calc directory", default
 parser.add_argument("-v", "--verbose", action="store_true", help="output a log of all removals")
 args = parser.parse_args()
 ROOT = checkPath(os.path.abspath(args.dir))
-PREFIXES = tuple(['FORCE', 'POSCAR', 'CONTCAR', 'INCAR'])
+PREFIXES = tuple(['FORCE', 'SPOSCAR', 'POSCAR', 'CONTCAR', 'INCAR'])
 SUFFIXES = tuple(['.txt'])
 
 def vprint(s):
