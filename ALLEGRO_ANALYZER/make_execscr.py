@@ -100,7 +100,7 @@ def get_run_cmd(calc_type='basic', outdir='.', twist=None, calc_list=[ENERGIES],
     assert kpts in ['GAMMA', 'G', 'Gamma', 'Gam', 'g', 'M', 'MP', True, False], "k-points parameter must be either 'GAMMA' or 'MP'"
     assert sampling in ['low', 'high'], "sampling must be low or high"
     calc_list = ' '.join(calc_list)
-    outdir = checkPath(outdir); exepath = outdir + fname
+    outdir = checkPath(outdir)
     kpts = '' if kpts in ['GAMMA', 'G', 'Gamma', 'Gam', 'g', True] else '--mp'
     vdw = '--vdw' if vdw in ['T', True, 'True'] else ''
     fcut = '-f' if fcut in ['T', True, 'True'] else ''
@@ -116,7 +116,7 @@ def get_run_cmd(calc_type='basic', outdir='.', twist=None, calc_list=[ENERGIES],
         passname += ('' if passname == '' else '-') + '${SLURM_ARRAY_TASK_ID}'
     if len(passname) > 0:
         passname = '-n ' + passname
-    return f'python3 $ALLEGRO_DIR/start.py -t {calc_type} {twist} {sampling} {no_ionic_step} {relaxer} -d $WDIR {passname} --super {super_dim} {vdw} {fcut} {ediff0} {kpts} {calc_list}\n'
+    return f'python3 {CODE_DIR}/start.py -t {calc_type} {twist} {sampling} {no_ionic_step} {relaxer} -d $WDIR {passname} --super {super_dim} {vdw} {fcut} {ediff0} {kpts} {calc_list}\n'
 
 if __name__ == '__main__':
     args = copy.deepcopy(sys.argv)[1:]; i = 0; n = len(args)
