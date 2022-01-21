@@ -151,6 +151,7 @@ def begin_computation(user_input_settings):
                    super_dim=SUPER_DIM[0], relaxer=user_input_settings.run_relaxer) 
         os.chdir(inter_path)
         print(f"Building configuration subjob ({inter_path+CONFIG_SUBDIR_NAME})...")
+        print(f"Running command `{runcmd}`...", flush=True)
         stream = os.popen(runcmd)
         print(stream.read())
     else:
