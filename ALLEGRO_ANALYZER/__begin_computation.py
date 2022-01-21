@@ -25,7 +25,7 @@ from __dirModifications import mkdir, copy, move
 from __build_shscript import compute_configs
 from __compute_properties import relax_solid, solve_electronic
 from pymatgen.io.vasp.inputs import Poscar
-from make_execscr import build_bash_exe
+from make_execscr import build_bash_exe, get_run_cmd
 import os
 import numpy as np
 
@@ -144,20 +144,15 @@ def begin_computation(user_input_settings):
                 print(stream.read())
             else:
                 print(DEBUG_NOTICE_MSG)
-        exepath = build_bash_exe(calc_type='config', calc_list=clist, outdir=inter_path,
-                   compute_jobname=CONFIG_JOBNAME, vdw=vdw, kpts=kpts, wdir=inter_path+CONFIG_SUBDIR_NAME,
-                   compute_time='01:00:00', compute_ncpu='1', twist=user_input_settings.get_tw_angle(), 
-                   sampling=user_input_settings.sampling, compute_partitions=ALT_COMPUTE_PARTITIONS, 
-                   passname=user_input_settings.passname(), fcut=user_input_settings.fcut, 
-                   ediff0=user_input_settings.ediff0, super_dim=SUPER_DIM[0], relaxer=user_input_settings.run_relaxer) 
-                   # just kicks off a bunch of jobs, so it doesn't need any time
-        if not DEBUGGING:
-            os.chdir(inter_path)
-            print(f"Submitting configuration job (wdir={inter_path+CONFIG_SUBDIR_NAME})...")
-            stream = os.popen('sbatch ' + exepath)
-            print(stream.read())
-        else:
-            print(DEBUG_NOTICE_MSG)
+        runcmd = get_run_cmd(calc_type='config', calc_list=clist, outdir=inter_path,
+                   vdw=vdw, kpts=kpts, twist=user_input_settings.get_tw_angle(), 
+                   sampling=user_input_settings.sampling, passname=user_input_settings.passname(), 
+                   fcut=user_input_settings.fcut, ediff0=user_input_settings.ediff0, 
+                   super_dim=SUPER_DIM[0], relaxer=user_input_settings.run_relaxer) 
+        os.chdir(inter_path)
+        print(f"Building configuration subjob ({inter_path+CONFIG_SUBDIR_NAME})...")
+        stream = os.popen(runcmd)
+        print(stream.read())
     else:
         print('Set to run analytical calculations directly, without relaxation')
         os.chdir(BASE_ROOT)

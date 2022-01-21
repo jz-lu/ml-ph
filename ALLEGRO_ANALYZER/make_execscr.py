@@ -90,6 +90,34 @@ def build_bash_exe(calc_type='basic', outdir='.', wdir=None, calc_list=[ENERGIES
     succ('Executable bash file successfully written to %s'%(exepath))
     return exepath
 
+def get_run_cmd(calc_type='basic', outdir='.', twist=None, calc_list=[ENERGIES], 
+                vdw=False, kpts='GAMMA', sampling='low', passname='', 
+                pass_idx=False, fcut=False, ediff0=INIT_EDIFF0, super_dim=SUPER_DIM[0], 
+                relaxer=False, no_ionic_step=False):
+    assert calc_type in TYPE_STRS, f"Unknown calculation type {calc_type}"
+    assert isinstance(calc_list, list), "Calculation list must be of type list"
+    assert vdw in ['T', 'F', True, False], "vdw parameter must be either 'T' or 'F'"
+    assert kpts in ['GAMMA', 'G', 'Gamma', 'Gam', 'g', 'M', 'MP', True, False], "k-points parameter must be either 'GAMMA' or 'MP'"
+    assert sampling in ['low', 'high'], "sampling must be low or high"
+    calc_list = ' '.join(calc_list)
+    outdir = checkPath(outdir); exepath = outdir + fname
+    kpts = '' if kpts in ['GAMMA', 'G', 'Gamma', 'Gam', 'g', True] else '--mp'
+    vdw = '--vdw' if vdw in ['T', True, 'True'] else ''
+    fcut = '-f' if fcut in ['T', True, 'True'] else ''
+    relaxer = '--relax' if relaxer else ''
+    twist = '' if twist is None else f'--twist {twist}'
+    sampling = f'-s {sampling}' if calc_type in CFG_STRS else ''
+    no_ionic_step = '--noionicstep' if no_ionic_step else ''
+    if ediff0 is None:
+        ediff0 = ''
+    else:
+        ediff0 = '-e ' + str(ediff0)
+    if pass_idx:
+        passname += ('' if passname == '' else '-') + '${SLURM_ARRAY_TASK_ID}'
+    if len(passname) > 0:
+        passname = '-n ' + passname
+    return f'python3 $ALLEGRO_DIR/start.py -t {calc_type} {twist} {sampling} {no_ionic_step} {relaxer} -d $WDIR {passname} --super {super_dim} {vdw} {fcut} {ediff0} {kpts} {calc_list}\n'
+
 if __name__ == '__main__':
     args = copy.deepcopy(sys.argv)[1:]; i = 0; n = len(args)
     compute_jobname = COMPUTE_JOBNAME
