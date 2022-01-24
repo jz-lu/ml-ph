@@ -11,7 +11,7 @@ def expand_range(rg):
         start = int(rg[:idx]); end = int(rg[idx+1:])
         return np.arange(start, end+1)
     except:
-        return np.array([rg])
+        return np.array([int(rg)])
 
 parser = argparse.ArgumentParser(description="Requeue failed jobs on cluster")
 parser.add_argument("sampling", type=int, help="number of shifts")
