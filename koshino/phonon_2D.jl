@@ -34,15 +34,13 @@ function DOS_stdev(θdeg)
     elseif θdeg < 9.01
         width = 0.43
     end
-    return width / (2 * sqrt(2 * log(2))) 
+    return width / (2 * sqrt(2 * log(2))) / 7.5
 end
 
 partition_density=1000
 function compute_DOS(weights, θdeg, omegas_k, A=1)
-    min_freq = minimum(minimum(omegas_k))
-    max_freq = maximum(maximum(omegas_k))
     variance = DOS_stdev(θdeg)^2
-    omegas = LinRange(min_freq, max_freq, partition_density)
+    omegas = LinRange(0, 3, partition_density)
     return omegas, [sum(
         sum(
             [weight * A * exp(-(omega - omega_k)^2 / (2 * variance)) 
@@ -100,7 +98,7 @@ nr = 50
 mode = "line"
 if parsed_args["mesh"] == true
     mode = "mesh"
-    nq = 45
+    nq = 11
 end
 wf_idx = 1
 
@@ -331,13 +329,15 @@ if mode == "line"
 elseif mode == "mesh"
     ifreqs = sign.(ievals) .* sqrt.(abs.(ievals))
     iG0_piece = ievecs_all[2*q0_idx-1 : 2*q0_idx, :, :]
-    iweights = sum(abs.(iG0_piece).^2, dims=1)
+    iweights = dropdims(sum(abs.(iG0_piece).^2, dims=1), dims=1)
+    println(size(iweights), size(ifreqs))
     iomegas, iDOS = compute_DOS(iweights, θdeg, ifreqs, 1)
     normalizer = maximum(iDOS)
 
     freqs = sign.(evals) .* sqrt.(abs.(evals))
     G0_piece = evecs_all[2*q0_idx-1 : 2*q0_idx, :, :]
-    weights = sum(abs.(G0_piece).^2, dims=1)
+    weights = dropdims(sum(abs.(G0_piece).^2, dims=1), dims=1)
+    println(size(weights))
     omegas, DOS = compute_DOS(weights, θdeg, freqs, normalizer)
 
     # Plot the DOS
