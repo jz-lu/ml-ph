@@ -11,6 +11,7 @@ using Optim
 using LinearAlgebra
 using ArgParse
 using NPZ
+using Base.Iterators
 
 # Obtain the DOS Gaussian standard deviation based on twist angle
 function DOS_stdev(θdeg)
@@ -26,7 +27,7 @@ function DOS_stdev(θdeg)
     elseif θdeg < 3.51
         width = 0.21
     elseif θdeg < 5.51
-        width = .27
+        width = 0.27
     elseif θdeg < 6.51
         width = 0.31
     elseif θdeg < 7.51
@@ -34,11 +35,12 @@ function DOS_stdev(θdeg)
     elseif θdeg < 9.01
         width = 0.43
     end
-    return width / (2 * sqrt(2 * log(2))) / 7.5
+    return width / (2 * sqrt(2 * log(2))) / 5
 end
 
-partition_density=1000
+partition_density = 1000
 function compute_DOS(weights, θdeg, omegas_k, A=1)
+    println("Computing DOS... ")
     variance = DOS_stdev(θdeg)^2
     omegas = LinRange(0, 3, partition_density)
     return omegas, [sum(
@@ -56,8 +58,9 @@ function parse_commandline()
     @add_arg_table! s begin
         "--deg", "-d"
             help = "twist angle in degrees"
-            required = true
+            # required = true
             arg_type = Float64
+            default = 2.
         "-N", "-n"
             help = "grid size (N if grid is NxN)"
             arg_type = Int
@@ -68,7 +71,7 @@ function parse_commandline()
         "--cut", "-c"
             help = "Grid shell cutoff"
             arg_type = Int
-            default = 7
+            default = 6
         "--out", "-o"
             help = "output directory path (must end in slash)"
             arg_type = String
@@ -98,7 +101,7 @@ nr = 50
 mode = "line"
 if parsed_args["mesh"] == true
     mode = "mesh"
-    nq = 11
+    nq = 45
 end
 wf_idx = 1
 
@@ -295,22 +298,21 @@ for k_idx = 1:size(kline,2)
     end
 end
 
+# normalization
+rho = 7.61 * 1e-7 # area density of single-layer graphene in kg/m^2
+
+w = sqrt.(abs.(evals) * 1e20 * 16.02   ./ rho) # in Hz
+iw = sqrt.(abs.(ievals) * 1e20 * 16.02   ./ rho) # in Hz
+lambda = λ/A0# in eV / A^2
+lambda = lambda * 1.602e-19 *1e20; # in J / m^2
+LM = a0 / θ *1e-10 # moire length in m
+w0 = sqrt(lambda/rho) * (2*pi) / LM # in 1/s
+# convert to meV
+hbar = 4.1357e-15 # in eV.s
+w0_meV = w0 * hbar *1e3
+w0_THz = w0 / 10e12
+
 if mode == "line"
-    # normalization
-    rho = 7.61 * 1e-7 # area density of single-layer graphene in kg/m^2
-    evals_shift = evals .- min(evals[:]...)
-    evals_shift = evals
-
-    w = sqrt.(abs.(evals_shift) * 1e20 * 16.02   ./ rho) # in Hz
-    lambda = λ/A0# in eV / A^2
-    lambda = lambda * 1.602e-19 *1e20; # in J / m^2
-    LM = a0 / θ *1e-10 # moire length in m
-    w0 = sqrt(lambda/rho) * (2*pi) / LM # in 1/s
-    # convert to meV
-    hbar = 4.1357e-15 # in eV.s
-    w0_meV = w0 * hbar *1e3
-    w0_THz = w0 / 10e12
-
     rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
     rcParams["font.size"] = 15
 
@@ -327,20 +329,41 @@ if mode == "line"
     npzwrite(string(dir, "band_koshino_", θdeg, ".npz"), w/w0)
     println(string("Saved to ", string(dir, "band_koshino_", θdeg, ".png")))
 elseif mode == "mesh"
-    ifreqs = sign.(ievals) .* sqrt.(abs.(ievals))
+    ifreqs = iw/w0
     iG0_piece = ievecs_all[2*q0_idx-1 : 2*q0_idx, :, :]
-    iweights = dropdims(sum(abs.(iG0_piece).^2, dims=1), dims=1)
-    println(size(iweights), size(ifreqs))
+    iweights = transpose(dropdims(sum(abs.(iG0_piece).^2, dims=1), dims=1))
+    println("iWeights size:")
+    println(size(iweights))
+    println("iFreqs size:")
+    println(size(ifreqs))
+    println("Flattening...")
+    ifreqs = ifreqs[:]
+    iweights = iweights[:]
+    println("iWeights size (flat):")
+    println(size(iweights))
+    println("iFreqs size (flat):")
+    println(size(ifreqs))
     iomegas, iDOS = compute_DOS(iweights, θdeg, ifreqs, 1)
     normalizer = maximum(iDOS)
+    println("Intralayer done.")
 
-    freqs = sign.(evals) .* sqrt.(abs.(evals))
+    freqs = w/w0
     G0_piece = evecs_all[2*q0_idx-1 : 2*q0_idx, :, :]
-    weights = dropdims(sum(abs.(G0_piece).^2, dims=1), dims=1)
+    weights = transpose(dropdims(sum(abs.(G0_piece).^2, dims=1), dims=1))
+    println("Weights size:")
     println(size(weights))
+    println("iFreqs size:")
+    println(size(freqs))
+    freqs = freqs[:]
+    weights = weights[:]
+    println("Weights size (flat):")
+    println(size(weights))
+    println("Freqs size (flat):")
+    println(size(freqs))
     omegas, DOS = compute_DOS(weights, θdeg, freqs, normalizer)
 
     # Plot the DOS
+    println("Plotting DOS...")
     clf()
     figure(2, figsize = (6,8))
     xlabel("DOS")
@@ -350,5 +373,4 @@ elseif mode == "mesh"
     savefig(string(dir, "dos_koshino_", θdeg, ".png"))
     npzwrite(string(dir, "dos_koshino_", θdeg, ".npz"), DOS)
     println(string("Saved to ", string(dir, "dos_koshino_", θdeg, ".png")))
-    
 end
