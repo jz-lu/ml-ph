@@ -1,6 +1,7 @@
 # Main file to be executed by user
 import os
 import numpy as np
+import shutil
 from pymatgen.io.vasp.inputs import VaspInput, Poscar
 from ____exit_with_error import exit_with_error
 from ____debug import DEBUG_NOTICE_MSG, DEBUGGING
@@ -12,7 +13,8 @@ from ___constants_names import (
     CONTCAR_NAME, 
     POSCAR_NAME, 
     INCAR_RELAXATION_NAME,
-    KPOINTS_NAME
+    KPOINTS_NAME, 
+    CODE_DIR
 )
 from ___constants_misc import ERR_VASP_RUN_RELAX, ERR_VASP_NOT_CONVERGED
 from ___constants_vasp import (
@@ -68,7 +70,10 @@ def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax', edinit=
         print(DEBUG_NOTICE_MSG)
         return
     dirName = checkPath(dirName)
-
+    
+    # Copy vdW kernel into the right folder
+    shutil.copyfile(CODE_DIR + 'vdw_kernel.bindat', dirName)
+    
     # pymatgen doesn't handle other files well. We will manually print chgcar in the outdir so VASP will take it when it runs.
     if predefined_chgcar != None:
         predefined_chgcar.write_file(dirName + CHGCAR_NAME)
