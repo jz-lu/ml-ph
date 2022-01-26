@@ -72,10 +72,10 @@ def run_vasp(vaspObj, dirName, predefined_chgcar=None, run_type='relax', edinit=
     dirName = checkPath(dirName)
     
     # Copy vdW kernel into the right folder
-    try:
-        shutil.copyfile(CODE_DIR + 'vdw_kernel.bindat', dirName)
-    except BaseException as e:
-        print(e)
+    kernel_cmd = 'cp ' + CODE_DIR + ' ' + 'vdw_kernel.bindat' + ' ' + dirName
+    print(f"Running `{kernel_cmd}`")
+    stream = os.popen(kernel_cmd)
+    print(stream.read())
     
     # pymatgen doesn't handle other files well. We will manually print chgcar in the outdir so VASP will take it when it runs.
     if predefined_chgcar != None:
