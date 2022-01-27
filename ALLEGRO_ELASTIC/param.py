@@ -30,8 +30,8 @@ if __name__ == "__main__":
         with open(fpath, 'w') as f:
             f.write('#!/bin/bash\n')
             f.write(f'#SBATCH -J {folder}\n')
-            f.write('#SBATCH -n 16\n#SBATCH -t 16:00:00\n')
-            f.write('#SBATCH -p kaxiras,shared\n#SBATCH --mem-per-cpu=7100\n')
+            f.write('#SBATCH -n 24\n#SBATCH -t 16:00:00\n')
+            f.write('#SBATCH -p shared\n#SBATCH --mem-per-cpu=7100\n')
             f.write(f'#SBATCH -o {folder}_%a_%A.out\n#SBATCH -e er_{folder}_%a_%A.err')
             f.write('#SBATCH --mail-type=END,FAIL\n#SBATCH --mail-user=jlu@college.harvard.edu\n')
             f.write('module load intel/17.0.4-fasrc01\n')
