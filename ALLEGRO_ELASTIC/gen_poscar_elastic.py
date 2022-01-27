@@ -43,7 +43,7 @@ def get_poscar_elastic(args):
     fpath = ROOT + mat + '/'
     if mat[0] == 'G':
         species = ['C', 'C']
-        a0 = 2.446
+        a0 = 2.457 # LDA: 2.446
         print(f"Material: Gr with lattice constants {a0}")
         pos = [[0, 0, 0], [sqrt(3)/3*a0, 0, 0]]
     elif mat[0] == 'W':
@@ -58,7 +58,7 @@ def get_poscar_elastic(args):
         pos = [[0, 0, 0], [sqrt(3)/3*a0, 0, -1.565], [sqrt(3)/3*a0, 0, 1.565]]
     elif mat[0] == 'M':
         species = ['Mo', 'S', 'S']
-        a0 = 3.178
+        a0 = 3.178 # LDA: 3.122
         print(f"Material: MoS2 with lattice constants {a0}")
         pos = [[0, 0, 0], [sqrt(3)/3*a0, 0, -1.565], [sqrt(3)/3*a0, 0, 1.565]]
     elif mat[0] == 'J':
