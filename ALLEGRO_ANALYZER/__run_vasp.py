@@ -61,6 +61,10 @@ def run_vasp_relaxation(vaspObj, dirName, outfile_name, errfile_name):
         print('Run complete.')
         not_converged = check_if_not_converged(dirName, outfile_name, max_nsw=vaspObj['INCAR']['NSW'])
         if not not_converged:
+            # Copy vdW kernel into the right folder
+            kernel_cmd = 'cp ' + CODE_DIR + ' ' + 'vdw_kernel.bindat' + ' ' + dirName
+            stream = os.popen(kernel_cmd)
+            print(stream.read())
             print(f"LT: step at {vaspObj['INCAR']['EDIFF']} complete")
     return vaspObj
 
