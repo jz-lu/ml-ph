@@ -48,7 +48,7 @@ def get_poscar_elastic(args):
         pos = [[0, 0, 0], [sqrt(3)/3*a0, 0, 0]]
     elif mat[0] == 'W':
         species = ['W', 'Se', 'Se']
-        a0 = 3.244
+        a0 = 3.302 # LDA: 3.244
         print(f"Material:WSe2 with lattice constants {a0}")
         pos = [[0, 0, 0], [sqrt(3)/3*a0, 0, -1.671], [sqrt(3)/3*a0, 0, 1.671]]
     elif mat[:4] == 'MoSe':
