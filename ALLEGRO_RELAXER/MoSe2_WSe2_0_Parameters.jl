@@ -2,10 +2,10 @@
 l = 3.306/sqrt(3) # LDA: 3.2462/sqrt(3)
 
 # R2SCAN elastic constants
-G1 = 0 # Shear modulus
-K1 = 0 # Bulk modulus
-G2 = 0 # Shear modulus
-K2 = 0 # Bulk modulus
+G1 = 71.5625 # Shear modulus
+K1 = 81.1942 # Bulk modulus
+G2 = 63.6819 # Shear modulus
+K2 = 73.7456 # Bulk modulus
 
 ## NEW COEFFS (eV)
 c1 = 0
