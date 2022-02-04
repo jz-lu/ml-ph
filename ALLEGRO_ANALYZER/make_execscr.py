@@ -140,6 +140,7 @@ if __name__ == '__main__':
     calc_list = [ENERGIES]
     calc_type = 'basic'
     twist = None
+    as_arr = False
 
     while i < n:
         if not is_flag(args[i]):
@@ -195,6 +196,9 @@ if __name__ == '__main__':
             if args[i] not in ['T', 'F']:
                 warn(f'Warning: expected vdW flag to be "T" or "F", got "{args[i]}", using "F"')
             i += 1
+        elif args[i] == '-arr':
+            as_arr = True
+            i += 1
         elif args[i] == '-tw':
             i += 1; check_not_flag(args[i]); assert 0 < args[i] < 180
             twist = float(args[i]); i += 1
@@ -209,7 +213,7 @@ if __name__ == '__main__':
             warn(f'Warning: unknown flag "{args[i]} ignored')
             i += 1
 
-    build_bash_exe(calc_type=calc_type, wdir=wdir, outdir=outdir, calc_list=calc_list, compute_jobname=compute_jobname,
+    build_bash_exe(calc_type=calc_type, wdir=wdir, as_arr=as_arr, outdir=outdir, calc_list=calc_list, compute_jobname=compute_jobname,
                     compute_nnode=compute_nnode, compute_ncpu=compute_ncpu, 
                     compute_time=compute_time, compute_partitions=compute_partitions, 
                     compute_mem_per_cpu=compute_mem_per_cpu, compute_email_type=compute_email_type, 
