@@ -133,7 +133,7 @@ if __name__ == '__main__':
     outdir = '.' # default to current WD
     vdw = ''
     sampling = 'low'
-    kpts = ''
+    kpts = 'GAMMA'
     fname = START_BATCH_NAME
     USE_NODE_INDICATOR = True
     calc_list = [ENERGIES]
