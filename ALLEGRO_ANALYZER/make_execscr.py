@@ -184,7 +184,7 @@ if __name__ == '__main__':
             i += 1
         elif args[i] == '-vdw':
             i += 1; check_not_flag(args[i])
-            vdw = '--vdw' if args[i] == 'T' else ''
+            vdw = 'T' if args[i] == 'T' else ''
             if args[i] not in ['T', 'F']:
                 warn(f'Warning: expected vdW flag to be "T" or "F", got "{args[i]}", using "F"')
             i += 1

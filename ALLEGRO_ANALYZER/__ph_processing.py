@@ -34,7 +34,7 @@ def compute_displacements(ROOT, user_input_settings, ndisp):
     kpts = 'GAMMA' if user_input_settings.kpoints_is_gamma_centered else 'MP'
     exepath = build_bash_exe(calc_type='norelax', outdir=ROOT, wdir=ROOT+PHDISP_STATIC_NAME, 
                    calc_list=[ENERGIES], compute_jobname=PHONON_JOBNAME+subname, 
-                   compute_mem_per_cpu='8000' if monster else COMPUTE_MEM_PER_CPU, 
+                   compute_mem_per_cpu='8000', 
                    vdw=vdw, kpts=kpts, 
                    compute_time='24:00:00' if monster else COMPUTE_TIME, 
                    as_arr=True, compute_ncpu='72' if large_sc else '48',
