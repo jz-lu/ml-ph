@@ -131,6 +131,7 @@ if __name__ == '__main__':
     compute_email_type = COMPUTE_EMAIL_TYPE
     compute_email_to = COMPUTE_EMAIL_TO
     outdir = '.' # default to current WD
+    wdir = None
     vdw = ''
     sampling = 'low'
     kpts = 'GAMMA'
@@ -172,6 +173,12 @@ if __name__ == '__main__':
             if args[i] in ['.', './', '..', '../'] or args[i][0] == '.':
                 warn(f'Warning: specified directory "{args[i]}" may not work when running executable')
             i += 1
+        elif args[i] == '-wdir':
+            i += 1; check_not_flag(args[i])
+            wdir = args[i]
+            if args[i] in ['.', './', '..', '../'] or args[i][0] == '.':
+                warn(f'Warning: specified directory "{args[i]}" may not work when running executable')
+            i += 1
         elif args[i] == '-s':
             i += 1; check_not_flag(args[i]); assert args[i] in ['low', 'high']
             sampling = args[i]; i += 1
@@ -202,7 +209,7 @@ if __name__ == '__main__':
             warn(f'Warning: unknown flag "{args[i]} ignored')
             i += 1
 
-    build_bash_exe(calc_type=calc_type, outdir=outdir, calc_list=calc_list, compute_jobname=compute_jobname,
+    build_bash_exe(calc_type=calc_type, wdir=wdir, outdir=outdir, calc_list=calc_list, compute_jobname=compute_jobname,
                     compute_nnode=compute_nnode, compute_ncpu=compute_ncpu, 
                     compute_time=compute_time, compute_partitions=compute_partitions, 
                     compute_mem_per_cpu=compute_mem_per_cpu, compute_email_type=compute_email_type, 
