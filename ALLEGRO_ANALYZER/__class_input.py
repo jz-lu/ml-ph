@@ -20,6 +20,7 @@ class InputData:
 
     def __init__(self, args):
         self.super_dim = args.super; assert args.super > 0
+        print(f"Supercell size: {self.super_dim}")
         self.name = args.name; print(f"Name: '{args.name}'")
         self.cmdargs = args; self.sampling_diagonal = (args.type == CFG_DIAG); self.theta = args.twist
         self.sampling_z = (args.type == CFG_Z); self.sampling_lc = (args.type == CFG_LC)
