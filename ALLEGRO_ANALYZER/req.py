@@ -66,7 +66,7 @@ else:
             bad_term = int(os.popen(f"grep 'BAD TERMINATION' {subdir + 'no_relax.out'} | wc -l").read()) > 0
             other_err = int(os.popen(f"grep 'rror' {subdir + 'no_relax.err'} | wc -l").read()) > 0
             unknown_failure = (int(os.popen(f"grep 'fail' {subdir + 'no_relax.err'} | wc -l").read()) > 0) \
-                            and (int(os.popen(f"grep 'fail' {subdir + 'no_relax.out'} | wc -l").read()) > 0)
+                            or (int(os.popen(f"grep 'fail' {subdir + 'no_relax.out'} | wc -l").read()) > 0)
             never_finished = int(os.popen(f"tail {subdir + 'no_relax.out'} -n 1 | grep DAV | wc -l").read()) > 0
             if bad_term or other_err or unknown_failure or never_finished:
                 shutil.rmtree(subdir)
