@@ -37,11 +37,12 @@ def process(dirName, supercellDim="3 3 1", Poscar_unitcell_name='POSCAR_unit'):
             move(poscarArray[i], dirName, dirName + subdirNames[i])
             assert os.path.isfile(checkPath(dirName + subdirNames[i]) + poscarArray[i])
             print(f'Moved {poscarArray[i]} to {checkPath(dirName + subdirNames[i])}')
+            print(os.popen("tree").read())
             
-            execmd = f"sbatch --array=1-{numPoscars} EXECUTABLE_BAT_DNE"
-            print(f'Running "{execmd}"')
-            print(os.popen(execmd).read())
-            print('Job array successfully submitted')
+        execmd = f"sbatch --array=1-{numPoscars} EXECUTABLE_BAT_DNE"
+        print(f'Running "{execmd}"')
+        print(os.popen(execmd).read())
+        print('Job array successfully submitted')
             
         print('Total number of displacement files generated: ' + dispNums[-1])
 
