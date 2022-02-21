@@ -28,7 +28,7 @@ parser.add_argument("--dfpt", action="store_true", help="use DFPT instead of fro
 parser.add_argument("-m", "--mp", action="store_true", help="use for MP k-points mesh, default: Gamma")
 parser.add_argument("-r", "--relax", action="store_true", help="use relaxed (non-uniform) configurations")
 parser.add_argument("--noionicstep", action="store_true", help="do not run ionic steps (i.e. VASP relaxation)")
-parser.add_argument("--super", type=int, help="phonon supercell", default=LARGE_SUPER_DIM[0])
+parser.add_argument("--super", type=int, help="phonon supercell", default=SUPER_DIM[0])
 parser.add_argument("calc", nargs="+", help="calculations list: energies, ph, eleband, eledos", default=[ENERGIES])
 cmdargs = parser.parse_args()
 
