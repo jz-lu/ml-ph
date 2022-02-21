@@ -2,6 +2,15 @@ import os
 from __directory_searchers import checkPath, findFilesInDir
 from __dirModifications import mkdir, move
 import argparse
+import numpy as np
+
+def expand_range(rg):
+    try:
+        idx = rg.index('-')
+        start = int(rg[:idx]); end = int(rg[idx+1:])
+        return np.arange(start, end+1)
+    except:
+        return np.array([int(rg)])
 
 def process(dirName, supercellDim="3 3 1", Poscar_unitcell_name='POSCAR_unit'):
     dirName = checkPath(dirName)
@@ -23,7 +32,7 @@ def process(dirName, supercellDim="3 3 1", Poscar_unitcell_name='POSCAR_unit'):
         print('Phonopy preprocessing error: ' + str(err))
 
     if numPoscars == 0:
-        raise Exception("No POSCARs found")
+        return
     else:
         dispNums = []
         subdirNames = []
@@ -37,7 +46,6 @@ def process(dirName, supercellDim="3 3 1", Poscar_unitcell_name='POSCAR_unit'):
             move(poscarArray[i], dirName, dirName + subdirNames[i])
             assert os.path.isfile(checkPath(dirName + subdirNames[i]) + poscarArray[i])
             print(f'Moved {poscarArray[i]} to {checkPath(dirName + subdirNames[i])}')
-            print(os.popen("tree").read())
             
         execmd = f"sbatch --array=1-{numPoscars} EXECUTABLE_BAT_DNE"
         print(f'Running "{execmd}"')
@@ -49,10 +57,16 @@ def process(dirName, supercellDim="3 3 1", Poscar_unitcell_name='POSCAR_unit'):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Resubmit erroneous-input phonopy jobs")
     parser.add_argument("sampling", type=int, help="number of shifts")
+    parser.add_argument("-s", "--skip", nargs="+", help="numbers to skip", default=[])
     parser.add_argument("-d", "--dir", type=str, help="main directory", default='.')
     args = parser.parse_args()
     dir_full = checkPath(os.path.abspath(args.dir))
     
+    skip = np.hstack([expand_range(x) for x in args.skip]) if len(args.skip) > 0 else []
+    print(f"Skipping: {'None' if skip == [] else skip}")
+    
     for i in range(args.sampling):
+        if i in skip:
+            continue
         process(dir_full + f'shift_{i}/analyses/phonon/')
         
