@@ -38,7 +38,7 @@ def process(dirName, supercellDim="3 3 1", Poscar_unitcell_name='POSCAR_unit'):
             assert os.path.isfile(checkPath(dirName + subdirNames[i]) + poscarArray[i])
             print(f'Moved {poscarArray[i]} to {checkPath(dirName + subdirNames[i])}')
             
-            execmd = f"sbatch --array=1-{len(numPoscars)} EXECUTABLE_BAT_DNE"
+            execmd = f"sbatch --array=1-{numPoscars} EXECUTABLE_BAT_DNE"
             print(f'Running "{execmd}"')
             print(os.popen(execmd).read())
             print('Job array successfully submitted')
