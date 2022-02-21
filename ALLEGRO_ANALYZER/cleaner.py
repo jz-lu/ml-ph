@@ -13,7 +13,7 @@ parser.add_argument("-v", "--verbose", action="store_true", help="output a log o
 args = parser.parse_args()
 ROOT = checkPath(os.path.abspath(args.dir))
 PREFIXES = tuple(['FORCE', 'SPOSCAR', 'POSCAR', 'CONTCAR', 'INCAR'])
-SUFFIXES = tuple(['.txt'])
+SUFFIXES = tuple(['.txt', '.npy'])
 
 def vprint(s):
     if args.verbose:
