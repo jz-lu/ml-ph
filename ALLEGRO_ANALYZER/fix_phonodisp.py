@@ -30,9 +30,10 @@ def process(dirName, supercellDim="3 3 1", Poscar_unitcell_name='POSCAR_unit'):
         print('Result: {} displacement files found.'.format(numPoscars))
     except Exception as err:
         print('Phonopy preprocessing error: ' + str(err))
+        return
 
     if numPoscars == 0:
-        return
+        raise Exception("No POSCARs found")
     else:
         dispNums = []
         subdirNames = []
