@@ -29,9 +29,8 @@ def process(dirName, supercellDim="3 3 1", Poscar_unitcell_name='POSCAR_unit'):
         subdirNames = []
         # Create new directories
         for i in range(numPoscars): 
-            breakpoint()
             dispNums.append((poscarArray[i])[-3:]) # Gives the XYZ in POSCAR-XYZ. THIS IS A STRING!
-            subdirNames.append('disp'%(int(dispNums[i])))
+            subdirNames.append('disp%d'%(int(dispNums[i])))
             print(os.popen("rm -r disp*").read())
             mkdir(subdirNames[i], dirName)
             print('New subdirectory %s created.'%(checkPath(dirName + subdirNames[i])))
