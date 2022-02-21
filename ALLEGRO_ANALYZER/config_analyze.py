@@ -114,6 +114,12 @@ if __name__ == '__main__':
                     + checkPath(ANALYSIS_DIR_NAME) + checkPath(TOTAL_ENER_DIR_NAME) + TOT_ENERGIES_NAME) as f:
             energies[i] = float(f.readline().split(' ')[-1])
     print(f"Energies retrieved.")
+    if diag:
+        nshifts = int(sqrt(nshifts))
+        filt = [(nshifts+1)*i for i in range(nshifts)]
+        energies = np.array(energies)[filt]
+        zspaces = np.array(zspaces)[filt]
+        bshifts = bshifts[filt]
 
     # cob = Poscar.from_file('POSCAR').structure.lattice.matrix[:2,:2].T
     # import csv
