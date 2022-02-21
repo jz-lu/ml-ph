@@ -50,7 +50,8 @@ if __name__ == '__main__':
     parser.add_argument("sampling", type=int, help="number of shifts")
     parser.add_argument("-d", "--dir", type=str, help="main directory", default='.')
     args = parser.parse_args()
+    dir_full = checkPath(os.path.abspath(args.dir))
     
     for i in range(args.sampling):
-        process(checkPath(args.dir) + f'shift_{i}/analyses/phonon/')
+        process(dir_full + f'shift_{i}/analyses/phonon/')
         
