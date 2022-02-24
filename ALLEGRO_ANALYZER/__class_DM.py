@@ -607,9 +607,17 @@ class TwistedDM:
         self.mode_set = [0]*len(self.k_mags)
         self.modetnsr = [0]*len(self.k_mags)
         for i, (k_mag, DM) in enumerate(zip(self.k_mags, self.DMs)):
-            evals = LA.eigvals(DM) 
-            signs = (-1)*(evals < 0) + (evals > 0) # pull negative sign out of square root to plot imaginary frequencies
-            modes_k = signs * np.sqrt(np.abs(evals)) * (VASP_FREQ_TO_INVCM_UNITS) # eV/Angs^2 -> THz ~ 15.633302; THz -> cm^-1 ~ 33.356
+            evals = LA.eigvals(DM) * (VASP_FREQ_TO_INVCM_UNITS)**2 + 0.035
+            signs = np.array([-1 if val < -5e-2 else 1 for val in evals])
+            modes_k = signs * np.sqrt(np.abs(evals))
+            if i == self.Gamma_idx+3:
+                sq_modes = evals
+                idxs = np.argsort(sq_modes)
+                print("SIGNS:", signs[idxs])
+                print("BEFORE SQRT:", sq_modes[idxs])
+                np.save("/Users/jonathanlu/Documents/tvMoS2/sq/test.npy", sq_modes[idxs])
+                print("MODES BEFORE:", np.sqrt(np.abs(evals))[idxs])
+                print("MODES AFTER:", modes_k[idxs])
             self.mode_set[i] = (k_mag, modes_k)
             self.modetnsr[i] = modes_k
         if dump:
@@ -656,7 +664,8 @@ class TwistedDM:
             lims[0] = min(0, lims[0], min(modes))
             lims[1] = max(lims[1], max(modes))
             plt.scatter([k_mag] * len(modes), modes, c='black', s=0.07)
-        lims[1] += 5; plt.ylim(lims)
+        lims[1] += 5
+        plt.ylim(lims)
         xlabs = (r'K', r'$\Gamma$', r'M', r'K')
         plt.xticks(corner_kmags, xlabs)
         plt.ylabel(r'$\omega\,(\mathrm{cm}^{-1})$')
