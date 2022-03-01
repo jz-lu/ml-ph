@@ -100,7 +100,7 @@ of `phtnsr` to slice proportional to ratio of atoms, instead of in half.
 PLOT_CMAP = 'Spectral'
 class TwistedRealspacePhonon:
     def __init__(self, theta, k, GM_set, DM_at_k, n_at, bl_masses, 
-                 poscars_uc, gridsz=13, outdir='.', modeidxs=np.arange(0,6), kpt=r'$\Gamma$',
+                 poscars_uc, gridsz=9, outdir='.', modeidxs=np.arange(0,6), kpt=r'$\Gamma$',
                  rspc_sc_sz=2):
         assert len(bl_masses) == n_at
         self.rspc_sc_sz = rspc_sc_sz
@@ -150,7 +150,7 @@ class TwistedRealspacePhonon:
         self.rec_nr = ceil(1.0 * gridsz * rspc_sc_sz)
         x_interval = [np.min(self.r_matrix[:,0]), np.max(self.r_matrix[:,0])]
         y_interval = [np.min(self.r_matrix[:,1]), np.max(self.r_matrix[:,1])]
-        x_interval[0] *= 1.11; x_interval[1] *= 1.11; y_interval[1] *= 1.1 # slight pump for aesthetics
+        x_interval[0] *= 1.11; x_interval[1] *= 1.11; y_interval[1] *= 1.15 # slight pump for aesthetics
         x = np.linspace(*x_interval, num=self.rec_nr, endpoint=True)
         y = np.linspace(*y_interval, num=self.rec_nr, endpoint=True)
         self.rec_rmatrix = np.array(list(prod(x, y)))
@@ -294,6 +294,7 @@ class TwistedRealspacePhonon:
                 max_z = np.max(np.abs(z))
                 
                 plt.xlabel("x"); plt.ylabel("y")
+                ax.set_ylim(top=max(coords[:,1]))
                 ax.set_aspect('equal')
                 fname = self.kpt[2:-1] if self.kpt[0] == "$" else self.kpt
                 this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}_k-{fname}' + outname[outname.index('.'):]

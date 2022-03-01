@@ -64,25 +64,25 @@ class PhonopyAPI:
             assert os.path.isfile(pname), self.POSCAR_ERR_MSG
             assert os.path.isfile(PH_FORCE_CONSTANTS_NAME), ERR_PH_FORCE_CONSTS_NOT_MADE
             
-            # supercell = read(SPOSCAR_NAME); prim = read(pname)
-            # fcs_phonopy = ForceConstants.read_phonopy(supercell, PH_FORCE_CONSTANTS_NAME)
-            # cs = ClusterSpace(prim, [cutoff])
-            # parameters = extract_parameters(fcs_phonopy, cs)
-            # enforced_parameters = enforce_rotational_sum_rules(cs, parameters, ['Huang', 'Born-Huang'])
-            # fcp_rot = ForceConstantPotential(cs, enforced_parameters)
-            # fcs_hiphive_rot = fcp_rot.get_force_constants(supercell)
-            # phonopy_prim = PhonopyAtoms(numbers=prim.numbers, 
-            #                             positions=prim.positions, cell=prim.cell)
-            # phon = Phonopy(phonopy_prim, 
-            #                supercell_matrix=np.diag([dim, dim, 1]), 
-            #                primitive_matrix=None)
-            # phon.set_force_constants(fcs_hiphive_rot.get_fc_array(order=2))
-            # ph_list.append(phon)
+            supercell = read(SPOSCAR_NAME); prim = read(pname)
+            fcs_phonopy = ForceConstants.read_phonopy(supercell, PH_FORCE_CONSTANTS_NAME)
+            cs = ClusterSpace(prim, [cutoff])
+            parameters = extract_parameters(fcs_phonopy, cs)
+            enforced_parameters = enforce_rotational_sum_rules(cs, parameters, ['Huang', 'Born-Huang'])
+            fcp_rot = ForceConstantPotential(cs, enforced_parameters)
+            fcs_hiphive_rot = fcp_rot.get_force_constants(supercell)
+            phonopy_prim = PhonopyAtoms(numbers=prim.numbers, 
+                                        positions=prim.positions, cell=prim.cell)
+            phon = Phonopy(phonopy_prim, 
+                           supercell_matrix=np.diag([dim, dim, 1]), 
+                           primitive_matrix=None)
+            phon.set_force_constants(fcs_hiphive_rot.get_fc_array(order=2))
+            ph_list.append(phon)
             
-            ph_list.append(phonopy.load(unitcell_filename=pname, 
-                                        supercell_matrix=np.diag([dim, dim, 1]), 
-                                        primitive_matrix=np.eye(3),
-                                        log_level=0)) # `log_level` is just the debug-paranoia level
+            # ph_list.append(phonopy.load(unitcell_filename=pname, 
+            #                             supercell_matrix=np.diag([dim, dim, 1]), 
+            #                             primitive_matrix=np.eye(3),
+            #                             log_level=0)) # `log_level` is just the debug-paranoia level
             print(f"Loaded phonopy object from {ph_dir} and applied rotational sum rule")
         return len(layers), ph_list
 

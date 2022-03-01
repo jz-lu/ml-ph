@@ -607,17 +607,9 @@ class TwistedDM:
         self.mode_set = [0]*len(self.k_mags)
         self.modetnsr = [0]*len(self.k_mags)
         for i, (k_mag, DM) in enumerate(zip(self.k_mags, self.DMs)):
-            evals = LA.eigvals(DM) * (VASP_FREQ_TO_INVCM_UNITS)**2 + 0.035
-            signs = np.array([-1 if val < -5e-2 else 1 for val in evals])
+            evals = LA.eigvals(DM) * (VASP_FREQ_TO_INVCM_UNITS)**2 + 0.1
+            signs = np.array([-1 if val < 0 else 1 for val in evals])
             modes_k = signs * np.sqrt(np.abs(evals))
-            if i == self.Gamma_idx+3:
-                sq_modes = evals
-                idxs = np.argsort(sq_modes)
-                print("SIGNS:", signs[idxs])
-                print("BEFORE SQRT:", sq_modes[idxs])
-                np.save("/Users/jonathanlu/Documents/tvMoS2/sq/test.npy", sq_modes[idxs])
-                print("MODES BEFORE:", np.sqrt(np.abs(evals))[idxs])
-                print("MODES AFTER:", modes_k[idxs])
             self.mode_set[i] = (k_mag, modes_k)
             self.modetnsr[i] = modes_k
         if dump:
@@ -666,6 +658,7 @@ class TwistedDM:
             plt.scatter([k_mag] * len(modes), modes, c='black', s=0.07)
         lims[1] += 5
         plt.ylim(lims)
+        plt.xlim((min(self.k_mags), max(self.k_mags)))
         xlabs = (r'K', r'$\Gamma$', r'M', r'K')
         plt.xticks(corner_kmags, xlabs)
         plt.ylabel(r'$\omega\,(\mathrm{cm}^{-1})$')
@@ -955,6 +948,7 @@ class TwistedPlotter:
         outdir = checkPath(outdir); assert os.path.isdir(outdir), f"Invalid directory {outdir}"
         plt.clf(); fig, [axband, axdos] = plt.subplots(nrows=1, ncols=2, sharey=True)
         lims = [0,0]
+        k_mags = [k_mag for k_mag,_ in self.mode_set]
         for k_mag, modes in self.mode_set:
             if self.cutoff is not None:
                 modes = modes[modes <= self.cutoff]
@@ -962,6 +956,7 @@ class TwistedPlotter:
             lims[1] = max(lims[1], max(modes))
             axband.scatter([k_mag] * len(modes), modes, c='black', s=0.07)
         lims[1] += 0.05*lims[1]; plt.ylim(lims)
+        axband.set_xlim(left=min(k_mags), right=max(k_mags))
         xlabs = (r'K', r'$\Gamma$', r'M', r'K')
         axband.set_xticks(self.corner_kmags)
         axband.set_xticklabels(xlabs)
@@ -978,6 +973,7 @@ class TwistedPlotter:
         axdos.set_title("DOS")
         axdos.ticklabel_format(axis='x', scilimits=(0,0), style='sci')
         plt.ylim(lims)
+        axdos.set_xlim(left=0)
         plt.savefig(outdir + filename, format='pdf')
         plt.close(fig)
         print(f"Band-DOS plot written to {outdir+filename}")
