@@ -604,16 +604,18 @@ class TwistedDM:
 
     def build_modes(self, dump=False, outdir='.'):
         """Diagonalize the set of DMs to get phonon modes"""
+        outdir = checkPath(os.path.abspath(outdir))
         self.mode_set = [0]*len(self.k_mags)
         self.modetnsr = [0]*len(self.k_mags)
+        self.evals = [0]*len(self.k_mags)
         for i, (k_mag, DM) in enumerate(zip(self.k_mags, self.DMs)):
-            evals = LA.eigvals(DM) * (VASP_FREQ_TO_INVCM_UNITS)**2 + 0.1
+            evals = LA.eigvals(DM) * (VASP_FREQ_TO_INVCM_UNITS)**2
             signs = np.array([-1 if val < 0 else 1 for val in evals])
             modes_k = signs * np.sqrt(np.abs(evals))
+            self.evals[i] = evals
             self.mode_set[i] = (k_mag, modes_k)
             self.modetnsr[i] = modes_k
         if dump:
-            outdir = checkPath(os.path.abspath(outdir))
             assert os.path.isdir(outdir), f"Directory {outdir} does not exist"
             k_dump = []; mode_dump = []
             for k_mag, modes in self.mode_set:
@@ -624,6 +626,7 @@ class TwistedDM:
                     f.write(f"{k_mag}\t{mode}\n")
         self.modes_built = True
         self.modetnsr = np.array(self.modetnsr)
+        np.save(outdir + 'evals.npy', np.array(self.evals))
         return self.mode_set
     
     def get_mode_set(self):
@@ -671,6 +674,8 @@ class TwistedDM:
         plt.close()
         if self.log:
             print(f"Band plot written to {outdir+filename}")
+        print(f"CUTOFF = {cutoff}")
+        print(f"LIMS = {plt.ylim()}")
         return
 
 """
