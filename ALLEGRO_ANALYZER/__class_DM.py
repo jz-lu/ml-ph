@@ -612,7 +612,7 @@ class TwistedDM:
         for i, (k_mag, DM) in enumerate(zip(self.k_mags, self.DMs)):
             evals = LA.eigvals(DM) * (VASP_FREQ_TO_INVCM_UNITS)**2
             signs = np.array([-1 if val < 0 else 1 for val in evals])
-            modes_k = signs * np.sqrt(np.abs(evals))
+            modes_k = signs * np.sqrt(np.abs(evals)) + 0.5
             self.evals[i] = evals
             self.mode_set[i] = (k_mag, modes_k)
             self.modetnsr[i] = modes_k
