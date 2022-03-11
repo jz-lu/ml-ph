@@ -23,7 +23,7 @@ with open(path, 'w') as f:
     f.write("#!/bin/bash\n")
     f.write(f"#SBATCH --job-name=dos-{args.name}\n")
     f.write("#SBATCH -N 1\n#SBATCH -n 24\n")
-    f.write("#SBATCH -t 16:00:00\n")
+    f.write("#SBATCH -t 36:00:00\n")
     f.write("#SBATCH -p shared\n")
     f.write("#SBATCH --mem-per-cpu=4000\n")
     f.write("#SBATCH -o dos_%a.out\n#SBATCH -e er_dos_%a.err\n")
