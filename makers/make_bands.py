@@ -26,4 +26,4 @@ for theta in thetas:
     theta = round(theta, 6)
     print("RUNNING: theta =", theta, flush=True)
     os.mkdir(f't{theta}')
-    print(os.popen(f"python {CODE_DIR} -d {data_dir} -o t{theta} -n {args.name} {r} {theta}").read())
+    print(os.popen(f"python {CODE_DIR} -d {data_dir} -o t{theta} -n {args.name} {r} -s {theta}").read())

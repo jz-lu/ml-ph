@@ -23,7 +23,7 @@ with open(path, 'w') as f:
     f.write(f"#SBATCH --job-name=b-{args.name}\n")
     f.write("#SBATCH -N 1\n#SBATCH -n 24\n")
     f.write("#SBATCH -t 16:00:00\n")
-    f.write("#SBATCH -p kaxiras,shared\n")
+    f.write("#SBATCH -p shared\n")
     f.write("#SBATCH --mem-per-cpu=4000\n")
     f.write("#SBATCH -o band_%a.out\n#SBATCH -e er_band_%a.err\n")
     f.write("#SBATCH --mail-type=END,FAIL\n#SBATCH --mail-user=jlu@college.harvard.edu\n")
