@@ -185,7 +185,9 @@ if __name__ == '__main__':
         thetas = np.linspace(np.deg2rad(thetas[0]), np.deg2rad(thetas[1]), ntheta)
         
         # Import and parse k-points list file
-        thspc_kpts_dir = np.unique(np.loadtxt(indir + SELECT_K_INAME), axis=0)
+        thspc_kpts_dir = np.loadtxt(indir + SELECT_K_INAME)
+        if len(thspc_kpts_dir.shape) == 1:
+            thspc_kpts_dir = np.expand_dims(thspc_kpts_dir, 0)
         num_kpts = len(thspc_kpts_dir)
         
         # The BZ depends on theta, so the GM set differs for each
@@ -264,6 +266,11 @@ if __name__ == '__main__':
             np.save(this_outdir + THSPC_PHONONS_ONAME, thspc_phonons)
             np.save(this_outdir + THSPC_MAGS_ONAME, thspc_mags)
             np.save(this_outdir + THSPC_MESH_ONAME, thspc_mesh)
+            np.save(this_outdir + 'dms.npy', th_TDMs)
+            np.save(this_outdir + 'masses.npy', bl_M)
+            np.save(this_outdir + 'k_set.npy', thspc_k_set)
+            np.save(this_outdir + 'GM_set.npy', thspc_GM_sets)
+            print(f"Saved theta-space DMs for k = {k_here} to {this_outdir + 'dms.npy'}")
             print(f"Saved theta-space modes for k = {k_here} to {this_outdir + THSPC_MODES_ONAME}")
             print(f"Saved theta-space mags for k = {k_here} to {this_outdir + THSPC_MAGS_ONAME}")
             print(f"Saved theta-space real space mesh for k = {k_here} to {this_outdir + THSPC_MESH_ONAME}")

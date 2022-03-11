@@ -20,6 +20,7 @@ from math import sqrt, pi, log, ceil
 from copy import deepcopy as dc
 import sys
 from __class_PhonopyAPI import PhonopyAPI
+from __class_PhononConfig import TwistedRealspacePhonon
 
 """
 These classes tosgether compute the twisted dynamical matrix from a sample of moire G vectors and k points along IBZ boundary.
@@ -701,9 +702,12 @@ class ThetaSpaceDM:
         
         self.DM_set = TDMs; self.thetas = thetas
         self.thspc_GM_sets = thspc_GM_sets
-        self.n_G = thspc_GM_sets.shape[1]; self.n_at = n_at; self.k_set = k_set
+        self.n_G = thspc_GM_sets.shape[1]
+        self.n_at = n_at
+        self.k_set = k_set
         self.masses = masses
         self.modeidxs = np.array(modeidxs).astype(int)
+        self.poscars_uc = poscars_uc
         self.A0 = poscars_uc[0].structure.lattice.matrix[:2,:2].T
         print(f"Initialized dynamical matrix analyzer in theta-space for k = {k_dir}.")
         self.__analyze(masses, gridsz=gridsz, sc_sz=sc_sz)
@@ -736,7 +740,7 @@ class ThetaSpaceDM:
         self.thtnsr = np.transpose(evecs, axes=(4,1,0,2,3)) # shape: (n_th, n_G, n_at, C, d)
         print(f"Tensors prepared. Phonon tensor has shape {self.thtnsr.shape}.")
         
-    def __thtnsr_to_phonons(self, M, gridsz=13, sc_sz=3):
+    def __thtnsr_to_phonons(self, M, gridsz=13, sc_sz=1):
         """
         Phonon tensor in Fourier space to real space over a `sc_sz` x `sc_sz` supermoire cell 
         and mesh density `gridsz`. Masses `M`.
@@ -744,40 +748,21 @@ class ThetaSpaceDM:
         x = np.linspace(-sc_sz/2, sc_sz/2, num=gridsz*sc_sz, endpoint=False)
         r_mesh = np.array(list(prod(x, x)))
         n_r = len(r_mesh)
-        def moire_mesh_at_th(th): # th in degrees
-            angle = np.deg2rad(th)
-            sc_lattice = LA.inv(np.array(
-                                   [[1-np.cos(angle), np.sin(angle)],[-np.sin(angle), 1-np.cos(angle)]]
-                                  )) @ self.A0
-            return r_mesh @ sc_lattice.T
         
-        self.thspc_r_mesh = np.array([moire_mesh_at_th(th) for th in self.thetas])
-        assert len(self.thspc_r_mesh) == len(self.thtnsr)
-        self.phonons = np.transpose(
-            [
-                [
-                    sum([G_blk * np.exp(-1j * np.dot(GM + k_th, r)) 
-                        for G_blk, GM in zip(tnsr_th, GM_set)]) # Fourier sum over G
-                    for r in r_mesh_th # do a sum for each realspace vector
-                ] 
-                for GM_set, k_th, tnsr_th, r_mesh_th in \
-                    zip(self.thspc_GM_sets, self.k_set, self.thtnsr, self.thspc_r_mesh) # over theta-space
-            ], axes=(2,0,3,1,4)
-        )
-        assert self.phonons.shape == (self.n_at, self.ntheta, len(self.modeidxs), n_r, 3)
-        self.phonons = np.transpose([y/sqrt(x) for x, y in zip(self.masses, self.phonons)], axes=(1,0,2,3,4))
-        self.phonon_mags = np.abs(self.phonons)
-        assert self.phonon_mags.shape == (self.ntheta, self.n_at, len(self.modeidxs), n_r, 3)
-        self.phonons = np.transpose(np.real(
-            list(
-                map(
-                    lambda x: np.mean(x, axis=1), \
-                    np.split(self.phonons, 2, axis=1)
-                    )
-                )
-            ), axes=(1,0,2,3,4))
+        objs = [TwistedRealspacePhonon(theta, k_theta, GM_set, DM_theta, 
+                               self.n_at, self.masses, self.poscars_uc, gridsz=gridsz,
+                               modeidxs=self.modeidxs, rspc_sc_sz=sc_sz,
+                               outdir="/Users/jonathanlu/Documents/tmos2_2/test/") \
+                        for theta, k_theta, GM_set, DM_theta in \
+                        zip(self.thetas, self.k_set, self.thspc_GM_sets, self.DM_set)]
+        self.thspc_r_mesh = np.array([obj.get_coords() for obj in objs])
+        self.phonons = np.array([obj.get_phonons() for obj in objs])
+        # for obj in objs:
+        #     obj.plot_phonons(rectangular=False)
+        self.phonon_mags = np.mean(np.abs(self.phonons), axis=1)
         assert self.phonons.shape == (self.ntheta, 2, len(self.modeidxs), n_r, 3)
-        self.phonon_mags = np.mean(self.phonon_mags, axis=1) # average over atoms/layers
+        assert self.phonon_mags.shape == (self.ntheta, len(self.modeidxs), n_r, 3)
+
         print(f"Phonon real-space tensor has shape {self.phonons.shape}")
         print(f"Phonon magnitude tensor has shape {self.phonon_mags.shape}.")
 
