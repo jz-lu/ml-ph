@@ -425,7 +425,7 @@ if __name__ == '__main__':
             omegas, DOS = TDOS.get_DOS(smoothen=True)
             if args.save:
                 dos_name = f"DOS_{round(np.rad2deg(theta), 6)}.npy"
-                np.save(outdir + dos_name)
+                np.save(outdir + dos_name, DOS)
                 print(f"Saved {dos_name} to {outdir}")
             pfx = "SMOOTH"
             TPLT = TwistedPlotter(round(np.rad2deg(theta), 6), omegas, DOS, mode_set, corner_kmags, cutoff=cutoff)
