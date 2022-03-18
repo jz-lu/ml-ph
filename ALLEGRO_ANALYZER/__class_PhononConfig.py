@@ -101,7 +101,7 @@ PLOT_CMAP = 'Spectral'
 class TwistedRealspacePhonon:
     def __init__(self, theta, k, GM_set, DM_at_k, n_at, bl_masses, 
                  poscars_uc, gridsz=9, outdir='.', modeidxs=np.arange(0,6), kpt=r'$\Gamma$',
-                 rspc_sc_sz=2):
+                 rspc_sc_sz=2, disp=False):
         assert len(bl_masses) == n_at
         self.rspc_sc_sz = rspc_sc_sz
         self.kpt = kpt
@@ -121,9 +121,12 @@ class TwistedRealspacePhonon:
         self.phtnsr = None; self.rphtnsr = None # Fourier and real space phonons
         self.old_rphtnsr_shape = (self.n_r, self.n_at, self.nmodes, self.d) # realspace phonons
         self.phtnsr_shape = (self.n_G, self.n_at, self.nmodes, self.d)
-        print("Initializing twisted realspace phonon object...")
+        self.disp = disp
+        if disp:
+            print("Initializing twisted realspace phonon object...")
         self.__phonon_inverse_fourier()
-        print(f"Twisted realspace phonon object initialized. Mode indices={self.modeidxs}")
+        if disp:
+            print(f"Twisted realspace phonon object initialized. Mode indices={self.modeidxs}")
     
     def __make_realspace_mesh(self, theta, gridsz, rspc_sc_sz, poscars_uc):
         """
@@ -158,7 +161,9 @@ class TwistedRealspacePhonon:
 
     def __DM_to_phtnsr(self):
         """Turn flattened dynamical matrix into a diagonalized tensor object"""
-        print("Diagonalizing and sorting dynamical matrix at Gamma...")
+        
+        if self.disp:
+            print("Diagonalizing and sorting dynamical matrix at Gamma...")
         def sorted_filtered_eigsys(A):
             vals, vecs = LA.eig(A)
             vals = np.real(vals); vecs = np.real_if_close(vecs)
@@ -168,8 +173,9 @@ class TwistedRealspacePhonon:
 
         evals, evecs = sorted_filtered_eigsys(self.DM_at_k)
         self.evals_real = evals[self.modeidxs]
-        print("Diagonalized.")
-        print("Transforming eigenmatrix into truncated Fourier phonon tensor...")
+        if self.disp:
+            print("Diagonalized.")
+            print("Transforming eigenmatrix into truncated Fourier phonon tensor...")
         
         # In this case n_at refers to number of atoms in entire bilayer unit cell
         evecs = np.array(evecs[:,self.modeidxs]).T # shape: (C, n_G x n_at x d) [C := num evecs]
@@ -177,24 +183,29 @@ class TwistedRealspacePhonon:
         for li in range(2): # each layer has shape: (C, n_G x n_at/2 x d)
             evecs_by_layer[li] = np.array(np.split(evecs_by_layer[li], self.n_G, axis=1)) # shape: (n_G, C, n_at/2 x d)
             evecs_by_layer[li] = np.array(np.split(evecs_by_layer[li], self.n_at//2, axis=2)) # shape: (n_at/2, n_G, C, d)
-            print(f"Final evec shape for layer {li}: {evecs_by_layer[li].shape}")
+            if self.disp:
+                print(f"Final evec shape for layer {li}: {evecs_by_layer[li].shape}")
         evecs = np.concatenate(evecs_by_layer, axis=0) # bring them together, so shape: (n_at, n_G, C, d)
         assert evecs.shape == (self.n_at, self.n_G, self.nmodes, self.d), f"Incorrect shape {evecs.shape}"
         self.phtnsr = np.transpose(evecs, axes=(1,0,2,3)) # shape: (n_G, n_at, C, d)
         assert self.phtnsr.shape == self.phtnsr_shape, f"Unexpected phonon tensor shape {self.phtnsr.shape}, expected {self.phtnsr_shape}"
-        print(f"Fourier phonon tensor constructed: shape {self.phtnsr.shape}")
+        if self.disp:
+            print(f"Fourier phonon tensor constructed: shape {self.phtnsr.shape}")
 
     def __build_modes(self):
         self.__DM_to_phtnsr()
-        print("Signing and unitizing phonon modes...")
+        if self.disp:
+            print("Signing and unitizing phonon modes...")
         self.modes = np.sign(self.evals_real) * np.sqrt(np.abs(self.evals_real)) * VASP_FREQ_TO_INVCM_UNITS
-        print("Modes prepared.")
+        if self.disp:
+            print("Modes prepared.")
 
     def __phonon_inverse_fourier(self):
         """Inverse Fourier transform from GM-basis (natural DM basis) to real-space basis"""
         self.__build_modes()
         
-        print(f"Building realspace phonon tensor...(k={self.k}, |k| = {LA.norm(self.k)})")
+        if self.disp:
+            print(f"Building realspace phonon tensor...(k={self.k}, |k| = {LA.norm(self.k)})")
         self.rphtnsr = np.array([sum([G_blk * np.exp(-1j * np.dot(GM + self.k, r)) 
             for G_blk, GM in zip(self.phtnsr, self.GM_set)]) for r in self.r_matrix])
         assert self.rphtnsr.shape == self.old_rphtnsr_shape, \
@@ -205,7 +216,8 @@ class TwistedRealspacePhonon:
         self.rphtnsr = np.transpose(self.rphtnsr, axes=(1,2,0,3)) # shape: (n_at, C, n_r, d)
         self.rec_rphtnsr = np.transpose(self.rec_rphtnsr, axes=(1,2,0,3)) # shape: (n_at, C, rec_nr, d)
         assert self.rphtnsr.shape == (self.n_at, self.nmodes, self.n_r, self.d)
-        print(f"Realspace phonon tensor built: shape {self.rphtnsr.shape}")
+        if self.disp:
+            print(f"Realspace phonon tensor built: shape {self.rphtnsr.shape}")
         self.mnormed_tnsr = np.array([y/sqrt(x) for x, y in zip(self.bl_masses, self.rphtnsr)])
         self.rec_mnormed_tnsr = np.array([y/sqrt(x) for x, y in zip(self.bl_masses, self.rec_rphtnsr)])
     
@@ -379,7 +391,7 @@ class TwistedRealspacePhonon:
             phonons = np.real(phonons) # just take the real component
             z = phonons[:,2]
             plt.rc('font', size=5*self.rspc_sc_sz)
-            plt.clf(); fig, ax = plt.subplots(figsize=(1.5*self.rspc_sc_sz, 2.5*self.rspc_sc_sz))
+            plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.rspc_sc_sz, 4.5*self.rspc_sc_sz))
             plt.tricontourf(coords[:,0], coords[:,1], z, cmap=PLOT_CMAP, levels=501) # color the z component as background
             ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="lightslategrey", linewidth=2.5)
             max_xy = np.max([LA.norm(phonon[:-1]) for phonon in phonons])

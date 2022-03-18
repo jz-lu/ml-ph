@@ -757,8 +757,6 @@ class ThetaSpaceDM:
                         zip(self.thetas, self.k_set, self.thspc_GM_sets, self.DM_set)]
         self.thspc_r_mesh = np.array([obj.get_coords() for obj in objs])
         self.phonons = np.array([obj.get_phonons() for obj in objs])
-        # for obj in objs:
-        #     obj.plot_phonons(rectangular=False)
         self.phonon_mags = np.mean(np.abs(self.phonons), axis=1)
         assert self.phonons.shape == (self.ntheta, 2, len(self.modeidxs), n_r, 3)
         assert self.phonon_mags.shape == (self.ntheta, len(self.modeidxs), n_r, 3)
