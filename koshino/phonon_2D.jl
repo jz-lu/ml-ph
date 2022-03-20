@@ -4,8 +4,8 @@ FFTW.set_num_threads(Sys.CPU_THREADS)
 include("Bilayers.jl")
 include("gsfe_func.jl")
 
-using PyPlot
-using PyCall
+# using PyPlot
+# using PyCall
 using Interpolations
 using Optim
 using LinearAlgebra
@@ -81,7 +81,7 @@ function parse_commandline()
     return parse_args(s)
 end
 
-close("all")
+# close("all")
 
 ## Parameters:
 parsed_args = parse_commandline()
@@ -313,19 +313,19 @@ w0_meV = w0 * hbar *1e3
 w0_THz = w0 / 10e12
 
 if mode == "line"
-    rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
-    rcParams["font.size"] = 15
-
-    fig=figure(2, figsize = (6, 8))
-    clf()
-    xlabel("k")
-    ylabel("ω/ω₀")
-    plot(w/w0,color="black")
-    title(string("θ = ", θdeg))
-    ylim((0.0,3))
-    xlim((0,size(w)[1]))
-    figure(2, figsize = (6,8))
-    savefig(string(dir, "band_koshino_", θdeg, ".png"))
+    # rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
+    # rcParams["font.size"] = 15
+    # fig=figure(2, figsize = (6, 8))
+    # clf()
+    # xlabel("k")
+    # ylabel("ω/ω₀")
+    # plot(w/w0,color="black")
+    # title(string("θ = ", θdeg))
+    # ylim((0.0,3))
+    # xlim((0,size(w)[1]))
+    # figure(2, figsize = (6,8))
+    # savefig(string(dir, "band_koshino_", θdeg, ".png"))
+    
     npzwrite(string(dir, "band_koshino_", θdeg, ".npz"), w/w0)
     println(string("Saved to ", string(dir, "band_koshino_", θdeg, ".png")))
 elseif mode == "mesh"
@@ -364,13 +364,13 @@ elseif mode == "mesh"
 
     # Plot the DOS
     println("Plotting DOS...")
-    clf()
-    figure(2, figsize = (6,8))
-    xlabel("DOS")
-    ylim((0.0, 3))
-    plot(DOS, omegas, color="black")
-    title(string("θ = ", θdeg))
-    savefig(string(dir, "dos_koshino_", θdeg, ".png"))
+    # clf()
+    # figure(2, figsize = (6,8))
+    # xlabel("DOS")
+    # ylim((0.0, 3))
+    # plot(DOS, omegas, color="black")
+    # title(string("θ = ", θdeg))
+    # savefig(string(dir, "dos_koshino_", θdeg, ".png"))
     npzwrite(string(dir, "dos_koshino_", θdeg, ".npz"), DOS)
     npzwrite(string(dir, "omegas_koshino_", θdeg, ".npz"), omegas)
     println(string("Saved to ", string(dir, "dos_koshino_", θdeg, ".png")))
