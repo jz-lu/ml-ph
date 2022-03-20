@@ -1,7 +1,7 @@
 """
 Streamlined Koshino model calculations over many twist angles.
 """
-import os, argparse
+import os, argparse, subprocess
 import numpy as np
 RELATIVE_PATH = 'ml-ph/koshino/phonon_2D.jl'
 LOCAL_PATH = '/Users/jonathanlu/Documents/'
