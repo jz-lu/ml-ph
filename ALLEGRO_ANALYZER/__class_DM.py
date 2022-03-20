@@ -612,7 +612,7 @@ class TwistedDM:
         for i, (k_mag, DM) in enumerate(zip(self.k_mags, self.DMs)):
             evals = LA.eigvals(DM) * (VASP_FREQ_TO_INVCM_UNITS)**2
             signs = np.array([-1 if val < 0 else 1 for val in evals])
-            modes_k = signs * np.sqrt(np.abs(evals)) + 0.5
+            modes_k = signs * np.sqrt(np.abs(evals))
             self.evals[i] = evals
             self.mode_set[i] = (k_mag, modes_k)
             self.modetnsr[i] = modes_k
@@ -641,6 +641,13 @@ class TwistedDM:
         if saveto is not None:
             np.save(saveto, self.modetnsr)
         return self.modetnsr
+    
+    def get_evals(self, saveto=None):
+        if not self.modes_built:
+            self.build_modes()
+        if saveto is not None:
+            np.save(saveto, self.evals)
+        return self.evals
     
     # Plot phonon modes as a function of k
     def plot_band(self, corner_kmags, angle, outdir='./', filename=DEFAULT_PH_BAND_PLOT_NAME, name=None, cutoff=None):

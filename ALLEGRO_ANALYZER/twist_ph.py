@@ -327,6 +327,7 @@ if __name__ == '__main__':
         if args.save:
             TDM.get_k_set(saveto=outdir + K_MAGS_ONAME)
             TDM.k_mode_tensor(saveto=outdir + MODES_TNSR_ONAME)
+            TDM.get_evals(saveto=outdir + 'evals.npy')
             print(f"Saved `{K_MAGS_ONAME}` and `{MODES_TNSR_ONAME}` to {outdir}")
 
         if force_sum:
@@ -424,8 +425,8 @@ if __name__ == '__main__':
                 
             omegas, DOS = TDOS.get_DOS(smoothen=True)
             if args.save:
-                dos_name = f"DOS_{round(np.rad2deg(theta), 6)}.npy"
-                np.save(outdir + dos_name, DOS)
+                np.save(outdir + "dos.npy", DOS)
+                np.save(outdir + "omegas.npy", omegas)
                 print(f"Saved {dos_name} to {outdir}")
             pfx = "SMOOTH"
             TPLT = TwistedPlotter(round(np.rad2deg(theta), 6), omegas, DOS, mode_set, corner_kmags, cutoff=cutoff)
