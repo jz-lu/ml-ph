@@ -372,5 +372,6 @@ elseif mode == "mesh"
     title(string("θ = ", θdeg))
     savefig(string(dir, "dos_koshino_", θdeg, ".png"))
     npzwrite(string(dir, "dos_koshino_", θdeg, ".npz"), DOS)
+    npzwrite(string(dir, "omegas_koshino_", θdeg, ".npz"), omegas)
     println(string("Saved to ", string(dir, "dos_koshino_", θdeg, ".png")))
 end
