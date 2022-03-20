@@ -312,7 +312,8 @@ class TwistedRealspacePhonon:
                 phonons = np.real(phonons) # just take the real component
                 z = phonons[:,2]
                 plt.rc('font', size=8*self.rspc_sc_sz)
-                plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.rspc_sc_sz, 5.5*self.rspc_sc_sz))
+                plt.clf()
+                fig, ax = plt.subplots(figsize=(3.5*self.rspc_sc_sz, 5.5*self.rspc_sc_sz))
                 plt.tricontourf(coords[:,0], coords[:,1], z, cmap=PLOT_CMAP, levels=501) # color the z component as background
                 ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="lightslategrey", linewidth=2.5)
                 max_xy = np.max([LA.norm(phonon[:-1]) for phonon in phonons])
