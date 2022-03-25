@@ -1,4 +1,4 @@
-include("MoSe2_WSe2_0_Parameters.jl")
+include("Gr_Parameters.jl")
 
 function GSFE(X::Array{Float64,2}, bl::Bilayer)
     R = bl.invE*X
