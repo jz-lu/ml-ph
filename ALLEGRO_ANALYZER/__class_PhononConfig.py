@@ -303,8 +303,6 @@ class TwistedRealspacePhonon:
         layer_blks = np.split(mode_tnsr, 2, axis=0) # split back by layer, then avg by atom
         layer_blks = np.real(list(map(lambda x: np.mean(x, axis=0), layer_blks)))
         assert layer_blks.shape == (2, self.nmodes, self.rec_nr if rectangular else self.n_r, self.d)
-        # np.save("/Users/jonathanlu/Documents/tmos2_2/test/phonons.npy", layer_blks)
-        # np.save("/Users/jonathanlu/Documents/tmos2_2/test/coords.npy", coords)
         zbound = np.max(np.abs(layer_blks[:,:,:,2]))
         for l_i, layer_blk in enumerate(layer_blks):
             l_i += 1 # index layers by 1
@@ -418,69 +416,52 @@ class TwistedRealspacePhonon:
                     transform=ax.transAxes, verticalalignment='center', horizontalalignment='center', bbox=props)
             plt.show()
                 
-    def plot_phonons_per_atom(self, outname='phat.pdf', zcolmesh=False):
+    def plot_a_phonon_per_atom(self, modeidx, outname='phsep.pdf', rectangular=True, save=False):
         """One plot per mode, per atom, per layer"""
-        coords = self.r_matrix
-
-        layer_blks = np.array(np.split(self.mnormed_tnsr, 2, axis=0)) # split back by layer, then avg it
+        coords = self.rec_rmatrix if rectangular else self.r_matrix
+        mode_tnsr = self.rec_mnormed_tnsr if rectangular else self.mnormed_tnsr
+        layer_blks = np.array(np.split(mode_tnsr, 2, axis=0)) # split back by layer, then avg by atom
         zbound = np.max(np.abs(layer_blks[:,:,:,:,2]))
+        n_at = layer_blks.shape[1]
+        print(f"{n_at} atoms per layer")
+        
+        fig, axs = plt.subplots(nrows=2, ncols=n_at, figsize=(5*self.rspc_sc_sz, 5.1*self.rspc_sc_sz))
+        fig.patch.set_facecolor('white')
+        plt.tight_layout()
+        plt.rc('font', size=8*self.rspc_sc_sz)
+        m_j = modeidx
+        plt.suptitle(r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" mode {m_j} at " + self.kpt)
+        
         for l_i, layer_blk in enumerate(layer_blks):
             l_i += 1 # index layers by 1
             for at_k, at_blk in enumerate(layer_blk):
-                for m_j, phonons in enumerate(at_blk):
-                    phonons = np.real(phonons) # just take the real component
-                    z = phonons[:,2]
-                    plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.rspc_sc_sz, 5.5*self.rspc_sc_sz))
-                    plt.rc('font', size=8*self.rspc_sc_sz)
-                    ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="limegreen", alpha=0.8)
-                    plt.quiver(coords[:,0], coords[:,1],    # positions
-                                phonons[:,0], phonons[:,1], # arrows
-                                z,                          # arrow colors
-                                cmap='CMRmap')
-                    (xm, xp), (ym, yp) = plt.xlim(), plt.ylim()
-                    max_xy = np.max([LA.norm(phonon[:-1]) for phonon in phonons])
-                    max_z = np.max(np.abs(z))
-                    ax.text(0.02*(xp-xm)+xm, 0.02*(yp-ym)+ym, r'$\delta u_{xy} = %.3E$'%max_xy)
-                    ax.text(0.06*(xp-xm)+xm, 0.06*(yp-ym)+ym, r'$\delta u_{z} = %.3E$'%max_z)
-                    ax.text(0.10*(xp-xm)+xm, 0.10*(yp-ym)+ym, r'$\omega = %.3f$'%self.modes[m_j])
-                    plt.xlabel("x"); plt.ylabel("y")
-                    ax.scatter(coords[:,0], coords[:,1], c='black', s=0.2)
-                    ax.set_aspect('equal')
-                    fname = self.kpt[2:-1] if self.kpt[0] == "$" else self.kpt
-                    this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}_{at_k}_k-{fname}' + outname[outname.index('.'):]
-                    plt.title(r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" Atom {at_k}, Mode {self.modeidxs[m_j]}, Layer {l_i} at " + self.kpt)
-                    plt.colorbar(shrink=0.5)
-                    plt.clim(-zbound, zbound)
-                    fig.savefig(self.outdir + this_outname)
-                    plt.close(fig)
-
-            if zcolmesh:
-                for l_i, layer_blk in enumerate(layer_blks):
-                    l_i += 1 # index layers by 1
-                    for at_k, at_blk in enumerate(layer_blk):
-                        for m_j, phonons in enumerate(at_blk):
-                            phonons = np.real(phonons) # just take the real component
-                            z = phonons[:,2]
-                            plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.rspc_sc_sz, 5.5*self.rspc_sc_sz))
-                            plt.rc('font', size=8*self.rspc_sc_sz)
-                            plt.tricontourf(coords[:,0], coords[:,1], z, cmap='CMRmap', levels=201)
-                            ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="limegreen", alpha=0.8)
-                            (xm, xp), (ym, yp) = plt.xlim(), plt.ylim()
-                            max_xy = np.max([LA.norm(phonon[:-1]) for phonon in phonons])
-                            max_z = np.max(np.abs(z))
-                            ax.text(0.02*(xp-xm)+xm, 0.02*(yp-ym)+ym, r'$\delta u_{xy} = %.3E$'%max_xy)
-                            ax.text(0.06*(xp-xm)+xm, 0.06*(yp-ym)+ym, r'$\delta u_{z} = %.3E$'%max_z)
-                            ax.text(0.10*(xp-xm)+xm, 0.10*(yp-ym)+ym, r'$\omega = %.3f$'%self.modes[m_j])
-                            plt.xlabel("x"); plt.ylabel("y")
-                            ax.set_aspect('equal')
-                            fname = self.kpt[2:-1] if self.kpt[0] == "$" else self.kpt
-                            this_outname = "COL_" + outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}_{at_k}_k-{fname}' + outname[outname.index('.'):]
-                            plt.title(r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" Atom {at_k}, Mode {self.modeidxs[m_j]}, Layer {l_i} at " + self.kpt)
-                            cb = plt.colorbar(shrink=0.5)
-                            cb.mappable.set_clim(-zbound, zbound)
-                            fig.savefig(self.outdir + this_outname)
-                            plt.close(fig)
-
-                update(f"Wrote per-atom twisted phonons in realspace to {self.outdir + this_outname}")
-        succ(f"Successfully generated {self.nmodes * self.n_at} realspace twisted phonon plots")
+                idx = (l_i - 1, at_k)
+                phonons = at_blk[m_j]
+                phonons = np.real(phonons) # just take the real component
+                z = phonons[:,2]
+                S = axs[idx].tricontourf(coords[:,0], coords[:,1], z, cmap=PLOT_CMAP, levels=501) # color the z component as background
+                S.set_clim(-zbound, zbound)
+                axs[idx].plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="lightslategrey", linewidth=2.5)
+                axs[idx].tick_params(
+                    left=False,
+                    bottom=False,
+                    labelleft=False,
+                    labelbottom=False
+                )
+                axs[idx].set_ylim(top=max(coords[:,1]))
+                axs[idx].set_aspect('equal')
+                axs[idx].quiver(coords[:,0], coords[:,1],    # positions
+                            phonons[:,0], phonons[:,1], 
+                            width=0.0045, headlength=6, headwidth=3, color='black') # arrows
+        # fig.subplots_adjust(right=0.8)
+        # cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
+        # fig.colorbar(S, ax=axs.ravel().tolist(), cax=cbar_ax, shrink=0.25)
+        
+        if save:
+            fname = self.kpt[2:-1] if self.kpt[0] == "$" else self.kpt
+            this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}_k-{fname}' + outname[outname.index('.'):]
+            
+            fig.savefig(self.outdir + this_outname)
+            plt.close(fig)
+        plt.show()
 
