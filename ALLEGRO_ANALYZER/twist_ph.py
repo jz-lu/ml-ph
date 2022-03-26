@@ -427,7 +427,7 @@ if __name__ == '__main__':
             if args.save:
                 np.save(outdir + "dos.npy", DOS)
                 np.save(outdir + "omegas.npy", omegas)
-                print(f"Saved {dos_name} to {outdir}")
+                print(f"Saved {outdir + 'dos.npy'} to {outdir}")
             pfx = "SMOOTH"
             TPLT = TwistedPlotter(round(np.rad2deg(theta), 6), omegas, DOS, mode_set, corner_kmags, cutoff=cutoff)
             TPLT.make_plot(outdir=outdir, name=name, filename=outname, pfx=pfx)
