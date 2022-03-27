@@ -153,7 +153,7 @@ class TwistedRealspacePhonon:
         self.rec_nr = ceil(1.0 * gridsz * rspc_sc_sz)
         x_interval = [np.min(self.r_matrix[:,0]), np.max(self.r_matrix[:,0])]
         y_interval = [np.min(self.r_matrix[:,1]), np.max(self.r_matrix[:,1])]
-        x_interval[0] *= 1.11; x_interval[1] *= 1.11; y_interval[1] *= 1.15 # slight pump for aesthetics
+        x_interval[0] *= 1.15; x_interval[1] *= 1.11; y_interval[1] *= 1.15 # slight pump for aesthetics
         x = np.linspace(*x_interval, num=self.rec_nr, endpoint=True)
         y = np.linspace(*y_interval, num=self.rec_nr, endpoint=True)
         self.rec_rmatrix = np.array(list(prod(x, y)))
@@ -310,34 +310,34 @@ class TwistedRealspacePhonon:
                 phonons = np.real(phonons) # just take the real component
                 z = phonons[:,2]
                 plt.rc('font', size=8*self.rspc_sc_sz)
-                plt.clf()
-                fig, ax = plt.subplots(figsize=(3.5*self.rspc_sc_sz, 5.5*self.rspc_sc_sz))
+                plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.rspc_sc_sz, 5.5*self.rspc_sc_sz))
                 plt.tricontourf(coords[:,0], coords[:,1], z, cmap=PLOT_CMAP, levels=501) # color the z component as background
                 ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="lightslategrey", linewidth=2.5)
-                max_xy = np.max([LA.norm(phonon[:-1]) for phonon in phonons])
-                max_z = np.max(np.abs(z))
+                mean_xy = np.mean([LA.norm(phonon[:-1]) for phonon in phonons])
+                mean_z = np.mean(np.abs(z))
                 
-                plt.xlabel("x"); plt.ylabel("y")
                 ax.set_ylim(top=max(coords[:,1]))
                 ax.set_aspect('equal')
                 plt.tick_params(left=False, right=False, labelleft=False, labelbottom=False, bottom=False)
                 fname = self.kpt[2:-1] if self.kpt[0] == "$" else self.kpt
-                this_outname = outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}_k-{fname}' + outname[outname.index('.'):]
-                plt.title(r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f"layer {l_i} at " + self.kpt)
-                plt.colorbar(shrink=0.5)
+                this_outname = outname[:outname.index('.')] + f'_{round(self.theta, 1)}_{self.modeidxs[m_j]}_{l_i}_k-{fname}' + outname[outname.index('.'):]
+                lstr = '%.1lf'%self.theta + rf"$^\circ,$ L{l_i} at {self.kpt}"
                 plt.clim(-zbound, zbound)
-                if zcolmesh:
-                    fig.savefig(self.outdir + 'COL_' + this_outname)
                 plt.quiver(coords[:,0], coords[:,1],    # positions
                             phonons[:,0], phonons[:,1], 
                             width=0.0045, headlength=6, headwidth=3, color='black') # arrows
 
-                textstr = r'$\omega = %.3f cm^{-1}$'%self.modes[m_j] + '\n' + \
-                          r'$\delta u_{xy}^* = %.3E$'%max_xy + \
-                          '\n' + r'$\delta u_{z}^* = %.3E$'%max_z
+                textstr = r'$\omega = %.3f$ cm$^{-1}$'%self.modes[m_j] + '\n' + \
+                            r'$\delta \overline{u_{xy}} = %.3E$'%mean_xy + \
+                            '\n' + r'$\delta \overline{u_{z}} = %.3E$'%mean_z
                 props = dict(boxstyle='round', facecolor='wheat', alpha=0.75)
                 ax.text(0.275, 0.085, textstr, 
                         transform=ax.transAxes, verticalalignment='center', horizontalalignment='center', bbox=props)
+                ax.text(0.8, 0.95, lstr, 
+                        transform=ax.transAxes, verticalalignment='center', horizontalalignment='center', bbox=props)
+                plt.xlabel("x", fontsize=10*self.rspc_sc_sz)
+                plt.ylabel("y", fontsize=10*self.rspc_sc_sz)
+                
                 fig.savefig(self.outdir + this_outname, bbox_inches='tight')
                 plt.close(fig)
 
@@ -397,14 +397,12 @@ class TwistedRealspacePhonon:
             mean_xy = np.mean([LA.norm(phonon[:-1]) for phonon in phonons])
             mean_z = np.mean(np.abs(z))
             
-            plt.xlabel("x"); plt.ylabel("y")
             ax.set_ylim(top=max(coords[:,1]))
             ax.set_aspect('equal')
             plt.tick_params(left=False, right=False, labelleft=False, labelbottom=False, bottom=False)
             fname = self.kpt[2:-1] if self.kpt[0] == "$" else self.kpt
             this_outname = outname[:outname.index('.')] + f'_{round(self.theta, 1)}_{self.modeidxs[m_j]}_{l_i}_k-{fname}' + outname[outname.index('.'):]
-            plt.title(r"$\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" layer {l_i} at " + self.kpt)
-            plt.colorbar(shrink=0.5)
+            lstr = '%.1lf'%self.theta + rf"$^\circ,$ L{l_i} at {self.kpt}"
             plt.clim(-zbound, zbound)
             plt.quiver(coords[:,0], coords[:,1],    # positions
                         phonons[:,0], phonons[:,1], 
@@ -416,6 +414,10 @@ class TwistedRealspacePhonon:
             props = dict(boxstyle='round', facecolor='wheat', alpha=0.75)
             ax.text(0.275, 0.085, textstr, 
                     transform=ax.transAxes, verticalalignment='center', horizontalalignment='center', bbox=props)
+            ax.text(0.8, 0.95, lstr, 
+                    transform=ax.transAxes, verticalalignment='center', horizontalalignment='center', bbox=props)
+            plt.xlabel("x", fontsize=10*self.rspc_sc_sz)
+            plt.ylabel("y", fontsize=10*self.rspc_sc_sz)
             if save:
                 fig.savefig(self.outdir + this_outname, bbox_inches='tight')
             plt.show()
