@@ -106,6 +106,7 @@ class TwistedRealspacePhonon:
         self.rspc_sc_sz = rspc_sc_sz
         self.kpt = kpt
         self.bl_masses = bl_masses
+        self.avg_mass = np.mean(bl_masses)
         self.GM_set = GM_set; self.n_G = len(GM_set); self.k = k
         self.modeidxs = np.array(modeidxs).astype(int)
         self.nmodes = len(modeidxs); assert self.nmodes >= 1
@@ -330,7 +331,7 @@ class TwistedRealspacePhonon:
                 textstr = r'$\omega = %.3f$ cm$^{-1}$'%self.modes[m_j] + '\n' + \
                             r'$\delta \overline{u_{xy}} = %.3E$'%mean_xy + \
                             '\n' + r'$\delta \overline{u_{z}} = %.3E$'%mean_z
-                props = dict(boxstyle='round', facecolor='wheat', alpha=0.75)
+                props = dict(boxstyle='round', facecolor='wheat', alpha=1)
                 ax.text(0.275, 0.085, textstr, 
                         transform=ax.transAxes, verticalalignment='center', horizontalalignment='center', bbox=props)
                 ax.text(0.8, 0.95, lstr, 
@@ -379,6 +380,7 @@ class TwistedRealspacePhonon:
     def plot_a_phonon(self, modeidx, save=False, outname='phreal.png', rectangular=True):
         coords = self.rec_rmatrix if rectangular else self.r_matrix
         mode_tnsr = self.rec_mnormed_tnsr if rectangular else self.mnormed_tnsr
+        mode_tnsr = mode_tnsr * np.sqrt(self.avg_mass)
 
         layer_blks = np.split(mode_tnsr, 2, axis=0) # split back by layer, then avg by atom
         layer_blks = np.real(list(map(lambda x: np.mean(x, axis=0), layer_blks)))
@@ -408,10 +410,10 @@ class TwistedRealspacePhonon:
                         phonons[:,0], phonons[:,1], 
                         width=0.0045, headlength=6, headwidth=3, color='black') # arrows
 
-            textstr = r'$\omega = %.3f$ cm$^{-1}$'%self.modes[m_j] + '\n' + \
-                        r'$\delta \overline{u_{xy}} = %.3E$'%mean_xy + \
-                        '\n' + r'$\delta \overline{u_{z}} = %.3E$'%mean_z
-            props = dict(boxstyle='round', facecolor='wheat', alpha=0.75)
+            textstr = r'$\omega = %.1f$ cm$^{-1}$'%self.modes[m_j] + '\n' + \
+                        r'$\delta \overline{u_{xy}} \sim %.1E$ $\AA$'%mean_xy + \
+                        '\n' + r'$\delta \overline{u_{z}} = %.1E$ $\AA$'%mean_z
+            props = dict(boxstyle='round', facecolor='wheat', alpha=1)
             ax.text(0.275, 0.085, textstr, 
                     transform=ax.transAxes, verticalalignment='center', horizontalalignment='center', bbox=props)
             ax.text(0.8, 0.95, lstr, 
