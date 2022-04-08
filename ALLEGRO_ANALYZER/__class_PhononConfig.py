@@ -5,6 +5,7 @@ from scipy import linalg as SLA
 from math import floor, log10, sqrt, ceil
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcol
+from matplotlib.ticker import MultipleLocator
 import os
 from itertools import product as prod
 from random import randint
@@ -377,7 +378,9 @@ class TwistedRealspacePhonon:
 
         succ(f"Successfully generated {self.nmodes * self.n_at} realspace twisted phonon plots")
     
-    def plot_a_phonon(self, modeidx, save=False, outname='phreal.png', rectangular=True):
+    def plot_a_phonon(self, modeidx, save=False, 
+                      outname='phreal.png', rectangular=True, 
+                      ticky=True, labely=True):
         coords = self.rec_rmatrix if rectangular else self.r_matrix
         mode_tnsr = self.rec_mnormed_tnsr if rectangular else self.mnormed_tnsr
         mode_tnsr = mode_tnsr * np.sqrt(self.avg_mass)
@@ -387,21 +390,33 @@ class TwistedRealspacePhonon:
         assert layer_blks.shape == (2, self.nmodes, self.rec_nr if rectangular else self.n_r, self.d)
         zbound = np.max(np.abs(layer_blks[:,:,:,2]))
         m_j = modeidx
+        
+        lx, ly = np.ptp(self.moire_boundary[:,0]), np.ptp(self.moire_boundary[:,1])
+        
         for l_i, layer_blk in enumerate(layer_blks):
             l_i += 1 # index layers by 1
             phonons = layer_blk[modeidx]
             phonons = np.real(phonons) # just take the real component
             z = phonons[:,2]
-            plt.rc('font', size=8*self.rspc_sc_sz)
+            plt.rc('font', size=9*self.rspc_sc_sz)
             plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.rspc_sc_sz, 5.5*self.rspc_sc_sz))
             plt.tricontourf(coords[:,0], coords[:,1], z, cmap=PLOT_CMAP, levels=501) # color the z component as background
             ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="lightslategrey", linewidth=2.5)
             mean_xy = np.mean([LA.norm(phonon[:-1]) for phonon in phonons])
             mean_z = np.mean(np.abs(z))
             
+            if ticky:
+                ax.xaxis.set_major_locator(MultipleLocator(lx))
+                ax.yaxis.set_major_locator(MultipleLocator(ly))
+                ax.set_xticklabels(np.arange(self.rspc_sc_sz+1+1)-1)
+                ax.set_yticklabels(np.arange(self.rspc_sc_sz+1+1)-1)
+                plt.xticks(fontsize=11*self.rspc_sc_sz)
+                plt.yticks(fontsize=11*self.rspc_sc_sz)
+            else:
+                plt.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
+            
             ax.set_ylim(top=max(coords[:,1]))
             ax.set_aspect('equal')
-            plt.tick_params(left=False, right=False, labelleft=False, labelbottom=False, bottom=False)
             fname = self.kpt[2:-1] if self.kpt[0] == "$" else self.kpt
             this_outname = outname[:outname.index('.')] + f'_{round(self.theta, 1)}_{self.modeidxs[m_j]}_{l_i}_k-{fname}' + outname[outname.index('.'):]
             lstr = '%.1lf'%self.theta + rf"$^\circ,$ L{l_i} at {self.kpt}"
@@ -412,14 +427,18 @@ class TwistedRealspacePhonon:
 
             textstr = r'$\omega = %.1f$ cm$^{-1}$'%self.modes[m_j] + '\n' + \
                         r'$\delta \overline{u_{xy}} \sim %.1E$ $\AA$'%mean_xy + \
-                        '\n' + r'$\delta \overline{u_{z}} = %.1E$ $\AA$'%mean_z
+                        '\n' + r'$\delta \overline{u_{z}} \sim %.1E$ $\AA$'%mean_z
             props = dict(boxstyle='round', facecolor='wheat', alpha=1)
             ax.text(0.275, 0.085, textstr, 
-                    transform=ax.transAxes, verticalalignment='center', horizontalalignment='center', bbox=props)
-            ax.text(0.8, 0.95, lstr, 
-                    transform=ax.transAxes, verticalalignment='center', horizontalalignment='center', bbox=props)
-            plt.xlabel("x", fontsize=10*self.rspc_sc_sz)
-            plt.ylabel("y", fontsize=10*self.rspc_sc_sz)
+                    transform=ax.transAxes, verticalalignment='center', 
+                    horizontalalignment='center', bbox=props)
+            ax.text(0.75, 0.95, lstr, 
+                    transform=ax.transAxes, verticalalignment='center', 
+                    horizontalalignment='center', bbox=props,
+                    fontsize=11*self.rspc_sc_sz)
+            if labely:
+                plt.ylabel(r"y ($\lambda_y$)", fontsize=11*self.rspc_sc_sz)
+            plt.xlabel(r"x ($\lambda_x$)", fontsize=11*self.rspc_sc_sz)
             if save:
                 fig.savefig(self.outdir + this_outname, bbox_inches='tight')
             plt.show()
@@ -431,7 +450,6 @@ class TwistedRealspacePhonon:
         layer_blks = np.array(np.split(mode_tnsr, 2, axis=0)) # split back by layer, then avg by atom
         zbound = np.max(np.abs(layer_blks[:,:,:,:,2]))
         n_at = layer_blks.shape[1]
-        print(f"{n_at} atoms per layer")
         
         fig, axs = plt.subplots(nrows=2, ncols=n_at, figsize=(5*self.rspc_sc_sz, 5.1*self.rspc_sc_sz))
         fig.patch.set_facecolor('white')

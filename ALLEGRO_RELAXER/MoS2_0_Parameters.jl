@@ -14,7 +14,7 @@ K2 = 73.5461 # Bulk modulus
 # G2 = 63.0955  # Shear modulus
 
 # R2SCAN Coeffs
-dummy = 7
+dummy = 1
 c1 = dummy * 1.279097768624577920e-02
 c2 = dummy * -2.339435602116175447e-03
 c3 = dummy * -8.260555909670658833e-04
