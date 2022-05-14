@@ -1,4 +1,6 @@
 # Allegro Elastic
+Please read the general documentation in the main directory of `ml-ph` before reading this.
+
 This is `Allegro Elastic`, an arm of `Allegro` responsible for the calculation of the elastic constants `K` (bulk modulus) and `G` (shear modulus) for monolayered materials.
 
 Regrettably, `Allegro Elastic` is less well-designed than the other arms of `Allegro`. In particular, before you compute anything, you will have to add the material you want in the branches of `get_poscar_elastic()` in `gen_poscar_elastic.py`. Give it a name, and add the relevant information by following the template from materials we already have, including graphene, MoS2, WSe2, etc. If the monolayers of interest are already there, simply adjust the lattice constant `a0`. 
