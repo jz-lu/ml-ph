@@ -101,7 +101,7 @@ nr = 50
 mode = "line"
 if parsed_args["mesh"] == true
     mode = "mesh"
-    nq = 45
+    nq = 15
 end
 wf_idx = 1
 

@@ -4,8 +4,9 @@ import numpy.linalg as LA
 from scipy import linalg as SLA
 from math import floor, log10, sqrt, ceil
 import matplotlib.pyplot as plt
+import matplotlib
 import matplotlib.colors as mcol
-from matplotlib.ticker import MultipleLocator
+from matplotlib.ticker import MultipleLocator, MaxNLocator
 import os
 from itertools import product as prod
 from random import randint
@@ -299,8 +300,13 @@ class TwistedRealspacePhonon:
         rectangular in Cartesian basis instead of square in lattice basis. If `zcolmesh` is True,
         plot a color contour of the z-component only (useful for interlayer analysis).
         """
+        # make the default Font latex
+        matplotlib.rcParams['mathtext.fontset'] = 'stix'
+        matplotlib.rcParams['font.family'] = 'STIXGeneral'
+        
         coords = self.rec_rmatrix if rectangular else self.r_matrix
         mode_tnsr = self.rec_mnormed_tnsr if rectangular else self.mnormed_tnsr
+        mode_tnsr = mode_tnsr * np.sqrt(self.avg_mass)
 
         layer_blks = np.split(mode_tnsr, 2, axis=0) # split back by layer, then avg by atom
         layer_blks = np.real(list(map(lambda x: np.mean(x, axis=0), layer_blks)))
@@ -369,7 +375,8 @@ class TwistedRealspacePhonon:
                 fname = self.kpt[2:-1] if self.kpt[0] == "$" else self.kpt
                 this_outname = 'REF_' + outname[:outname.index('.')] + f'_{self.modeidxs[m_j]}_{l_i}_k-{fname}' + outname[outname.index('.'):]
                 plt.title(r"Ref $\theta=$" + '%.1lf'%self.theta + r"$^\circ,$" + f" Mode {self.modeidxs[m_j]}, Layer {l_i} at " + self.kpt)
-                plt.colorbar(shrink=0.5)
+                cbar = plt.colorbar(shrink=0.5)
+                cbar.ax.set_yticklabels(cbar.ax.get_yticklabels(), fontsize=20)
                 plt.clim(-zbound, zbound)
                 fig.savefig(self.outdir + this_outname)
                 plt.close(fig)
@@ -380,7 +387,12 @@ class TwistedRealspacePhonon:
     
     def plot_a_phonon(self, modeidx, save=False, 
                       outname='phreal.png', rectangular=True, 
-                      ticky=True, labely=True):
+                      ticky=True, labely=True, labelx=True):
+        # make the default Font latex
+        matplotlib.rcParams['mathtext.fontset'] = 'stix'
+        matplotlib.rcParams['font.family'] = 'STIXGeneral'
+        FONT_SIZE = 18
+
         coords = self.rec_rmatrix if rectangular else self.r_matrix
         mode_tnsr = self.rec_mnormed_tnsr if rectangular else self.mnormed_tnsr
         mode_tnsr = mode_tnsr * np.sqrt(self.avg_mass)
@@ -391,27 +403,26 @@ class TwistedRealspacePhonon:
         zbound = np.max(np.abs(layer_blks[:,:,:,2]))
         m_j = modeidx
         
-        lx, ly = np.ptp(self.moire_boundary[:,0]), np.ptp(self.moire_boundary[:,1])
-        
         for l_i, layer_blk in enumerate(layer_blks):
             l_i += 1 # index layers by 1
             phonons = layer_blk[modeidx]
             phonons = np.real(phonons) # just take the real component
             z = phonons[:,2]
-            plt.rc('font', size=9*self.rspc_sc_sz)
+            plt.rc('font', size=16*self.rspc_sc_sz)
             plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.rspc_sc_sz, 5.5*self.rspc_sc_sz))
             plt.tricontourf(coords[:,0], coords[:,1], z, cmap=PLOT_CMAP, levels=501) # color the z component as background
             ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="lightslategrey", linewidth=2.5)
             mean_xy = np.mean([LA.norm(phonon[:-1]) for phonon in phonons])
             mean_z = np.mean(np.abs(z))
+            # print(f"Layer {l_i}:\n", z)
             
             if ticky:
-                ax.xaxis.set_major_locator(MultipleLocator(lx))
-                ax.yaxis.set_major_locator(MultipleLocator(ly))
-                ax.set_xticklabels(np.arange(self.rspc_sc_sz+1+1)-1)
-                ax.set_yticklabels(np.arange(self.rspc_sc_sz+1+1)-1)
-                plt.xticks(fontsize=11*self.rspc_sc_sz)
-                plt.yticks(fontsize=11*self.rspc_sc_sz)
+                ax.xaxis.set_major_locator(MaxNLocator(5))
+                ax.yaxis.set_major_locator(MaxNLocator(6))
+                # ax.set_xticklabels(np.arange(self.rspc_sc_sz+1+1)-1)
+                # ax.set_yticklabels(np.arange(self.rspc_sc_sz+1+1)-1)
+                plt.xticks(fontsize=FONT_SIZE*self.rspc_sc_sz)
+                plt.yticks(fontsize=FONT_SIZE*self.rspc_sc_sz)
             else:
                 plt.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
             
@@ -419,26 +430,29 @@ class TwistedRealspacePhonon:
             ax.set_aspect('equal')
             fname = self.kpt[2:-1] if self.kpt[0] == "$" else self.kpt
             this_outname = outname[:outname.index('.')] + f'_{round(self.theta, 1)}_{self.modeidxs[m_j]}_{l_i}_k-{fname}' + outname[outname.index('.'):]
-            lstr = '%.1lf'%self.theta + rf"$^\circ,$ L{l_i} at {self.kpt}"
+            lstr = '%.1lf'%self.theta + rf"$^\circ,$ L{l_i}"
             plt.clim(-zbound, zbound)
             plt.quiver(coords[:,0], coords[:,1],    # positions
                         phonons[:,0], phonons[:,1], 
-                        width=0.0045, headlength=6, headwidth=3, color='black') # arrows
+                        width=0.0045, headwidth=6, minshaft=2, 
+                        color='black') # arrows
 
             textstr = r'$\omega = %.1f$ cm$^{-1}$'%self.modes[m_j] + '\n' + \
-                        r'$\delta \overline{u_{xy}} \sim %.1E$ $\AA$'%mean_xy + \
-                        '\n' + r'$\delta \overline{u_{z}} \sim %.1E$ $\AA$'%mean_z
+                        r'$\delta \overline{u_{xy}} \sim %.1E$ $\mathrm{\AA}$'%mean_xy + \
+                        '\n' + r'$\delta \overline{u_{z}} \sim %.1E$ $\mathrm{\AA}$'%mean_z
             props = dict(boxstyle='round', facecolor='wheat', alpha=1)
-            ax.text(0.275, 0.085, textstr, 
+            ax.text(0.35, 0.13, textstr, 
                     transform=ax.transAxes, verticalalignment='center', 
-                    horizontalalignment='center', bbox=props)
-            ax.text(0.75, 0.95, lstr, 
-                    transform=ax.transAxes, verticalalignment='center', 
-                    horizontalalignment='center', bbox=props,
-                    fontsize=11*self.rspc_sc_sz)
+                    horizontalalignment='center', bbox=props, 
+                    fontsize=15*self.rspc_sc_sz)
             if labely:
-                plt.ylabel(r"y ($\lambda_y$)", fontsize=11*self.rspc_sc_sz)
-            plt.xlabel(r"x ($\lambda_x$)", fontsize=11*self.rspc_sc_sz)
+                plt.ylabel(r"y ($\mathrm{\AA}$)", fontsize=FONT_SIZE*self.rspc_sc_sz)
+            else:
+                ax.set_yticklabels([])
+            if labelx:
+                plt.xlabel(r"x ($\mathrm{\AA}$)", fontsize=FONT_SIZE*self.rspc_sc_sz)
+            else:
+                ax.set_xticklabels([])
             if save:
                 fig.savefig(self.outdir + this_outname, bbox_inches='tight')
             plt.show()

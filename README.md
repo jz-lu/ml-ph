@@ -1,84 +1,41 @@
 # ml-ph
-Repository to calculate phonons for multi-layered two-dimensional materials
+This is `ml-ph` (`Allegro`), a scrappy library containing a set of tools that together compute the phononic physics of bilayered moire heterostructures. This library was developed for the purpose of a study at the Kaxiras Group at the Dept. of physics in Harvard University. Below provides some minimal documentation about the library, including the workflow for a phononic computation and the features available.
 
-_Documentation Notes_:
-1. This documentation regularly switches between the terminology of the "fixed" layer and the "first" layer (i.e. bottom layer). They both refer to the layer serving as the reference point for the configuration; this layer sets the standard of the lattice constant that all other layers will be strained to in the strain-shift algorithm. Since the choice of the fixed layer is arbitrary, we will always take it to be the first or bottommost layer.
-2. "Selective dynamics", which refers to a constraint on which directions (in terms of the lattice basis vector set) the VASP DFT calculator's relaxation protocol is allowed to relax the solid on, is shortened to "SD".
-
-## Overview
-The purpose, (blackbox style) functions, and sample calculations are found in the _docs_ folder. The below details how to run the script, and then discusses a high-level idea of how it works. **A flow chart detailing the algorithm is found in the _docs_ folder as well**.
-
-
-## Instructions on calling the automated script
-If any of this section if unclear, read the documentation first, in particular the **Input** section. You can run it directly or use a batch file to submit a job if you wish. The command-line calling, either way, should be of the form
-```
-python3 start.py <typeFlag: 0 for real space, 1 for config sampling> <I/O DIRECTORY> <vdW T/F> <GAMMA or MP> <arg1> <arg2> .... Specify at least one arg (eledos, eleband, phdos, phband, energies).
-
-    If using input file to specify parameters...
-        Usage: "python3 start.py -f <filename>" where parameters are in the input file separated by a newline
-```
-where _I/O DIRECTORY_ is the directory of the POSCAR and where the calculation will be run, _vdW (T/F)_ is a True/False on whether to use van der Waals interactions in the calculations or not, *GAMMA or MP* specifies the type of sampling on the Brillouin zone (for gamma-centered enter GAMMA or for Monkhorst-Pack enter MP), and the _calculation i_ specifies the types of calculations for electronic and phononic bands and DOS (inputs eledos, eleband, phdos, phband). Note that for _GAMMA or MP_, if you already have a valid KPOINTS file in your I/O directory, it does not matter which you put in; the file's sampling type will be read and used.
-
-## Documentation
-The general flow chart is given as a PDF in the _docs_ folder, for configuration space sampling (the algorithm is similar for real-space calculations, omitting multiprocessing over the sampling and output related to displacement samples). The program can do both real-space calculations and configuration-space sampling based on type flag.
-
-### Input
-For any calculation, the four inputs are the INCAR (VASP settings), POTCAR (pseudopotential), KPOINTS (reciprocal space sampling line/grid), and POSCAR (solid spcification). If running a real-space calculations, the input is a single POSCAR; for configuration space, the input is one POSCAR per layer (see **Notes** on input format) and the fixed layer is the file that comes *first in alphanumeric order*. INCAR, KPOINTS (grid for DOS), and POTCAR are optional—`Allegro Analyzer` will generate them with default options if they are not found. For band structure, a line KPOINTS file named `LINE_KPOINTS` should be inputted. All inputs should go into the I/O directory specified on the command line.
-
-### Configuration Sampling
-Due to incommensurability of twisted or mismatched solids, DFT calculations on a unit cell is impractical (even if a supercell existed, calculation time increases exponentially with volume). However, for such symmetry breakers as small twists the change in positioning of the atoms is smooth. Thus to compute pairwise quantities such as forces (which is the key to relaxations, energies, and phonon modes), it suffices to sample _configurations_ of atoms between the layers, letting the bottom (first) layer remain fixed and mapping the remaining layers to the first in terms of their configuration. The configuration of an atom in an upper (nonfixed) layer is computed by the linear transformation
-<img src="http://www.sciweavers.org/tex2img.php?eq=A_i%20%3D%20%5Cbegin%7Bpmatrix%7D%0A%5Cmathbf%7BR%7D_%7Bi%2C1%7D%20%26%20%5Cmathbf%7BR%7D_%7Bi%2C2%7D%0A%5Cend%7Bpmatrix%7D%20%2C%5C%3B%20A_%7B%5Cdelta%202%7D%20%5Cequiv%20%281%20-%20A_1%20A_2%5E%7B-1%7D%29%20%5CRightarrow%5Cmathbf%7Bb%7D%20%3D%20A_%7B%5Cdelta%202%7D%20%5Cmb%7Br%7D%20%5Ciff%20%5Cmb%7Br%7D%20%3D%20A_%7B%5Cdelta%202%7D%5E%7B-1%7D%20%5Cmathbf%7Bb%7D&bc=White&fc=Black&im=jpg&fs=12&ff=arev&edit=0" align="center" border="0" alt="A_i = \begin{pmatrix}\mathbf{R}_{i,1} & \mathbf{R}_{i,2}\end{pmatrix} ,\; A_{\delta 2} \equiv (1 - A_1 A_2^{-1}) \Rightarrow\mathbf{b} = A_{\delta 2} \mb{r} \iff \mb{r} = A_{\delta 2}^{-1} \mathbf{b}" width="506" height="26" />
-where **R** is the lattice vectors for the *i*th layer. For more details about the motivation for this definition, see the summary report section on Configuration sampling or Stephen Carr's paper, both in _docs_. Since configurations suffice to approximate all of the relevant forces, we can sample a grid of configurations (i.e. sample a shift vector that uniformly along the lattice parallelogram), shift every atom in the nonfixed layers by the vector, modulo the unit cell torus, and do the standard relaxation and energy computations over each shift independently. We can then study the energy and forces over each shift and compute the phonons. The key is to compute and subsequently diagonalize the dynamical matrix in *k*-space to get the phonon modes for arbitrary incommensurate multilayered materials. Details are given in the summary report in _docs_.
-
-#### Input validation
-Configurations are built as follows. Along with the standard INCAR, POTCAR, KPOINTS inputs (none of which are required—`Allegro Analyzer` automates the default construction of them all), one POSCAR must be given for each layer, for a minimum of two layers. These POSCARs are imported into _pymatgen_ objects in `Configuration::import_init_poscars()` in `__class_Configuration.py`, from individual files that must be located at the specified `ROOT` I/O directory from the command line. The lattice basis vectors, concatenated into a matrix, are extracted from the _pymatgen_ POSCAR object in `Configuration::get_lattices()`. The fixed layer (which is the first layer under our model) in-plane lattice vectors (the 2 basis vectors in the plane of the 2D solid) are checked to have the same norm (they should be scaled identically), and then normalized in `Configuration::__get_normed_fixed_lattice()`. A multilayered solid under the configuration sampling paradigm can differ _at most_ by a small constant scaling in the lattice; the lattice vectors themselves _must be identical_ up to normalization. Thus `Configuration::check_lattice_consistency()` subsequently examines the lattices over each layer and ensures that they are the same when normalized. Finally,  If any of the above checks fail, `Allegro Analyzer` terminates. 
-
-#### POSCAR construction and the strain-shift algorithm
-Validated input POSCARs, one for each layer, are concatenated into a single POSCAR as follows. Shifts are generated via the static class method `Configuration::sample_grid()`. Given a shift, a single POSCAR containing all the layers are generated via `Configuration::build_config_poscar()`, which implements the strain-shift (SS) algorithm. Informally, SS strains every layer except the fixed so that every layer has the same lattice basis (we assume that this strain maintains solid stability, so that the lattice constant mismatch is sufficiently small, as explained in **Input validation**), then shifts every sublattice atom modulo the unit cell torus. SD is allowed only in the interlayer direction for all but the fixed layer. In practice this simply amounts to a few lines of code:
-```
-for i in nonfixed_layers:
-  for j in i->atoms:
-    j + shift_vec mod (1, 1, 1)
-```
-No explicit straining is necessary since the fixed layer serves as the base POSCAR, and each atom from the other layers are subsequently added to the base POSCAR after the shift, so by virtue of sharing the same lattice basis as the fixed, the strain has already been made.
-
-### DFT Relaxation and Energy Computation
-The program assumes that the individual layers are either already relaxed, or are strained anyway so it isn't actually supposed to be relaxed (e.g. mismatched lattices in multilayers, twists, etc.). Thus only the interlayer spacing is relaxed (this is encoded by the [selective dynamics](https://www.vasp.at/wiki/index.php/Input) option in POSCAR). The relaxation process is computed with DFT handled by the program VASP (Vienna Ab Initio Simulation Package). The inputs required on VASP are the [INCAR](https://www.vasp.at/wiki/index.php/INCAR) (VASP settings), [POSCAR](https://www.vasp.at/wiki/wiki/index.php/POSCAR) (gives all specs of the unit cell of the solid), [POTCAR](https://www.vasp.at/wiki/wiki/index.php/POTCAR) (which is always handled entirely by the program and does not require user knowledge--it is just a file giving the pseudopotential that VASP is to use in simluating the given material), and [KPOINTS](https://www.vasp.at/wiki/wiki/index.php/KPOINTS) (specifies the sampling of the BZ, a mesh/grid for DOS and a line around the IBZ for band structure). (Note: all of the inputs are collected and stored into a single Vasp-readable object in the class `CarCollector` via the `pymatgen` VASP I/O API.) To relax the solid, VASP starts by assuming a trial wavefunction using Linear Combination of Orbitals (LCAO), then iteratively solves the corresponding Schrodinger equation until a self-consistent wavefunction is found (the calculation is said to *converge* when this occurs). For phonon calculations, the convergence threshold should be extremely small for accurate calculations, and in the default INCAR it is set to `10^-8` energy units. In each round, the energy computed, along with use of the Hellmann-Feynman theorem (get the forces from the Hamiltonian matrix elements), give the direction and magnitude by which VASP nnudges the atoms, thus "relaxing them" to an equilibrium point. Overall, the process is 2-layered: there are many rounds of relaxation where the atoms are moved based on the computed forces until an equilibrium threshold, set in INCAR, has been reached (or failure to relax is outputted), and in each relaxation round the wavefunctions are solved iteratively until self-consistent and the forces computed. The total and Fermi energy are then outputted by the program. In this program the relaxation is attempted up to 3 times before giving up. To prevent repetition, each time the CHGCAR (charge densities file--holding the most recently computed charge distribution) is fed into VASP as input so the relaxation iterations pick up where they left off. CONTCAR (the POSCAR of the unit cell after the _n_ rounds of relaxation) is fed in in place of POSCAR.
-
-#### Configuration Energy and Spacing Plots
-
-The total energy is interpolated over the smooth region of sampled configuration shift vectors `b`. This forms an energy contour plot over a displacement parallogram within the unit cell bounding the sampled shifts. The same plot is made with respect to interlayer spacing (i.e. the minimum interlayer distance among all layers) in place of energy. For completeness, energy vs. interlayer spacing is also plotted. Raw data is outputted as well in tabular csv format.
-
-### Electronic Calculations
-Following a (successful) relaxation VASP outputs a CONTCAR file containing the final positions of the atoms. This is fed into a new INCAR (that turns off relaxation with a particular flag, and the entire vasp object is run without relaxation. Based on input specification in the calling of `start.py`, the following two calculations may be performed, independently (with the exception that if both are run, DOS is run first and the updated CHGCAR which is slightly better is used in the band structure calculation).
-
-#### Electron DOS
-A grid of _k_-points in the BZ is automatically generated unless a KPOINTS mesh file is given. Currently the default generated KPOINTS uses a [smeared Gaussian](https://www.vasp.at/wiki/wiki/index.php/ISMEAR) to approximate (counts the number of states with a given energy and sums Gaussians with smearing in place of delta functions). By changing the `ISMEAR` flag in the INCAR (see link above on Gaussian), this can be changed to the tetrahedron method, which requires less tuning but does not reflect the delta function summations as naturally. The DOS Gaussian width parameter *might otherwise require hand-tuning via trial-and-error* ad-hoc for each material.
-
-#### Electronic Band Structure
-Instead of a grid, sampling along the boundary of the IBZ is specified. This requires manual input on the user's part (see *Notes*) via a line KPOINTS input file, the documentation of which can be found in the "Strings of k-points for bandstructure calculations" section of [this article](https://www.vasp.at/wiki/wiki/index.php/KPOINTS). An example is also given in the sample files of _docs_ under the single calculation of AA bilayer graphene. The band structure is calculated by diagonalizing the Hamiltonian at each of the sampled _k_-points along the IBZ boundary as specified in the line KPOINTS file.
-
-### Phononic Calculations
-Calculations for phonons are in part done by `phonopy`, program with a python API (though we do not use it--instead we use subprocesses to run phonopy in the shell). The documentation for phonopy is [here](https://phonopy.github.io/phonopy/index.html). The input is the VASP Poscar and a specification of a supercell dimension; this is because the displacment breaks unit cell symmetry and a larger cell is required. We use a `3 3 1` supercell (3 by 3) but this is largely ad-hoc and found via trial-and-error for a given class of materials, based on whether the phonons calculated are reasonable (i.e. no negative/imaginary frequencies, etc.). The general workflow follows the frozen phonon approach: we first generate a set of displacements. One displacement is generated for each dimension for each atom in the unit cell, and then reduced by the symmetries of the space group. These can be generated from such models as the Born Force Constants; phonopy uses a thermodynamic displacement model (see their docs). For each displacement, the force constants are calculated by double differentiation of the change in potential energy. This generates a `FORCE_SETS` file containing the force constants matrix. Phonopy then automatically diagonalizes it in real space to plot the band structure. It also computes the DOS by the analog to that of the electronic calculation method. We will use the force constants matrix to generate a dynamical matrix, and map it into Fourier space for diagonlization.
-
-#### Fourier Sampled Dynamical Matrices
-
-In the Fourier space transform (**NOTE: not yet implemented**)
+## How to cite this library
 TODO
 
-<img src="http://www.sciweavers.org/tex2img.php?eq=%5Cmathbf%7Bk%7D%20%3D%20A_%7B%5Cdelta%202%7D%20%5Cmathbf%7BG%7D%2C%5C%3B%20A_%7B%5Cdelta%202%7D%5ET%20%3D%20A_%7B%5Cdelta%202%7D%20%20%5CRightarrow%20e%5E%7Bi%5Cmathbf%7Bk%7D%5Ccdot%5Cmathbf%7Br%7D%7D%20%3D%20e%5E%7Bi%5Cmathbf%7BG%7D%5Ccdot%5Cmathbf%7Bb%7D%7D&bc=White&fc=Black&im=jpg&fs=12&ff=arev&edit=0" align="center" border="0" alt="\mathbf{k} = A_{\delta 2} \mathbf{G},\; A_{\delta 2}^T = A_{\delta 2}  \Rightarrow e^{i\mathbf{k}\cdot\mathbf{r}} = e^{i\mathbf{G}\cdot\mathbf{b}}" width="285" height="28" />
+## Overciew
+The calculation of phonons runs in two primary stages. The first involves computation of the pairwise forces of atoms in pristine bilayer configuration space over a discrete `N x N` set of configurations. (In the paper, we used `9 x 9`.) This step is built upon density functional theory (DFT) implemented by the Vienna _ab initio_ package (VASP), which requires separate licensing. See **Initial setup** for details. This calculation has been maximally parallelized but is still expected to take a long time. On average, we found this step to take about 8-24 hours per configuration to run on a computing cluster with 4000 GB RAM per core, 24 cores. DFT calculations will first require ionic relaxation, followed by force computations. The two steps are submitted as separate jobs. Be aware that since each configuration is relaxed, and then requires up to 36 force calculations in the frozen phonon method, the DFT calculations can total to a few thousand jobs submitted onto the computing cluster.
 
+The second step involves the construction of the moire dynamical matrix from the forces. This step is very quick, and should take about 1-4 minutes for band structure and real space wavefunctions. However, for calculations of density of states (DOS), `ml-ph` must compute the dyamical matrix at every one of a `45 x 45` mesh in reciprocal space, which can take 2-10 hours. This step is based on the collective API calls of `phonopy`, `hiphive`, and `ml-ph` itself.
 
-## Notes
-Note that this code, at least the automated phonopy analysis part, likely does not work for 3-d materials or ones with  complicated band paths. For bulk materials the code can be modified easily on the phonopy analysis to use a package like seeKpath to automatically generate the high symmetry lines.
+`ml-ph` has deprecated functions of calculating electronic band structures and DOS as well for pristine multilayered materials. We will not discuss how to do so there, but some of the old code is in `ALLEGRO_ANALYZER/__postprocess_relaxation.py` for the curious.
 
-Any "special" notes:
-* Input POSCARs should never begin with 'POSCAR-'. Specifically, 'POSCAR_(stuff)' is to be used for configuration work, where the layers will be orderd alphanumerically after the underscore, and 'POSCAR' should be used for real space work. The automated analysis relies on this keyword to analyze phonon structures properly.
-* The KPOINTS file for line sampling along the IBZ boundary must be named `LINE_KPOINTS` and must be specified if any band calculations (electronic or phononic) are requested. A normal mesh grid must be named `KPOINTS`, but need not be specified as the program will generate a default one if none are fed in.
+## Dependencies
+Install Python packages via `conda` or `pip`. Look these up as needed for their own documentation on installation.
 
-## Informal Changelog (major only)
-(Use `git log --oneline --decorate --color` for detailed changelog).
+1. Python package `phonopy`, latest.
+2. Python package `hiphive`, latest.
+3. Vienna *ab initio* simulation package (VASP). Any version will do, as long as it is set up properly (see below).
+4. A computing cluster that uses the SLURM scheduler. Most modern clusters use SLURM. For example, the Department of Energy NERSC computing clusters. (Without supercomputing power, this workflow is infeasible.)
+5. Python 3.7.7 or later with the basics (`numpy`, `matplotlib`, etc.)
+6. Python package `pymatgen`, latest.
+8. Julia, any version at least `1.0`.
 
-2021-01-17: fixed strain bugs in Configuration class and fixed z-lattice vector constant off by factor of 10.
+## Initial setup
+The first order of business is to build VASP. This is standard to any condensed matter physics calculation and is not unique to `ml-ph`, so we will not discuss it in detail. Whatever the method is, update `ALLEGRO_ANALYZER/STATIC_BAT_DNE` with the right command to call the VASP executable. 
 
-2021-01-23: completed configuration space non-phononic aspects of data output and analysis.
+Ensure next that the python path and the location of the VASP POTCAR (pseudopotential files)are correctly set up in `~/.pmgrc.yaml`. The details of this can be found in the `pymatgen` setup documentation.
+
+## Workflow
+Every VASP calculation requires the INCAR, KPOINTS, POSCAR, and POTCAR input files. See VASP documentation about these. `ml-ph` is set up to automatically create the INCAR, KPOINTS, and POTCAR files for you, but you must provide a POSCAR file in the directory wherein you run the calculations. If you want to specify your own INCAR/KPOINTS, you may add that as an input file along the required POSCAR, and `ml-ph` will use that in lieu of a default creation. If you want to change the parameters of the default creation, check `ALLEGRO_ANALYZER/___constants_vasp.py`.
+
+The general workflow is as follows. Prepare two POSCAR files, `POSCAR_LAYER1` and `POSCAR_LAYER2` for the two monolayers. Each part of the workflow utilizes a different subroutine of `Allegro`, and the details are found in the `README.md` in the respective folders.
+
+1. Obtain the elastic constants `K` and `G` of each monolayer by calling `ALLEGRO_ELASTIC`.
+2. Run a twisted calculation in `ALLEGRO_ANALYZER`. Obtain the GSFE coefficients `c0` through `c5` as described in the documentation there. For phonon calculations, you may discard `c0`.
+3. Create a parameters file in `ALLEGRO_RELAXER` for your material. Use the templates in the example files. Copy in the `K` and `G` for each layer as well as `c1` through `c5`.
+4. Get the band structure, real space wavefunction, and density of states to your heart's content by running some of the scripts in `ALLEGRO_ANALYZER`.
+5. Go forth and prosper!
+
+See Fig. 1 in the paper from **How to cite** for a visualization of the workflow.
