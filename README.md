@@ -1,6 +1,8 @@
 # ml-ph
 This is `ml-ph` (`Allegro`), a scrappy library containing a set of tools that together compute the phononic physics of bilayered moire heterostructures with hexagonal pristine lattices. This library was developed for the purpose of a study at the Kaxiras Group at the Dept. of physics in Harvard University. Below provides some minimal documentation about the library, including the workflow for a phononic computation and the features available.
 
+For questions about `Allegro Analyzer`, please reach out to Jonathan Lu. For questions about `Allegro Relaxer` or `Allegro Elastic`, please reach out to either Jonathan Lu or Ziyan "Zoe" Zhu. See below paper for contact information.
+
 ## How to cite this library
 TODO
 
