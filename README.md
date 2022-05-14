@@ -1,5 +1,5 @@
 # ml-ph
-This is `ml-ph` (`Allegro`), a scrappy library containing a set of tools that together compute the phononic physics of bilayered moire heterostructures. This library was developed for the purpose of a study at the Kaxiras Group at the Dept. of physics in Harvard University. Below provides some minimal documentation about the library, including the workflow for a phononic computation and the features available.
+This is `ml-ph` (`Allegro`), a scrappy library containing a set of tools that together compute the phononic physics of bilayered moire heterostructures with hexagonal pristine lattices. This library was developed for the purpose of a study at the Kaxiras Group at the Dept. of physics in Harvard University. Below provides some minimal documentation about the library, including the workflow for a phononic computation and the features available.
 
 ## How to cite this library
 TODO
@@ -27,10 +27,14 @@ The first order of business is to build VASP. This is standard to any condensed 
 
 Ensure next that the python path and the location of the VASP POTCAR (pseudopotential files)are correctly set up in `~/.pmgrc.yaml`. The details of this can be found in the `pymatgen` setup documentation.
 
+Depending on how different your implementation of SLURM is from ours, you may need to do significant modification to `ALLEGRO_ANALYZER/make_exescr.py`, which builds the general bash executable script that calls SLURM. See that file for details.
+
 ## Workflow
 Every VASP calculation requires the INCAR, KPOINTS, POSCAR, and POTCAR input files. See VASP documentation about these. `ml-ph` is set up to automatically create the INCAR, KPOINTS, and POTCAR files for you, but you must provide a POSCAR file in the directory wherein you run the calculations. If you want to specify your own INCAR/KPOINTS, you may add that as an input file along the required POSCAR, and `ml-ph` will use that in lieu of a default creation. If you want to change the parameters of the default creation, check `ALLEGRO_ANALYZER/___constants_vasp.py`.
 
-The general workflow is as follows. Prepare two POSCAR files, `POSCAR_LAYER1` and `POSCAR_LAYER2` for the two monolayers. Each part of the workflow utilizes a different subroutine of `Allegro`, and the details are found in the `README.md` in the respective folders.
+The general workflow is as follows. Prepare two POSCAR files, `POSCAR_LAYER1` and `POSCAR_LAYER2` for the two monolayers. Ensure that they are positioned such that if they were stacked on top of each other directly, they would be at the highest energy (AA) stacking configuration, for `ml-ph` assumes this. Moreover, the vacuum separation (the length of the out-of-plane lattice basis vector) is assumed to be 35 for `ml-ph` calculations. This can be changed in `ALLEGRO_ANALYZER/___constants_vasp.py`. However, it is important that the vacuum separation is sufficiently large, so it is better to change your POSCARs to match the assumed 35.0. `ALLEGRO_ANALYZER/modpos.py` does this automatically; run it with `-h` for details.
+
+Each part of the workflow utilizes a different subroutine of `Allegro`, and the details are found in the `README.md` in the respective folders.
 
 1. Obtain the elastic constants `K` and `G` of each monolayer by calling `ALLEGRO_ELASTIC`.
 2. Run a twisted calculation in `ALLEGRO_ANALYZER`. Obtain the GSFE coefficients `c0` through `c5` as described in the documentation there. For phonon calculations, you may discard `c0`.
