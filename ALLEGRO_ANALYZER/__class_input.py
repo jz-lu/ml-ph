@@ -26,6 +26,7 @@ class InputData:
         self.sampling_z = (args.type == CFG_Z); self.sampling_lc = (args.type == CFG_LC)
         self.cfg_grid_sz = None; self.calc_str = args.type; self.sampling = args.sampling
         self.no_ionic_step = args.noionicstep
+        self.z_layer_sep = args.intspc
         if self.sampling_diagonal:
             print("Configuration sampling: DIAGONAL")
             self.cfg_grid_sz = DIAG_SAMPLE_LOW if args.sampling == 'low' else DIAG_SAMPLE_HIGH

@@ -14,7 +14,6 @@ from ___constants_names import (
     )
 from ___constants_compute import *
 from ___constants_misc import NUM_AVAILABLE_CORES
-from ___constants_vasp import Z_LAYER_SEP
 from __class_input import InputData
 from __class_Configuration import Configuration
 from __directory_searchers import checkPath

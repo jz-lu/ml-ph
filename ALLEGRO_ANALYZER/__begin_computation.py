@@ -2,7 +2,6 @@ from ____exit_with_error import exit_with_error
 from ____debug import DEBUGGING, DEBUG_NOTICE_MSG
 from ___constants_config import GRID_SAMPLE_LOW, GRID_SAMPLE_HIGH
 from ___constants_misc import NUM_AVAILABLE_CORES
-from ___constants_vasp import Z_LAYER_SEP
 from ___constants_compute import (
     DEFAULT_NUM_LAYERS, 
     MONOLAYER_JOBNAME, CONFIG_JOBNAME, 
@@ -42,7 +41,7 @@ def begin_computation(user_input_settings):
     elif flg == TYPE_RELAX_CONFIG:
         print('Set to run parallel computations over grid sample in configuration space, defaulted to layer 1 (z = 0). Starting...')
         grid_size = user_input_settings.get_cfg_grid_sz()
-        init_interlayer_spacing = Z_LAYER_SEP
+        init_interlayer_spacing = user_input_settings.z_layer_sep
         config = None
         if not user_input_settings.sampling_is_lc():
             config = Configuration(BASE_ROOT)

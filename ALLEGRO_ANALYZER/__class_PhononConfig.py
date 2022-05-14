@@ -11,7 +11,7 @@ import os
 from itertools import product as prod
 from random import randint
 from pymatgen.io.vasp.inputs import Poscar
-from ___constants_vasp import VASP_FREQ_TO_INVCM_UNITS, Z_LAYER_SEP
+from ___constants_vasp import VASP_FREQ_TO_INVCM_UNITS
 from ___constants_output import DEFAULT_MODE_LABELS
 from __directory_searchers import checkPath
 from ___helpers_parsing import succ, update
@@ -116,9 +116,6 @@ class TwistedRealspacePhonon:
         self.DM_at_k = DM_at_k
         self.d = 3; self.theta = theta
         self.__make_realspace_mesh(theta, gridsz, rspc_sc_sz, poscars_uc)
-        
-        self.at_pos = np.concatenate([p.structure.cart_coords for p in poscars_uc], axis=0)
-        self.at_pos[self.n_at//2:,2] += Z_LAYER_SEP*poscars_uc[0].structure.lattice.matrix[-1,-1] # make interlayer space
         
         self.outdir = checkPath(os.path.abspath(outdir))
         self.phtnsr = None; self.rphtnsr = None # Fourier and real space phonons
