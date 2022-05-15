@@ -1,8 +1,0 @@
-caller job.err job.out starter_bat test.py
-
-caller
-job.err
-job.out
-starter_bat
-test.py
-

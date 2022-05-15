@@ -1,2 +1,0 @@
-Total energy (eV): -36.91776956
-Fermi energy (eV): -1.2197

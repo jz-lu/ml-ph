@@ -1,1 +1,0 @@
-Failed attempt to plot DOS for graphene due to insufficient number of points sampled in the plot. Resolved: set NEDOS = a large number, like 3001 in INCAR. Default was 301, results in discontinuous plot.

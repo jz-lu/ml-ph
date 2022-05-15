@@ -1,3 +1,0 @@
-Use `run_koshino.py` to run the Koshino model for comparison to the CSC model.
-
-A parameter file `Param_<Mat>.jl` must be given, as specified in some of the examples. For the moment, only homobilayers can be used. The elastic calculations are obtained from Allegro Elastic. For a given material, specify the right parameter file at the top of `gsfe_func.jl`, then run `run_koshino.py`, which has a documented argument parser.
