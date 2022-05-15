@@ -1,0 +1,4 @@
+# Allegro Relaxer
+Please read the general documentation in the main directory of `ml-ph` before reading this.
+
+This is `Allegro Relaxer`, an arm of `Allegro` that implements continuum relaxation due to the twist. You will never need to call anything in this arm directly, for it has an API called by `__class_RelaxerAPI.py` in `ALLEGRO_ANALYZER`. However, for a given bilayer material you will need to slightly adjust `gsfe_func.jl`. Specifically, you must create a new parameters file `<Your material>.jl`, following in the template of `MoS2_0_Parameters.jl` wherein you will give the elastic constants `K` and `G` for each monolahyer computed from `Allegro Elastic` as well as the GSFE coefficients `c1, ..., c5` computed from `Allegro Analyzer`. Then in `gsfe_func.jl`, change the `include()` function in line 1 to that of `<Your material>.jl`. This must be done before you compute the dynamical matrix in the final step of the workflow.

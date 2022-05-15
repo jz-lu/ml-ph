@@ -1,0 +1,14 @@
+#!/bin/bash
+#SBATCH --job-name=gr
+#SBATCH -n 36
+#SBATCH -t 8:00:00
+#SBATCH -p shared,test
+#SBATCH --mem-per-cpu=5000
+#SBATCH -o job_%j.out
+#SBATCH -e job_%j.err
+
+module list
+
+echo "[**VASP BATCH FILE**] VASP batch file starting..."
+mpirun -np $SLURM_NTASKS /n/kaxiras_lab/vasp/vasp.std
+echo "[**VASP BATCH FILE**] VASP batch file complete."

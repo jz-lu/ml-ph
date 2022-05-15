@@ -1,0 +1,10 @@
+ running on    4 total cores
+ distrk:  each k-point on    4 cores,    1 groups
+ distr:  one band on    1 cores,    4 groups
+ using from now: INCAR     
+ vasp.5.4.4.18Apr17-6-g9f103f2a35 (build May 31 2018 21:15:54) complex          
+  
+ POSCAR found type information on POSCAR  C 
+ POSCAR found :  1 types and       4 ions
+ scaLAPACK will be used
+  No initial positions read in

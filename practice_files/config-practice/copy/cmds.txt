@@ -1,0 +1,5 @@
+1
+/home/jonathanlu/Documents/ml-ph/practice_files/config-practice/TBLG
+F
+G
+energies
