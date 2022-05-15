@@ -25,7 +25,7 @@ Install Python packages via `conda` or `pip`. Look these up as needed for their 
 8. Julia, any version at least `1.0`.
 
 ## Initial setup
-The first order of business is to build VASP. This is standard to any condensed matter physics calculation and is not unique to `ml-ph`, so we will not discuss it in detail. Whatever the method is, update `ALLEGRO_ANALYZER/STATIC_BAT_DNE` with the right command to call the VASP executable. 
+The first order of business is to build VASP. This is standard to any condensed matter physics calculation and is not unique to `ml-ph`, so we will not discuss it in detail. Whatever the method is, update `ALLEGRO_ANALYZER/STATIC_BAT_DNE` and `ALLEGRO_ELASTIC/ELASTIC_BAT_DNE` with the right command to call the VASP executable. 
 
 Ensure next that the python path and the location of the VASP POTCAR (pseudopotential files)are correctly set up in `~/.pmgrc.yaml`. The details of this can be found in the `pymatgen` setup documentation.
 
