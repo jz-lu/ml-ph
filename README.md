@@ -6,7 +6,7 @@ For questions about `Allegro Analyzer`, please reach out to Jonathan Lu. For que
 ## How to cite this library
 TODO
 
-## Overciew
+## Overview
 The calculation of phonons runs in two primary stages. The first involves computation of the pairwise forces of atoms in pristine bilayer configuration space over a discrete `N x N` set of configurations. (In the paper, we used `9 x 9`.) This step is built upon density functional theory (DFT) implemented by the Vienna _ab initio_ package (VASP), which requires separate licensing. See **Initial setup** for details. This calculation has been maximally parallelized but is still expected to take a long time. On average, we found this step to take about 8-24 hours per configuration to run on a computing cluster with 4000 GB RAM per core, 24 cores. DFT calculations will first require ionic relaxation, followed by force computations. The two steps are submitted as separate jobs. Be aware that since each configuration is relaxed, and then requires up to 36 force calculations in the frozen phonon method, the DFT calculations can total to a few thousand jobs submitted onto the computing cluster.
 
 The second step involves the construction of the moire dynamical matrix from the forces. This step is very quick, and should take about 1-4 minutes for band structure and real space wavefunctions. However, for calculations of density of states (DOS), `ml-ph` must compute the dyamical matrix at every one of a `45 x 45` mesh in reciprocal space, which can take 2-10 hours. This step is based on the collective API calls of `phonopy`, `hiphive`, and `ml-ph` itself.
