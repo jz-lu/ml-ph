@@ -285,6 +285,9 @@ class TwistedRealspacePhonon:
         layer_blks = np.real(list(map(lambda x: np.mean(x, axis=0), layer_blks)))
         assert layer_blks.shape == (2, self.nmodes, self.rec_nr if rectangular else self.n_r, self.d)
         return layer_blks
+
+    def get_phonons_fourier(self):
+        return self.phtnsr
     
     def get_coords(self, rectangular=False):
         coords = self.rec_rmatrix if rectangular else self.r_matrix
@@ -384,7 +387,8 @@ class TwistedRealspacePhonon:
     
     def plot_a_phonon(self, modeidx, save=False, 
                       outname='phreal.png', rectangular=True, 
-                      ticky=True, labely=True, labelx=True):
+                      ticky=True, labely=True, labelx=True, reduce_tick=False,
+                      shift=0):
         # make the default Font latex
         matplotlib.rcParams['mathtext.fontset'] = 'stix'
         matplotlib.rcParams['font.family'] = 'STIXGeneral'
@@ -409,12 +413,12 @@ class TwistedRealspacePhonon:
             plt.clf(); fig, ax = plt.subplots(figsize=(3.5*self.rspc_sc_sz, 5.5*self.rspc_sc_sz))
             plt.tricontourf(coords[:,0], coords[:,1], z, cmap=PLOT_CMAP, levels=501) # color the z component as background
             ax.plot(self.moire_boundary[:,0], self.moire_boundary[:,1], c="lightslategrey", linewidth=2.5)
-            mean_xy = np.mean([LA.norm(phonon[:-1]) for phonon in phonons])
-            mean_z = np.mean(np.abs(z))
+            mean_xy = round(np.mean([LA.norm(phonon[:-1]) for phonon in phonons]), 2)
+            mean_z = round(np.mean(np.abs(z)), 2)
             # print(f"Layer {l_i}:\n", z)
             
             if ticky:
-                ax.xaxis.set_major_locator(MaxNLocator(5))
+                ax.xaxis.set_major_locator(MaxNLocator(5-2*reduce_tick))
                 ax.yaxis.set_major_locator(MaxNLocator(6))
                 # ax.set_xticklabels(np.arange(self.rspc_sc_sz+1+1)-1)
                 # ax.set_yticklabels(np.arange(self.rspc_sc_sz+1+1)-1)
@@ -433,21 +437,24 @@ class TwistedRealspacePhonon:
                         phonons[:,0], phonons[:,1], 
                         width=0.0045, headwidth=6, minshaft=2, 
                         color='black') # arrows
-
-            textstr = r'$\omega = %.1f$ cm$^{-1}$'%self.modes[m_j] + '\n' + \
-                        r'$\delta \overline{u_{xy}} \sim %.1E$ $\mathrm{\AA}$'%mean_xy + \
-                        '\n' + r'$\delta \overline{u_{z}} \sim %.1E$ $\mathrm{\AA}$'%mean_z
+            rel1 = '<' if mean_xy < 0.01 else '='
+            rel2 = '<' if mean_z < 0.01 else '='
+            val1 = 0.01 if mean_xy < 0.01 else mean_xy
+            val2 = 0.01 if mean_z < 0.01 else mean_z
+            textstr = r'$\omega \,=\, %.1f$ cm$^{-1}$'%self.modes[m_j] + '\n' + \
+                        r'$\delta \overline{u}_{xy} \,%s\, %.2f$ $\mathrm{\AA}$'%(rel1, val1) + \
+                        '\n' + r'$\delta \overline{u}_{z} \,%s\, %.2f$ $\mathrm{\AA}$'%(rel2, val2)
             props = dict(boxstyle='round', facecolor='wheat', alpha=1)
-            ax.text(0.35, 0.13, textstr, 
+            ax.text(0.3-0.002*self.theta+shift, 0.13, textstr, 
                     transform=ax.transAxes, verticalalignment='center', 
                     horizontalalignment='center', bbox=props, 
                     fontsize=15*self.rspc_sc_sz)
             if labely:
-                plt.ylabel(r"y ($\mathrm{\AA}$)", fontsize=FONT_SIZE*self.rspc_sc_sz)
+                plt.ylabel(r"$y$ ($\mathrm{\AA}$)", fontsize=FONT_SIZE*self.rspc_sc_sz)
             else:
                 ax.set_yticklabels([])
             if labelx:
-                plt.xlabel(r"x ($\mathrm{\AA}$)", fontsize=FONT_SIZE*self.rspc_sc_sz)
+                plt.xlabel(r"$x$ ($\mathrm{\AA}$)", fontsize=FONT_SIZE*self.rspc_sc_sz)
             else:
                 ax.set_xticklabels([])
             if save:

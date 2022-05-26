@@ -260,8 +260,10 @@ if __name__ == '__main__':
                                                       bl_M[layer_idx_permuter], 
                                                       poscars_uc, modeidxs=modeidxs)
             thspc_modes, thspc_phonons, thspc_mags = thspc_analyzer.get_modes_and_phonons()
+            thspc_fourier = thspc_analyzer.get_phonons_fourier()
             thspc_mesh = thspc_analyzer.get_thspc_r_mesh()
             
+            np.save(this_outdir + 'fourier.npy', thspc_fourier)
             np.save(this_outdir + THSPC_MODES_ONAME, thspc_modes)
             np.save(this_outdir + THSPC_PHONONS_ONAME, thspc_phonons)
             np.save(this_outdir + THSPC_MAGS_ONAME, thspc_mags)

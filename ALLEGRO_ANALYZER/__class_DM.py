@@ -759,13 +759,13 @@ class ThetaSpaceDM:
         
         objs = [TwistedRealspacePhonon(theta, k_theta, GM_set, DM_theta, 
                                self.n_at, self.masses, self.poscars_uc, gridsz=gridsz,
-                               modeidxs=self.modeidxs, rspc_sc_sz=sc_sz,
-                               outdir="/Users/jonathanlu/Documents/tmos2_2/test/") \
+                               modeidxs=self.modeidxs, rspc_sc_sz=sc_sz) \
                         for theta, k_theta, GM_set, DM_theta in \
                         zip(self.thetas, self.k_set, self.thspc_GM_sets, self.DM_set)]
         self.thspc_r_mesh = np.array([obj.get_coords() for obj in objs])
         self.phonons = np.array([obj.get_phonons() for obj in objs])
         self.phonon_mags = np.mean(np.abs(self.phonons), axis=1)
+        self.phonons_fourier = np.array([obj.get_phonons_fourier() for obj in objs])
         assert self.phonons.shape == (self.ntheta, 2, len(self.modeidxs), n_r, 3)
         assert self.phonon_mags.shape == (self.ntheta, len(self.modeidxs), n_r, 3)
 
@@ -783,6 +783,9 @@ class ThetaSpaceDM:
 
     def get_phonons(self):
         return self.phonons, self.phonon_mags
+
+    def get_phonons_fourier(self):
+        return self.phonons_fourier
 
     def get_modes_and_phonons(self):
         return self.modes, self.phonons, self.phonon_mags

@@ -246,6 +246,8 @@ class ConfigOutput:
         out_file = self.__out_dir + pfx + f"energy_config_plot_{levels}.png"
         ax.set_aspect('equal') # prevent axis stretching
         fig.savefig(out_file)
+        np.save(self.__out_dir + pfx + '_b.npy', b)
+        np.save(self.__out_dir + pfx + '_e.npy', energies)
         if need_direct:
             plt.clf(); fig, ax = plt.subplots()
             cf = ax.tricontourf(bdir[:,0], bdir[:,1], energies, levels=levels, cmap="RdGy"); fig.colorbar(cf, ax=ax)
