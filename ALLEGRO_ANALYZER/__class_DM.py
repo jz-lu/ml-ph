@@ -700,7 +700,7 @@ modeidxs: indices of the modes desired
 """
 class ThetaSpaceDM:
     def __init__(self, k_dir, k_set, TDMs, thetas, thspc_GM_sets, n_at, masses, poscars_uc, 
-                 modeidxs=np.arange(0,6), gridsz=13, sc_sz=3):
+                 modeidxs=np.arange(0,6), gridsz=15, sc_sz=3):
         self.ntheta = len(thetas)
         
         assert self.ntheta == len(TDMs), \
@@ -748,7 +748,7 @@ class ThetaSpaceDM:
         self.thtnsr = np.transpose(evecs, axes=(4,1,0,2,3)) # shape: (n_th, n_G, n_at, C, d)
         print(f"Tensors prepared. Phonon tensor has shape {self.thtnsr.shape}.")
         
-    def __thtnsr_to_phonons(self, M, gridsz=13, sc_sz=1):
+    def __thtnsr_to_phonons(self, M, gridsz=15, sc_sz=1):
         """
         Phonon tensor in Fourier space to real space over a `sc_sz` x `sc_sz` supermoire cell 
         and mesh density `gridsz`. Masses `M`.
@@ -772,7 +772,7 @@ class ThetaSpaceDM:
         print(f"Phonon real-space tensor has shape {self.phonons.shape}")
         print(f"Phonon magnitude tensor has shape {self.phonon_mags.shape}.")
 
-    def __analyze(self, masses, gridsz=13, sc_sz=3):
+    def __analyze(self, masses, gridsz=15, sc_sz=1):
         self.__DM_to_DDM()
         self.__DDM_to_thtnsr()
         self.__thtnsr_to_phonons(masses, gridsz=gridsz, sc_sz=sc_sz)

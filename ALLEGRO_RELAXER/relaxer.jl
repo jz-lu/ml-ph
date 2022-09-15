@@ -12,7 +12,7 @@ using LinearAlgebra
 using ArgParse
 using NPZ
 
-on_cluster = true #! make true when on cluster
+on_cluster = false #! make true when on cluster
 
 function parse_commandline()
     s = ArgParseSettings()

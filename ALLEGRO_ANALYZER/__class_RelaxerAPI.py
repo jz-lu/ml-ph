@@ -83,22 +83,29 @@ class RelaxerAPI:
         return self.bprime_cart if cartesian else self.bprime_dir
 
     def plot_relaxation(self, filename='relax.png'):
-        plt.clf(); _, ax = plt.subplots()
-        plt.scatter(self.b[:,0], self.b[:,1], c='royalblue', alpha=0.15, label='before')
-        plt.scatter(self.bprime_cart[:,0], self.bprime_cart[:,1], c='royalblue', label='after')
+        import matplotlib
+        matplotlib.rcParams['mathtext.fontset'] = 'stix'
+        matplotlib.rcParams['font.family'] = 'STIXGeneral'
+        plt.clf()
+        plt.rc("font", size=16)
+        _, ax = plt.subplots()
+        plt.scatter(self.b[:,0], self.b[:,1], facecolors='none', edgecolors='k', alpha=0.9, s=60, label='before')
+        plt.scatter(self.bprime_cart[:,0], self.bprime_cart[:,1], c='royalblue', s=50, label='after')
         ax.set_aspect('equal') # prevent stretching of space in plot
-        pts = [[1/3, 1/3], [2/3, 2/3]]
-        if np.isclose(self.langle, 120):
-            pts = [[1/3, 2/3], [2/3, 1/3]]
-        pts = np.array(pts); pts = (self.cob @ pts.T).T # make Cartesian
-        labels = ['AB', 'BA']
-        for (x, y), lab in zip(pts, labels):
-            plt.annotate(lab, (x, y), # this is the point to label
-                 textcoords="offset points", # how to position the text
-                 xytext=(-5,0), # distance from text to points (x,y)
-                 ha='center') # horizontal alignment can be left, right or center
-        plt.legend(); plt.title("Relaxer before-after for " + str(self.theta) + r"$^\circ$")
-        ax.set_xlabel(r'$x$'); ax.set_ylabel(r'$y$')
+        # pts = [[1/3, 1/3], [2/3, 2/3]]
+        # if np.isclose(self.langle, 120):
+        #     pts = [[1/3, 2/3], [2/3, 1/3]]
+        # pts = np.array(pts); pts = (self.cob @ pts.T).T # make Cartesian
+        # labels = ['AB', 'BA']
+        # for (x, y), lab in zip(pts, labels):
+        #     plt.annotate(lab, (x, y), # this is the point to label
+        #          textcoords="offset points", # how to position the text
+        #          xytext=(-5,0), # distance from text to points (x,y)
+        #          ha='center') # horizontal alignment can be left, right or center
+        plt.legend()
+        plt.title(r"$\theta$ $=$ " + str(self.theta) + r"$^\circ$", fontsize=16+2)
+        ax.set_xlabel(r"$x$ ($\mathrm{\AA}$)", fontsize=16)
+        ax.set_ylabel(r"$y$ ($\mathrm{\AA}$)", fontsize=16)
         filename = filename[:filename.index('.')] + self.pfx + filename[filename.index('.'):]
         outname = self.outdir + 'ba_' + filename
         plt.savefig(outname)

@@ -140,7 +140,8 @@ class TwistedRealspacePhonon:
         
         # Sample and transform mesh
         self.gridsz = gridsz; self.n_r = (gridsz * rspc_sc_sz)**2
-        x = np.linspace(-rspc_sc_sz/2, rspc_sc_sz/2, num=gridsz*rspc_sc_sz, endpoint=False)
+        # x = np.linspace(-rspc_sc_sz/2, rspc_sc_sz/2, num=gridsz*rspc_sc_sz, endpoint=False)
+        x = np.linspace(0, rspc_sc_sz, num=gridsz*rspc_sc_sz, endpoint=False)
         self.r_matrix = np.array(list(prod(x, x)))
         assert self.r_matrix.shape == (self.n_r, 2)
         self.diagidxs = self.r_matrix[:,0] == self.r_matrix[:,1]
@@ -388,7 +389,7 @@ class TwistedRealspacePhonon:
     def plot_a_phonon(self, modeidx, save=False, 
                       outname='phreal.png', rectangular=True, 
                       ticky=True, labely=True, labelx=True, reduce_tick=False,
-                      shift=0):
+                      shift=0, flip=False):
         # make the default Font latex
         matplotlib.rcParams['mathtext.fontset'] = 'stix'
         matplotlib.rcParams['font.family'] = 'STIXGeneral'
@@ -434,7 +435,7 @@ class TwistedRealspacePhonon:
             lstr = '%.1lf'%self.theta + rf"$^\circ,$ L{l_i}"
             plt.clim(-zbound, zbound)
             plt.quiver(coords[:,0], coords[:,1],    # positions
-                        phonons[:,0], phonons[:,1], 
+                        (-1 * flip) * phonons[:,0], (-1 * flip) * phonons[:,1], 
                         width=0.0045, headwidth=6, minshaft=2, 
                         color='black') # arrows
             rel1 = '<' if mean_xy < 0.01 else '='
@@ -442,8 +443,8 @@ class TwistedRealspacePhonon:
             val1 = 0.01 if mean_xy < 0.01 else mean_xy
             val2 = 0.01 if mean_z < 0.01 else mean_z
             textstr = r'$\omega \,=\, %.1f$ cm$^{-1}$'%self.modes[m_j] + '\n' + \
-                        r'$\delta \overline{u}_{xy} \,%s\, %.2f$ $\mathrm{\AA}$'%(rel1, val1) + \
-                        '\n' + r'$\delta \overline{u}_{z} \,%s\, %.2f$ $\mathrm{\AA}$'%(rel2, val2)
+                        r'$\delta \overline{u}_{xy} \,%s\, %.2f$'%(rel1, val1) + \
+                        '\n' + r'$\delta \overline{u}_{z} \,%s\, %.2f$'%(rel2, val2)
             props = dict(boxstyle='round', facecolor='wheat', alpha=1)
             ax.text(0.3-0.002*self.theta+shift, 0.13, textstr, 
                     transform=ax.transAxes, verticalalignment='center', 
@@ -460,6 +461,7 @@ class TwistedRealspacePhonon:
             if save:
                 fig.savefig(self.outdir + this_outname, bbox_inches='tight')
             plt.show()
+        return coords, np.array(layer_blks)[:,modeidx]
                 
     def plot_a_phonon_per_atom(self, modeidx, outname='phsep.pdf', rectangular=True, save=False):
         """One plot per mode, per atom, per layer"""
