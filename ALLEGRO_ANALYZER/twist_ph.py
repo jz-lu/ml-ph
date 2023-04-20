@@ -322,7 +322,7 @@ if __name__ == '__main__':
         print("Twisted dynamical matrix object constructed.")
 
         # save dynamic matrices to file (no sum rule here)
-        TDMs = np.array([TDM_here.get_DM_set()[0] for TDM_here in TDM])
+        TDMs = TDM.get_DM_set()[0] 
 
         np.save(this_outdir + 'dms.npy', TDMs)
         np.save(this_outdir + 'k_set.npy', k_mags)
