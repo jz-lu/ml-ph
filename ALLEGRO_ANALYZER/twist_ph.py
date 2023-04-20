@@ -324,8 +324,10 @@ if __name__ == '__main__':
         # save dynamic matrices to file (no sum rule here)
         TDMs = TDM.get_DM_set()[0] 
 
-        np.save(this_outdir + 'dms.npy', TDMs)
-        np.save(this_outdir + 'k_set.npy', k_mags)
+        np.save(outdir + 'dms.npy', TDMs)
+        np.save(outdir + 'k_set.npy', k_mags)
+        np.save(outdir + 'G0_set.npy', G0_set)
+        np.save(outdir + 'GM_set.npy', GM_set)
         
         if do_sum_rule:
             TDM.apply_sum_rule()
