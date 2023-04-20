@@ -277,7 +277,8 @@ if __name__ == '__main__':
             print(f"Saved theta-space phonons for k = {k_here} to {this_outdir + THSPC_PHONONS_ONAME}", flush=True)
             
         update(f"Finished writing theta-space analysis to {outdir}")
-
+    
+    # This is the analyses done in most cases 
     else:
         print("Analysis type: k-space", flush=True)
         b_relaxed = None
@@ -319,6 +320,13 @@ if __name__ == '__main__':
         print("Combining into a single twisted dynamical matrix object...")
         TDM = TwistedDM(MLDMs[0], MLDMs[1], ILDM, k_mags, [p.structure.species for p in poscars_uc], Gamma_idx)
         print("Twisted dynamical matrix object constructed.")
+
+        # save dynamic matrices to file (no sum rule here)
+        TDMs = np.array([TDM_here.get_DM_set()[0] for TDM_here in TDM])
+
+        np.save(this_outdir + 'dms.npy', TDMs)
+        np.save(this_outdir + 'k_set.npy', k_mags)
+        
         if do_sum_rule:
             TDM.apply_sum_rule()
         mode_set = TDM.get_mode_set()
