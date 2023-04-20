@@ -290,7 +290,7 @@ class InterlayerDM:
         self.n_GM = len(GM_set)
         if ph_list is not None:
             pos_sc_idx = sc_idx(sc, uc)
-            self.force_matrices = [dm_calc([0,0], ph, sc, uc, pos_sc_idx) for ph in ph_list]
+            self.force_matrices = [dm_calc([0,0], ph, sc, uc, pos_sc_idx) for ph in ph_list] # is this correct? what are sc and uc? 
             # self.force_matrices = [ph.get_dynamical_matrix_at_q([0,0]) for ph in ph_list] # DM(Gamma) ~= FC (mass-scaled)
         else:
             self.force_matrices = force_matrices
