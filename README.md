@@ -4,7 +4,7 @@ This is `ml-ph` (`Allegro`), a scrappy library containing a set of tools that to
 Much of this library was written for one person and hence is without substantial consideration of ease of code readability, and parts of the code that are now deprecated have not yet been cleaned. For questions about `Allegro Analyzer`, please reach out to Jonathan Lu. For questions about `Allegro Relaxer` or `Allegro Elastic`, please reach out to either Jonathan Lu or Ziyan "Zoe" Zhu. See below paper for contact information.
 
 ## How to cite this library
-TODO
+Cite directly on the GitHub link. The paper is available [on the ArXiv](https://arxiv.org/abs/2207.04965) and [on Physical Review B](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.106.144305).
 
 ## Overview
 The calculation of phonons runs in two primary stages. The first involves computation of the pairwise forces of atoms in pristine bilayer configuration space over a discrete `N x N` set of configurations. (In the paper, we used `9 x 9`.) This step is built upon density functional theory (DFT) implemented by the Vienna _ab initio_ package (VASP), which requires separate licensing. See **Initial setup** for details. This calculation has been maximally parallelized but is still expected to take a long time. On average, we found this step to take about 8-24 hours per configuration to run on a computing cluster with 4000 GB RAM per core, 24 cores. DFT calculations will first require ionic relaxation, followed by force computations. The two steps are submitted as separate jobs. Be aware that since each configuration is relaxed, and then requires up to 36 force calculations in the frozen phonon method, the DFT calculations can total to a few thousand jobs submitted onto the computing cluster.
