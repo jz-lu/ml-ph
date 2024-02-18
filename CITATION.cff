@@ -1,0 +1,60 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: DAQML
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Jonathan Zhang
+    family-names: Lu
+    email: lujz@mit.edu
+    affiliation: MIT
+    orcid: 'https://orcid.org/0000-0002-2806-8248'
+  - given-names: Ziyan
+    family-names: Zhu
+    affiliation: Stanford University
+  - given-names: Mattia
+    family-names: Angeli
+    affiliation: Harvard University
+  - given-names: Daniel T.
+    family-names: Larson
+    affiliation: Harvard University
+  - given-names: Efthimios
+    family-names: Kaxiras
+    affiliation: Harvard University
+identifiers:
+  - type: doi
+    value: 10.1103/PhysRevB.106.144305
+    description: Physics Review B
+  - type: url
+    value: 'https://arxiv.org/abs/2207.04965'
+    description: ArXiv
+repository-code: 'https://github.com/jz-lu/ml-ph'
+abstract: >-
+  We develop a low-energy continuum model for phonons in
+  twisted moiré bilayers, based on a configuration-space
+  approach. In this approach, interatomic force constants
+  are obtained from density functional theory (DFT)
+  calculations of untwisted bilayers with various in-plane
+  shifts. This allows for efficient computation of phonon
+  properties for any small twist angle, while maintaining
+  DFT-level accuracy. Based on this framework, we show how
+  the low-energy phonon modes, including interlayer shearing
+  and layer-breathing modes, vary with the twist angle. As
+  the twist angle decreases, the frequencies of the
+  low-energy modes are reordered and the atomic displacement
+  fields corresponding to phonon eigenmodes break
+  translational symmetry, developing periodicity on the
+  moiré length scale. We demonstrate the capabilities of our
+  model by calculating the phonon properties of three
+  specific structures: bilayer graphene, bilayer molybdenum
+  disulfide (MoS2), and molybdenum diselenide-tungsten
+  diselenide (MoSe2-WSe2).
+keywords:
+  - moire
+  - phonons
+  - continuum model
+  - two-dimensional materials
